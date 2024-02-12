@@ -82,8 +82,10 @@ class SpotCommentSchema(SQLAlchemyAutoSchema):
 class DataBase:
     def __init__(self, api: Api):
         self.api = api
-        engine = sa.create_engine("sqlite:///:memory:")
+        engine = sa.create_engine("sqlite:///spots.db")
         self.session = scoped_session(sessionmaker(bind=engine))
+        self.session.execute(sa.text('DELETE FROM spots;'))
+        self.session.commit()
         Base.metadata.create_all(engine)
         self.schema = SpotSchema()
 
@@ -121,9 +123,12 @@ if __name__ == "__main__":
     api = Api()
     db = DataBase(api)
     db.update_all_spots()
-    cw_spots = db.get_by_mode("CW")
-    print(cw_spots)
-    db.update_spot_comments("KU8T", "K-2263")
-    comments = db.get_spot_comments()
-    text = map(lambda x: f"{x.activator}@{x.park}: {x.comments} de {x.spotter}", comments)
-    print(*text, sep='\n')
+    all_spots = db.get_spots()
+    v = SpotSchema(many=True)
+    print(v.dumps(all_spots))
+    # cw_spots = db.get_by_mode("CW")
+    # print(cw_spots)
+    # db.update_spot_comments("KU8T", "K-2263")
+    # comments = db.get_spot_comments()
+    # text = map(lambda x: f"{x.activator}@{x.park}: {x.comments} de {x.spotter}", comments)
+    # print(*text, sep='\n')
