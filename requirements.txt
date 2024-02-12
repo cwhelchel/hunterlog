@@ -1,4 +1,25 @@
-setuptools
-pywebview
-pyinstaller; sys_platform != 'darwin'
-py2app; sys_platform == 'darwin'
+altgraph==0.17.4
+bottle==0.12.25
+certifi==2024.2.2
+cffi==1.16.0
+charset-normalizer==3.3.2
+clr-loader==0.2.6
+greenlet==3.0.3
+idna==3.6
+importlib-metadata==7.0.1
+marshmallow==3.20.2
+marshmallow-sqlalchemy==1.0.0
+packaging==23.2
+pefile==2023.2.7
+proxy_tools==0.1.0
+pycparser==2.21
+pyinstaller==6.3.0
+pyinstaller-hooks-contrib==2024.0
+pythonnet==3.0.3
+pywebview==4.4.1
+pywin32-ctypes==0.2.2
+requests==2.31.0
+SQLAlchemy==2.0.26
+typing_extensions==4.9.0
+urllib3==2.2.0
+zipp==3.17.0
