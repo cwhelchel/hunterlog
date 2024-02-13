@@ -1,26 +1,11 @@
 from typing import List
-import requests
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import scoped_session, sessionmaker, relationship, backref
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
+from sqlalchemy.orm import scoped_session, sessionmaker
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from pota import Api
 
 Base = declarative_base()
-
-# https://api.pota.app/spot/activator
-# [
-#     {
-#         "spotId": 24573134,
-#         "spotTime": "2024-02-12T17:52:16",
-#         "spotter": "WE9V-#",
-#         "mode": "CW",
-#         "frequency": "7061.0",
-#         "band": "40m",
-#         "source": "RBN",
-#         "comments": "RBN 19 dB 21 WPM via WE9V-#"
-#     },
-#     {
 
 
 class Spot(Base):
@@ -130,5 +115,4 @@ if __name__ == "__main__":
     # print(cw_spots)
     # db.update_spot_comments("KU8T", "K-2263")
     # comments = db.get_spot_comments()
-    # text = map(lambda x: f"{x.activator}@{x.park}: {x.comments} de {x.spotter}", comments)
     # print(*text, sep='\n')
