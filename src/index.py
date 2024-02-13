@@ -1,11 +1,10 @@
-import json
 import os
 import threading
 import webview
 
 from time import time
 
-from spots import DataBase, SpotSchema
+from db import DataBase, SpotSchema
 from pota import Api as PotaApi
 
 pota = PotaApi()
