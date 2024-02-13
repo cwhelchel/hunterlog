@@ -1,7 +1,7 @@
 import os
 import threading
 import webview
-
+import logging
 from time import time
 
 from db import DataBase, SpotSchema
@@ -11,6 +11,8 @@ pota = PotaApi()
 db = DataBase(pota)
 # first lets update our spots w/ api data
 db.update_all_spots()
+
+counter = 0
 
 
 class Api:
@@ -29,6 +31,13 @@ class Api:
         return os.listdir('.')
 
     def get_spots(self):
+        logging.debug('py getting spots')
+        spots = db.get_spots()
+        ss = SpotSchema(many=True)
+        return ss.dumps(spots)
+    
+    def qso_data(self):
+        logging.debug('py getting qso dat')
         spots = db.get_spots()
         ss = SpotSchema(many=True)
         return ss.dumps(spots)
@@ -72,12 +81,21 @@ entry = get_entrypoint()
 
 @set_interval(1)
 def update_ticker():
+    global counter
+    counter += 1
+    if counter > 30:
+        print('updating db')
+        db.update_all_spots()
+        counter = 0
+
     if len(webview.windows) > 0:
         webview.windows[0].evaluate_js(
             'window.pywebview.state.setTicker("%d")' % time())
+        webview.windows[0].evaluate_js(
+            'window.pywebview.state.hookGetSpots('')')
 
 
 if __name__ == '__main__':
     window = webview.create_window(
-        'pywebview-react boilerplate', entry, js_api=Api())
+        'BIG BAG HUNTER', entry, js_api=Api())
     webview.start(update_ticker, debug=True)

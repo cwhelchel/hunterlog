@@ -75,6 +75,7 @@ class DataBase:
         self.schema = SpotSchema()
 
     def update_all_spots(self):
+        self.session.execute(sa.text('DELETE FROM spots;'))
         json = self.api.get_spots()
         for s in json:
             to_add = self.schema.load(s, session=self.session)
