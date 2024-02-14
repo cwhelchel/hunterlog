@@ -11,6 +11,7 @@ import { FilterBar } from '../FilterBar/FilterBar'
 import { useAppContext } from '../AppContext';
 
 import './SpotViewer.scss'
+import { Qso } from '../../types/QsoTypes';
 
 
 // https://mui.com/material-ui/react-table/
@@ -91,10 +92,7 @@ export default function SpotViewer() {
         items: []
     });
 
-    const { data } = useAppContext();
-
-    console.log(`context id is = ${data?.id}`);
-    console.log(`context tx is = ${data?.text}`);
+    const { contextData, setData } = useAppContext();
 
     function getSpots() {
         // get the spots from the db
@@ -106,11 +104,15 @@ export default function SpotViewer() {
     }
 
     function getQsoData(id) {
-        // get the spots from the db
-        const spots = window.pywebview.api.get_spots()
-        spots.then((r) => {
-            var x = JSON.parse(r);
-            setSpots(x);
+        // use the spot to generate qso data (unsaved)
+        const q = window.pywebview.api.qso_data(id);
+        console.log(q);
+        q.then((r) => {
+            var x = JSON.parse(r) as Qso;
+            console.log(x);
+            const newCtxData = {...contextData};
+            newCtxData.qso = x;
+            setData(newCtxData);
         });
     }
 
@@ -169,7 +171,7 @@ export default function SpotViewer() {
         details, // GridCallbackDetails
       ) => {
         console.log('row click');
-        data.text = params.row.name;
+        getQsoData(params.row.spotId)
       };
 
     return (

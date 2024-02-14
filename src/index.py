@@ -4,7 +4,7 @@ import webview
 import logging
 from time import time
 
-from db import DataBase, SpotSchema
+from db import DataBase, SpotSchema, QsoSchema
 from pota import Api as PotaApi
 
 pota = PotaApi()
@@ -35,12 +35,12 @@ class Api:
         spots = db.get_spots()
         ss = SpotSchema(many=True)
         return ss.dumps(spots)
-    
-    def qso_data(self):
-        logging.debug('py getting qso dat')
-        spots = db.get_spots()
-        ss = SpotSchema(many=True)
-        return ss.dumps(spots)
+
+    def qso_data(self, id: int):
+        logging.debug('py getting qso data')
+        q = db.build_qso_from_spot(id)
+        qs = QsoSchema()
+        return qs.dumps(q)
 
 
 def get_entrypoint():

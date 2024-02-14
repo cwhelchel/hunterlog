@@ -1,4 +1,5 @@
 from typing import List
+import logging
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -64,6 +65,64 @@ class SpotCommentSchema(SQLAlchemyAutoSchema):
         load_instance = True
 
 
+class Qso(Base):
+    __tablename__ = "qsos"
+    id = sa.Column(sa.Integer, primary_key=True)
+    call = sa.Column(sa.String)
+    rst_sent = sa.Column(sa.String)
+    rst_recv = sa.Column(sa.String)
+    freq = sa.Column(sa.String)
+    freq_rx = sa.Column(sa.String)
+    mode = sa.Column(sa.String(15))
+    comment = sa.Column(sa.String)
+    qso_date = sa.Column(sa.Date)
+    time_on = sa.Column(sa.Time)
+    tx_pwr = sa.Column(sa.Integer)
+    rx_pwr = sa.Column(sa.Integer)
+    gridsquare = sa.Column(sa.String(6))
+    sig = sa.Column(sa.String)
+    sig_info = sa.Column(sa.String)
+
+    def __init__(self, spot: Spot):
+        self.call = spot.activator
+        self.rst_sent = "599"
+        self.rst_recv = "599"
+        self.freq = spot.frequency
+        self.freq_rx = spot.frequency
+        self.mode = spot.mode
+        self.qso_date = spot.spotTime
+        self.gridsquare = spot.grid6
+        pass
+
+    def __repr__(self):
+        return "<qso({self.id!r}:{self.call!r} on {self.qso_date!r})>" \
+            .format(self=self)
+
+
+class QsoSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = Qso
+        load_instance = True
+
+
+class UserConfig:
+    __tablename__ = "config"
+    id = sa.Column(sa.Integer, primary_key=True)
+    my_call = sa.Column(sa.String)
+    my_grid6 = sa.Column(sa.String(6))
+    defualt_pwr = sa.Column(sa.Integer)
+
+    def __repr__(self):
+        return "<config({self.my_call!r}:{self.my_grid6!r} on {self.defualt_pwr!r})>" \
+            .format(self=self)
+
+
+class UserConfigSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = UserConfig
+        load_instance = True
+
+
 class DataBase:
     def __init__(self, api: Api):
         self.api = api
@@ -73,6 +132,18 @@ class DataBase:
         self.session.commit()
         Base.metadata.create_all(engine)
         self.schema = SpotSchema()
+        self.init_config()
+
+    def init_config(self):
+        current = self.session.query(UserConfig).first()
+
+        if current is None:
+            cs = UserConfigSchema()
+            logging.debug("creating default user config...")
+            s = {'my_call': "N9FZ", 'my_grid6': 'EM82dl', 'default_pwr': 20}
+            default_config = cs.load(s, session=self.session)
+            self.session.add(default_config)
+            self.session.commit()
 
     def update_all_spots(self):
         self.session.execute(sa.text('DELETE FROM spots;'))
@@ -103,6 +174,12 @@ class DataBase:
 
     def get_by_mode(self, mode: str) -> List[Spot]:
         return self.session.query(Spot).filter(Spot.mode == mode).all()
+
+    def build_qso_from_spot(self, spot_id: int) -> Qso:
+        s = self.get_spot(spot_id)
+        q = Qso(s)
+        print(q)
+        return q
 
 
 if __name__ == "__main__":

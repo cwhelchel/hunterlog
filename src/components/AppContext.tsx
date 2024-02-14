@@ -1,22 +1,40 @@
 import * as React from 'react';
+import { Qso } from '../types/QsoTypes';
 
-export interface IAppContext {
+interface ContextData {
     id: number;
     text: string;
+    qso: Qso | null;
 };
 
-const defData = { id: 0, text:"" };
+interface AppContextType {
+    contextData: ContextData;
+    setData: (d: ContextData) => void;
+}
 
-//export const AppContext = React.createContext<{ data: IAppContext } | null>(null);
-export const AppContext = React.createContext<{
-    data: IAppContext;
-} | null>(null);
+const defData: ContextData = {id: 0, text:"", qso:null };
+
+export const AppContext = React.createContext<AppContextType | null>(null);
 
 export const AppContextProvider = ({ children }) => {
-    const [contextData] = React.useState<IAppContext>();
+    const [contextData, setContextData] = React.useState<ContextData>(defData);
+
+    const setData = (ctx: ContextData) => {
+        const newContext: ContextData = {
+            id: ctx.id,
+            text: ctx.text,
+            qso: ctx.qso
+        }
+        setContextData(newContext);
+    };
+
+    const contextValue: AppContextType = {
+        contextData,
+        setData
+      };
 
     return (
-        <AppContext.Provider value={{ data: defData }}>
+        <AppContext.Provider value={contextValue}>
             {children}
         </AppContext.Provider>
     )
@@ -26,16 +44,8 @@ export const useAppContext = () => {
     const context = React.useContext(AppContext);
 
     if (!context) {
-        throw new Error("useAppContext must be used inside the ThemeProvider");
+        throw new Error("useAppContext must be used inside the AppContextProvider");
     }
 
     return context;
 };
-
-// export const setData = (ctx: IAppContext) => {
-//     //console.log("in context setData");
-//     const newContext: IAppContext = {
-//         id: Math.random(), 
-//         text: ctx.text
-//     }
-// };
