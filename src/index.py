@@ -4,15 +4,14 @@ import webview
 import logging
 from time import time
 
-from db import DataBase, SpotSchema, QsoSchema
+from db import SpotSchema, QsoSchema, DataBase
 from pota import Api as PotaApi
 
 pota = PotaApi()
-db = DataBase(pota)
-# first lets update our spots w/ api data
-db.update_all_spots()
+the_db = DataBase()
 
-counter = 0
+# first lets update our spots w/ api data
+the_db.update_all_spots(pota.get_spots())
 
 
 class Api:
@@ -32,13 +31,13 @@ class Api:
 
     def get_spots(self):
         logging.debug('py getting spots')
-        spots = db.get_spots()
+        spots = the_db.get_spots()
         ss = SpotSchema(many=True)
         return ss.dumps(spots)
 
     def qso_data(self, id: int):
         logging.debug('py getting qso data')
-        q = db.build_qso_from_spot(id)
+        q = the_db.build_qso_from_spot(id)
         qs = QsoSchema()
         return qs.dumps(q)
 
@@ -79,20 +78,16 @@ def set_interval(interval):
 entry = get_entrypoint()
 
 
-@set_interval(1)
+@set_interval(30)
 def update_ticker():
-    global counter
-    counter += 1
-    if counter > 30:
-        print('updating db')
-        db.update_all_spots()
-        counter = 0
+
+    logging.debug('updating db')
+    json = pota.get_spots()
+    the_db.update_all_spots(json)
 
     if len(webview.windows) > 0:
         webview.windows[0].evaluate_js(
             'window.pywebview.state.setTicker("%d")' % time())
-        webview.windows[0].evaluate_js(
-            'window.pywebview.state.hookGetSpots('')')
 
 
 if __name__ == '__main__':
