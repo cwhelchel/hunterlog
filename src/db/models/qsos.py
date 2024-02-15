@@ -1,8 +1,10 @@
+import datetime
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 
 from db.models.spots import Spot
+from db.utc import utcnow
 
 Base = declarative_base()
 engine = sa.create_engine("sqlite:///spots.db")
@@ -19,7 +21,7 @@ class Qso(Base):
     mode = sa.Column(sa.String(15))
     comment = sa.Column(sa.String)
     qso_date = sa.Column(sa.Date)
-    time_on = sa.Column(sa.Time)
+    time_on = sa.Column(sa.Date, server_default=utcnow())
     tx_pwr = sa.Column(sa.Integer)
     rx_pwr = sa.Column(sa.Integer)
     gridsquare = sa.Column(sa.String(6))

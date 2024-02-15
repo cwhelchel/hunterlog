@@ -8,7 +8,7 @@ export interface Qso {
     mode: string;
     comment: string;
     qso_date: Date;
-    time_on: Date;
+    time_on: string;
     tx_pwr: number;
     rx_pwr: number;
     gridsquare: string;

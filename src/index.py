@@ -7,6 +7,7 @@ from time import time
 from db import SpotSchema, QsoSchema, DataBase
 from pota import Api as PotaApi
 
+logging.basicConfig(level=logging.DEBUG)
 pota = PotaApi()
 the_db = DataBase()
 
@@ -40,6 +41,10 @@ class Api:
         q = the_db.build_qso_from_spot(id)
         qs = QsoSchema()
         return qs.dumps(q)
+
+    def log_qso(self, qso_data):
+        logging.debug("logging qso:")
+        logging.debug(qso_data)
 
 
 def get_entrypoint():
