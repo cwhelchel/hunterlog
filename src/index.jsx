@@ -11,15 +11,17 @@ import Editor from './components/Editor/Editor'
 import Ticker from './components/Ticker/Ticker'
 import SpotViewer from './components/SpotViewer/SpotViewer'
 import QsoEntry from './components/QsoEntry/QsoEntry'
-
+import LeafMap from './components/Map/Map'
 
 import './index.scss'
+
 
 const darkTheme = createTheme({
     palette: {
         mode: 'dark'
     }
 });
+
 
 const App = function () {
     return (
@@ -30,6 +32,7 @@ const App = function () {
                         <CssBaseline />
                         <Header />
                         <Ticker />
+                        <LeafMap />
                         <QsoEntry />
                         <SpotViewer />
                         <Editor />

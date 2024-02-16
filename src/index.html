@@ -1,12 +1,25 @@
 <!DOCTYPE html>
 <html>
-  <head>
+
+<head>
     <title>pywebview-react boilerplate</title>
-    <meta name="format-detection" content="telephone=no"/>
+    <meta name="format-detection" content="telephone=no" />
     <link href="index.scss" type="text/css">
-  </head>
-  <body>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        /* Set the map container size */
+        #map {
+            height: 200px;
+            width: 50%;
+        }
+    </style>
+</head>
+
+<body>
     <div id="app"></div>
-    <script src="index.jsx"></script>
-  </body>
+    <!-- <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script> -->
+    <script type="module" src="index.jsx"></script>
+    <!-- <script src="map.js"></script> -->
+</body>
+
 </html>
