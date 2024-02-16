@@ -1,16 +1,12 @@
 import * as React from 'react';
-import { Button, Box, InputLabel, Select, TextField, IconButton, IconButtonProps } from '@mui/material';
-import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
-import PauseCircleFilledOutlinedIcon from '@mui/icons-material/PauseCircleFilledOutlined';
-import PauseOutlinedIcon from '@mui/icons-material/PauseOutlined';
-import { TimePicker } from '@mui/x-date-pickers/TimePicker';
-import { TimeField } from '@mui/x-date-pickers/TimeField';
+import { Button, Box, TextField } from '@mui/material';
 import { useAppContext } from '../AppContext';
 import dayjs, { Dayjs } from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 
 import './QsoEntry.scss'
-import { Qso } from '../../types/QsoTypes';
+import { Qso } from '../../@types/QsoTypes';
+import QsoTimeEntry from './QsoTimeEntry';
 
 dayjs.extend(utc);
 
@@ -33,20 +29,11 @@ let defaultQso: Qso = {
     sig_info: ""
 }
 
-const CustomButton = ({ isPlaying, setter }) => (
-    <IconButton
-        aria-label="play-timer"
-        onClick={(e) => setter(!isPlaying)}>
-        {isPlaying && (<PauseOutlinedIcon color='primary' />)}
-        {!isPlaying && (<PlayArrowOutlinedIcon color='error' />)}
-    </IconButton>
-);
-
 
 export default function QsoEntry() {
     const [qso, setQso] = React.useState(defaultQso);
     const [isPlaying, setIsPlaying] = React.useState(true);
-    const [qsoTime, setQsoTime] = React.useState<Dayjs | null>(dayjs('2022-04-17T15:30'));
+    const [qsoTime, setQsoTime] = React.useState<Dayjs>(dayjs('2022-04-17T15:30'));
     const { contextData, setData } = useAppContext();
 
     function handleLogQsoClick(
@@ -54,20 +41,8 @@ export default function QsoEntry() {
     ) {
         console.log("logging qso...");
 
-        if (isPlaying)
-            qso.time_on = dayjs().toISOString();
-        else
-            qso.time_on = (qsoTime) ? qsoTime.toISOString() : dayjs().toISOString();
-
+        qso.time_on = (qsoTime) ? qsoTime.toISOString() : dayjs().toISOString();
         window.pywebview.api.log_qso(qso);
-    }
-
-    function incQsoTime() {
-        if (isPlaying) {
-            const t = dayjs(qsoTime).add(1, 's');
-            console.log(t.toISOString());
-            setQsoTime(t);
-        }
     }
 
     function updateQsoEntry() {
@@ -85,19 +60,6 @@ export default function QsoEntry() {
     React.useEffect(() => {
         updateQsoEntry();
     }, [contextData.qso]);
-
-    // setup a timer
-    React.useEffect(() => {
-        const interval: any = setInterval(() => {
-            incQsoTime();
-        }, 1000);
-        return () => clearInterval(interval);
-    });
-
-    React.useEffect(() => {
-        // happens whenver IsPlaying changes
-        setQsoTime(dayjs());
-    }, [isPlaying]);
 
     return (
         <div className="qso-container">
@@ -130,23 +92,7 @@ export default function QsoEntry() {
                         setQso({ ...qso, gridsquare: e.target.value });
                     }} />
 
-                <TimePicker
-                    label="Time On"
-                    sx={{
-                        "& .MuiOutlinedInput-root": { "color": isPlaying ? "inherit" : "#FF2D00" },
-                    }}
-                    ampm={false}
-                    disabled={isPlaying}
-                    timezone="UTC"
-                    format='HH:mm:ss'
-                    value={qsoTime}
-                    onChange={(e) => {
-                        console.log(e?.toISOString());
-                        setQsoTime(e);
-                    }}
-                    slots={{ openPickerButton: CustomButton }}
-                    slotProps={{ openPickerButton: { isPlaying: isPlaying, setter: setIsPlaying } }}
-                />
+                <QsoTimeEntry qsoTime={qsoTime} setQsoTime={setQsoTime} />
             </Box>
 
             <Button variant="outlined" onClick={(e) => handleLogQsoClick(e)}>

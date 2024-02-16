@@ -1,16 +1,5 @@
 import * as React from 'react';
-import { Qso } from '../types/QsoTypes';
-
-interface ContextData {
-    id: number;
-    text: string;
-    qso: Qso | null;
-};
-
-interface AppContextType {
-    contextData: ContextData;
-    setData: (d: ContextData) => void;
-}
+import { AppContextType, ContextData } from '../@types/ContextTypes';
 
 const defData: ContextData = {id: 0, text:"", qso:null };
 
