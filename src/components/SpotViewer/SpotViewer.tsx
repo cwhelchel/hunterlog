@@ -86,7 +86,7 @@ function createEqualityFilter(field: string, value: string) {
 
 export default function SpotViewer() {
     const [mode, setMode] = React.useState("")
-    const [time, setTime] = React.useState(60)
+    const [time, setTime] = React.useState(30)
     const [spots, setSpots] = React.useState(rows)
     const [filterModel, setFilterModel] = React.useState<GridFilterModel>({
         items: []
@@ -134,7 +134,7 @@ export default function SpotViewer() {
             if (x < 0) {
                 console.log('getting spots...');
                 getSpots();
-                return setTime(60);
+                return setTime(30);
             }
             // return x < 0
             //   ? clearInterval(interval)
@@ -176,7 +176,6 @@ export default function SpotViewer() {
 
     return (
         <div className='spots-container'>
-            <span><em>{time}</em></span>
             <FilterBar
                 onModeChange={handleOnModeChange}
                 onFilterClear={handleOnFilterCleared} />

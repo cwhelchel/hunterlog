@@ -35,7 +35,7 @@ export const FilterBar = (props: IFilterBarPros) => {
     };
 
     return (
-        <div className='spots-bar'>
+        <div className='filter-bar'>
             <FormControl size='small' >
                 <InputLabel id="demo-simple-select-label">Mode</InputLabel>
                 <Select

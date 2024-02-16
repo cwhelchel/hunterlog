@@ -37,6 +37,8 @@ class Qso(Base):
         self.mode = spot.mode
         self.qso_date = spot.spotTime
         self.gridsquare = spot.grid6
+        self.sig_info = spot.reference
+        self.sig = 'POTA'  # todo support SOTA
         pass
 
     def __repr__(self):

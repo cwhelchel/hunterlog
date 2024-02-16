@@ -83,7 +83,7 @@ def set_interval(interval):
 entry = get_entrypoint()
 
 
-@set_interval(30)
+@set_interval(60)
 def update_ticker():
 
     logging.debug('updating db')

@@ -86,6 +86,11 @@ export default function QsoEntry() {
                     onChange={(e) => {
                         setQso({ ...qso, freq: e.target.value });
                     }} />
+                <TextField id="park" label="Park"
+                    value={qso.sig_info}
+                    onChange={(e) => {
+                        setQso({ ...qso, sig_info: e.target.value });
+                    }} />
                 <TextField id="grid" label="Grid"
                     value={qso.gridsquare}
                     onChange={(e) => {
@@ -95,7 +100,8 @@ export default function QsoEntry() {
                 <QsoTimeEntry qsoTime={qsoTime} setQsoTime={setQsoTime} />
             </Box>
 
-            <Button variant="outlined" onClick={(e) => handleLogQsoClick(e)}>
+            <Button variant="outlined" onClick={(e) => handleLogQsoClick(e)}
+                sx={{ 'm': 1, }}>
                 Log QSO
             </Button>
         </div>

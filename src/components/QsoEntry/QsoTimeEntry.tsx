@@ -5,6 +5,7 @@ import PauseOutlinedIcon from '@mui/icons-material/PauseOutlined';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import dayjs, { Dayjs } from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import OutlinedInputClasses from '@mui/material/OutlinedInput/outlinedInputClasses'
 
 
 interface CustomOpenPickerProps {
@@ -12,7 +13,7 @@ interface CustomOpenPickerProps {
     setter: (value: boolean) => void;
 }
 
-const customOpenPickerButton = ({ isPlayValue, setter } : CustomOpenPickerProps) => {
+const customOpenPickerButton = ({ isPlayValue, setter }: CustomOpenPickerProps) => {
     return (
         <IconButton
             aria-label="play-timer"
@@ -62,14 +63,23 @@ export default function QsoTimeEntry({ qsoTime, setQsoTime }: QsoTimeEntryProps)
                 setQsoTime(e);
             }}
             slots={{ openPickerButton: customOpenPickerButton }}
-            slotProps={{ openPickerButton: { isPlayValue: isPlaying, setter: setIsPlaying } }}
+            slotProps={{
+                openPickerButton: { isPlayValue: isPlaying, setter: setIsPlaying },
+                textField: {
+                    sx: {
+                        [`.${OutlinedInputClasses.root}`]: {
+                            width: 233,
+                        },
+                    }
+                },
+            }}
         />
     );
 
     function incQsoTime() {
         if (isPlaying) {
             const t = dayjs(qsoTime).add(1, 's');
-            console.log(t.toISOString());
+            //console.log(t.toISOString());
             setQsoTime(t);
         }
     }

@@ -5,6 +5,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { LocalizationProvider } from '@mui/x-date-pickers'
 import CssBaseline from '@mui/material/CssBaseline';
+import Stack from '@mui/material/Stack';
 
 import Header from './components/Header/Header'
 import Editor from './components/Editor/Editor'
@@ -30,12 +31,17 @@ const App = function () {
                 <AppContextProvider>
                     <ThemeProvider theme={darkTheme}>
                         <CssBaseline />
-                        <Header />
-                        <Ticker />
-                        <LeafMap />
-                        <QsoEntry />
-                        <SpotViewer />
-                        <Editor />
+                        <Stack direction="column">
+                            <Stack
+                                direction="row"
+                                justifyContent="space-evenly"
+                                margin="3rem"
+                                height="40%">
+                                <QsoEntry />
+                                <LeafMap />
+                            </Stack>
+                            <SpotViewer />
+                        </Stack>
                     </ThemeProvider>
                 </AppContextProvider>
             </LocalizationProvider>
