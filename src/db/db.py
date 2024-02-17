@@ -164,17 +164,19 @@ class DataBase:
             self.session.add(to_add)
         self.session.commit()
 
-    def update_activator_stat(self, activator_stat_json):
+    def update_activator_stat(self, activator_stat_json) -> int:
         schema = ActivatorSchema()
         x = self.get_activator(activator_stat_json['callsign'])
         if x is None:
             to_add = schema.load(activator_stat_json, session=self.session)
             self.session.add(to_add)
+            x = to_add
         else:
             print(f"updating activator {x.activator_id}")
             schema.load(activator_stat_json, session=self.session, instance=x)
 
         self.session.commit()
+        return x.activator_id
 
     def get_spots(self):
         return self.session.query(Spot).all()
@@ -192,6 +194,9 @@ class DataBase:
         return self.session.query(Activator) \
             .filter(Activator.callsign == callsign) \
             .first()
+
+    def get_activator_by_id(self, id: int) -> Activator:
+        return self.session.query(Activator).get(id)
 
     def build_qso_from_spot(self, spot_id: int) -> Qso:
         s = self.get_spot(spot_id)

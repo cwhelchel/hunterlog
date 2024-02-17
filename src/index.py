@@ -5,6 +5,7 @@ import logging
 from time import time
 
 from db import SpotSchema, QsoSchema, DataBase
+from db.models.activators import ActivatorSchema
 from pota import Api as PotaApi
 
 logging.basicConfig(level=logging.DEBUG)
@@ -21,15 +22,16 @@ def do_update():
     #     update_activator_stats(i.activator)
 
 
-def update_activator_stats(callsign: str):
+def update_activator_stats(callsign: str) -> int:
     j = pota.get_activator_stats(callsign)
 
     if j is not None:
         # the json will be none if say the call doesn't return success
         # from api. probably they dont have an account
-        the_db.update_activator_stat(j)
+        return the_db.update_activator_stat(j)
     else:
         logging.warn(f"activator callsign {callsign} not found")
+        return -1
 
 
 # first lets update our spots w/ api data
@@ -69,8 +71,12 @@ class Api:
 
     def get_activator_stats(self, callsign):
         logging.debug("getting activator stats...")
-        json = pota.get_activator_stats(callsign)
-        the_db.update_activator_stat(json)
+        id = update_activator_stats(callsign)
+        if id > 0:
+            activator = the_db.get_activator_by_id(id)
+            s = ActivatorSchema()
+            return s.dumps(activator)
+        return None
 
 
 def get_entrypoint():
