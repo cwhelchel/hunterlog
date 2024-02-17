@@ -50,25 +50,20 @@ export default function QsoTimeEntry({ qsoTime, setQsoTime }: QsoTimeEntryProps)
     return (
         <TimePicker
             label="Time On"
-            sx={{
-                "& .MuiOutlinedInput-root": { "color": isPlaying ? "inherit" : "#FF2D00" },
-            }}
             ampm={false}
             disabled={isPlaying}
             timezone="UTC"
             format='HH:mm:ss'
             value={qsoTime}
-            onChange={(e) => {
-                // console.log(e?.toISOString());
-                setQsoTime(e);
-            }}
+            onChange={(e) => { setQsoTime(e); }}
             slots={{ openPickerButton: customOpenPickerButton }}
             slotProps={{
                 openPickerButton: { isPlayValue: isPlaying, setter: setIsPlaying },
                 textField: {
                     sx: {
                         [`.${OutlinedInputClasses.root}`]: {
-                            width: 233,
+                            width: 225,
+                            "color": isPlaying ? "inherit" : "#FF2D00"
                         },
                     }
                 },
@@ -78,8 +73,7 @@ export default function QsoTimeEntry({ qsoTime, setQsoTime }: QsoTimeEntryProps)
 
     function incQsoTime() {
         if (isPlaying) {
-            const t = dayjs(qsoTime).add(1, 's');
-            //console.log(t.toISOString());
+            const t = dayjs();
             setQsoTime(t);
         }
     }

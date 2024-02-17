@@ -3,6 +3,7 @@ import logging
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
+from db.models.activators import Activator, ActivatorSchema
 
 from db.models.qsos import Qso, QsoSchema
 from db.models.spot_comments import SpotComment, SpotCommentSchema
@@ -132,7 +133,7 @@ class DataBase:
         engine = sa.create_engine("sqlite:///spots.db")
         self.session = scoped_session(sessionmaker(bind=engine))
         Base.metadata.create_all(engine)
-        
+
         self.session.execute(sa.text('DELETE FROM spots;'))
         self.session.commit()
         self.schema = SpotSchema()
@@ -163,6 +164,18 @@ class DataBase:
             self.session.add(to_add)
         self.session.commit()
 
+    def update_activator_stat(self, activator_stat_json):
+        schema = ActivatorSchema()
+        x = self.get_activator(activator_stat_json['callsign'])
+        if x is None:
+            to_add = schema.load(activator_stat_json, session=self.session)
+            self.session.add(to_add)
+        else:
+            print(f"updating activator {x.activator_id}")
+            schema.load(activator_stat_json, session=self.session, instance=x)
+
+        self.session.commit()
+
     def get_spots(self):
         return self.session.query(Spot).all()
 
@@ -174,6 +187,11 @@ class DataBase:
 
     def get_by_mode(self, mode: str) -> List[Spot]:
         return self.session.query(Spot).filter(Spot.mode == mode).all()
+
+    def get_activator(self, callsign: str) -> Activator:
+        return self.session.query(Activator) \
+            .filter(Activator.callsign == callsign) \
+            .first()
 
     def build_qso_from_spot(self, spot_id: int) -> Qso:
         s = self.get_spot(spot_id)

@@ -1,48 +1,31 @@
 import React from "react";
-import { Map, MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
+import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { useAppContext } from "../AppContext";
 import { ParkInfo } from "../../@types/PotaTypes";
+import { LatLngExpression } from "leaflet";
+import { getParkInfo } from "../../pota";
 
 const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
-
-function getParkInfo(park: string): Promise<ParkInfo> {
-
-    let url = "https://api.pota.app/park/" + park;
-    console.log(url);
-
-    return fetch(url)
-        .then(res => res.json()) // the JSON body is taken from the response
-        .then(res => {
-            // The response has an `any` type, so we need to cast
-            // it to the `User` type, and return it from the promise
-            return res as ParkInfo;
-        })
-}
 
 
 export default function Leaflet({ latitude, longitude }) {
     const mapRef = React.useRef(null);
-    //const [mapRef, setMap] = React.useState<Map | null>(null);
     const { contextData, setData } = useAppContext();
     const [lat, setLat] = React.useState(latitude);
     const [lon, setLon] = React.useState(longitude);
-    const [markerPosition, setMarkerPosition] = React.useState([0.0,0.0]);
+    const [markerPosition, setMarkerPosition] = React.useState<LatLngExpression>([0.0,0.0]);
 
     function handleOnSetView() {
-        const { current = {} } = mapRef;
-        //const { leafletElement: map } = current;
-        console.log(`setting view ${lat} ${lon}`);
-
         if (mapRef && mapRef.current) {
-
             mapRef.current.setView([lat, lon], 5);
             setMarkerPosition([lat, lon]);
         }
     }
 
     React.useEffect(() => {
-        updateMap();
+        // this will set the state's lat,lon and trigger next effect
+        getParkLoc();
     }, [contextData.qso]);
 
     React.useEffect(() => {
@@ -67,11 +50,11 @@ export default function Leaflet({ latitude, longitude }) {
         </MapContainer>
     );
 
-    function updateMap() {
+    function getParkLoc() {
         console.log(contextData.qso?.sig_info);
         const park = contextData.qso?.sig_info;
         if (park) {
-            const info = getParkInfo(park)
+            getParkInfo(park)
                 .then(x => {
                     setLat(x.latitude);
                     setLon(x.longitude);

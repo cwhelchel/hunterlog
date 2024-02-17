@@ -11,8 +11,29 @@ logging.basicConfig(level=logging.DEBUG)
 pota = PotaApi()
 the_db = DataBase()
 
+
+def do_update():
+    json = pota.get_spots()
+    the_db.update_all_spots(json)
+
+    # loop thru the new spots and update activator info
+    # for i in the_db.get_spots():
+    #     update_activator_stats(i.activator)
+
+
+def update_activator_stats(callsign: str):
+    j = pota.get_activator_stats(callsign)
+
+    if j is not None:
+        # the json will be none if say the call doesn't return success
+        # from api. probably they dont have an account
+        the_db.update_activator_stat(j)
+    else:
+        logging.warn(f"activator callsign {callsign} not found")
+
+
 # first lets update our spots w/ api data
-the_db.update_all_spots(pota.get_spots())
+do_update()
 
 
 class Api:
@@ -45,6 +66,11 @@ class Api:
     def log_qso(self, qso_data):
         logging.debug("logging qso:")
         logging.debug(qso_data)
+
+    def get_activator_stats(self, callsign):
+        logging.debug("getting activator stats...")
+        json = pota.get_activator_stats(callsign)
+        the_db.update_activator_stat(json)
 
 
 def get_entrypoint():
@@ -87,8 +113,7 @@ entry = get_entrypoint()
 def update_ticker():
 
     logging.debug('updating db')
-    json = pota.get_spots()
-    the_db.update_all_spots(json)
+    do_update()
 
     if len(webview.windows) > 0:
         webview.windows[0].evaluate_js(
