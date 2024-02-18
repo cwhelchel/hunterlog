@@ -1,17 +1,14 @@
 export interface ActivatorData {
-    id: number;
-    call: string;
-    rst_sent: string;
-    rst_recv: string;
-    freq: string;
-    freq_rx: string;
-    mode: string;
-    comment: string;
-    qso_date: Date;
-    time_on: string;
-    tx_pwr: number;
-    rx_pwr: number;
-    gridsquare: string;
-    sig: string;
-    sig_info: string;
+    activator_id: number;
+    callsign: string;
+    name: string;
+    qth: string;
+    gravatar: string;
+    activator: { activations: number, parks: number, qsos: number };
+    attempts: { activations: number, parks: number, qsos: number };
+    hunter: { parks: number, qsos: number };
+    endorsements: number;
+    awards: number;
 }
+
+//{"activations": 54, "parks": 13, "qsos": 2070}

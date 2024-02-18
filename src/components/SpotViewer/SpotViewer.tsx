@@ -4,8 +4,8 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
-import { DataGrid, GridColDef, GridValueGetterParams, GridValueFormatterParams, GridFilterModel } from '@mui/x-data-grid';
-import {GridEventListener} from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridValueGetterParams, GridValueFormatterParams, GridFilterModel, GridSortModel, GridSortDirection } from '@mui/x-data-grid';
+import { GridEventListener } from '@mui/x-data-grid';
 
 import { FilterBar } from '../FilterBar/FilterBar'
 import { useAppContext } from '../AppContext';
@@ -18,7 +18,7 @@ import { Qso } from '../../types/QsoTypes';
 
 
 const columns: GridColDef[] = [
-    { field: 'spotId', headerName: 'ID', width: 70 },
+    // { field: 'spotId', headerName: 'ID', width: 70 },
     { field: 'activator', headerName: 'Activator', width: 130 },
     {
         field: 'spotTime',
@@ -34,12 +34,22 @@ const columns: GridColDef[] = [
             const mm = params.value.getMinutes().toString().padStart(2, '0');
             return `${hh}:${mm}`;
         }
-
     },
     { field: 'frequency', headerName: 'Freq', width: 100, type: 'number' },
     { field: 'mode', headerName: 'Mode', width: 100 },
-    { field: 'reference', headerName: 'Reference', width: 150 },
-    { field: 'name', headerName: 'Park Name', width: 500 },
+    { field: 'locationDesc', headerName: 'Loc', width: 150 },
+    {
+        field: 'reference', headerName: 'Park', width: 500,
+        valueGetter: (params: GridValueGetterParams) => {
+            return `${params.row.reference || ''} - ${params.row.name || ''}`;
+        },
+    },
+    {
+        field: 'spotOrig', headerName: 'Spot', width: 500,
+        valueGetter: (params: GridValueGetterParams) => {
+            return `${params.row.spotter || ''}: ${params.row.comments || ''}`;
+        },
+    }
 ];
 
 // example spots 
@@ -75,6 +85,8 @@ var currentFilters = {
     }]
 };
 
+var currentSortFilter = { field: 'spotTime', sort: 'desc' as GridSortDirection };
+
 function createEqualityFilter(field: string, value: string) {
     return {
         field: field,
@@ -91,6 +103,8 @@ export default function SpotViewer() {
     const [filterModel, setFilterModel] = React.useState<GridFilterModel>({
         items: []
     });
+    const [sortModel, setSortModel] = React.useState<GridSortModel>([currentSortFilter]);
+
 
     const { contextData, setData } = useAppContext();
 
@@ -108,9 +122,11 @@ export default function SpotViewer() {
         const q = window.pywebview.api.qso_data(id);
         console.log(q);
         q.then((r) => {
+            if (r['success'] == false)
+                return;
             var x = JSON.parse(r) as Qso;
             console.log(x);
-            const newCtxData = {...contextData};
+            const newCtxData = { ...contextData };
             newCtxData.qso = x;
             setData(newCtxData);
         });
@@ -128,7 +144,7 @@ export default function SpotViewer() {
     }, []);
 
     // setup a timer
-    React.useEffect( () => {
+    React.useEffect(() => {
         const interval: any = setInterval(() => {
             const x = time - 1;
             if (x < 0) {
@@ -136,12 +152,9 @@ export default function SpotViewer() {
                 getSpots();
                 return setTime(30);
             }
-            // return x < 0
-            //   ? clearInterval(interval)
-            //   : setTime(time - 1);
-              return setTime(time - 1);
-          }, 1000);
-          return () => clearInterval(interval);
+            return setTime(time - 1);
+        }, 1000);
+        return () => clearInterval(interval);
     });
 
 
@@ -169,10 +182,10 @@ export default function SpotViewer() {
         params,  // GridRowParams
         event,   // MuiEvent<React.MouseEvent<HTMLElement>>
         details, // GridCallbackDetails
-      ) => {
+    ) => {
         console.log('row click');
         getQsoData(params.row.spotId)
-      };
+    };
 
     return (
         <div className='spots-container'>
@@ -192,6 +205,8 @@ export default function SpotViewer() {
                 filterModel={filterModel}
                 onFilterModelChange={(newFilterModel) => setFilterModel(newFilterModel)}
                 onRowClick={handleRowClick}
+                sortModel={sortModel}
+                onSortModelChange={(e) => setSortModel(e)}
             />
         </div >
     );

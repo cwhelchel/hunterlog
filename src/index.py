@@ -62,6 +62,8 @@ class Api:
     def qso_data(self, id: int):
         logging.debug('py getting qso data')
         q = the_db.build_qso_from_spot(id)
+        if q is None:
+            return {"success": False}
         qs = QsoSchema()
         return qs.dumps(q)
 

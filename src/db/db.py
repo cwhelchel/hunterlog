@@ -172,7 +172,7 @@ class DataBase:
             self.session.add(to_add)
             x = to_add
         else:
-            print(f"updating activator {x.activator_id}")
+            logging.debug(f"updating activator {x.activator_id}")
             schema.load(activator_stat_json, session=self.session, instance=x)
 
         self.session.commit()
@@ -200,9 +200,10 @@ class DataBase:
 
     def build_qso_from_spot(self, spot_id: int) -> Qso:
         s = self.get_spot(spot_id)
-        q = Qso(s)
-        print(q)
-        return q
+        if s is not None:
+            q = Qso(s)
+            # print(q)
+            return q
 
 
 if __name__ == "__main__":
