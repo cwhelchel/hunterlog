@@ -15,6 +15,7 @@ dist
 gui
 .DS_Store
 venv*
+.venv*
 .vscode
 .pytest_cache
 __pycache__
