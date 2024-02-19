@@ -16,6 +16,7 @@ import { ActivatorInfo } from './components/ActivatorInfo/ActivatorInfo'
 
 import './index.scss'
 import { FilterBar } from './components/FilterBar/FilterBar'
+import { Link } from '@mui/material'
 
 
 const darkTheme = createTheme({
@@ -32,7 +33,12 @@ const App = function () {
                 <AppContextProvider>
                     <ThemeProvider theme={darkTheme}>
                         <CssBaseline />
-                        <Stack direction="column">
+                        <Link component="button"
+                            onClick={() => {
+                                window.pywebview.api.launch_pota_window();
+                            }}>
+                            POTA
+                        </Link>
                         <Stack direction="column"
                             ml="1.5rem"
                             mr="1.5rem">

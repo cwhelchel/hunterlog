@@ -4,3 +4,4 @@ from .models.spots import *
 from .models.user_config import *
 
 from db.db import DataBase
+from db.db import Bands
