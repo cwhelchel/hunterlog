@@ -33,17 +33,20 @@ const App = function () {
                     <ThemeProvider theme={darkTheme}>
                         <CssBaseline />
                         <Stack direction="column">
+                        <Stack direction="column"
+                            ml="1.5rem"
+                            mr="1.5rem">
                             <Grid
                                 container
                                 sx={{
                                     "&.MuiGrid-root": { backgroundColor: (theme) => theme.palette.background.default }
                                 }}
+                                overflow='hidden'
                                 className='sticky'
                                 direction="row"
                                 justifyContent="space-evenly"
                                 divider={<Divider orientation="vertical" flexItem />}
                                 spacing={{ xs: 2, md: 4 }}
-                                m={3}
                                 height="50%">
                                 <Grid item xs={4}>
                                     <QsoEntry />

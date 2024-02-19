@@ -45,7 +45,7 @@ bandLimits = {
 
 class DataBase:
     def __init__(self):
-        engine = sa.create_engine("sqlite:///spots.db", pool_size=15, max_overflow=30)
+        engine = sa.create_engine("sqlite:///spots.db", poolclass=sa.NullPool)
         self.session = scoped_session(sessionmaker(bind=engine))
         Base.metadata.create_all(engine)
 
@@ -108,12 +108,8 @@ class DataBase:
     def get_by_band(self, band: Bands) -> List[Spot]:
         ll = bandLimits[band][0]
         ul = bandLimits[band][1]
-        print(f"{ll}-{ul}")
         terms = [sa.cast(Spot.frequency, sa.Float) < ul,
                  sa.cast(Spot.frequency, sa.Float) > ll]
-        # x = self.session.execute(
-        #     sa.select(Spot).where(*terms)
-        # ).all()
         x = self.session.query(Spot) \
             .filter(sa.and_(*terms)) \
             .all()
