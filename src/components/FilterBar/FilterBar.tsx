@@ -17,6 +17,7 @@ interface IFilterBarPros {
 
 export const FilterBar = (props: IFilterBarPros) => {
     const [mode, setMode] = React.useState('');
+    const [band, setBand] = React.useState(0);
 
     const { contextData, setData } = useAppContext();
 
@@ -41,14 +42,19 @@ export const FilterBar = (props: IFilterBarPros) => {
 
         let next = {...contextData, bandFilter: x };
         setData(next);
+        setBand(x);
     }
 
     const handleClear = () => {
         setMode("");
+        setBand(0);
         contextData.filter.items = [];
         contextData.filter.items.push(
             createEqualityFilter('mode', '')
         );
+        window.pywebview.api.set_band_filter(0);
+        let next = {...contextData, bandFilter: 0 };
+        setData(next);
     };
 
     return (
@@ -62,16 +68,17 @@ export const FilterBar = (props: IFilterBarPros) => {
                 autoComplete="off"
             >
                 <FormControl size='small'>
-                    <InputLabel id="band-select-label">Mode</InputLabel>
+                    <InputLabel id="band-select-label">Band</InputLabel>
                     <Select
                         labelId="band-select-label"
                         id="band-select"
-                        value={0}
+                        value={band}
                         label="Band"
                         variant='standard'
                         sx={{ minWidth: 75 }}
                         onChange={handleBandChange}
                     >
+                        {/* use style={{ display: "none" }} to hide these later */}
                         <MenuItem value={0}><em>None</em></MenuItem>
                         <MenuItem value={1}>160</MenuItem>
                         <MenuItem value={2}>80</MenuItem>

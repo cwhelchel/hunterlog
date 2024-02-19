@@ -4,7 +4,7 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
-import { DataGrid, GridColDef, GridValueGetterParams, GridValueFormatterParams, GridFilterModel, GridSortModel, GridSortDirection } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridValueGetterParams, GridValueFormatterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams } from '@mui/x-data-grid';
 import { GridEventListener } from '@mui/x-data-grid';
 
 import { FilterBar } from '../FilterBar/FilterBar'
@@ -12,6 +12,8 @@ import { useAppContext } from '../AppContext';
 
 import './SpotViewer.scss'
 import { Qso } from '../../@types/QsoTypes';
+import Tooltip from '@mui/material/Tooltip';
+import CallToolTip from './CallTooltip';
 
 
 // https://mui.com/material-ui/react-table/
@@ -19,7 +21,15 @@ import { Qso } from '../../@types/QsoTypes';
 
 const columns: GridColDef[] = [
     // { field: 'spotId', headerName: 'ID', width: 70 },
-    { field: 'activator', headerName: 'Activator', width: 130 },
+    {
+        field: 'activator', headerName: 'Activator', width: 130,
+        renderCell: (params: GridCellParams) => (
+            <CallToolTip callsign={params.row.activator} />
+            // <Tooltip title={params.row.activator}>
+            //     <span>{params.row.activator}</span>
+            // </Tooltip>
+        ),
+    },
     {
         field: 'spotTime',
         headerName: 'Time',
@@ -145,7 +155,6 @@ export default function SpotViewer() {
 
     React.useEffect(() => {
         // get the spots from the db
-        console.log("kick the dog");
         if (window.pywebview !== undefined)
             getSpots();
     }, [contextData.bandFilter]);

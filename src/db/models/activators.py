@@ -20,6 +20,7 @@ class Activator(Base):
     hunter = sa.Column(sa.JSON)
     endorsements = sa.Column(sa.Integer)
     awards = sa.Column(sa.Integer)
+    updated = sa.Column(sa.TIMESTAMP, server_default=sa.func.now(), onupdate=sa.func.current_timestamp())
 
     def __repr__(self):
         return "<activator(id={self.activator_id!r})>".format(self=self)

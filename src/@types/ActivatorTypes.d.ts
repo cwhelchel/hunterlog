@@ -9,6 +9,7 @@ export interface ActivatorData {
     hunter: { parks: number, qsos: number };
     endorsements: number;
     awards: number;
+    updated: string;
 }
 
 //{"activations": 54, "parks": 13, "qsos": 2070}

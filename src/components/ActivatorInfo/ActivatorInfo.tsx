@@ -22,10 +22,11 @@ const defaultActData: ActivatorData = {
     qth: "",
     gravatar: "",
     activator: { activations: 0, parks: 0, qsos: 0 },
-    attempts: "",
-    hunter: "",
+    attempts: { activations: 0, parks: 0, qsos: 0 },
+    hunter: {  parks: 0, qsos: 0 },
     endorsements: 0,
     awards: 0,
+    updated: '1970-01-01T00:00:00'
 }
 
 const getUserAvatarURL = (md5) => {
@@ -48,7 +49,7 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
         const q = window.pywebview.api.get_activator_stats(actCall);
 
         q.then((r) => {
-            console.log(r);
+            // console.log(r);
             var x = JSON.parse(r) as ActivatorData;
             // console.log(x);
             setActivator(x);

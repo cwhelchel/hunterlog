@@ -3,6 +3,9 @@ import threading
 import webview
 import logging
 from time import time
+import datetime
+from datetime import timedelta
+
 
 from db import SpotSchema, QsoSchema, DataBase
 from db.db import Bands
@@ -78,12 +81,24 @@ class Api:
 
     def get_activator_stats(self, callsign):
         logging.debug("getting activator stats...")
-        id = update_activator_stats(callsign)
-        if id > 0:
-            activator = the_db.get_activator_by_id(id)
-            s = ActivatorSchema()
-            return s.dumps(activator)
-        return None
+
+        def update():
+            id = update_activator_stats(callsign)
+            if id > 0: 
+                activator = the_db.get_activator_by_id(id)
+                s = ActivatorSchema()
+                return s.dumps(activator)
+
+        ac = the_db.get_activator(callsign)
+        if (ac is None):
+            # not found pull new data
+            return update()
+        else:
+            # check timestamp
+            if (datetime.datetime.utcnow() - ac.updated < timedelta(days=1)):
+                return update()
+            
+        return ActivatorSchema().dumps(ac)
 
     def set_band_filter(self, band: int):
         logging.debug(f"setting band filter to: {band}")
