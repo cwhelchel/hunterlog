@@ -1,5 +1,6 @@
 from typing import List
 import logging
+from enum import Enum
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -14,118 +15,32 @@ from db.models.user_config import UserConfig, UserConfigSchema
 Base = declarative_base()
 
 
-# class Spot(Base):
-#     __tablename__ = "spots"
-#     spotId = sa.Column(sa.Integer, primary_key=True)
-#     activator = sa.Column(sa.String)
-#     frequency = sa.Column(sa.String)
-#     mode = sa.Column(sa.String(15))
-#     reference = sa.Column(sa.String(15))
-#     parkName = sa.Column(sa.String, nullable=True)
-#     spotTime = sa.Column(sa.DateTime)
-#     spotter = sa.Column(sa.String())
-#     comments = sa.Column(sa.String())
-#     source = sa.Column(sa.String())
-#     invalid = sa.Column(sa.Boolean, nullable=True)
-#     name = sa.Column(sa.String())
-#     locationDesc = sa.Column(sa.String)
-#     grid4 = sa.Column(sa.String(4))
-#     grid6 = sa.Column(sa.String(6))
-#     latitude = sa.Column(sa.Float)
-#     longitude = sa.Column(sa.Float)
-#     count = sa.Column(sa.Integer())
-#     expire = sa.Column(sa.Integer())
-
-#     def __repr__(self):
-#         return "<spot(id={self.spotId!r})>".format(self=self)
+class Bands(Enum):
+    NOBAND = 0
+    ONESIXTY = 1
+    EIGHTY = 2
+    SIXTY = 3
+    FOURTY = 4
+    THIRTY = 5
+    TWENTY = 6
+    SEVENTEEN = 7
+    FIFTEEN = 8
+    TWELVE = 9
+    TEN = 10
 
 
-# class SpotSchema(SQLAlchemyAutoSchema):
-#     class Meta:
-#         model = Spot
-#         load_instance = True
-
-
-# class SpotComment(Base):
-#     __tablename__ = "comments"
-#     spotId = sa.Column(sa.Integer, primary_key=True)
-#     spotTime = sa.Column(sa.DateTime)
-#     spotter = sa.Column(sa.String)
-#     mode = sa.Column(sa.String(15))
-#     frequency = sa.Column(sa.String)
-#     band = sa.Column(sa.String(15))
-#     source = sa.Column(sa.String(10))
-#     comments = sa.Column(sa.String)
-
-#     activator = sa.Column(sa.String, nullable=True)
-#     park = sa.Column(sa.String, nullable=True)
-
-#     def __repr__(self):
-#         return "<comment({self.spotId!r}:{self.comments!r})>".format(self=self)
-
-
-# class SpotCommentSchema(SQLAlchemyAutoSchema):
-#     class Meta:
-#         model = SpotComment
-#         load_instance = True
-
-
-# class Qso(Base):
-#     __tablename__ = "qsos"
-#     id = sa.Column(sa.Integer, primary_key=True)
-#     call = sa.Column(sa.String)
-#     rst_sent = sa.Column(sa.String)
-#     rst_recv = sa.Column(sa.String)
-#     freq = sa.Column(sa.String)
-#     freq_rx = sa.Column(sa.String)
-#     mode = sa.Column(sa.String(15))
-#     comment = sa.Column(sa.String)
-#     qso_date = sa.Column(sa.Date)
-#     time_on = sa.Column(sa.Time)
-#     tx_pwr = sa.Column(sa.Integer)
-#     rx_pwr = sa.Column(sa.Integer)
-#     gridsquare = sa.Column(sa.String(6))
-#     sig = sa.Column(sa.String)
-#     sig_info = sa.Column(sa.String)
-
-#     def __init__(self, spot: Spot):
-#         self.call = spot.activator
-#         self.rst_sent = "599"
-#         self.rst_recv = "599"
-#         self.freq = spot.frequency
-#         self.freq_rx = spot.frequency
-#         self.mode = spot.mode
-#         self.qso_date = spot.spotTime
-#         self.gridsquare = spot.grid6
-#         pass
-
-#     def __repr__(self):
-#         return "<qso({self.id!r}:{self.call!r} on {self.qso_date!r})>" \
-#             .format(self=self)
-
-
-# class QsoSchema(SQLAlchemyAutoSchema):
-#     class Meta:
-#         model = Qso
-#         load_instance = True
-
-
-# class UserConfig(Base):
-#     __tablename__ = "config"
-#     id = sa.Column(sa.Integer, primary_key=True)
-#     my_call = sa.Column(sa.String)
-#     my_grid6 = sa.Column(sa.String(6))
-#     defualt_pwr = sa.Column(sa.Integer)
-
-#     def __repr__(self):
-#         return "<config({self.my_call!r}:{self.my_grid6!r} on {self.defualt_pwr!r})>" \
-#             .format(self=self)
-
-
-# class UserConfigSchema(SQLAlchemyAutoSchema):
-#     class Meta:
-#         model = UserConfig
-#         load_instance = True
+bandLimits = {
+    Bands.ONESIXTY: (1800.0, 2000.0),
+    Bands.EIGHTY: (3500.0, 4000.0),
+    Bands.SIXTY: (5330.0, 5410.0),
+    Bands.FOURTY: (7000.0, 7300.0),
+    Bands.THIRTY: (10100.0, 10150.0),
+    Bands.TWENTY: (14000.0, 14350.0),
+    Bands.SEVENTEEN: (18068.0, 18168.0),
+    Bands.FIFTEEN: (21000.0, 21450.0),
+    Bands.TWELVE: (24890.0, 24990.0),
+    Bands.TEN: (28000.0, 29700.0),
+}
 
 
 class DataBase:
@@ -190,6 +105,15 @@ class DataBase:
     def get_by_mode(self, mode: str) -> List[Spot]:
         return self.session.query(Spot).filter(Spot.mode == mode).all()
 
+    def get_by_band(self, band: Bands) -> List[Spot]:
+        ll = bandLimits[band][0]
+        ul = bandLimits[band][1]
+        print(f"{ll}-{ul}")
+        x = self.session.query(Spot) \
+            .filter(sa.and_(sa.cast(Spot.frequency, sa.Float) < ul, sa.cast(Spot.frequency, sa.Float) > ll)) \
+            .all()
+        return x
+
     def get_activator(self, callsign: str) -> Activator:
         return self.session.query(Activator) \
             .filter(Activator.callsign == callsign) \
@@ -212,8 +136,8 @@ if __name__ == "__main__":
     all_spots = db.get_spots()
     v = SpotSchema(many=True)
     print(v.dumps(all_spots))
-    # cw_spots = db.get_by_mode("CW")
-    # print(cw_spots)
+    cw_spots = db.get_by_band(Bands.FOURTY)
+    print(cw_spots)
     # db.update_spot_comments("KU8T", "K-2263")
     # comments = db.get_spot_comments()
     # print(*text, sep='\n')

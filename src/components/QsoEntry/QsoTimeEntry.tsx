@@ -62,7 +62,7 @@ export default function QsoTimeEntry({ qsoTime, setQsoTime }: QsoTimeEntryProps)
                 textField: {
                     sx: {
                         [`.${OutlinedInputClasses.root}`]: {
-                            width: 225,
+                            fontSize: 14,
                             "color": isPlaying ? "inherit" : "#FF2D00"
                         },
                     }

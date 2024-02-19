@@ -37,7 +37,7 @@ export default function Leaflet({ latitude, longitude }) {
         <MapContainer center={[lat, lon]}
             zoom={5}
             ref={mapRef}
-            style={{ height: "35vh", width: "100vw" }}>
+            style={{ height: "300px", width: "300px" }}>
             <TileLayer
                 attribution={attribution}
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

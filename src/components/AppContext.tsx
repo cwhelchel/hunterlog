@@ -1,7 +1,17 @@
 import * as React from 'react';
 import { AppContextType, ContextData } from '../@types/ContextTypes';
 
-const defData: ContextData = {id: 0, text:"", qso:null };
+const defData: ContextData = {
+    qso: null,
+    filter: {
+        items: [{
+            field: 'mode',
+            operator: 'equals',
+            value: ''
+        }]
+    },
+    bandFilter: 0
+};
 
 export const AppContext = React.createContext<AppContextType | null>(null);
 
@@ -10,9 +20,9 @@ export const AppContextProvider = ({ children }) => {
 
     const setData = (ctx: ContextData) => {
         const newContext: ContextData = {
-            id: ctx.id,
-            text: ctx.text,
-            qso: ctx.qso
+            qso: ctx.qso,
+            filter: ctx.filter,
+            bandFilter: ctx.bandFilter,
         }
         setContextData(newContext);
     };
@@ -20,7 +30,7 @@ export const AppContextProvider = ({ children }) => {
     const contextValue: AppContextType = {
         contextData,
         setData
-      };
+    };
 
     return (
         <AppContext.Provider value={contextValue}>
@@ -37,4 +47,13 @@ export const useAppContext = () => {
     }
 
     return context;
+};
+
+
+export function createEqualityFilter(field: string, value: string) {
+    return {
+        field: field,
+        operator: 'equals',
+        value: value
+    }
 };

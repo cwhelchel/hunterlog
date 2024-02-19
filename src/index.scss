@@ -16,7 +16,13 @@ textarea {
   padding: 0.6rem;
 }
 
-
 h1, h2, h3 {
   font-family: 'Roboto Condensed', 'Helvetica Neue', sans-serif;
+}
+
+div.sticky {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  z-index: 5,
 }

@@ -50,7 +50,7 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
         q.then((r) => {
             console.log(r);
             var x = JSON.parse(r) as ActivatorData;
-            console.log(x);
+            // console.log(x);
             setActivator(x);
         });
 
@@ -58,7 +58,7 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
 
     return (
         <div className='activator-info'>
-            {activator.activator_id !== 0 &&
+            {activator !== null && activator.activator_id !== 0 &&
                 <>
                     <h3>{activator?.callsign} - {activator?.name}</h3>
                     <img src={getUserAvatarURL(activator?.gravatar)} />

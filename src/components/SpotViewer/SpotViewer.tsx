@@ -11,7 +11,7 @@ import { FilterBar } from '../FilterBar/FilterBar'
 import { useAppContext } from '../AppContext';
 
 import './SpotViewer.scss'
-import { Qso } from '../../types/QsoTypes';
+import { Qso } from '../../@types/QsoTypes';
 
 
 // https://mui.com/material-ui/react-table/
@@ -100,9 +100,9 @@ export default function SpotViewer() {
     const [mode, setMode] = React.useState("")
     const [time, setTime] = React.useState(30)
     const [spots, setSpots] = React.useState(rows)
-    const [filterModel, setFilterModel] = React.useState<GridFilterModel>({
-        items: []
-    });
+    // const [filterModel, setFilterModel] = React.useState<GridFilterModel>({
+    //     items: []
+    // });
     const [sortModel, setSortModel] = React.useState<GridSortModel>([currentSortFilter]);
 
 
@@ -120,12 +120,12 @@ export default function SpotViewer() {
     function getQsoData(id) {
         // use the spot to generate qso data (unsaved)
         const q = window.pywebview.api.qso_data(id);
-        console.log(q);
+        //console.log(q);
         q.then((r) => {
             if (r['success'] == false)
                 return;
             var x = JSON.parse(r) as Qso;
-            console.log(x);
+            //console.log(x);
             const newCtxData = { ...contextData };
             newCtxData.qso = x;
             setData(newCtxData);
@@ -142,6 +142,13 @@ export default function SpotViewer() {
             getSpots();
         })
     }, []);
+
+    React.useEffect(() => {
+        // get the spots from the db
+        console.log("kick the dog");
+        if (window.pywebview !== undefined)
+            getSpots();
+    }, [contextData.bandFilter]);
 
     // setup a timer
     React.useEffect(() => {
@@ -163,21 +170,6 @@ export default function SpotViewer() {
         return row.spotId;
     }
 
-    const handleOnModeChange = (newMode: string) => {
-        setMode(newMode); // it doesn't work without this?????
-        filterModel.items = [];
-        filterModel.items.push(
-            createEqualityFilter('mode', newMode)
-        );
-        console.log(filterModel);
-        setFilterModel(filterModel);
-    };
-
-    const handleOnFilterCleared = () => {
-        currentFilters.items = [];
-        setFilterModel(currentFilters);
-    }
-
     const handleRowClick: GridEventListener<'rowClick'> = (
         params,  // GridRowParams
         event,   // MuiEvent<React.MouseEvent<HTMLElement>>
@@ -187,11 +179,14 @@ export default function SpotViewer() {
         getQsoData(params.row.spotId)
     };
 
+    function setFilterModel(e: GridFilterModel) {
+        contextData.filter = e;
+        setData(contextData);
+    };
+
     return (
         <div className='spots-container'>
-            <FilterBar
-                onModeChange={handleOnModeChange}
-                onFilterClear={handleOnFilterCleared} />
+            {/* <FilterBar /> */}
             <DataGrid
                 rows={spots}
                 columns={columns}
@@ -202,8 +197,8 @@ export default function SpotViewer() {
                     },
                 }}
                 pageSizeOptions={[5, 10, 25]}
-                filterModel={filterModel}
-                onFilterModelChange={(newFilterModel) => setFilterModel(newFilterModel)}
+                filterModel={contextData.filter}
+                onFilterModelChange={(v) => setFilterModel(v)}
                 onRowClick={handleRowClick}
                 sortModel={sortModel}
                 onSortModelChange={(e) => setSortModel(e)}

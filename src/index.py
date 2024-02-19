@@ -5,12 +5,14 @@ import logging
 from time import time
 
 from db import SpotSchema, QsoSchema, DataBase
+from db.db import Bands
 from db.models.activators import ActivatorSchema
 from pota import Api as PotaApi
 
 logging.basicConfig(level=logging.DEBUG)
 pota = PotaApi()
 the_db = DataBase()
+band_filter = Bands.NOBAND
 
 
 def do_update():
@@ -55,7 +57,10 @@ class Api:
 
     def get_spots(self):
         logging.debug('py getting spots')
-        spots = the_db.get_spots()
+        if band_filter != Bands.NOBAND:
+            spots = the_db.get_by_band(band=band_filter)
+        else:
+            spots = the_db.get_spots()
         ss = SpotSchema(many=True)
         return ss.dumps(spots)
 
@@ -79,6 +84,12 @@ class Api:
             s = ActivatorSchema()
             return s.dumps(activator)
         return None
+
+    def set_band_filter(self, band: int):
+        logging.debug(f"setting band filter to: {band}")
+        x = Bands(band)
+        global band_filter
+        band_filter = x
 
 
 def get_entrypoint():

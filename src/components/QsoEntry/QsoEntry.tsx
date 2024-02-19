@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Box, TextField } from '@mui/material';
+import { Button, Box, TextField, Grid } from '@mui/material';
 import { useAppContext } from '../AppContext';
 import dayjs, { Dayjs } from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -63,42 +63,59 @@ export default function QsoEntry() {
 
     return (
         <div className="qso-container">
-            <Box
+            {/* <Box
                 component="form"
+                height="75%"
                 sx={{
                     '& > :not(style)': { m: 1 },
                 }}
                 noValidate
                 autoComplete="off"
-            >
-                <TextField id="callsign" label="Callsign"
-                    value={qso.call}
-                    onChange={(e) => {
-                        setQso({ ...qso, call: e.target.value });
-                    }} />
-                <TextField id="mode" label="Mode"
-                    value={qso.mode}
-                    onChange={(e) => {
-                        setQso({ ...qso, mode: e.target.value });
-                    }} />
-                <TextField id="freq" label="Frequency"
-                    value={qso.freq}
-                    onChange={(e) => {
-                        setQso({ ...qso, freq: e.target.value });
-                    }} />
-                <TextField id="park" label="Park"
-                    value={qso.sig_info}
-                    onChange={(e) => {
-                        setQso({ ...qso, sig_info: e.target.value });
-                    }} />
-                <TextField id="grid" label="Grid"
-                    value={qso.gridsquare}
-                    onChange={(e) => {
-                        setQso({ ...qso, gridsquare: e.target.value });
-                    }} />
+            > */}
+            <Grid container
+                spacing={{ xs: 1, md: 3 }}
+                m={2}>
+                <Grid item xs={3}>
+                    <TextField id="callsign" label="Callsign"
+                        value={qso.call}
+                        onChange={(e) => {
+                            setQso({ ...qso, call: e.target.value });
+                        }} />
+                </Grid>
+                <Grid item xs={3}>
 
-                <QsoTimeEntry qsoTime={qsoTime} setQsoTime={setQsoTime} />
-            </Box>
+                    <TextField id="mode" label="Mode"
+                        value={qso.mode}
+                        onChange={(e) => {
+                            setQso({ ...qso, mode: e.target.value });
+                        }} />
+                </Grid>
+                <Grid item xs={3}>
+                    <TextField id="freq" label="Frequency"
+                        value={qso.freq}
+                        onChange={(e) => {
+                            setQso({ ...qso, freq: e.target.value });
+                        }} />
+                </Grid>
+                <Grid item xs={3}>
+                    <TextField id="park" label="Park"
+                        value={qso.sig_info}
+                        onChange={(e) => {
+                            setQso({ ...qso, sig_info: e.target.value });
+                        }} />
+                </Grid>
+                <Grid item xs={3}>
+                    <TextField id="grid" label="Grid"
+                        value={qso.gridsquare}
+                        onChange={(e) => {
+                            setQso({ ...qso, gridsquare: e.target.value });
+                        }} />
+                </Grid>
+                <Grid item xs={3}>
+                    <QsoTimeEntry qsoTime={qsoTime} setQsoTime={setQsoTime} />
+                </Grid>
+            </Grid>
+            {/* </Box> */}
 
             <Button variant="outlined" onClick={(e) => handleLogQsoClick(e)}
                 sx={{ 'm': 1, }}>
