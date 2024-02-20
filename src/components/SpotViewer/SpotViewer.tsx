@@ -114,8 +114,6 @@ export default function SpotViewer() {
     //     items: []
     // });
     const [sortModel, setSortModel] = React.useState<GridSortModel>([currentSortFilter]);
-
-
     const { contextData, setData } = useAppContext();
 
     function getSpots() {
@@ -126,6 +124,20 @@ export default function SpotViewer() {
             setSpots(x);
         });
     }
+
+    // when [spots] are set, update regions
+    React.useEffect( () => {
+        // parse the current spots and pull out the region specifier from each
+        // location
+        spots.map((spot) => {
+            let loc = spot.locationDesc.substring(0, 2);
+            if (!contextData.regions.includes(loc))
+                contextData.regions.push(loc);
+        });
+
+        setData(contextData);
+        console.log(contextData.regions);
+    }, [spots]);
 
     function getQsoData(id) {
         // use the spot to generate qso data (unsaved)
@@ -148,7 +160,7 @@ export default function SpotViewer() {
                 window.pywebview.state = {}
             }
 
-            // get the spots from the db
+            // first run thru do this:
             getSpots();
         })
     }, []);
@@ -157,7 +169,7 @@ export default function SpotViewer() {
         // get the spots from the db
         if (window.pywebview !== undefined)
             getSpots();
-    }, [contextData.bandFilter]);
+    }, [contextData.bandFilter, contextData.regionFilter]);
 
     // setup a timer
     React.useEffect(() => {

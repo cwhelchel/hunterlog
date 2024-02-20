@@ -5,6 +5,8 @@ export interface ContextData {
     qso: Qso | null;
     filter: GridFilterModel;
     bandFilter: number;
+    regions: string[];
+    regionFilter: string;
 }
 
 export  interface AppContextType {

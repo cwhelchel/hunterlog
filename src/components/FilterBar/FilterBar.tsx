@@ -15,9 +15,12 @@ import { createEqualityFilter, useAppContext } from '../AppContext';
 interface IFilterBarPros {
 }
 
+const age = ["Ten", "Twenty", "Thirty"];
+
 export const FilterBar = (props: IFilterBarPros) => {
     const [mode, setMode] = React.useState('');
-    const [band, setBand] = React.useState(0);
+    const [band, setBand] = React.useState('');
+    const [region, setRegion] = React.useState('');
 
     const { contextData, setData } = useAppContext();
 
@@ -40,20 +43,30 @@ export const FilterBar = (props: IFilterBarPros) => {
         console.log("changing band to: " + m);
         window.pywebview.api.set_band_filter(x);
 
-        let next = {...contextData, bandFilter: x };
+        let next = { ...contextData, bandFilter: x };
         setData(next);
-        setBand(x);
+        setBand(m);
+    }
+
+    const handleRegionChange = (event: SelectChangeEvent) => {
+        let r = event.target.value as string;
+        console.log("changing region to: " + r);
+        window.pywebview.api.set_region_filter(r);
+
+        let next = { ...contextData, regionFilter: r };
+        setData(next);
+        setRegion(r);
     }
 
     const handleClear = () => {
         setMode("");
-        setBand(0);
+        setBand("0");
         contextData.filter.items = [];
         contextData.filter.items.push(
             createEqualityFilter('mode', '')
         );
         window.pywebview.api.set_band_filter(0);
-        let next = {...contextData, bandFilter: 0 };
+        let next = { ...contextData, bandFilter: 0 };
         setData(next);
     };
 
@@ -68,10 +81,10 @@ export const FilterBar = (props: IFilterBarPros) => {
                 autoComplete="off"
             >
                 <FormControl size='small'>
-                    <InputLabel id="band-select-label">Band</InputLabel>
+                    <InputLabel id="band-label">Band</InputLabel>
                     <Select
-                        labelId="band-select-label"
-                        id="band-select"
+                        labelId="band-label"
+                        id="band"
                         value={band}
                         label="Band"
                         variant='standard'
@@ -79,17 +92,17 @@ export const FilterBar = (props: IFilterBarPros) => {
                         onChange={handleBandChange}
                     >
                         {/* use style={{ display: "none" }} to hide these later */}
-                        <MenuItem value={0}><em>None</em></MenuItem>
-                        <MenuItem value={1}>160</MenuItem>
-                        <MenuItem value={2}>80</MenuItem>
-                        <MenuItem value={3}>60</MenuItem>
-                        <MenuItem value={4}>40</MenuItem>
-                        <MenuItem value={5}>30</MenuItem>
-                        <MenuItem value={6}>20</MenuItem>
-                        <MenuItem value={7}>17</MenuItem>
-                        <MenuItem value={8}>15</MenuItem>
-                        <MenuItem value={9}>12</MenuItem>
-                        <MenuItem value={10}>10</MenuItem>
+                        <MenuItem value="0"><em>None</em></MenuItem>
+                        <MenuItem value="1">160</MenuItem>
+                        <MenuItem value="2">80</MenuItem>
+                        <MenuItem value="3">60</MenuItem>
+                        <MenuItem value="4">40</MenuItem>
+                        <MenuItem value="5">30</MenuItem>
+                        <MenuItem value="6">20</MenuItem>
+                        <MenuItem value="7">17</MenuItem>
+                        <MenuItem value="8">15</MenuItem>
+                        <MenuItem value="9">12</MenuItem>
+                        <MenuItem value="10">10</MenuItem>
                     </Select>
                 </FormControl>
                 <FormControl size='small'>
@@ -107,6 +120,25 @@ export const FilterBar = (props: IFilterBarPros) => {
                         <MenuItem value='CW'>CW</MenuItem>
                         <MenuItem value='SSB'>SSB</MenuItem>
                         <MenuItem value='FT8'>FT8</MenuItem>
+                    </Select>
+                </FormControl>
+                <FormControl size='small'>
+                    <InputLabel id="region-lbl">Region</InputLabel>
+                    <Select
+                        labelId="region-lbl"
+                        id="region"
+                        value={region}
+                        label="Region"
+                        variant='standard'
+                        sx={{ minWidth: 100 }}
+                        onChange={handleRegionChange}
+                    >
+                        <MenuItem value=""><em>None</em></MenuItem>
+                        {contextData.regions.map((region) => (
+                            <MenuItem key={region} value={region}>
+                                {region}
+                            </MenuItem>
+                        ))}
                     </Select>
                 </FormControl>
                 <Button onClick={handleClear} variant="outlined">

@@ -53,6 +53,8 @@ class DataBase:
         self.session.commit()
         self.schema = SpotSchema()
         self.init_config()
+        self.band_filter = Bands.NOBAND
+        self.region_filter = None
 
     def init_config(self):
         current = self.session.query(UserConfig).first()
@@ -94,7 +96,12 @@ class DataBase:
         return x.activator_id
 
     def get_spots(self):
-        return self.session.query(Spot).all()
+        terms = self._get_all_filters()
+        x = self.session.query(Spot) \
+            .filter(sa.and_(*terms)) \
+            .all()
+        return x
+        # return self.session.query(Spot).all()
 
     def get_spot(self, id: int) -> Spot:
         return self.session.query(Spot).get(id)
@@ -106,10 +113,11 @@ class DataBase:
         return self.session.query(Spot).filter(Spot.mode == mode).all()
 
     def get_by_band(self, band: Bands) -> List[Spot]:
-        ll = bandLimits[band][0]
-        ul = bandLimits[band][1]
-        terms = [sa.cast(Spot.frequency, sa.Float) < ul,
-                 sa.cast(Spot.frequency, sa.Float) > ll]
+        # ll = bandLimits[band][0]
+        # ul = bandLimits[band][1]
+        # terms = [sa.cast(Spot.frequency, sa.Float) < ul,
+        #          sa.cast(Spot.frequency, sa.Float) > ll]
+        terms = self._get_all_filters()
         x = self.session.query(Spot) \
             .filter(sa.and_(*terms)) \
             .all()
@@ -129,6 +137,34 @@ class DataBase:
             q = Qso(s)
             # print(q)
             return q
+
+    def set_band_filter(self, band: Bands):
+        logging.debug(f"db setting band filter to {band}")
+        self.band_filter = band
+
+    def set_region_filter(self, region: str):
+        logging.debug(f"db setting region filter to {region}")
+        self.region_filter = region
+
+    def _get_all_filters(self) -> list[sa.ColumnElement[bool]]:
+        return self._get_band_filters() + self._get_region_filters()
+
+    def _get_band_filters(self) -> list[sa.ColumnElement[bool]]:
+        band = Bands(self.band_filter)  # not sure why cast is needed
+        if band == Bands.NOBAND:
+            return []
+        ll = bandLimits[band][0]
+        ul = bandLimits[band][1]
+        terms = [sa.cast(Spot.frequency, sa.Float) < ul,
+                 sa.cast(Spot.frequency, sa.Float) > ll]
+        return terms
+
+    def _get_region_filters(self) -> list[sa.ColumnElement[bool]]:
+        region = self.region_filter
+        if (region is None):
+            return []
+        terms = [Spot.locationDesc.startswith(region)]
+        return terms
 
 
 if __name__ == "__main__":

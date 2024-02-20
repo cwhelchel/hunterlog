@@ -10,7 +10,9 @@ const defData: ContextData = {
             value: ''
         }]
     },
-    bandFilter: 0
+    bandFilter: 0,
+    regions: [],
+    regionFilter: '',
 };
 
 export const AppContext = React.createContext<AppContextType | null>(null);
@@ -23,6 +25,8 @@ export const AppContextProvider = ({ children }) => {
             qso: ctx.qso,
             filter: ctx.filter,
             bandFilter: ctx.bandFilter,
+            regions: ctx.regions,
+            regionFilter: ctx.regionFilter
         }
         setContextData(newContext);
     };

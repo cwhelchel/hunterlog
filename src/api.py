@@ -11,8 +11,6 @@ from db.models.qsos import QsoSchema
 from db.models.spots import SpotSchema
 from pota import Api as PotaApi
 
-band_filter = Bands.NOBAND
-
 
 class JsApi:
     def __init__(self, the_db: DataBase, pota_api: PotaApi):
@@ -35,10 +33,10 @@ class JsApi:
 
     def get_spots(self):
         logging.debug('py getting spots')
-        if band_filter != Bands.NOBAND:
-            spots = self.db.get_by_band(band=band_filter)
-        else:
-            spots = self.db.get_spots()
+        # if self.band_filter != Bands.NOBAND:
+        #     spots = self.db.get_by_band(band=self.band_filter)
+        # else:
+        spots = self.db.get_spots()
         ss = SpotSchema(many=True)
         return ss.dumps(spots)
 
@@ -76,10 +74,12 @@ class JsApi:
         return ActivatorSchema().dumps(ac)
 
     def set_band_filter(self, band: int):
-        logging.debug(f"setting band filter to: {band}")
-        x = Bands(band)
-        global band_filter
-        band_filter = x
+        logging.debug(f"api setting band filter to: {band}")
+        self.db.set_band_filter(band)
+
+    def set_region_filter(self, region: str):
+        logging.debug(f"api setting region filter to: {region}")
+        self.db.set_region_filter(region)
 
     def update_activator_stats(self, callsign: str) -> int:
         j = self.pota.get_activator_stats(callsign)
