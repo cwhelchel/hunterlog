@@ -1,6 +1,7 @@
 import os
+import socket
 import webview
-import logging
+import logging as L
 import datetime
 from datetime import timedelta
 
@@ -11,25 +12,17 @@ from db.models.qsos import QsoSchema
 from db.models.spots import SpotSchema
 from pota import Api as PotaApi
 
+from cat import CAT
+
+logging = L.getLogger("api")
+
 
 class JsApi:
     def __init__(self, the_db: DataBase, pota_api: PotaApi):
         self.db = the_db
         self.pota = pota_api
-
-    def fullscreen(self):
-        webview.windows[0].toggle_fullscreen()
-
-    def save_content(self, content):
-        filename = webview.windows[0].create_file_dialog(webview.SAVE_DIALOG)
-        if not filename:
-            return
-
-        with open(filename, 'w') as f:
-            f.write(content)
-
-    def ls(self):
-        return os.listdir('.')
+        logging.debug("init CAT...")
+        self.cat = CAT("flrig", "127.0.0.1", 12345)
 
     def get_spots(self):
         logging.debug('py getting spots')
@@ -94,3 +87,53 @@ class JsApi:
 
     def launch_pota_window(self):
         webview.create_window(title='POTA APP', url='https://pota.app/')
+
+    def qsy_to(self, freq, mode: str):
+        '''Use CAT control to QSY'''
+        logging.debug(f"qsy_to {freq} {mode}")
+        x = float(freq) * 1000.0
+        logging.debug(f"adjusted freq {x}")
+        if mode == "SSB" and x > 10000000:
+            mode = "USB"
+        elif mode == "SSB":
+            mode = "LSB"
+        logging.debug(f"adjusted mode {mode}")
+        self.cat.set_mode(mode)
+        self.cat.set_vfo(x)
+
+    def _send_msg(self, msg: str):
+        """
+        Send a UDP adif message to a remote endpoint
+        """
+        host = self.settings.get("host", "127.0.0.1")
+        port = self.settings.get("port", 8073)
+        type = socket.SOCK_DGRAM
+
+        try:
+            with socket.socket(socket.AF_INET, type) as sock:
+                sock.connect((host, port))
+                sock.send(msg.encode())
+        except Exception as err:
+            logging.warn("send_msg exception:", err)
+
+    def _get_adif(self) -> str:
+        pass
+        # qso = (
+        #     f"<BAND:{len(self.band_field.text())}>{self.band_field.text()}\n"
+        #     f"<CALL:{len(self.activator_call.text())}>{self.activator_call.text()}\n"
+        #     f"<COMMENT:{len(self.comments.document().toPlainText())}>{self.comments.document().toPlainText()}\n"
+        #     "<SIG:4>POTA\n"
+        #     f"<SIG_INFO:{len(self.park_designator.text())}>{self.park_designator.text()}\n"
+        #     f"<DISTANCE:{len(self.park_distance.text())}>{self.park_distance.text()}\n"
+        #     f"<GRIDSQUARE:{len(self.park_grid.text())}>{self.park_grid.text()}\n"
+        #     f"<MODE:{len(self.mode_field.text())}>{self.mode_field.text()}\n"
+        #     f"<NAME:{len(self.activator_name.text())}>{self.activator_name.text()}\n"
+        #     f"<OPERATOR:{len(self.mycall_field.text())}>{self.mycall_field.text()}\n"
+        #     f"<RST_RCVD:{len(self.rst_recieved.text())}>{self.rst_recieved.text()}\n"
+        #     f"<RST_SENT:{len(self.rst_sent.text())}>{self.rst_sent.text()}\n"
+        #     f"<STATE:{len(self.park_state.text())}>{self.park_state.text()}\n"
+        #     f"<FREQ:{len(freq)}>{freq}\n"
+        #     f"<QSO_DATE:{len(self.date_field.text())}>{self.date_field.text()}\n"
+        #     f"<TIME_ON:{len(self.time_field.text())}>{self.time_field.text()}\n"
+        #     f"<MY_GRIDSQUARE:{len(self.mygrid_field.text())}>{self.mygrid_field.text()}\n"
+        #     "<EOR>\n"

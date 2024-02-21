@@ -111,7 +111,7 @@ export default function QsoEntry() {
                             setQso({ ...qso, gridsquare: e.target.value });
                         }} />
                 </Grid>
-                <Grid item xs={3}>
+                <Grid item xs={4}>
                     <QsoTimeEntry qsoTime={qsoTime} setQsoTime={setQsoTime} />
                 </Grid>
             </Grid>

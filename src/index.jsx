@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { AppContextProvider } from './components/AppContext'
-import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { ThemeProvider, ThemeOptions, createTheme } from '@mui/material/styles'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { LocalizationProvider } from '@mui/x-date-pickers'
 import CssBaseline from '@mui/material/CssBaseline';
@@ -25,13 +25,21 @@ const darkTheme = createTheme({
     }
 });
 
+export const potaTheme = createTheme({
+    palette: {
+        mode: 'dark',
+        primary: { main: '#008C2C' },
+        secondary: { main: '#8c0060' }
+    }
+});
+
 
 const App = function () {
     return (
         <>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <AppContextProvider>
-                    <ThemeProvider theme={darkTheme}>
+                    <ThemeProvider theme={potaTheme}>
                         <CssBaseline />
                         <Link component="button"
                             onClick={() => {

@@ -25,9 +25,6 @@ const columns: GridColDef[] = [
         field: 'activator', headerName: 'Activator', width: 130,
         renderCell: (params: GridCellParams) => (
             <CallToolTip callsign={params.row.activator} />
-            // <Tooltip title={params.row.activator}>
-            //     <span>{params.row.activator}</span>
-            // </Tooltip>
         ),
     },
     {
@@ -45,17 +42,30 @@ const columns: GridColDef[] = [
             return `${hh}:${mm}`;
         }
     },
-    { field: 'frequency', headerName: 'Freq', width: 100, type: 'number' },
-    { field: 'mode', headerName: 'Mode', width: 100 },
-    { field: 'locationDesc', headerName: 'Loc', width: 150 },
     {
-        field: 'reference', headerName: 'Park', width: 500,
+        field: 'frequency', headerName: 'Freq', width: 100, type: 'number',
+        renderCell: (x) => {
+            function onClick(e, m) {
+                console.log("js qsy to...");
+                console.log(`param ${e} ${m}`);
+                window.pywebview.api.qsy_to(e, m);
+            };
+
+            return (
+                <Button sx={{width:'100px'}} variant='contained' onClick={() => { onClick(x.row.frequency, x.row.mode) }}>{x.row.frequency}</Button>
+            )
+        }
+    },
+    { field: 'mode', headerName: 'Mode', width: 100 },
+    { field: 'locationDesc', headerName: 'Loc', width: 100 },
+    {
+        field: 'reference', headerName: 'Park', width: 400,
         valueGetter: (params: GridValueGetterParams) => {
             return `${params.row.reference || ''} - ${params.row.name || ''}`;
         },
     },
     {
-        field: 'spotOrig', headerName: 'Spot', width: 500,
+        field: 'spotOrig', headerName: 'Spot', width: 400,
         valueGetter: (params: GridValueGetterParams) => {
             return `${params.row.spotter || ''}: ${params.row.comments || ''}`;
         },
@@ -83,7 +93,7 @@ const rows = [
         "latitude": 37.1877,
         "longitude": -86.1012,
         "count": 52,
-        "expire": 18
+        "expire": 18,
     }
 ]
 
@@ -97,22 +107,11 @@ var currentFilters = {
 
 var currentSortFilter = { field: 'spotTime', sort: 'desc' as GridSortDirection };
 
-function createEqualityFilter(field: string, value: string) {
-    return {
-        field: field,
-        operator: 'equals',
-        value: value
-    }
-}
-
 
 export default function SpotViewer() {
     const [mode, setMode] = React.useState("")
     const [time, setTime] = React.useState(30)
     const [spots, setSpots] = React.useState(rows)
-    // const [filterModel, setFilterModel] = React.useState<GridFilterModel>({
-    //     items: []
-    // });
     const [sortModel, setSortModel] = React.useState<GridSortModel>([currentSortFilter]);
     const { contextData, setData } = useAppContext();
 
@@ -126,7 +125,7 @@ export default function SpotViewer() {
     }
 
     // when [spots] are set, update regions
-    React.useEffect( () => {
+    React.useEffect(() => {
         // parse the current spots and pull out the region specifier from each
         // location
         spots.map((spot) => {
@@ -136,7 +135,6 @@ export default function SpotViewer() {
         });
 
         setData(contextData);
-        console.log(contextData.regions);
     }, [spots]);
 
     function getQsoData(id) {
@@ -207,7 +205,6 @@ export default function SpotViewer() {
 
     return (
         <div className='spots-container'>
-            {/* <FilterBar /> */}
             <DataGrid
                 rows={spots}
                 columns={columns}
