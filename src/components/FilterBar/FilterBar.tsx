@@ -15,7 +15,6 @@ import { createEqualityFilter, useAppContext } from '../AppContext';
 interface IFilterBarPros {
 }
 
-const age = ["Ten", "Twenty", "Thirty"];
 
 export const FilterBar = (props: IFilterBarPros) => {
     const [mode, setMode] = React.useState('');

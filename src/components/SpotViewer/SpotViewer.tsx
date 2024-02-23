@@ -185,7 +185,7 @@ export default function SpotViewer() {
 
 
     // return the correct PK id for our rows
-    function getRowId(row) {
+    function getRowId(row: { spotId: any; }) {
         return row.spotId;
     }
 
