@@ -12,6 +12,8 @@ class UserConfig(Base):
     my_call = sa.Column(sa.String)
     my_grid6 = sa.Column(sa.String(6))
     default_pwr = sa.Column(sa.Integer)
+    flr_host = sa.Column(sa.String)
+    flr_port = sa.Column(sa.Integer)
 
     def __repr__(self):
         return "<config({self.my_call!r}:{self.my_grid6!r})>" \

@@ -8,6 +8,7 @@ from api import JsApi
 from db import DataBase
 from pota import Api as PotaApi
 
+# put filename='index.log' for deployment
 logging.basicConfig(level=logging.DEBUG)
 
 pota = PotaApi()
@@ -18,10 +19,6 @@ the_api = JsApi(the_db, pota)
 def do_update():
     json = pota.get_spots()
     the_db.update_all_spots(json)
-
-    # loop thru the new spots and update activator info
-    # for i in the_db.get_spots():
-    #     update_activator_stats(i.activator)
 
 
 # first lets update our spots w/ api data

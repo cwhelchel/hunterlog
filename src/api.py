@@ -3,6 +3,7 @@ import socket
 import webview
 import logging as L
 import datetime
+import re
 from datetime import timedelta
 
 from db.db import Bands
@@ -15,6 +16,7 @@ from pota import Api as PotaApi
 from cat import CAT
 
 logging = L.getLogger("api")
+IDTOKENPAT = r"^.*CognitoIdentityServiceProvider\..+\.idToken=([\w\.-]*\;)"
 
 
 class JsApi:
@@ -23,6 +25,7 @@ class JsApi:
         self.pota = pota_api
         logging.debug("init CAT...")
         self.cat = CAT("flrig", "127.0.0.1", 12345)
+        self.pw = None
 
     def get_spots(self):
         logging.debug('py getting spots')
@@ -44,6 +47,9 @@ class JsApi:
     def log_qso(self, qso_data):
         logging.debug("logging qso:")
         logging.debug(qso_data)
+        json = self.pota.get_park(qso_data['sig_info'])
+        logging.debug(f"log_qso park: {json}")
+        self.db.inc_park_hunt(json)
 
     def get_activator_stats(self, callsign):
         logging.debug("getting activator stats...")
@@ -86,7 +92,37 @@ class JsApi:
             return -1
 
     def launch_pota_window(self):
-        webview.create_window(title='POTA APP', url='https://pota.app/')
+        self.pw = webview.create_window(
+            title='POTA APP', url='https://pota.app/#/user/stats')
+        
+        # self.pw.evaluate_js
+        # (token, cookies) = self.get_id_token(self.pw)
+        # logging.debug(f"token: {token}")
+
+        # self.pota.get_user_hunt(token, cookies)
+
+        # self.pw.js_api_endpoint.e
+
+    # def get_id_token(self, win: webview.Window) -> tuple[str, any]:
+    #     logging.debug("looking thru cookies for idToken...")
+    #     cookies = win.get_cookies()
+    #     tok = None
+    #     jar = {}
+
+    #     for c in cookies:
+    #         co = c.output()
+    #         x = co.split('=')
+    #         k = x[0][12:]
+    #         jar[k] = x[1]
+    #         m = re.match(IDTOKENPAT, co)
+    #         if m:
+    #             # logging.debug(f"matched group {m.group(1)}")
+    #             tok = m.group(1)
+
+    #     logging.debug(jar)
+    #     if tok is None:
+    #         logging.warn("no POTA idToken found in cookies!")
+    #     return (tok, jar)
 
     def qsy_to(self, freq, mode: str):
         '''Use CAT control to QSY'''

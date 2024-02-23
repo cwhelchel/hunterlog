@@ -27,6 +27,10 @@ class Qso(Base):
     gridsquare = sa.Column(sa.String(6))
     sig = sa.Column(sa.String)
     sig_info = sa.Column(sa.String)
+    # custom app-only data:
+    from_app = sa.Column(sa.Boolean, nullable=True)  # true if logged from app
+    cnfm_hunt = sa.Column(sa.Boolean, nullable=True)
+    # 👆 true confirmed from hunter.csv
 
     def __init__(self, spot: Spot):
         self.call = spot.activator

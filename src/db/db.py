@@ -4,13 +4,13 @@ from enum import Enum
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
-from db.models.activators import Activator, ActivatorSchema
 
 from db.models.qsos import Qso, QsoSchema
+from db.models.activators import Activator, ActivatorSchema
 from db.models.spot_comments import SpotComment, SpotCommentSchema
 from db.models.spots import Spot, SpotSchema
 from db.models.user_config import UserConfig, UserConfigSchema
-
+from db.models.parks import Park, ParkSchema
 
 Base = declarative_base()
 
@@ -62,7 +62,8 @@ class DataBase:
         if current is None:
             cs = UserConfigSchema()
             logging.debug("creating default user config...")
-            s = {'my_call': "N9FZ", 'my_grid6': 'EM82dl', 'default_pwr': 20}
+            s = {'my_call': "N9FZ", 'my_grid6': 'EM82dl', 'default_pwr': 20,
+                 'flr_host': "127.0.0.1", 'flr_port': 12345}
             default_config = cs.load(s, session=self.session)
             self.session.add(default_config)
             self.session.commit()
@@ -131,12 +132,46 @@ class DataBase:
     def get_activator_by_id(self, id: int) -> Activator:
         return self.session.query(Activator).get(id)
 
+    def get_user_config(self) -> UserConfig:
+        return self.session.query(UserConfig).first()
+
     def build_qso_from_spot(self, spot_id: int) -> Qso:
         s = self.get_spot(spot_id)
         if s is not None:
             q = Qso(s)
             # print(q)
             return q
+
+    def log_qso(self, qso: Qso):
+        pass
+
+    def inc_park_hunt(self, park: any):
+        '''
+        Increment the hunt count of a park by one. If park is not in db add it.
+
+        :param any park: the json for a POTA park returned from POTA api
+        '''
+        schema = ParkSchema()
+        p = self.get_park(park['reference'])
+
+        if p is None:
+            logging.debug(f"adding new park row for {park['reference']}")
+            to_add: Park = schema.load(park, session=self.session)
+            to_add.hunts = 1
+            logging.debug(to_add)
+            self.session.add(to_add)
+            p = to_add
+        else:
+            logging.debug(f"increment hunts for park {p.reference}")
+            p.hunts += 1
+            schema.load(park, session=self.session, instance=p)
+
+        self.session.commit()
+
+    def get_park(self, park: str) -> Park:
+        return self.session.query(Park) \
+            .filter(Park.reference == park) \
+            .first()
 
     def set_band_filter(self, band: Bands):
         logging.debug(f"db setting band filter to {band}")
