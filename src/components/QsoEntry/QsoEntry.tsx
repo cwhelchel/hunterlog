@@ -41,8 +41,9 @@ export default function QsoEntry() {
     ) {
         console.log("logging qso...");
 
+        qso.id = 1;
         qso.time_on = (qsoTime) ? qsoTime.toISOString() : dayjs().toISOString();
-        window.pywebview.api.log_qso(qso);
+        window.pywebview.api.log_qso(JSON.stringify(qso));
     }
 
     function updateQsoEntry() {

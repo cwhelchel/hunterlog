@@ -1,12 +1,9 @@
-import os
 import socket
 import webview
 import logging as L
 import datetime
-import re
 from datetime import timedelta
 
-from db.db import Bands
 from db.db import DataBase
 from db.models.activators import ActivatorSchema
 from db.models.qsos import QsoSchema
@@ -16,7 +13,7 @@ from pota import Api as PotaApi
 from cat import CAT
 
 logging = L.getLogger("api")
-IDTOKENPAT = r"^.*CognitoIdentityServiceProvider\..+\.idToken=([\w\.-]*\;)"
+# IDTOKENPAT = r"^.*CognitoIdentityServiceProvider\..+\.idToken=([\w\.-]*\;)"
 
 
 class JsApi:
@@ -50,6 +47,7 @@ class JsApi:
         json = self.pota.get_park(qso_data['sig_info'])
         logging.debug(f"log_qso park: {json}")
         self.db.inc_park_hunt(json)
+        self.db.log_qso(qso_data)
 
     def get_activator_stats(self, callsign):
         logging.debug("getting activator stats...")

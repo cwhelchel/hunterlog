@@ -1,5 +1,5 @@
 from typing import List
-import logging
+import logging as L
 from enum import Enum
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
@@ -13,6 +13,8 @@ from db.models.user_config import UserConfig, UserConfigSchema
 from db.models.parks import Park, ParkSchema
 
 Base = declarative_base()
+
+logging = L.getLogger("db")
 
 
 class Bands(Enum):
@@ -139,11 +141,19 @@ class DataBase:
         s = self.get_spot(spot_id)
         if s is not None:
             q = Qso(s)
-            # print(q)
             return q
 
-    def log_qso(self, qso: Qso):
-        pass
+    def log_qso(self, qso: any):
+        '''
+        Logs the QSO passed in from UI.
+
+        :param any qso: json from the frontend.
+        '''
+        s = QsoSchema()
+        logging.debug(f"inserting qso: {qso}")
+        q = s.load(qso, session=self.session, transient=True)
+        self.session.add(q)
+        self.session.commit()
 
     def inc_park_hunt(self, park: any):
         '''
