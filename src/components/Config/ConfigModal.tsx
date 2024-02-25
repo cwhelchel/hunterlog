@@ -23,7 +23,7 @@ export default function ConfigModal() {
     React.useEffect(() => {
         window.addEventListener('pywebviewready', function () {
             let x = window.pywebview.api.get_user_config();
-            x.then( (r: string) => {
+            x.then((r: string) => {
                 if (r == null) return;
                 console.log(`got confg ${r}`);
                 var cfg = JSON.parse(r) as UserConfig;
@@ -35,6 +35,7 @@ export default function ConfigModal() {
     const handleSave = () => {
         if (window.pywebview !== undefined) {
             window.pywebview.api.set_user_config(config);
+            handleClose();
         }
     };
 
@@ -55,16 +56,35 @@ export default function ConfigModal() {
                         Configuration
                     </h2>
                     <p id="unstyled-modal-description" className="modal-description">
-                        Aliquid amet deserunt earum!
+                        Please update your settings.
                     </p>
                     <TextField id="my_call" label="My Callsign"
                         value={config?.my_call}
                         onChange={(e) => {
                             setConfig({ ...config, my_call: e.target.value });
                         }} />
-                    <Button onClick={handleSave}>
-                        Save
-                    </Button>
+                    <TextField id="my_grid6" label="My Gridsquare (6 digit)"
+                        value={config?.my_grid6}
+                        onChange={(e) => {
+                            setConfig({ ...config, my_grid6: e.target.value });
+                        }} />
+                    <TextField id="default_pwr" label="Default TX Power"
+                        value={config?.default_pwr}
+                        onChange={(e) => {
+                            setConfig({ ...config, default_pwr: Number.parseInt(e.target.value) });
+                        }} />
+                    <TextField id="flr_host" label="FLRIG Host (IP)"
+                        value={config?.flr_host}
+                        onChange={(e) => {
+                            setConfig({ ...config, flr_host: e.target.value });
+                        }} />
+                    <TextField id="flr_port" label="FLRIG Port (number)"
+                        value={config?.flr_port}
+                        onChange={(e) => {
+                            setConfig({ ...config, flr_port: Number.parseInt(e.target.value) });
+                        }} />
+                    <Button onClick={handleSave}>Save</Button>
+                    <Button onClick={handleClose}>Cancel</Button>
                 </ModalContent>
             </Modal>
         </div>
