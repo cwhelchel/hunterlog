@@ -12,6 +12,7 @@ import Grid from '@mui/material/Grid';
 import SpotViewer from './components/SpotViewer/SpotViewer'
 import QsoEntry from './components/QsoEntry/QsoEntry'
 import LeafMap from './components/Map/Map'
+import ConfigModal from './components/Config/ConfigModal'
 import { ActivatorInfo } from './components/ActivatorInfo/ActivatorInfo'
 
 import './index.scss'
@@ -76,6 +77,7 @@ const App = function () {
                                 </Grid>
                             </Grid>
                             <SpotViewer />
+                            <ConfigModal />
                         </Stack>
                     </ThemeProvider>
                 </AppContextProvider>

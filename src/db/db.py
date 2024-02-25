@@ -88,7 +88,8 @@ class DataBase:
             count = self.get_op_qso_count(to_add.activator)
             to_add.op_hunts = count
 
-            hunted = self.get_spot_hunted_flag(to_add.activator, to_add.frequency)
+            hunted = self.get_spot_hunted_flag(
+                to_add.activator, to_add.frequency)
             to_add.hunted = hunted
 
         self.session.commit()
@@ -148,6 +149,12 @@ class DataBase:
 
     def get_user_config(self) -> UserConfig:
         return self.session.query(UserConfig).first()
+
+    def update_user_config(self, json: any):
+        schema = UserConfigSchema()
+        config = self.get_user_config()
+        schema.load(json, session=self.session, instance=config)
+        self.session.commit()
 
     def build_qso_from_spot(self, spot_id: int) -> Qso:
         s = self.get_spot(spot_id)

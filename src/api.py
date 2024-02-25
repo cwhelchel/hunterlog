@@ -8,6 +8,7 @@ from db.db import DataBase
 from db.models.activators import ActivatorSchema
 from db.models.qsos import QsoSchema
 from db.models.spots import SpotSchema
+from db.models.user_config import UserConfigSchema
 from pota import Api as PotaApi
 
 from cat import CAT
@@ -75,6 +76,14 @@ class JsApi:
                 return update()
 
         return ActivatorSchema().dumps(ac)
+
+    def get_user_config(self):
+        cfg = self.db.get_user_config()
+        return UserConfigSchema().dumps(cfg)
+
+    def set_user_config(self, config_json: any):
+        logging.debug(f"setting config {config_json}")
+        self.db.update_user_config(config_json)
 
     def set_band_filter(self, band: int):
         logging.debug(f"api setting band filter to: {band}")
