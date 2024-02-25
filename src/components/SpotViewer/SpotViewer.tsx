@@ -14,6 +14,8 @@ import './SpotViewer.scss'
 import { Qso } from '../../@types/QsoTypes';
 import Tooltip from '@mui/material/Tooltip';
 import CallToolTip from './CallTooltip';
+import { Badge } from '@mui/material';
+import { SpotRow } from '../../@types/Spots';
 
 
 // https://mui.com/material-ui/react-table/
@@ -24,7 +26,7 @@ const columns: GridColDef[] = [
     {
         field: 'activator', headerName: 'Activator', width: 130,
         renderCell: (params: GridCellParams) => (
-            <CallToolTip callsign={params.row.activator} />
+            <CallToolTip callsign={params.row.activator} op_hunts={params.row.op_hunts} />
         ),
     },
     {
@@ -45,14 +47,14 @@ const columns: GridColDef[] = [
     {
         field: 'frequency', headerName: 'Freq', width: 100, type: 'number',
         renderCell: (x) => {
-            function onClick(e, m) {
+            function onClick(e: string, m: string) {
                 console.log("js qsy to...");
                 console.log(`param ${e} ${m}`);
                 window.pywebview.api.qsy_to(e, m);
             };
 
             return (
-                <Button sx={{width:'100px'}} variant='contained' onClick={() => { onClick(x.row.frequency, x.row.mode) }}>{x.row.frequency}</Button>
+                <Button sx={{ width: '100px' }} variant='contained' onClick={() => { onClick(x.row.frequency, x.row.mode) }}>{x.row.frequency}</Button>
             )
         }
     },
@@ -60,56 +62,42 @@ const columns: GridColDef[] = [
     { field: 'locationDesc', headerName: 'Loc', width: 100 },
     {
         field: 'reference', headerName: 'Park', width: 400,
-        valueGetter: (params: GridValueGetterParams) => {
-            return `${params.row.reference || ''} - ${params.row.name || ''}`;
-        },
+        // valueGetter: (params: GridValueGetterParams) => {
+        //     return `${params.row.reference || ''} - ${params.row.name || ''}`;
+        // },
+        renderCell: (x) => {
+            return (
+                <Badge
+                    badgeContent={x.row.park_hunts}
+                    color="secondary"
+                    anchorOrigin={{
+                        vertical: 'top',
+                        horizontal: 'left',
+                    }}>
+                    {x.row.reference} - {x.row.name}
+                </Badge>
+            )
+        }
     },
     {
         field: 'spotOrig', headerName: 'Spot', width: 400,
         valueGetter: (params: GridValueGetterParams) => {
             return `${params.row.spotter || ''}: ${params.row.comments || ''}`;
         },
+    },
+    {
+        field: 'hunted', headerName: 'Hunted', width: 100
     }
 ];
 
-// example spots 
-const rows = [
-    {
-        "spotId": 24575447,
-        "activator": "KC4MIT",
-        "frequency": "14244",
-        "mode": "SSB",
-        "reference": "K-0050",
-        "parkName": null,
-        "spotTime": "2024-02-12T19:10:03",
-        "spotter": "KC4MIT",
-        "comments": "QRT",
-        "source": "Web",
-        "invalid": null,
-        "name": "Mammoth Cave National Park",
-        "locationDesc": "US-KY",
-        "grid4": "EM67",
-        "grid6": "EM67we",
-        "latitude": 37.1877,
-        "longitude": -86.1012,
-        "count": 52,
-        "expire": 18,
-    }
-]
 
-var currentFilters = {
-    items: [{
-        field: 'mode',
-        operator: 'equals',
-        value: 'CW'
-    }]
-};
+const rows: SpotRow[] = [];
+
 
 var currentSortFilter = { field: 'spotTime', sort: 'desc' as GridSortDirection };
 
 
 export default function SpotViewer() {
-    const [mode, setMode] = React.useState("")
     const [time, setTime] = React.useState(30)
     const [spots, setSpots] = React.useState(rows)
     const [sortModel, setSortModel] = React.useState<GridSortModel>([currentSortFilter]);
@@ -118,7 +106,7 @@ export default function SpotViewer() {
     function getSpots() {
         // get the spots from the db
         const spots = window.pywebview.api.get_spots()
-        spots.then((r) => {
+        spots.then((r: string) => {
             var x = JSON.parse(r);
             setSpots(x);
         });
@@ -137,11 +125,11 @@ export default function SpotViewer() {
         setData(contextData);
     }, [spots]);
 
-    function getQsoData(id) {
+    function getQsoData(id: number) {
         // use the spot to generate qso data (unsaved)
         const q = window.pywebview.api.qso_data(id);
         //console.log(q);
-        q.then((r) => {
+        q.then((r: any) => {
             if (r['success'] == false)
                 return;
             var x = JSON.parse(r) as Qso;
@@ -160,6 +148,8 @@ export default function SpotViewer() {
 
             // first run thru do this:
             getSpots();
+
+            window.pywebview.state.getSpots = getSpots;
         })
     }, []);
 

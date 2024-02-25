@@ -1,4 +1,3 @@
-import json
 import socket
 import webview
 import logging as L
@@ -43,14 +42,18 @@ class JsApi:
         return qs.dumps(q)
 
     def log_qso(self, qso_data):
-        logging.debug("logging qso:")
-        logging.debug(qso_data)
         park_json = self.pota.get_park(qso_data['sig_info'])
-        logging.debug(f"log_qso park: {park_json}")
+        logging.debug(f"updating park stat for: {park_json}")
         self.db.inc_park_hunt(park_json)
 
-        # qso_json = json.dumps(qso_data)
+        logging.debug(f"logging qso: {qso_data}")
         self.db.log_qso(qso_data)
+
+        json = self.pota.get_spots()
+        self.db.update_all_spots(json)
+
+        webview.windows[0].evaluate_js(
+            'window.pywebview.state.getSpots()')
 
     def get_activator_stats(self, callsign):
         logging.debug("getting activator stats...")
@@ -95,7 +98,7 @@ class JsApi:
     def launch_pota_window(self):
         self.pw = webview.create_window(
             title='POTA APP', url='https://pota.app/#/user/stats')
-        
+
         # self.pw.evaluate_js
         # (token, cookies) = self.get_id_token(self.pw)
         # logging.debug(f"token: {token}")

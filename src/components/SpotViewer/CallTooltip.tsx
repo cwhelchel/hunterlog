@@ -4,9 +4,11 @@ import { useAppContext } from '../AppContext';
 
 import Tooltip from '@mui/material/Tooltip';
 import { ActivatorData } from '../../@types/ActivatorTypes';
+import Badge from '@mui/material/Badge';
 
 declare interface ICallToolTipProps {
-    callsign: string
+    callsign: string,
+    op_hunts: number
 }
 
 export default function CallToolTip(props: ICallToolTipProps) {
@@ -28,8 +30,18 @@ export default function CallToolTip(props: ICallToolTipProps) {
     }
 
     return (
+
         <Tooltip title={name}>
-            <span>{props.callsign}</span>
+            <Badge
+                badgeContent={props.op_hunts}
+                color="secondary"
+                anchorOrigin={{
+                    vertical: 'top',
+                    horizontal: 'left',
+                }}>
+
+                <span>{props.callsign}</span>
+            </Badge>
         </Tooltip>
     );
 }

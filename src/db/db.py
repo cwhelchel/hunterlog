@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List
 import logging as L
 from enum import Enum
@@ -54,7 +54,6 @@ class DataBase:
 
         self.session.execute(sa.text('DELETE FROM spots;'))
         self.session.commit()
-        self.schema = SpotSchema()
         self.init_config()
         self.band_filter = Bands.NOBAND
         self.region_filter = None
@@ -72,10 +71,26 @@ class DataBase:
             self.session.commit()
 
     def update_all_spots(self, spots_json):
+        schema = SpotSchema()
+
         self.session.execute(sa.text('DELETE FROM spots;'))
         for s in spots_json:
-            to_add = self.schema.load(s, session=self.session)
+            to_add: Spot = schema.load(s, session=self.session)
             self.session.add(to_add)
+
+            # get meta data for this spot
+            park = self.get_park(to_add.reference)
+            if park is not None and park.hunts > 0:
+                to_add.park_hunts = park.hunts
+            else:
+                to_add.park_hunts = 0
+
+            count = self.get_op_qso_count(to_add.activator)
+            to_add.op_hunts = count
+
+            hunted = self.get_spot_hunted_flag(to_add.activator, to_add.frequency)
+            to_add.hunted = hunted
+
         self.session.commit()
 
     def update_spot_comments(self, spot_comments_json):
@@ -117,10 +132,6 @@ class DataBase:
         return self.session.query(Spot).filter(Spot.mode == mode).all()
 
     def get_by_band(self, band: Bands) -> List[Spot]:
-        # ll = bandLimits[band][0]
-        # ul = bandLimits[band][1]
-        # terms = [sa.cast(Spot.frequency, sa.Float) < ul,
-        #          sa.cast(Spot.frequency, sa.Float) > ll]
         terms = self._get_all_filters()
         x = self.session.query(Spot) \
             .filter(sa.and_(*terms)) \
@@ -203,6 +214,19 @@ class DataBase:
         return self.session.query(Park) \
             .filter(Park.reference == park) \
             .first()
+
+    def get_op_qso_count(self, call: str) -> int:
+        return self.session.query(Qso) \
+            .filter(Qso.call == call) \
+            .count()
+
+    def get_spot_hunted_flag(self, activator, freq: str) -> bool:
+        now = datetime.utcnow()
+        flag = self.session.query(Qso) \
+            .filter(Qso.call == activator,
+                    now - Qso.time_on < timedelta(days=1)) \
+            .count()
+        return flag
 
     def set_band_filter(self, band: Bands):
         logging.debug(f"db setting band filter to {band}")

@@ -28,6 +28,11 @@ class Spot(Base):
     count = sa.Column(sa.Integer())
     expire = sa.Column(sa.Integer())
 
+    # meta data from app
+    hunted = sa.Column(sa.Boolean, nullable=True)
+    park_hunts = sa.Column(sa.Integer, nullable=True)
+    op_hunts = sa.Column(sa.Integer, nullable=True)
+
     def __repr__(self):
         return "<spot(id={self.spotId!r})>".format(self=self)
 
