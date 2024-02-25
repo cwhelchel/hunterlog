@@ -32,8 +32,7 @@ class Qso(Base):
     cnfm_hunt = sa.Column(sa.Boolean, nullable=True)
     # 👆 true confirmed from hunter.csv
 
-    def __init__(self, spot: Spot):
-        self.qso_id = 1
+    def init_from_spot(self, spot: Spot):
         self.call = spot.activator
         self.rst_sent = "599"
         self.rst_recv = "599"
@@ -44,7 +43,6 @@ class Qso(Base):
         self.gridsquare = spot.grid6
         self.sig_info = spot.reference
         self.sig = 'POTA'  # todo support SOTA
-        pass
 
     def __repr__(self):
         return "<qso({self.qso_id!r}:{self.call!r} on {self.qso_date!r})>" \

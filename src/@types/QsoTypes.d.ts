@@ -1,5 +1,5 @@
 export interface Qso {
-    id: number;
+    //qso_id: number;
     call: string;
     rst_sent: string;
     rst_recv: string;

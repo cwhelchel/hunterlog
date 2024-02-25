@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List
 import logging as L
 from enum import Enum
@@ -5,7 +6,7 @@ import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 
-from db.models.qsos import Qso, QsoSchema
+from db.models.qsos import Qso
 from db.models.activators import Activator, ActivatorSchema
 from db.models.spot_comments import SpotComment, SpotCommentSchema
 from db.models.spots import Spot, SpotSchema
@@ -140,7 +141,8 @@ class DataBase:
     def build_qso_from_spot(self, spot_id: int) -> Qso:
         s = self.get_spot(spot_id)
         if s is not None:
-            q = Qso(s)
+            q = Qso()
+            q.init_from_spot(s)
             return q
 
     def log_qso(self, qso: any):
@@ -149,9 +151,28 @@ class DataBase:
 
         :param any qso: json from the frontend.
         '''
-        s = QsoSchema()
+
+        # passing in the QSO object from init_from_spot
+        # doesn't seem to ever work. recreat a QSO object
+        # and add it directly
         logging.debug(f"inserting qso: {qso}")
-        q = s.load(qso, session=self.session, transient=True)
+        q = Qso()
+        q.call = qso['call']
+        q.rst_sent = qso['rst_sent']
+        q.rst_recv = qso['rst_recv']
+        q.freq = qso['freq']
+        q.freq_rx = qso['freq_rx']
+        q.mode = qso['mode']
+        q.comment = qso['comment']
+        q.qso_date = datetime.fromisoformat(qso['qso_date'])
+        q.time_on = datetime.fromisoformat(qso['time_on'])
+        q.tx_pwr = qso['tx_pwr']
+        q.rx_pwr = qso['rx_pwr']
+        q.gridsquare = qso['gridsquare']
+        q.sig = qso['sig']
+        q.sig_info = qso['sig_info']
+        q.from_app = True
+        q.cnfm_hunt = False
         self.session.add(q)
         self.session.commit()
 

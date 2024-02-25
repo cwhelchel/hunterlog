@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Box, TextField, Grid } from '@mui/material';
+import { Button, TextField, Grid } from '@mui/material';
 import { useAppContext } from '../AppContext';
 import dayjs, { Dayjs } from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -12,7 +12,6 @@ dayjs.extend(utc);
 
 
 let defaultQso: Qso = {
-    id: 0,
     call: "",
     rst_sent: "",
     rst_recv: "",
@@ -32,7 +31,6 @@ let defaultQso: Qso = {
 
 export default function QsoEntry() {
     const [qso, setQso] = React.useState(defaultQso);
-    const [isPlaying, setIsPlaying] = React.useState(true);
     const [qsoTime, setQsoTime] = React.useState<Dayjs>(dayjs('2022-04-17T15:30'));
     const { contextData, setData } = useAppContext();
 
@@ -41,9 +39,8 @@ export default function QsoEntry() {
     ) {
         console.log("logging qso...");
 
-        qso.id = 1;
         qso.time_on = (qsoTime) ? qsoTime.toISOString() : dayjs().toISOString();
-        window.pywebview.api.log_qso(JSON.stringify(qso));
+        window.pywebview.api.log_qso(qso);
     }
 
     function updateQsoEntry() {
@@ -64,15 +61,6 @@ export default function QsoEntry() {
 
     return (
         <div className="qso-container">
-            {/* <Box
-                component="form"
-                height="75%"
-                sx={{
-                    '& > :not(style)': { m: 1 },
-                }}
-                noValidate
-                autoComplete="off"
-            > */}
             <Grid container
                 spacing={{ xs: 1, md: 3 }}
                 m={2}>
@@ -116,10 +104,9 @@ export default function QsoEntry() {
                     <QsoTimeEntry qsoTime={qsoTime} setQsoTime={setQsoTime} />
                 </Grid>
             </Grid>
-            {/* </Box> */}
 
             <Button variant="outlined" onClick={(e) => handleLogQsoClick(e)}
-                sx={{ 'm': 1, }}>
+                sx={{ 'm': 1, }} >
                 Log QSO
             </Button>
         </div>

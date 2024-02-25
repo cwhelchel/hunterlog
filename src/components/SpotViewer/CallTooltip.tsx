@@ -17,10 +17,11 @@ export default function CallToolTip(props: ICallToolTipProps) {
             getActivatorData()
     }, []);
 
-    function getActivatorData () {
+    function getActivatorData() {
         const x = window.pywebview.api.get_activator_stats(props.callsign);
 
-        x.then((r) => {
+        x.then((r: string) => {
+            if (r == null) return;
             var x = JSON.parse(r) as ActivatorData;
             setName(x.name)
         });

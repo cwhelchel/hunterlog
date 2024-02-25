@@ -1,3 +1,4 @@
+import json
 import socket
 import webview
 import logging as L
@@ -44,9 +45,11 @@ class JsApi:
     def log_qso(self, qso_data):
         logging.debug("logging qso:")
         logging.debug(qso_data)
-        json = self.pota.get_park(qso_data['sig_info'])
-        logging.debug(f"log_qso park: {json}")
-        self.db.inc_park_hunt(json)
+        park_json = self.pota.get_park(qso_data['sig_info'])
+        logging.debug(f"log_qso park: {park_json}")
+        self.db.inc_park_hunt(park_json)
+
+        # qso_json = json.dumps(qso_data)
         self.db.log_qso(qso_data)
 
     def get_activator_stats(self, callsign):
