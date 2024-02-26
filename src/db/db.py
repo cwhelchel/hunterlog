@@ -183,7 +183,11 @@ class DataBase:
         q.mode = qso['mode']
         q.comment = qso['comment']
         q.qso_date = datetime.fromisoformat(qso['qso_date'])
-        q.time_on = datetime.fromisoformat(qso['time_on'])
+        temp: str = qso['time_on']
+        if temp.endswith('Z'):
+            # fromisoformat doesnt like trailing Z
+            temp = temp[:-1]
+        q.time_on = datetime.fromisoformat(temp)
         q.tx_pwr = qso['tx_pwr']
         q.rx_pwr = qso['rx_pwr']
         q.gridsquare = qso['gridsquare']
