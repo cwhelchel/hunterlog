@@ -1,6 +1,5 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import { AppContextProvider } from './components/AppContext'
 import { ThemeProvider, ThemeOptions, createTheme } from '@mui/material/styles'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { LocalizationProvider } from '@mui/x-date-pickers'
@@ -8,17 +7,19 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
 import Grid from '@mui/material/Grid';
+import { Link } from '@mui/material'
 
+import { AppContextProvider } from './components/AppContext'
 import SpotViewer from './components/SpotViewer/SpotViewer'
 import QsoEntry from './components/QsoEntry/QsoEntry'
 import LeafMap from './components/Map/Map'
 import ConfigModal from './components/Config/ConfigModal'
 import { ActivatorInfo } from './components/ActivatorInfo/ActivatorInfo'
+import { FilterBar } from './components/FilterBar/FilterBar'
+import { UpdateStats } from './components/Stats/UpdateStats'
+
 
 import './index.scss'
-import { FilterBar } from './components/FilterBar/FilterBar'
-import { Link } from '@mui/material'
-
 
 const darkTheme = createTheme({
     palette: {
@@ -78,6 +79,7 @@ const App = function () {
                             </Grid>
                             <SpotViewer />
                             <ConfigModal />
+                            <UpdateStats />
                         </Stack>
                     </ThemeProvider>
                 </AppContextProvider>

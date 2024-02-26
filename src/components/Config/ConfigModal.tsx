@@ -25,7 +25,7 @@ export default function ConfigModal() {
             let x = window.pywebview.api.get_user_config();
             x.then((r: string) => {
                 if (r == null) return;
-                console.log(`got confg ${r}`);
+                console.log(`got config ${r}`);
                 var cfg = JSON.parse(r) as UserConfig;
                 setConfig(cfg);
             });
@@ -42,7 +42,7 @@ export default function ConfigModal() {
     return (
         <div>
             <Button variant='outlined' color='primary' onClick={handleOpen}>
-                Open modal
+                Configuration
             </Button>
             <Modal
                 aria-labelledby="unstyled-modal-title"

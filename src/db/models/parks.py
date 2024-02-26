@@ -13,10 +13,15 @@ class Park(Base):
     __tablename__ = "parks"
     id = sa.Column(sa.Integer, primary_key=True)
     reference = sa.Column(sa.String, nullable=False)
-    name = sa.Column(sa.String, nullable=False)
-    grid6 = sa.Column(sa.String)
-    hunts = sa.Column(sa.Integer, default=0)
+    name = sa.Column(sa.String)
+    grid6 = sa.Column(sa.String(6))
     active = sa.Column(sa.Integer)
+    latitude = sa.Column(sa.Float, nullable=True)
+    longitude = sa.Column(sa.Float, nullable=True)
+    parkComments = sa.Column(sa.String)
+
+    # meta and calculated data
+    hunts = sa.Column(sa.Integer, default=0)
     last = sa.Column(sa.TIMESTAMP,
                      server_default=utcnow(),
                      onupdate=sa.func.current_timestamp())

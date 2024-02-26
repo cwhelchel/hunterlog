@@ -13,9 +13,6 @@ PARK_URL = "https://api.pota.app/park/{park}"
 class Api():
     '''Class that calls the POTA endpoints and returns their results'''
 
-    def __init__(self):
-        pass
-
     def get_spots(self):
         '''Return all current spots from POTA API'''
         response = requests.get(SPOT_URL)
@@ -58,7 +55,8 @@ class Api():
     #     page = 1
     #     size = 25
     #     searchCall = "WB0RLJ"
-    #     url = f"https://api.pota.app/user/logbook?hunterOnly=1&page={page}&size={size}"
+    #     url = f"https://api.pota.app/user/logbook?hunterOnly=1&page={page}
+    #             &size={size}"
     #     headers = {
     #         'authorization': id_token,
     #         'origin': "https://pota.app",

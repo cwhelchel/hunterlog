@@ -19,6 +19,7 @@ class PotaStats:
         self.activated_parks = []
         self.hunted_parks = []
         self.loc_stats: dict[str, LocationStat] = {}
+        self.hunted_park_stats: dict[str, int] = {}
         self._get_activations_csv()
         self._get_hunts_csv()
 
@@ -37,12 +38,23 @@ class PotaStats:
         else:
             return 0
 
+    def get_park_hunt_count(self, park: str) -> int:
+        '''Returns number of hunter QSOs for a given park'''
+        if park in self.hunted_park_stats:
+            return self.hunted_park_stats[park]
+        else:
+            return 0
+
     def get_actx_count(self, location: str) -> int:
         '''Returns number of activated references in a given location'''
         if location in self.loc_stats:
             return self.loc_stats[location].activations
         else:
             return 0
+
+    def get_all_hunts(self) -> list[str]:
+        '''Returns a list of all the hunted parks'''
+        return self.hunted_parks
 
     def _get_activations_csv(self):
         '''
@@ -86,9 +98,11 @@ class PotaStats:
                     skip_headers = False
                     continue
                 else:
+                    park = row['Reference']
                     location = row["HASC"]
                     self._inc_hunts(location)
-                    self.hunted_parks.append(row['Reference'])
+                    self.hunted_parks.append(park)
+                    self.hunted_park_stats[park] = row['QSOs']
 
     def _inc_hunts(self, location: str):
         if location in self.loc_stats:

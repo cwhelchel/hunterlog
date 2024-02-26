@@ -58,6 +58,12 @@ class DataBase:
         self.band_filter = Bands.NOBAND
         self.region_filter = None
 
+    def commit_session(self):
+        '''
+        Calls session.commit to save any pending changes to db.
+        '''
+        self.session.commit()
+
     def init_config(self):
         current = self.session.query(UserConfig).first()
 
@@ -198,6 +204,33 @@ class DataBase:
         self.session.add(q)
         self.session.commit()
 
+    def update_park_data(self, park: any):
+        '''
+        Parks added from stats do not have anything besides hunt count and 
+        the reference. This method updates the rest of the data.
+
+        :param any park: the json for a POTA park returned from POTA api
+        '''
+        schema = ParkSchema()
+        p = self.get_park(park['reference'])
+
+        if p is None:
+            logging.debug(f"inserting new {park['reference']}")
+            to_add: Park = schema.load(park, session=self.session)
+            logging.debug(to_add)
+            self.session.add(to_add)
+            p = to_add
+        else:
+            logging.debug(f"updating data for for park {p.reference}")
+            p.active = park['active']
+            p.grid6 = park['grid6']
+            p.name = park['name']
+            p.latitude = park['latitude']
+            p.longitude = park['longitude']
+            p.parkComments = park['parkComments']
+
+        self.session.commit()
+
     def inc_park_hunt(self, park: any):
         '''
         Increment the hunt count of a park by one. If park is not in db add it.
@@ -220,6 +253,38 @@ class DataBase:
             schema.load(park, session=self.session, instance=p)
 
         self.session.commit()
+
+    def update_park_hunts(self, park: any, hunts: int,
+                          delay_commit: bool = True):
+        '''
+        Update the hunts field of a park in the db with the given hunt. Will
+        create a park row if none exists
+
+        :param any park: park json/dic
+        :param int hunts: new hunts value
+        :param bool delay_commit: if true will not call session.commit
+        '''
+        schema = ParkSchema()
+        obj = self.get_park(park['reference'])
+
+        if obj is None:
+            # logging.debug(f"adding new park row for {park}")
+            # to_add: Park = schema.load(park, session=self.session)
+            to_add = Park()
+            to_add.reference = park['reference']
+            to_add.hunts = hunts
+            logging.debug(to_add)
+            self.session.add(to_add)
+            obj = to_add
+        else:
+            # logging.debug(f"increment hunts for park {obj.reference}")
+            # if this was hunted in the app and the the stats are imported
+            # this will overwrite and may clear previous hunts
+            obj.hunts = hunts
+            schema.load(park, session=self.session, instance=obj)
+
+        if not delay_commit:
+            self.session.commit()
 
     def get_park(self, park: str) -> Park:
         return self.session.query(Park) \

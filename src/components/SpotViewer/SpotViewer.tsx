@@ -127,7 +127,7 @@ export default function SpotViewer() {
 
     function getQsoData(id: number) {
         // use the spot to generate qso data (unsaved)
-        const q = window.pywebview.api.qso_data(id);
+        const q = window.pywebview.api.get_qso_from_spot(id);
         //console.log(q);
         q.then((r: any) => {
             if (r['success'] == false)

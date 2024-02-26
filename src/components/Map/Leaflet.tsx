@@ -14,7 +14,7 @@ export default function Leaflet({ latitude, longitude }) {
     const { contextData, setData } = useAppContext();
     const [lat, setLat] = React.useState(latitude);
     const [lon, setLon] = React.useState(longitude);
-    const [markerPosition, setMarkerPosition] = React.useState<LatLngExpression>([0.0,0.0]);
+    const [markerPosition, setMarkerPosition] = React.useState<LatLngExpression>([0.0, 0.0]);
 
     function handleOnSetView() {
         if (mapRef && mapRef.current) {
@@ -54,11 +54,29 @@ export default function Leaflet({ latitude, longitude }) {
         console.log(contextData.qso?.sig_info);
         const park = contextData.qso?.sig_info;
         if (park) {
-            getParkInfo(park)
-                .then(x => {
-                    setLat(x.latitude);
-                    setLon(x.longitude);
-                });
+            let j = window.pywebview.api.get_park(park);
+            j.then((parkJson: string) => {
+                console.log(parkJson);
+
+                if (parkJson == null){
+                    // db does not have the goods. lets ask POTA.APP
+                    getParkInfo(park)
+                        .then(x => {
+                            setLat(x.latitude);
+                            setLon(x.longitude);
+
+                            window.pywebview.api.update_park(x);
+                        });
+                    return;
+                }
+
+                let p = JSON.parse(parkJson) as ParkInfo;
+                if (p) {
+                    console.log(`park in db ${p}`);
+                    setLat(p.latitude);
+                    setLon(p.longitude);
+                }
+            });
         }
     }
 };

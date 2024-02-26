@@ -6,10 +6,11 @@ from datetime import timedelta
 
 from db.db import DataBase
 from db.models.activators import ActivatorSchema
+from db.models.parks import ParkSchema
 from db.models.qsos import QsoSchema
 from db.models.spots import SpotSchema
 from db.models.user_config import UserConfigSchema
-from pota import Api as PotaApi
+from pota import PotaApi, PotaStats
 
 from cat import CAT
 
@@ -18,9 +19,10 @@ logging = L.getLogger("api")
 
 
 class JsApi:
-    def __init__(self, the_db: DataBase, pota_api: PotaApi):
+    def __init__(self, the_db: DataBase, pota_api: PotaApi, stats: PotaStats):
         self.db = the_db
         self.pota = pota_api
+        self.pota_stats = stats
         logging.debug("init CAT...")
         self.cat = CAT("flrig", "127.0.0.1", 12345)
         self.pw = None
@@ -34,27 +36,13 @@ class JsApi:
         ss = SpotSchema(many=True)
         return ss.dumps(spots)
 
-    def qso_data(self, id: int):
+    def get_qso_from_spot(self, id: int):
         logging.debug('py getting qso data')
         q = self.db.build_qso_from_spot(id)
         if q is None:
             return {"success": False}
         qs = QsoSchema()
         return qs.dumps(q)
-
-    def log_qso(self, qso_data):
-        park_json = self.pota.get_park(qso_data['sig_info'])
-        logging.debug(f"updating park stat for: {park_json}")
-        self.db.inc_park_hunt(park_json)
-
-        logging.debug(f"logging qso: {qso_data}")
-        self.db.log_qso(qso_data)
-
-        json = self.pota.get_spots()
-        self.db.update_all_spots(json)
-
-        webview.windows[0].evaluate_js(
-            'window.pywebview.state.getSpots()')
 
     def get_activator_stats(self, callsign):
         logging.debug("getting activator stats...")
@@ -77,9 +65,37 @@ class JsApi:
 
         return ActivatorSchema().dumps(ac)
 
+    def get_park(self, ref: str) -> str:
+        '''
+        Returns the JSON for the park if found in the db
+
+        :param str ref: the POTA park reference designator string
+
+        :returns JSON of park object in db or None if not found
+        '''
+        park = self.db.get_park(ref)
+        if park is None:
+            return None
+        ps = ParkSchema()
+        return ps.dumps(park)
+
     def get_user_config(self):
         cfg = self.db.get_user_config()
         return UserConfigSchema().dumps(cfg)
+
+    def log_qso(self, qso_data):
+        park_json = self.pota.get_park(qso_data['sig_info'])
+        logging.debug(f"updating park stat for: {park_json}")
+        self.db.inc_park_hunt(park_json)
+
+        logging.debug(f"logging qso: {qso_data}")
+        self.db.log_qso(qso_data)
+
+        j = self.pota.get_spots()
+        self.db.update_all_spots(j)
+
+        webview.windows[0].evaluate_js(
+            'window.pywebview.state.getSpots()')
 
     def set_user_config(self, config_json: any):
         logging.debug(f"setting config {config_json}")
@@ -149,6 +165,24 @@ class JsApi:
         logging.debug(f"adjusted mode {mode}")
         self.cat.set_mode(mode)
         self.cat.set_vfo(x)
+
+    def update_park(self, park: any):
+        '''The UI will only try to update parks when they're clicked on.'''
+        self.db.update_park_data(park)
+
+    def update_park_hunts(self):
+        '''
+        Will use the current pota stats from hunter.csv to update the db with
+        new park hunt numbers
+        '''
+        hunts = self.pota_stats.get_all_hunts()
+
+        for park in hunts:
+            count = self.pota_stats.get_park_hunt_count(park)
+            j = {'reference': park, 'hunts': count}
+            self.db.update_park_hunts(j, count)
+
+        self.db.commit_session()
 
     def _send_msg(self, msg: str):
         """
