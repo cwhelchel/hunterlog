@@ -28,8 +28,12 @@ class Spot(Base):
     count = sa.Column(sa.Integer())
     expire = sa.Column(sa.Integer())
 
-    # meta data from app
-    hunted = sa.Column(sa.Boolean, nullable=True)
+    # meta data regarding this "activation" (activator+park+utcday) as it
+    # applies to this specific spot
+    hunted = sa.Column(sa.Boolean, nullable=True)  # has this spot been hunted?
+    hunted_bands = sa.Column(sa.String, nullable=True)  # list of bands hunted
+
+    # stats for this spot ie. park and op hunts
     park_hunts = sa.Column(sa.Integer, nullable=True)
     op_hunts = sa.Column(sa.Integer, nullable=True)
 

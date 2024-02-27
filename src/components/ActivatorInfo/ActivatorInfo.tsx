@@ -29,7 +29,7 @@ const defaultActData: ActivatorData = {
     updated: '1970-01-01T00:00:00'
 }
 
-const getUserAvatarURL = (md5) => {
+const getUserAvatarURL = (md5: string) => {
     if (!md5) return '';
 
     return `https://gravatar.com/avatar/${md5}?d=identicon`;
@@ -48,7 +48,7 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
 
         const q = window.pywebview.api.get_activator_stats(actCall);
 
-        q.then((r) => {
+        q.then((r: string) => {
             // console.log(r);
             var x = JSON.parse(r) as ActivatorData;
             // console.log(x);

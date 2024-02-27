@@ -8,12 +8,15 @@ import { getParkInfo } from "../../pota";
 
 const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
-
-export default function Leaflet({ latitude, longitude }) {
+interface ILeafletProps {
+    latitude: number,
+    longitude: number
+}
+export default function Leaflet(props: ILeafletProps) {
     const mapRef = React.useRef(null);
     const { contextData, setData } = useAppContext();
-    const [lat, setLat] = React.useState(latitude);
-    const [lon, setLon] = React.useState(longitude);
+    const [lat, setLat] = React.useState(props.latitude);
+    const [lon, setLon] = React.useState(props.longitude);
     const [markerPosition, setMarkerPosition] = React.useState<LatLngExpression>([0.0, 0.0]);
 
     function handleOnSetView() {
@@ -51,30 +54,41 @@ export default function Leaflet({ latitude, longitude }) {
     );
 
     function getParkLoc() {
+
+        function getFromPotaApi(parkRef: string) {
+            getParkInfo(parkRef)
+                .then(x => {
+                    setLat(x.latitude);
+                    setLon(x.longitude);
+                    window.pywebview.api.update_park(x);
+                });
+        }
+
         console.log(contextData.qso?.sig_info);
         const park = contextData.qso?.sig_info;
+
         if (park) {
             let j = window.pywebview.api.get_park(park);
             j.then((parkJson: string) => {
                 console.log(parkJson);
 
-                if (parkJson == null){
+                if (parkJson == null) {
                     // db does not have the goods. lets ask POTA.APP
-                    getParkInfo(park)
-                        .then(x => {
-                            setLat(x.latitude);
-                            setLon(x.longitude);
-
-                            window.pywebview.api.update_park(x);
-                        });
+                    getFromPotaApi(park);
                     return;
                 }
 
                 let p = JSON.parse(parkJson) as ParkInfo;
                 if (p) {
-                    console.log(`park in db ${p}`);
-                    setLat(p.latitude);
-                    setLon(p.longitude);
+                    // the park could have been added via stat parsing from
+                    // hunter_parks.csv and have no lat lon
+                    if (p.latitude == null || p.longitude == null) {
+                        getFromPotaApi(park);
+                    } else {
+                        console.log(`park in db ${p}`);
+                        setLat(p.latitude);
+                        setLon(p.longitude);
+                    }
                 }
             });
         }

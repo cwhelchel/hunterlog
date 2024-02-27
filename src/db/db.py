@@ -1,10 +1,11 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List
 import logging as L
 from enum import Enum
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
+
 
 from db.models.qsos import Qso
 from db.models.activators import Activator, ActivatorSchema
@@ -16,6 +17,8 @@ from db.models.parks import Park, ParkSchema
 Base = declarative_base()
 
 logging = L.getLogger("db")
+# show sql
+# L.getLogger('sqlalchemy.engine').setLevel(L.INFO)
 
 
 class Bands(Enum):
@@ -44,6 +47,22 @@ bandLimits = {
     Bands.TWELVE: (24890.0, 24990.0),
     Bands.TEN: (28000.0, 29700.0),
 }
+
+
+def get_band(freq) -> Bands:
+    '''
+    Get the enumerated Bands value for the given frequency
+
+    :param str freq: string of the frequency in MHz
+    '''
+    try:
+        f = float(freq)
+        for band, lmt in bandLimits.items():
+            if (f > lmt[0] and f < lmt[1]):
+                return band
+    except ValueError:
+        logging.error("invalid str to float conv in get_band(freq)")
+        return Bands.NOBAND
 
 
 class DataBase:
@@ -177,7 +196,7 @@ class DataBase:
         '''
 
         # passing in the QSO object from init_from_spot
-        # doesn't seem to ever work. recreat a QSO object
+        # doesn't seem to ever work. recreate a QSO object
         # and add it directly
         logging.debug(f"inserting qso: {qso}")
         q = Qso()
@@ -298,10 +317,18 @@ class DataBase:
 
     def get_spot_hunted_flag(self, activator, freq: str) -> bool:
         now = datetime.utcnow()
+        band = get_band(freq)
+        logging.debug(f"using band {band} for freq {freq}")
+        if band is not None:
+            terms = self._get_band_lmt_terms(band, Qso.freq)
+        else:
+            terms = [1 == 1]
+
         flag = self.session.query(Qso) \
             .filter(Qso.call == activator,
-                    now - Qso.time_on < timedelta(days=1)) \
-            .count()
+                    Qso.time_on > now.date(),
+                    sa.and_(*terms)) \
+            .count() > 0
         return flag
 
     def set_band_filter(self, band: Bands):
@@ -319,10 +346,15 @@ class DataBase:
         band = Bands(self.band_filter)  # not sure why cast is needed
         if band == Bands.NOBAND:
             return []
+        terms = self._get_band_lmt_terms(band, Spot.frequency)
+        return terms
+
+    def _get_band_lmt_terms(self, band: Bands, col: sa.Column) \
+            -> list[sa.ColumnElement[bool]]:
         ll = bandLimits[band][0]
         ul = bandLimits[band][1]
-        terms = [sa.cast(Spot.frequency, sa.Float) < ul,
-                 sa.cast(Spot.frequency, sa.Float) > ll]
+        terms = [sa.cast(col, sa.Float) < ul,
+                 sa.cast(col, sa.Float) > ll]
         return terms
 
     def _get_region_filters(self) -> list[sa.ColumnElement[bool]]:
@@ -335,12 +367,8 @@ class DataBase:
 
 if __name__ == "__main__":
     db = DataBase()
-    db.update_all_spots()
-    all_spots = db.get_spots()
-    v = SpotSchema(many=True)
-    print(v.dumps(all_spots))
-    cw_spots = db.get_by_band(Bands.FOURTY)
-    print(cw_spots)
+    db.get_spot_hunted_flag('K6MRF', '7250')
+
     # db.update_spot_comments("KU8T", "K-2263")
     # comments = db.get_spot_comments()
     # print(*text, sep='\n')

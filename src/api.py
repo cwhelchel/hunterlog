@@ -80,10 +80,19 @@ class JsApi:
         return ps.dumps(park)
 
     def get_user_config(self):
+        '''
+        Returns the JSON for the user configuration record in the db
+        '''
         cfg = self.db.get_user_config()
         return UserConfigSchema().dumps(cfg)
 
     def log_qso(self, qso_data):
+        '''
+        Logs the QSO to the database, adif file, and updates stats. Will force
+        a reload of the currently displayed spots.
+
+        :param any qso_data: dict of qso data from the UI
+        '''
         park_json = self.pota.get_park(qso_data['sig_info'])
         logging.debug(f"updating park stat for: {park_json}")
         self.db.inc_park_hunt(park_json)
