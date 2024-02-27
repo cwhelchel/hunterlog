@@ -332,7 +332,7 @@ class DataBase:
         '''
         now = datetime.utcnow()
         band = get_band(freq)
-        logging.debug(f"using band {band} for freq {freq}")
+        # logging.debug(f"using band {band} for freq {freq}")
         if band is not None:
             terms = self._get_band_lmt_terms(band, Qso.freq)
         else:

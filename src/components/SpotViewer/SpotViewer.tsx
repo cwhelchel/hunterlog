@@ -13,6 +13,7 @@ import CallToolTip from './CallTooltip';
 import { SpotRow } from '../../@types/Spots';
 
 import './SpotViewer.scss'
+import HuntedCheckbox from './HuntedCheckbox';
 
 // https://mui.com/material-ui/react-table/
 
@@ -85,21 +86,7 @@ const columns: GridColDef[] = [
         field: 'hunted', headerName: 'Hunted', width: 100,
         renderCell: (x) => {
             return (
-                <>
-                    {x.row.hunted && (
-                        <div>
-                            <Tooltip title={
-                                <React.Fragment>
-                                    {'hunted on:'}<br />
-                                    {x.row.hunted_bands}
-                                </React.Fragment>
-                            }>
-                                <CheckBoxIcon color='primary' />
-                            </Tooltip>
-                        </div>
-                    )}
-                    {!x.row.hunted && (<CheckBoxOutlineBlankIcon />)}
-                </>
+                <HuntedCheckbox hunted={x.row.hunted} hunted_bands={x.row.hunted_bands} />
             )
         }
     }
