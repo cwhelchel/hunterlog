@@ -19,6 +19,7 @@ export interface SpotRow {
     count: number,
     expire: number,
     hunted: boolean,
+    hunted_bands: string,
     park_hunts: number,
     op_hunts: number
 };

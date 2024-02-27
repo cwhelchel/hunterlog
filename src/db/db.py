@@ -119,7 +119,10 @@ class DataBase:
 
             hunted = self.get_spot_hunted_flag(
                 to_add.activator, to_add.frequency)
+            bands = self.get_spot_hunted_bands(to_add.activator)
+
             to_add.hunted = hunted
+            to_add.hunted_bands = bands
 
         self.session.commit()
 

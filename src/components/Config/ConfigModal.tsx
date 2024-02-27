@@ -41,7 +41,7 @@ export default function ConfigModal() {
 
     return (
         <div>
-            <Button variant='outlined' color='primary' onClick={handleOpen}>
+            <Button color='primary' onClick={handleOpen}>
                 Configuration
             </Button>
             <Modal

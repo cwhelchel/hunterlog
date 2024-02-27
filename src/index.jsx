@@ -17,6 +17,7 @@ import ConfigModal from './components/Config/ConfigModal'
 import { ActivatorInfo } from './components/ActivatorInfo/ActivatorInfo'
 import { FilterBar } from './components/FilterBar/FilterBar'
 import { UpdateStats } from './components/Stats/UpdateStats'
+import AppMenu from './components/AppMenu/AppMenu'
 
 
 import './index.scss'
@@ -43,12 +44,6 @@ const App = function () {
                 <AppContextProvider>
                     <ThemeProvider theme={potaTheme}>
                         <CssBaseline />
-                        <Link component="button"
-                            onClick={() => {
-                                window.pywebview.api.launch_pota_window();
-                            }}>
-                            POTA
-                        </Link>
                         <Stack direction="column"
                             ml="1.5rem"
                             mr="1.5rem">
@@ -61,9 +56,12 @@ const App = function () {
                                 className='sticky'
                                 direction="row"
                                 justifyContent="space-evenly"
-                                divider={<Divider orientation="vertical" flexItem />}
-                                spacing={{ xs: 2, md: 4 }}
+                                // divider={<Divider orientation="vertical" flexItem />}
+                                spacing={{ xs: 1, md: 2 }}
                                 height="50%">
+                                <Grid item xs={12} >
+                                    <AppMenu />
+                                </Grid>
                                 <Grid item xs={4}>
                                     <QsoEntry />
                                 </Grid>
@@ -78,8 +76,6 @@ const App = function () {
                                 </Grid>
                             </Grid>
                             <SpotViewer />
-                            <ConfigModal />
-                            <UpdateStats />
                         </Stack>
                     </ThemeProvider>
                 </AppContextProvider>

@@ -1,22 +1,18 @@
 import * as React from 'react';
 import Button from '@mui/material/Button';
-import InputLabel from '@mui/material/InputLabel';
-import MenuItem from '@mui/material/MenuItem';
-import FormControl from '@mui/material/FormControl';
-import Select, { SelectChangeEvent } from '@mui/material/Select';
+import { Badge, Tooltip } from '@mui/material';
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
+import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import { DataGrid, GridColDef, GridValueGetterParams, GridValueFormatterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams } from '@mui/x-data-grid';
 import { GridEventListener } from '@mui/x-data-grid';
 
-import { FilterBar } from '../FilterBar/FilterBar'
 import { useAppContext } from '../AppContext';
 
-import './SpotViewer.scss'
 import { Qso } from '../../@types/QsoTypes';
-import Tooltip from '@mui/material/Tooltip';
 import CallToolTip from './CallTooltip';
-import { Badge } from '@mui/material';
 import { SpotRow } from '../../@types/Spots';
 
+import './SpotViewer.scss'
 
 // https://mui.com/material-ui/react-table/
 
@@ -86,7 +82,26 @@ const columns: GridColDef[] = [
         },
     },
     {
-        field: 'hunted', headerName: 'Hunted', width: 100
+        field: 'hunted', headerName: 'Hunted', width: 100,
+        renderCell: (x) => {
+            return (
+                <>
+                    {x.row.hunted && (
+                        <div>
+                            <Tooltip title={
+                                <React.Fragment>
+                                    {'hunted on:'}<br />
+                                    {x.row.hunted_bands}
+                                </React.Fragment>
+                            }>
+                                <CheckBoxIcon color='primary' />
+                            </Tooltip>
+                        </div>
+                    )}
+                    {!x.row.hunted && (<CheckBoxOutlineBlankIcon />)}
+                </>
+            )
+        }
     }
 ];
 
