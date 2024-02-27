@@ -35,6 +35,10 @@ class Bands(Enum):
     TEN = 10
 
 
+bandNames = [
+    'NA', '160m', '80m', '60m', '40m', '30m', '20m', '17m', '15m', '12m', '10m'
+]
+
 bandLimits = {
     Bands.ONESIXTY: (1800.0, 2000.0),
     Bands.EIGHTY: (3500.0, 4000.0),
@@ -225,7 +229,7 @@ class DataBase:
 
     def update_park_data(self, park: any):
         '''
-        Parks added from stats do not have anything besides hunt count and 
+        Parks added from stats do not have anything besides hunt count and
         the reference. This method updates the rest of the data.
 
         :param any park: the json for a POTA park returned from POTA api
@@ -316,6 +320,13 @@ class DataBase:
             .count()
 
     def get_spot_hunted_flag(self, activator, freq: str) -> bool:
+        '''
+        Gets the flag indicating if a given spot has been hunted already today
+
+        :param str activator: activators callsign
+        :param str freq: frequency in MHz
+        :returns true if the spot has already been hunted
+        '''
         now = datetime.utcnow()
         band = get_band(freq)
         logging.debug(f"using band {band} for freq {freq}")
@@ -330,6 +341,30 @@ class DataBase:
                     sa.and_(*terms)) \
             .count() > 0
         return flag
+
+    def get_spot_hunted_bands(self, activator) -> str:
+        '''
+        Gets the string of all hunted bands, this spot has been hunted today
+
+        :param str activator: activators callsign
+        :returns list of hunted bands for today
+        '''
+        now = datetime.utcnow()
+        result = ""
+        hunted_b = []
+
+        qsos = self.session.query(Qso) \
+            .filter(Qso.call == activator,
+                    Qso.time_on > now.date()) \
+            .all()
+
+        for q in qsos:
+            band = get_band(q.freq)
+            hunted_b.append(bandNames[band.value])
+
+        result = ",".join(hunted_b)
+
+        return result
 
     def set_band_filter(self, band: Bands):
         logging.debug(f"db setting band filter to {band}")
@@ -367,8 +402,6 @@ class DataBase:
 
 if __name__ == "__main__":
     db = DataBase()
-    db.get_spot_hunted_flag('K6MRF', '7250')
-
     # db.update_spot_comments("KU8T", "K-2263")
     # comments = db.get_spot_comments()
     # print(*text, sep='\n')
