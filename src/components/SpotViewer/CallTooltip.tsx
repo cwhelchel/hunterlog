@@ -40,7 +40,7 @@ export default function CallToolTip(props: ICallToolTipProps) {
                     horizontal: 'left',
                 }}>
 
-                <span>{props.callsign}</span>
+                <span id="activatorText">{props.callsign}</span>
             </Badge>
         </Tooltip>
     );

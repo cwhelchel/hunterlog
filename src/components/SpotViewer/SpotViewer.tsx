@@ -67,11 +67,12 @@ const columns: GridColDef[] = [
                 <Badge
                     badgeContent={x.row.park_hunts}
                     color="secondary"
+                    max={999}
                     anchorOrigin={{
                         vertical: 'top',
                         horizontal: 'left',
                     }}>
-                    {x.row.reference} - {x.row.name}
+                    <span id="parkName">{x.row.reference} - {x.row.name}</span>
                 </Badge>
             )
         }
@@ -81,6 +82,22 @@ const columns: GridColDef[] = [
         valueGetter: (params: GridValueGetterParams) => {
             return `${params.row.spotter || ''}: ${params.row.comments || ''}`;
         },
+        // do this to have a popup for all spots comments
+        // renderCell: (x) => {
+        //     function onClick(e: number) {
+        //         window.pywebview.api.qsy_to(e);
+        //     };
+
+        //     let cellVal = `${x.row.spotter || ''}: ${x.row.comments || ''}`;
+
+        //     return (
+        //         <Button sx={{ width: '100px' }}
+        //             variant='contained'
+        //             onClick={() => { onClick(x.row.spotId) }}>
+        //             {cellVal}
+        //         </Button>
+        //     )
+        // }
     },
     {
         field: 'hunted', headerName: 'Hunted', width: 100,
