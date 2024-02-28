@@ -11,15 +11,14 @@ interface ISpotCommentsProps {
 };
 
 export default function HuntedCheckbox(props: ISpotCommentsProps) {
-    const [anchor, setAnchor] = React.useState<null | HTMLElement>(null);
+    const [open, setOpen] = React.useState(false);
     const [comments, setComments] = React.useState<null | SpotComments[]>(null);
-    const [useRbn, setUseRbn] = React.useState<boolean>(false);
 
     function getSpotComments(spotId: number) {
         let id = spotId;
         console.log(`getting comments for ${id}`);
         let p = window.pywebview.api.get_spot_comments(id);
-    
+
         p.then((x: string) => {
             console.log('comments json:');
             let t = JSON.parse(x) as SpotComments[];
@@ -27,17 +26,16 @@ export default function HuntedCheckbox(props: ISpotCommentsProps) {
         });
     }
 
-    
+
     function onClick(e: React.MouseEvent<HTMLElement>) {
         getSpotComments(props.spotId);
-        setAnchor(anchor ? null : e.currentTarget);
+        setOpen(true);
     };
 
     function handleClickAway(_: any) {
-        setAnchor(null);
+        setOpen(false);
     }
 
-    const open = Boolean(anchor);
     const cellVal = `${props.spotter}: ${props.comments}`;
 
     function handleChange(event: any, checked: boolean): void {
@@ -70,7 +68,15 @@ export default function HuntedCheckbox(props: ISpotCommentsProps) {
                         <FormControlLabel control={<Switch onChange={handleChange} />} label="Hide RBN" />
 
                         {comments?.map(c => {
-                            return <span>{c.spotter}: {c.comments}<br /></span>;
+                            return (<>
+                                <div className='spotCmtItem'>
+                                    <div className="spotCmtTitle">
+                                        {c.spotter} at {c.spotTime}
+                                    </div>
+                                    <div className="spotCmtText">{c.comments}</div>
+                                    <hr role='separator' className='spotSep' />
+                                </div>
+                            </>)
                         })
                         }
                     </ModalContent>
@@ -107,15 +113,17 @@ const StyledModal = styled(Modal)`
 
 const ModalContent = styled('div')(
     ({ theme }) => css`
-    font-family: Lucida Console, courier, monospace;
+    /*font-family: Roboto, Lucida Console, courier, monospace;*/
     font-size: 0.75em;
     text-align: start;
     position: relative;
     display: flex;
     flex-direction: column;
     height:500px;
+    width:25%;
     gap: 8px;
     overflow: scroll;
+    overflow-x: hidden;
     background-color: ${theme.palette.mode === 'dark' ? grey[900] : '#fff'};
     border-radius: 8px;
     border: 1px solid ${theme.palette.mode === 'dark' ? grey[700] : grey[200]};

@@ -16,3 +16,22 @@
     width: 400px;
     overflow: scroll;
 }
+
+div.spotCmtItem {
+    padding: auto;
+}
+
+div.spotCmtTitle {
+    font-weight: 600;
+}
+
+div.spotCmtText {
+    font-weight: 400;
+}
+
+.spotSep {
+    max-width: 100%;
+    height: 0;
+    max-height: 0;
+    border: 1px solid #333;
+}
