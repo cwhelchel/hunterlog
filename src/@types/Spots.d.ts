@@ -23,30 +23,3 @@ export interface SpotRow {
     park_hunts: number,
     op_hunts: number
 };
-
-// const rows = [
-//     {
-//         "spotId": 24575447,
-//         "activator": "KC4MIT",
-//         "frequency": "14244",
-//         "mode": "SSB",
-//         "reference": "K-0050",
-//         "parkName": null,
-//         "spotTime": "2024-02-12T19:10:03",
-//         "spotter": "KC4MIT",
-//         "comments": "QRT",
-//         "source": "Web",
-//         "invalid": null,
-//         "name": "Mammoth Cave National Park",
-//         "locationDesc": "US-KY",
-//         "grid4": "EM67",
-//         "grid6": "EM67we",
-//         "latitude": 37.1877,
-//         "longitude": -86.1012,
-//         "count": 52,
-//         "expire": 18,
-//         "hunted": false,
-//         "park_hunts": 0,
-//         "op_hunts": 0
-//     }
-// ]

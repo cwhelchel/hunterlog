@@ -158,8 +158,12 @@ class DataBase:
     def get_spot(self, id: int) -> Spot:
         return self.session.query(Spot).get(id)
 
-    def get_spot_comments(self) -> List[SpotComment]:
-        return self.session.query(SpotComment).all()
+    def get_spot_comments(self, activator, park: str) -> List[SpotComment]:
+        return self.session.query(SpotComment) \
+            .filter(SpotComment.activator == activator,
+                    SpotComment.park == park) \
+            .order_by(SpotComment.spotTime.desc()) \
+            .all()
 
     def get_by_mode(self, mode: str) -> List[Spot]:
         return self.session.query(Spot).filter(Spot.mode == mode).all()
@@ -181,6 +185,24 @@ class DataBase:
 
     def get_user_config(self) -> UserConfig:
         return self.session.query(UserConfig).first()
+
+    def insert_spot_comments(self,
+                             activator: str,
+                             park: str,
+                             comments: any):
+        sql = sa.text(f"DELETE FROM comments WHERE activator='{activator}' AND park='{park}' ;")  # noqa E501
+        self.session.execute(sql)
+        self.session.commit()
+
+        for x in comments:
+            x["activator"] = activator
+            x["park"] = park
+
+        # logging.debug(f"inserting {comments}")
+        ss = SpotCommentSchema(many=True)
+        to_add = ss.load(comments, session=self.session)
+        self.session.add_all(to_add)
+        self.session.commit()
 
     def update_user_config(self, json: any):
         schema = UserConfigSchema()

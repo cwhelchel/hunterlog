@@ -8,6 +8,7 @@ from db.db import DataBase
 from db.models.activators import ActivatorSchema
 from db.models.parks import ParkSchema
 from db.models.qsos import QsoSchema
+from db.models.spot_comments import SpotCommentSchema
 from db.models.spots import SpotSchema
 from db.models.user_config import UserConfigSchema
 from pota import PotaApi, PotaStats
@@ -35,6 +36,15 @@ class JsApi:
         spots = self.db.get_spots()
         ss = SpotSchema(many=True)
         return ss.dumps(spots)
+
+    def get_spot_comments(self, spot_id: int):
+        spot = self.db.get_spot(spot_id)
+        comms = self.pota.get_spot_comments(spot.activator, spot.reference)
+        self.db.insert_spot_comments(spot.activator, spot.reference, comms)
+
+        x = self.db.get_spot_comments(spot.activator, spot.reference)
+        ss = SpotCommentSchema(many=True)
+        return ss.dumps(x)
 
     def get_qso_from_spot(self, id: int):
         logging.debug('py getting qso data')

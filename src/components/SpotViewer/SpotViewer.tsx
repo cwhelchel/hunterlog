@@ -1,8 +1,6 @@
 import * as React from 'react';
 import Button from '@mui/material/Button';
-import { Badge, Tooltip } from '@mui/material';
-import CheckBoxIcon from '@mui/icons-material/CheckBox';
-import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
+import { Badge } from '@mui/material';
 import { DataGrid, GridColDef, GridValueGetterParams, GridValueFormatterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams } from '@mui/x-data-grid';
 import { GridEventListener } from '@mui/x-data-grid';
 
@@ -14,6 +12,8 @@ import { SpotRow } from '../../@types/Spots';
 
 import './SpotViewer.scss'
 import HuntedCheckbox from './HuntedCheckbox';
+import FreqButton from './FreqButton';
+import SpotComments from './SpotComments';
 
 // https://mui.com/material-ui/react-table/
 
@@ -44,24 +44,15 @@ const columns: GridColDef[] = [
     {
         field: 'frequency', headerName: 'Freq', width: 100, type: 'number',
         renderCell: (x) => {
-            function onClick(e: string, m: string) {
-                console.log("js qsy to...");
-                console.log(`param ${e} ${m}`);
-                window.pywebview.api.qsy_to(e, m);
-            };
-
             return (
-                <Button sx={{ width: '100px' }} variant='contained' onClick={() => { onClick(x.row.frequency, x.row.mode) }}>{x.row.frequency}</Button>
-            )
+                <FreqButton frequency={x.row.frequency} mode={x.row.mode} />
+            );
         }
     },
     { field: 'mode', headerName: 'Mode', width: 100 },
     { field: 'locationDesc', headerName: 'Loc', width: 100 },
     {
         field: 'reference', headerName: 'Park', width: 400,
-        // valueGetter: (params: GridValueGetterParams) => {
-        //     return `${params.row.reference || ''} - ${params.row.name || ''}`;
-        // },
         renderCell: (x) => {
             return (
                 <Badge
@@ -79,25 +70,15 @@ const columns: GridColDef[] = [
     },
     {
         field: 'spotOrig', headerName: 'Spot', width: 400,
-        valueGetter: (params: GridValueGetterParams) => {
-            return `${params.row.spotter || ''}: ${params.row.comments || ''}`;
-        },
+        // valueGetter: (params: GridValueGetterParams) => {
+        //     return `${params.row.spotter || ''}: ${params.row.comments || ''}`;
+        // },
         // do this to have a popup for all spots comments
-        // renderCell: (x) => {
-        //     function onClick(e: number) {
-        //         window.pywebview.api.qsy_to(e);
-        //     };
-
-        //     let cellVal = `${x.row.spotter || ''}: ${x.row.comments || ''}`;
-
-        //     return (
-        //         <Button sx={{ width: '100px' }}
-        //             variant='contained'
-        //             onClick={() => { onClick(x.row.spotId) }}>
-        //             {cellVal}
-        //         </Button>
-        //     )
-        // }
+        renderCell: (x) => {
+            return (
+                <SpotComments spotId={x.row.spotId} spotter={x.row.spotter} comments={x.row.comments} />
+            )
+        }
     },
     {
         field: 'hunted', headerName: 'Hunted', width: 100,
