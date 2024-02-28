@@ -8,10 +8,12 @@ import TextField from '@mui/material/TextField';
 
 const def: UserConfig = {
     my_call: 'W1AW',
-    my_grid6: 'EM82dl',
+    my_grid6: 'FN31pr',
     default_pwr: 0,
     flr_host: '127.0.0.1',
-    flr_port: 12345
+    flr_port: 12345,
+    adif_host: '127.0.0.1',
+    adif_port: 12345
 };
 
 export default function ConfigModal() {
@@ -79,6 +81,16 @@ export default function ConfigModal() {
                             setConfig({ ...config, flr_host: e.target.value });
                         }} />
                     <TextField id="flr_port" label="FLRIG Port (number)"
+                        value={config?.flr_port}
+                        onChange={(e) => {
+                            setConfig({ ...config, flr_port: Number.parseInt(e.target.value) });
+                        }} />
+                    <TextField id="adif_host" label="Remote ADIF Host (IP)"
+                        value={config?.flr_host}
+                        onChange={(e) => {
+                            setConfig({ ...config, flr_host: e.target.value });
+                        }} />
+                    <TextField id="adif_port" label="Remote ADIF Port (number)"
                         value={config?.flr_port}
                         onChange={(e) => {
                             setConfig({ ...config, flr_port: Number.parseInt(e.target.value) });

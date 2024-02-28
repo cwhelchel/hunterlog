@@ -93,8 +93,13 @@ class DataBase:
         if current is None:
             cs = UserConfigSchema()
             logging.debug("creating default user config...")
-            s = {'my_call': "N9FZ", 'my_grid6': 'EM82dl', 'default_pwr': 20,
-                 'flr_host': "127.0.0.1", 'flr_port': 12345}
+            s = {'my_call': "W1AW",
+                 'my_grid6': 'FN31pr',
+                 'default_pwr': 1500,
+                 'flr_host': "127.0.0.1",
+                 'flr_port': 12345,
+                 'adif_host': "127.0.0.1",
+                 'adif_port': 12345}
             default_config = cs.load(s, session=self.session)
             self.session.add(default_config)
             self.session.commit()
