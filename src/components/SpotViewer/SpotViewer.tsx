@@ -164,7 +164,7 @@ export default function SpotViewer() {
         const interval: any = setInterval(() => {
             const x = time - 1;
             if (x < 0) {
-                console.log('getting spots...');
+                console.log('tmr tick: getting spots...');
                 getSpots();
                 return setTime(30);
             }
@@ -184,7 +184,6 @@ export default function SpotViewer() {
         event,   // MuiEvent<React.MouseEvent<HTMLElement>>
         details, // GridCallbackDetails
     ) => {
-        console.log('row click');
         getQsoData(params.row.spotId)
     };
 

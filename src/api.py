@@ -5,16 +5,17 @@ import datetime
 from datetime import timedelta
 
 from db.db import DataBase
-from db.models.activators import ActivatorSchema
+from db.models.activators import Activator, ActivatorSchema
 from db.models.parks import ParkSchema
 from db.models.qsos import QsoSchema
 from db.models.spot_comments import SpotCommentSchema
 from db.models.spots import SpotSchema
 from db.models.user_config import UserConfigSchema
 from pota import PotaApi, PotaStats
-from log import AdifLog
+from utils import AdifLog
 
 from cat import CAT
+from utils.distance import Distance
 
 logging = L.getLogger("api")
 # IDTOKENPAT = r"^.*CognitoIdentityServiceProvider\..+\.idToken=([\w\.-]*\;)"
@@ -27,14 +28,12 @@ class JsApi:
         self.pota_stats = stats
         self.adif_log = AdifLog()
         logging.debug("init CAT...")
-        self.cat = CAT("flrig", "127.0.0.1", 12345)
+        cfg = self.db.get_user_config()
+        self.cat = CAT("flrig", cfg.flr_host, cfg.flr_port)
         self.pw = None
 
     def get_spots(self):
         logging.debug('py getting spots')
-        # if self.band_filter != Bands.NOBAND:
-        #     spots = self.db.get_by_band(band=self.band_filter)
-        # else:
         spots = self.db.get_spots()
         ss = SpotSchema(many=True)
         return ss.dumps(spots)
@@ -53,29 +52,21 @@ class JsApi:
         q = self.db.build_qso_from_spot(id)
         if q is None:
             return {"success": False}
+
+        cfg = self.db.get_user_config()
+        d = Distance.distance_miles(cfg.my_grid6, q.gridsquare)
+        q.distance = d
         qs = QsoSchema()
         return qs.dumps(q)
 
     def get_activator_stats(self, callsign):
         logging.debug("getting activator stats...")
-
-        def update():
-            id = self.update_activator_stats(callsign)
-            if id > 0:
-                activator = self.db.get_activator_by_id(id)
-                s = ActivatorSchema()
-                return s.dumps(activator)
-
-        ac = self.db.get_activator(callsign)
-        if (ac is None):
-            # not found pull new data
-            return update()
-        else:
-            # check timestamp
-            if (datetime.datetime.utcnow() - ac.updated < timedelta(days=1)):
-                return update()
-
+        ac = self._get_activator(callsign)
         return ActivatorSchema().dumps(ac)
+
+    def get_activator_hunts(self, callsign):
+        logging.debug("getting hunt count stats...")
+        return self.db.get_activator_hunts(callsign)
 
     def get_park(self, ref: str) -> str:
         '''
@@ -115,8 +106,11 @@ class JsApi:
         j = self.pota.get_spots()
         self.db.update_all_spots(j)
 
+        # get the data to log to the adif file and remote adif host
         qso = self.db.get_qso(id)
         cfg = self.db.get_user_config()
+        act = self.db.get_activator_name(qso_data['call'])
+        qso.name = act
         self.adif_log.log_qso(qso, cfg)
 
         webview.windows[0].evaluate_js(
@@ -224,24 +218,25 @@ class JsApi:
         except Exception as err:
             logging.warn("send_msg exception:", err)
 
-    def _get_adif(self) -> str:
-        pass
-        # qso = (
-        #     f"<BAND:{len(self.band_field.text())}>{self.band_field.text()}\n"
-        #     f"<CALL:{len(self.activator_call.text())}>{self.activator_call.text()}\n"
-        #     f"<COMMENT:{len(self.comments.document().toPlainText())}>{self.comments.document().toPlainText()}\n"
-        #     "<SIG:4>POTA\n"
-        #     f"<SIG_INFO:{len(self.park_designator.text())}>{self.park_designator.text()}\n"
-        #     f"<DISTANCE:{len(self.park_distance.text())}>{self.park_distance.text()}\n"
-        #     f"<GRIDSQUARE:{len(self.park_grid.text())}>{self.park_grid.text()}\n"
-        #     f"<MODE:{len(self.mode_field.text())}>{self.mode_field.text()}\n"
-        #     f"<NAME:{len(self.activator_name.text())}>{self.activator_name.text()}\n"
-        #     f"<OPERATOR:{len(self.mycall_field.text())}>{self.mycall_field.text()}\n"
-        #     f"<RST_RCVD:{len(self.rst_recieved.text())}>{self.rst_recieved.text()}\n"
-        #     f"<RST_SENT:{len(self.rst_sent.text())}>{self.rst_sent.text()}\n"
-        #     f"<STATE:{len(self.park_state.text())}>{self.park_state.text()}\n"
-        #     f"<FREQ:{len(freq)}>{freq}\n"
-        #     f"<QSO_DATE:{len(self.date_field.text())}>{self.date_field.text()}\n"
-        #     f"<TIME_ON:{len(self.time_field.text())}>{self.time_field.text()}\n"
-        #     f"<MY_GRIDSQUARE:{len(self.mygrid_field.text())}>{self.mygrid_field.text()}\n"
-        #     "<EOR>\n"
+    def _get_activator(self, callsign: str) -> Activator:
+        ''''
+        Gets the activator model from the db or pulls the data to create a
+        new one or update and old one.
+        '''
+        def update():
+            logging.info("activator needs update from POTA API...")
+            id = self.update_activator_stats(callsign)
+            if id > 0:
+                activator = self.db.get_activator_by_id(id)
+                return activator
+
+        ac = self.db.get_activator(callsign)
+        if (ac is None):
+            # not found pull new data
+            return update()
+        else:
+            # check timestamp
+            if (datetime.datetime.utcnow() - ac.updated < timedelta(days=1)):
+                return update()
+
+        return ac

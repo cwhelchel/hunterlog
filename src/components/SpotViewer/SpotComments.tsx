@@ -14,18 +14,19 @@ export default function HuntedCheckbox(props: ISpotCommentsProps) {
     const [open, setOpen] = React.useState(false);
     const [comments, setComments] = React.useState<null | SpotComments[]>(null);
 
+    const cellVal = `${props.spotter}: ${props.comments}`;
+
     function getSpotComments(spotId: number) {
         let id = spotId;
-        console.log(`getting comments for ${id}`);
+        //console.log(`getting comments for ${id}`);
         let p = window.pywebview.api.get_spot_comments(id);
 
         p.then((x: string) => {
-            console.log('comments json:');
+            //console.log('comments json:');
             let t = JSON.parse(x) as SpotComments[];
             setComments(t);
         });
     }
-
 
     function onClick(e: React.MouseEvent<HTMLElement>) {
         getSpotComments(props.spotId);
@@ -35,8 +36,6 @@ export default function HuntedCheckbox(props: ISpotCommentsProps) {
     function handleClickAway(_: any) {
         setOpen(false);
     }
-
-    const cellVal = `${props.spotter}: ${props.comments}`;
 
     function handleChange(event: any, checked: boolean): void {
         console.log(checked);
@@ -69,7 +68,7 @@ export default function HuntedCheckbox(props: ISpotCommentsProps) {
 
                         {comments?.map(c => {
                             return (<>
-                                <div className='spotCmtItem'>
+                                <div className={getClassName(c.source)}>
                                     <div className="spotCmtTitle">
                                         {c.spotter} at {c.spotTime}
                                     </div>
@@ -85,6 +84,13 @@ export default function HuntedCheckbox(props: ISpotCommentsProps) {
         </div >
 
     );
+
+    function getClassName(source: string): string {
+        if (source === 'RBN')
+            return 'spotCmtItemRbn';
+
+        return 'spotCmtItem';
+    }
 }
 
 // stolen from MUI base-ui docs: 

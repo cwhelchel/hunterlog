@@ -27,7 +27,7 @@ export default function ConfigModal() {
             let x = window.pywebview.api.get_user_config();
             x.then((r: string) => {
                 if (r == null) return;
-                console.log(`got config ${r}`);
+                //console.log(`got config ${r}`);
                 var cfg = JSON.parse(r) as UserConfig;
                 setConfig(cfg);
             });

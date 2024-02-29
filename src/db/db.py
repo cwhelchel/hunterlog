@@ -97,7 +97,7 @@ class DataBase:
             self.session.add(to_add)
             x = to_add
         else:
-            logging.debug(f"updating activator {x.activator_id}")
+            # logging.debug(f"updating activator {x.activator_id}")
             schema.load(activator_stat_json, session=self.session, instance=x)
 
         self.session.commit()
@@ -132,12 +132,24 @@ class DataBase:
         return x
 
     def get_activator(self, callsign: str) -> Activator:
+        basecall = self._get_basecall(callsign)
+
         return self.session.query(Activator) \
+            .filter(Activator.callsign == basecall) \
+            .first()
+
+    def get_activator_name(self, callsign: str) -> str:
+        return self.session.query(Activator.name) \
             .filter(Activator.callsign == callsign) \
             .first()
 
     def get_activator_by_id(self, id: int) -> Activator:
         return self.session.query(Activator).get(id)
+
+    def get_activator_hunts(self, callsign: str) -> int:
+        return self.session.query(Qso) \
+            .filter(Qso.call == callsign) \
+            .count()
 
     def get_user_config(self) -> UserConfig:
         return self.session.query(UserConfig).first()
@@ -171,9 +183,14 @@ class DataBase:
 
     def build_qso_from_spot(self, spot_id: int) -> Qso:
         s = self.get_spot(spot_id)
+        if (s is None):
+            q = Qso()
+            q.comment = "Error no spot"
+            return q
+        a = self.get_activator(s.activator)
         if s is not None:
             q = Qso()
-            q.init_from_spot(s)
+            q.init_from_spot(s, a.name)
             return q
 
     def log_qso(self, qso: any) -> int:
@@ -281,7 +298,7 @@ class DataBase:
             to_add = Park()
             to_add.reference = park['reference']
             to_add.hunts = hunts
-            logging.debug(to_add)
+            # logging.debug(to_add)
             self.session.add(to_add)
             obj = to_add
         else:
@@ -383,6 +400,15 @@ class DataBase:
             return []
         terms = [Spot.locationDesc.startswith(region)]
         return terms
+    
+    def _get_basecall(self, callsign: str) -> str:
+        if "/" in callsign:
+            basecall = max(
+                callsign.split("/")[0], callsign.split("/")[1],
+                key=len)
+        else:
+            basecall = callsign
+        return basecall
 
 
 if __name__ == "__main__":

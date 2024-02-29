@@ -64,13 +64,13 @@ export default function Leaflet(props: ILeafletProps) {
                 });
         }
 
-        console.log(contextData.qso?.sig_info);
+        //console.log(contextData.qso?.sig_info);
         const park = contextData.qso?.sig_info;
 
         if (park) {
             let j = window.pywebview.api.get_park(park);
             j.then((parkJson: string) => {
-                console.log(parkJson);
+                //console.log(parkJson);
 
                 if (parkJson == null) {
                     // db does not have the goods. lets ask POTA.APP
@@ -83,6 +83,7 @@ export default function Leaflet(props: ILeafletProps) {
                     // the park could have been added via stat parsing from
                     // hunter_parks.csv and have no lat lon
                     if (p.latitude == null || p.longitude == null) {
+                        console.log(`invalid lat/lon for ${p}. pulling from POTA api`);
                         getFromPotaApi(park);
                     } else {
                         console.log(`park in db ${p}`);

@@ -25,7 +25,8 @@ let defaultQso: Qso = {
     rx_pwr: 0,
     gridsquare: "",
     sig: "",
-    sig_info: ""
+    sig_info: "",
+    distance: 0
 }
 
 
@@ -42,6 +43,7 @@ export default function QsoEntry() {
         qso.comment = `[POTA ${qso.sig_info} todo add more] ` + qso.comment;
         qso.time_on = (qsoTime) ? qsoTime.toISOString() : dayjs().toISOString();
         window.pywebview.api.log_qso(qso);
+        setQso(defaultQso);
     }
 
     function updateQsoEntry() {
@@ -60,43 +62,66 @@ export default function QsoEntry() {
         updateQsoEntry();
     }, [contextData.qso]);
 
+    const textFieldStyle = { style: { fontSize: 14 } };
+
     return (
         <div className="qso-container">
             <Grid container
-                spacing={{ xs: 1, md: 3 }}
-                m={2}>
-                <Grid item xs={3}>
+                spacing={{ xs: 1, md: 2 }}
+                m={1}
+                >
+                <Grid item xs={2}>
                     <TextField id="callsign" label="Callsign"
                         value={qso.call}
+                        inputProps={textFieldStyle}
                         onChange={(e) => {
                             setQso({ ...qso, call: e.target.value });
                         }} />
                 </Grid>
-                <Grid item xs={3}>
-
-                    <TextField id="mode" label="Mode"
-                        value={qso.mode}
-                        onChange={(e) => {
-                            setQso({ ...qso, mode: e.target.value });
-                        }} />
-                </Grid>
-                <Grid item xs={3}>
+                <Grid item xs={2}>
                     <TextField id="freq" label="Frequency"
                         value={qso.freq}
+                        inputProps={textFieldStyle}
                         onChange={(e) => {
                             setQso({ ...qso, freq: e.target.value });
                         }} />
                 </Grid>
-                <Grid item xs={3}>
+                <Grid item xs={2}>
+                    <TextField id="mode" label="Mode"
+                        value={qso.mode}
+                        inputProps={textFieldStyle}
+                        onChange={(e) => {
+                            setQso({ ...qso, mode: e.target.value });
+                        }} />
+                </Grid>
+                <Grid item xs={2}>
+                    <TextField id="rstSent" label="RST Sent"
+                        value={qso.rst_sent}
+                        inputProps={textFieldStyle}
+                        onChange={(e) => {
+                            setQso({ ...qso, rst_sent: e.target.value });
+                        }} />
+                </Grid>
+                <Grid item xs={2}>
+                    <TextField id="rstRecv" label="RST Recv"
+                        value={qso.rst_recv}
+                        inputProps={textFieldStyle}
+                        onChange={(e) => {
+                            setQso({ ...qso, rst_recv: e.target.value });
+                        }} />
+                </Grid>
+                <Grid item xs={2}>
                     <TextField id="park" label="Park"
                         value={qso.sig_info}
+                        inputProps={textFieldStyle}
                         onChange={(e) => {
                             setQso({ ...qso, sig_info: e.target.value });
                         }} />
                 </Grid>
-                <Grid item xs={3}>
+                <Grid item xs={2}>
                     <TextField id="grid" label="Grid"
                         value={qso.gridsquare}
+                        inputProps={textFieldStyle}
                         onChange={(e) => {
                             setQso({ ...qso, gridsquare: e.target.value });
                         }} />
@@ -104,14 +129,19 @@ export default function QsoEntry() {
                 <Grid item xs={4}>
                     <QsoTimeEntry qsoTime={qsoTime} setQsoTime={setQsoTime} />
                 </Grid>
-                <Grid item xs={3}>
+                <Grid item xs={6}>
                     <TextField id="comments" label="Comments"
                         value={qso.comment}
+                        inputProps={textFieldStyle}
                         onChange={(e) => {
                             setQso({ ...qso, comment: e.target.value });
                         }} />
                 </Grid>
             </Grid>
+
+            <div className='qsoMetaData'>
+                <span>Distance: {qso.distance}</span>
+            </div>
 
             <Button variant="outlined" onClick={(e) => handleLogQsoClick(e)}
                 sx={{ 'm': 1, }} >

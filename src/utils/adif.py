@@ -34,8 +34,8 @@ class AdifLog():
 
                 f.write("HUNTER LOG backup log\n")
                 f.write(f"Created {datetime.datetime.now()}\n")
-                f.write(pid + "\n")
-                f.write(v + "\n")
+                f.write(pid)
+                f.write(v)
                 f.write("<EOH>\n")
 
     def _send_msg(self, msg: str, host: str, port: int):
@@ -58,8 +58,8 @@ class AdifLog():
     def _get_adif(self, qso: Qso, config: UserConfig) -> str:
         band_name = bands.get_band_name(qso.freq)
 
+        # todo:
         # self._get_adif_field("distance", qso.sig_info) +
-        # self._get_adif_field("name", qso.activator_name) +
         # self._get_adif_field("STATE", qso.park_state) +
 
         # silly but w/e
@@ -70,10 +70,12 @@ class AdifLog():
 
         adif = self._get_adif_field("band", band_name) + \
             self._get_adif_field("call", qso.call) + \
+            self._get_adif_field("name", qso.name) + \
             self._get_adif_field("comment", qso.comment) + \
             self._get_adif_field("sig", qso.sig) + \
             self._get_adif_field("sig_info", qso.sig_info) + \
             self._get_adif_field("gridsquare", qso.gridsquare) + \
+            self._get_adif_field("distance", str(qso.distance)) + \
             self._get_adif_field("mode", qso.mode) + \
             self._get_adif_field("operator", config.my_call) + \
             self._get_adif_field("rst_rcvd", qso.rst_recv) + \
@@ -85,23 +87,3 @@ class AdifLog():
             "<EOR>\n"
 
         return adif
-
-        # qso = (
-        #     f"<BAND:{len(self.band_field.text())}>{self.band_field.text()}\n"
-        #     f"<CALL:{len(self.activator_call.text())}>{self.activator_call.text()}\n"
-        #     f"<COMMENT:{len(self.comments.document().toPlainText())}>{self.comments.document().toPlainText()}\n"
-        #     "<SIG:4>POTA\n"
-        #     f"<SIG_INFO:{len(self.park_designator.text())}>{self.park_designator.text()}\n"
-        #     f"<DISTANCE:{len(self.park_distance.text())}>{self.park_distance.text()}\n"
-        #     f"<GRIDSQUARE:{len(self.park_grid.text())}>{self.park_grid.text()}\n"
-        #     f"<MODE:{len(self.mode_field.text())}>{self.mode_field.text()}\n"
-        #     f"<NAME:{len(self.activator_name.text())}>{self.activator_name.text()}\n"
-        #     f"<OPERATOR:{len(self.mycall_field.text())}>{self.mycall_field.text()}\n"
-        #     f"<RST_RCVD:{len(self.rst_recieved.text())}>{self.rst_recieved.text()}\n"
-        #     f"<RST_SENT:{len(self.rst_sent.text())}>{self.rst_sent.text()}\n"
-        #     f"<STATE:{len(self.park_state.text())}>{self.park_state.text()}\n"
-        #     f"<FREQ:{len(freq)}>{freq}\n"
-        #     f"<QSO_DATE:{len(self.date_field.text())}>{self.date_field.text()}\n"
-        #     f"<TIME_ON:{len(self.time_field.text())}>{self.time_field.text()}\n"
-        #     f"<MY_GRIDSQUARE:{len(self.mygrid_field.text())}>{self.mygrid_field.text()}\n"
-        #     "<EOR>\n"

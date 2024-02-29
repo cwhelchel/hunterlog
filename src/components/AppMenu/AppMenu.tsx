@@ -37,7 +37,7 @@ export default function AppMenu() {
     }, []);
 
     function getGravatarUrl(md5: string) {
-        console.log(md5);
+        //console.log(md5);
         return `https://gravatar.com/avatar/${md5}?d=identicon`;
     }
 

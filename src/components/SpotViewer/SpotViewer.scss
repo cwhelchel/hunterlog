@@ -17,8 +17,16 @@
     overflow: scroll;
 }
 
+// normal web spots
 div.spotCmtItem {
     padding: auto;
+    font-size: 0.90rem;
+}
+
+div.spotCmtItemRbn {
+    padding: auto;
+    font-size: 0.75rem;
+    color: #555;
 }
 
 div.spotCmtTitle {

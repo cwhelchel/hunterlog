@@ -12,6 +12,7 @@ export interface Qso {
     tx_pwr: number;
     rx_pwr: number;
     gridsquare: string;
+    distance: number;
     sig: string;
     sig_info: string;
 }

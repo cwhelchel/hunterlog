@@ -1,1 +1,0 @@
-from .adif import AdifLog
