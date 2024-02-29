@@ -39,6 +39,7 @@ export default function QsoEntry() {
     ) {
         console.log("logging qso...");
 
+        qso.comment = `[POTA ${qso.sig_info} todo add more] ` + qso.comment;
         qso.time_on = (qsoTime) ? qsoTime.toISOString() : dayjs().toISOString();
         window.pywebview.api.log_qso(qso);
     }
@@ -102,6 +103,13 @@ export default function QsoEntry() {
                 </Grid>
                 <Grid item xs={4}>
                     <QsoTimeEntry qsoTime={qsoTime} setQsoTime={setQsoTime} />
+                </Grid>
+                <Grid item xs={3}>
+                    <TextField id="comments" label="Comments"
+                        value={qso.comment}
+                        onChange={(e) => {
+                            setQso({ ...qso, comment: e.target.value });
+                        }} />
                 </Grid>
             </Grid>
 

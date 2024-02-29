@@ -12,6 +12,7 @@ from db.models.spot_comments import SpotCommentSchema
 from db.models.spots import SpotSchema
 from db.models.user_config import UserConfigSchema
 from pota import PotaApi, PotaStats
+from log import AdifLog
 
 from cat import CAT
 
@@ -24,6 +25,7 @@ class JsApi:
         self.db = the_db
         self.pota = pota_api
         self.pota_stats = stats
+        self.adif_log = AdifLog()
         logging.debug("init CAT...")
         self.cat = CAT("flrig", "127.0.0.1", 12345)
         self.pw = None
@@ -108,10 +110,14 @@ class JsApi:
         self.db.inc_park_hunt(park_json)
 
         logging.debug(f"logging qso: {qso_data}")
-        self.db.log_qso(qso_data)
+        id = self.db.log_qso(qso_data)
 
         j = self.pota.get_spots()
         self.db.update_all_spots(j)
+
+        qso = self.db.get_qso(id)
+        cfg = self.db.get_user_config()
+        self.adif_log.log_qso(qso, cfg)
 
         webview.windows[0].evaluate_js(
             'window.pywebview.state.getSpots()')

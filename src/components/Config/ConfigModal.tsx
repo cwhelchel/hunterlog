@@ -86,14 +86,14 @@ export default function ConfigModal() {
                             setConfig({ ...config, flr_port: Number.parseInt(e.target.value) });
                         }} />
                     <TextField id="adif_host" label="Remote ADIF Host (IP)"
-                        value={config?.flr_host}
+                        value={config?.adif_host}
                         onChange={(e) => {
-                            setConfig({ ...config, flr_host: e.target.value });
+                            setConfig({ ...config, adif_host: e.target.value });
                         }} />
                     <TextField id="adif_port" label="Remote ADIF Port (number)"
-                        value={config?.flr_port}
+                        value={config?.adif_port}
                         onChange={(e) => {
-                            setConfig({ ...config, flr_port: Number.parseInt(e.target.value) });
+                            setConfig({ ...config, adif_port: Number.parseInt(e.target.value) });
                         }} />
                     <Button onClick={handleSave}>Save</Button>
                     <Button onClick={handleClose}>Cancel</Button>
