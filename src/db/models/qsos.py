@@ -1,3 +1,4 @@
+import datetime
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
@@ -58,6 +59,50 @@ class Qso(Base):
             return "+00"
 
         return ""
+
+    def init_from_adif(self, adif: dict):
+        '''
+        Init the fields from dictionary of ADIF files. see adif-io in utils
+
+        There's a lot we don't import, namely any MY_ fields or Operator data.
+        It's assumed to be the configured user is the my part of this.
+        '''
+        f = float(adif['FREQ'] if 'FREQ' in adif.keys() else '-1.0')
+        fs = str(f * 1000) if f >= 0 else ''
+        qd = datetime.datetime(
+            int(adif['QSO_DATE'][:4]),
+            int(adif['QSO_DATE'][4:6]),
+            int(adif['QSO_DATE'][6:]))
+
+        qt = datetime.datetime(
+            int(adif['QSO_DATE'][:4]),
+            int(adif['QSO_DATE'][4:6]),
+            int(adif['QSO_DATE'][6:]),
+            int(adif['TIME_ON'][:2]),
+            int(adif['TIME_ON'][2:4]),
+            int(adif['TIME_ON'][4:]))
+
+        self.call = adif['CALL']
+        self.name = adif['NAME'] if 'NAME' in adif.keys() else ''
+        self.state = adif['STATE'] if 'STATE' in adif.keys() else ''
+        self.rst_sent = adif['RST_SENT']
+        self.rst_recv = adif['RST_RCVD']
+        self.freq = fs
+        self.freq_rx = fs
+        self.mode = adif['MODE']
+        self.comment = adif['COMMENT'] if 'COMMENT' in adif.keys() else ''
+        self.qso_date = qd
+        self.time_on = qt
+        self.gridsquare = adif['GRIDSQUARE'] if 'GRIDSQUARE' in adif.keys() else ''  # noqa: E501
+        self.sig_info = adif['SIG_INFO']
+        # if we're importing from adif we may have a SIG_INFO with no SIG if so
+        # go ahead and fix it (the checks look for valid pota park format in)
+        self.sig = adif['SIG'] if 'SIG' in adif.keys() else 'POTA'
+        self.tx_pwr = adif['TX_PWR'] if 'TX_PWR' in adif.keys() else ''
+
+        self.from_app = False
+        self.cnfm_hunt = True
+        # print(self)
 
     def __repr__(self):
         return "<qso({self.qso_id!r}:{self.call!r} on {self.qso_date!r})>" \

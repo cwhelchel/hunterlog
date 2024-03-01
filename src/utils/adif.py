@@ -4,7 +4,10 @@ import logging as L
 import os
 import socket
 import bands
+import adif_io
+import re
 
+from db.db import DataBase
 from db.models.qsos import Qso
 from db.models.user_config import UserConfig
 from version import __version__
@@ -25,6 +28,30 @@ class AdifLog():
     def write_adif_log(self, adif):
         with open(BACKUP_LOG_FN, "a", encoding='UTF-8') as file:
             file.write(adif + "\n")
+
+    def import_from_log(self, file_name: str, the_db: DataBase):
+        logging.info(f"importing adif from {file_name}")
+        pattern = r'([A-Z]+-[0-9]*)'
+        if os.path.exists(file_name):
+            qsos, header = adif_io.read_from_file(file_name)
+            logging.debug(f"adif hdr {header}")
+            for qso in qsos:
+                q = Qso()
+                sig_check = ('SIG' in qso.keys() and qso['SIG'] == 'POTA')
+                sig_info_check = ('SIG_INFO' in qso.keys()
+                                  and re.match(pattern, qso["SIG_INFO"]))
+                if (sig_check or sig_info_check):
+                    if not sig_info_check: 
+                        # we got pota sig but no sig_info
+                        # check the comments
+                        if 'COMMENT' in qso.keys():
+                            m = re.findall(pattern, qso['COMMENT'])
+                            sig_info = m[0]
+                            qso['SIG_INFO'] = sig_info
+                    q.init_from_adif(qso)
+                    the_db.insert_qso(q)
+
+            the_db.commit_session()
 
     def _init_adif_log(self):
         if not os.path.exists(BACKUP_LOG_FN):

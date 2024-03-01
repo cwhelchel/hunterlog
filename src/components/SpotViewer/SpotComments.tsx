@@ -38,8 +38,6 @@ export default function HuntedCheckbox(props: ISpotCommentsProps) {
     }
 
     function handleChange(event: any, checked: boolean): void {
-        console.log(checked);
-
         if (comments == null)
             return;
 

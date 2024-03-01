@@ -89,6 +89,23 @@ class JsApi:
         cfg = self.db.get_user_config()
         return UserConfigSchema().dumps(cfg)
 
+    def import_adif(self):
+        '''
+        Opens a Open File Dialog to allow the user to select a ADIF file
+        containing POTA QSOs to be imported into the app's database.
+        '''
+        ft = ('ADIF files (*.adi;*.adif)', 'All files (*.*)')
+        filename = webview.windows[0] \
+            .create_file_dialog(
+                webview.OPEN_DIALOG,
+            file_types=ft)
+        if not filename:
+            return
+
+        logging.info("starting import of ADIF file...")
+        adif = AdifLog()
+        adif.import_from_log(filename[0], self.db)
+
     def log_qso(self, qso_data):
         '''
         Logs the QSO to the database, adif file, and updates stats. Will force

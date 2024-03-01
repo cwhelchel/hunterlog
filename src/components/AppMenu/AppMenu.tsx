@@ -9,6 +9,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import { useAppContext } from '../AppContext';
 import ConfigModal from '../Config/ConfigModal';
 import { UpdateStats } from '../Stats/UpdateStats';
+import { ImportAdif } from '../Stats/ImportAdif';
 import { UserConfig } from '../../@types/Config';
 import { ActivatorData } from '../../@types/ActivatorTypes';
 import { Avatar } from '@mui/material';
@@ -53,6 +54,7 @@ export default function AppMenu() {
                     </Typography>
                     <ConfigModal />
                     <UpdateStats />
+                    <ImportAdif />
                 </Toolbar>
             </AppBar>
         </Box>

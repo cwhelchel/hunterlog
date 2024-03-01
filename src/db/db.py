@@ -157,6 +157,11 @@ class DataBase:
     def get_qso(self, id: int) -> Qso:
         return self.session.query(Qso).get(id)
 
+    def insert_qso(self, qso: Qso, delay_commit: bool = True):
+        self.session.add(qso)
+        if not delay_commit:
+            self.session.commit()
+
     def insert_spot_comments(self,
                              activator: str,
                              park: str,
@@ -164,6 +169,9 @@ class DataBase:
         sql = sa.text(f"DELETE FROM comments WHERE activator='{activator}' AND park='{park}' ;")  # noqa E501
         self.session.execute(sql)
         self.session.commit()
+
+        if comments is None:
+            return
 
         for x in comments:
             x["activator"] = activator
@@ -400,8 +408,11 @@ class DataBase:
             return []
         terms = [Spot.locationDesc.startswith(region)]
         return terms
-    
+
     def _get_basecall(self, callsign: str) -> str:
+        if callsign is None:
+            return ""
+
         if "/" in callsign:
             basecall = max(
                 callsign.split("/")[0], callsign.split("/")[1],
