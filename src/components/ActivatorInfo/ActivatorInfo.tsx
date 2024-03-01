@@ -41,12 +41,16 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
     const [huntCount, setHuntCount] = React.useState(0);
 
     React.useEffect(() => {
-        const actCall = contextData?.qso?.call;
-
         if (window.pywebview === undefined) {
             return;
         }
-
+        
+        if (contextData.qso == null) {
+            setActivator(defaultActData);
+            return;
+        }
+        
+        const actCall = contextData?.qso?.call;
         const q = window.pywebview.api.get_activator_stats(actCall);
 
         q.then((r: string) => {

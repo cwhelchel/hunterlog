@@ -3,6 +3,7 @@ import { AppContextType, ContextData } from '../@types/ContextTypes';
 
 const defData: ContextData = {
     qso: null,
+    park: null,
     filter: {
         items: [{
             field: 'mode',
@@ -26,7 +27,8 @@ export const AppContextProvider = ({ children }) => {
             filter: ctx.filter,
             bandFilter: ctx.bandFilter,
             regions: ctx.regions,
-            regionFilter: ctx.regionFilter
+            regionFilter: ctx.regionFilter,
+            park: ctx.park
         }
         setContextData(newContext);
     };

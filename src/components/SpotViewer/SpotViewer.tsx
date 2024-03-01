@@ -14,6 +14,7 @@ import './SpotViewer.scss'
 import HuntedCheckbox from './HuntedCheckbox';
 import FreqButton from './FreqButton';
 import SpotComments from './SpotComments';
+import { Park } from '../../@types/Parks';
 
 // https://mui.com/material-ui/react-table/
 
@@ -133,10 +134,18 @@ export default function SpotViewer() {
             if (r['success'] == false)
                 return;
             var x = JSON.parse(r) as Qso;
-            //console.log(x);
             const newCtxData = { ...contextData };
+
             newCtxData.qso = x;
-            setData(newCtxData);
+
+            window.pywebview.api.get_park(x.sig_info)
+                .then((r: string) => {
+                    //console.log(`spotviewer: got park (raw) ${r}`);
+                    let p = JSON.parse(r) as Park;
+                    //console.log(`spotviewer: setting park ${p}`);
+                    newCtxData.park = p;
+                    setData(newCtxData);
+                });
         });
     }
 
@@ -184,7 +193,7 @@ export default function SpotViewer() {
         event,   // MuiEvent<React.MouseEvent<HTMLElement>>
         details, // GridCallbackDetails
     ) => {
-        getQsoData(params.row.spotId)
+        getQsoData(params.row.spotId);
     };
 
     function setFilterModel(e: GridFilterModel) {

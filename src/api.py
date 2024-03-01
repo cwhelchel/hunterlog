@@ -68,17 +68,37 @@ class JsApi:
         logging.debug("getting hunt count stats...")
         return self.db.get_activator_hunts(callsign)
 
-    def get_park(self, ref: str) -> str:
+    def get_park(self, ref: str, pull_from_pota: bool = True) -> str:
         '''
         Returns the JSON for the park if found in the db
 
         :param str ref: the POTA park reference designator string
+        :param bool pull_from_pota: True (default) to try to update when a park
+            is not in the db.
 
         :returns JSON of park object in db or None if not found
         '''
+        if ref is None:
+            logging.debug("get_park: ref param was None")
+            return
+
+        logging.debug(f"get_park: getting park {ref}")
+
         park = self.db.get_park(ref)
-        if park is None:
-            return None
+
+        if park is None and pull_from_pota:
+            logging.debug(f"get_park: park was None {ref}")
+            api_res = self.pota.get_park(ref)
+            logging.debug(f"get_park: park from api {api_res}")
+            self.db.update_park_data(api_res)
+            park = self.db.get_park(ref)
+        elif park.name is None:
+            logging.debug(f"get_park: park Name was None {ref}")
+            api_res = self.pota.get_park(ref)
+            logging.debug(f"get_park: park from api {api_res}")
+            self.db.update_park_data(api_res)
+            park = self.db.get_park(ref)
+
         ps = ParkSchema()
         return ps.dumps(park)
 
@@ -88,7 +108,7 @@ class JsApi:
         '''
         cfg = self.db.get_user_config()
         return UserConfigSchema().dumps(cfg)
-    
+
     def get_version_num(self):
         return __version__
 
@@ -130,7 +150,7 @@ class JsApi:
         qso = self.db.get_qso(id)
         cfg = self.db.get_user_config()
         act = self.db.get_activator_name(qso_data['call'])
-        qso.name = act
+        qso.name = act if act is not None else 'ERROR NONAME'
         self.adif_log.log_qso(qso, cfg)
 
         webview.windows[0].evaluate_js(
@@ -204,10 +224,6 @@ class JsApi:
         logging.debug(f"adjusted mode {mode}")
         self.cat.set_mode(mode)
         self.cat.set_vfo(x)
-
-    def update_park(self, park: any):
-        '''The UI will only try to update parks when they're clicked on.'''
-        self.db.update_park_data(park)
 
     def update_park_hunts(self):
         '''

@@ -27,27 +27,40 @@ let defaultQso: Qso = {
     gridsquare: "",
     sig: "",
     sig_info: "",
-    distance: 0
+    distance: 0,
+    name: '',
+    state: ''
 }
 
 
 export default function QsoEntry() {
     const [qso, setQso] = React.useState(defaultQso);
     const [qsoTime, setQsoTime] = React.useState<Dayjs>(dayjs('2022-04-17T15:30'));
-    const [park, setPark] = React.useState<Park>();
     const { contextData, setData } = useAppContext();
 
     function handleLogQsoClick(
         event: React.MouseEvent<HTMLButtonElement, MouseEvent>
     ) {
-        console.log("logging qso...");
+        console.log(`qso at ${contextData.park?.name}`);
 
-        window.pywebview.api.log_qso(qso.sig_info)
-
-        qso.comment = `[POTA ${qso.sig_info} ${qso.state} ${qso.gridsquare} ${park?.name} ] ` + qso.comment;
+        let cmt = qso.comment ?? '';
+        let name = `${contextData.park?.name} ${contextData.park?.parktypeDesc}`;
+        qso.comment = `[POTA ${qso.sig_info} ${qso.state} ${qso.gridsquare} ${name}] ` + cmt;
         qso.time_on = (qsoTime) ? qsoTime.toISOString() : dayjs().toISOString();
+        
         window.pywebview.api.log_qso(qso);
+
+        handleClearClick(event);
+    }
+
+    function handleClearClick(
+        event: React.MouseEvent<HTMLButtonElement, MouseEvent>
+    ) {
+        console.log("clearing qso...");
         setQso(defaultQso);
+        contextData.park = null;
+        contextData.qso = null;
+        setData(contextData);
     }
 
     function updateQsoEntry() {
@@ -64,15 +77,6 @@ export default function QsoEntry() {
     // we need to update our TextFields
     React.useEffect(() => {
         updateQsoEntry();
-
-        if (window.pywebview === undefined)
-            return;
-
-        window.pywebview.api.get_park(qso.sig_info)
-            .then((r: string) => {
-                let p = JSON.parse(r) as Park;
-                setPark(p);
-            });
     }, [contextData.qso]);
 
     const textFieldStyle = { style: { fontSize: 14 } };
@@ -159,6 +163,10 @@ export default function QsoEntry() {
             <Button variant="outlined" onClick={(e) => handleLogQsoClick(e)}
                 sx={{ 'm': 1, }} >
                 Log QSO
+            </Button>
+            <Button variant="outlined" onClick={(e) => handleClearClick(e)}
+                sx={{ 'm': 1, }} >
+                Clear
             </Button>
         </div>
     );

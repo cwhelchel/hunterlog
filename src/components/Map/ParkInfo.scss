@@ -1,0 +1,35 @@
+.parkInfo {
+    font-size: smaller;
+}
+
+
+#parkStatsContainer {
+    width: 100%;
+    text-align: center;
+    font-size: smaller;
+    font-weight: 300;
+    font-style: italic;
+}
+
+
+// #parkStats {
+//     font-size: smaller;
+//     font-weight: 300;
+//     font-style: italic;
+// }
+
+#parkTitleContainer {
+    width: 100%;
+}
+
+#parkTitle {
+    font-size: larger;
+    font-family: 'Roboto Condensed', 'Helvetica Neue', sans-serif;
+}
+
+.sep {
+    max-width: 100%;
+    height: 0;
+    max-height: 0;
+    border: 1px solid #333;
+}

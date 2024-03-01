@@ -30,3 +30,10 @@ export interface ParkInfo {
     firstActivator: string
     firstActivationDate: string
 }
+
+export interface ParkStats {
+    reference: string
+    attempts: number
+    activations: number
+    contacts: number
+}

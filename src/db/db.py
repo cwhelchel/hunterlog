@@ -245,6 +245,9 @@ class DataBase:
 
         :param any park: the json for a POTA park returned from POTA api
         '''
+        if park is None:
+            return
+
         schema = ParkSchema()
         p = self.get_park(park['reference'])
 
@@ -256,12 +259,32 @@ class DataBase:
             p = to_add
         else:
             logging.debug(f"updating data for for park {p.reference}")
-            p.active = park['active']
-            p.grid6 = park['grid6']
             p.name = park['name']
+            p.grid4 = park['grid4']
+            p.grid6 = park['grid6']
+            p.active = park['active']
             p.latitude = park['latitude']
             p.longitude = park['longitude']
             p.parkComments = park['parkComments']
+            p.accessibility = park['accessibility']
+            p.sensitivity = park['sensitivity']
+            p.accessMethods = park['accessMethods']
+            p.activationMethods = park['activationMethods']
+            p.agencies = park['agencies']
+            p.agencyURLs = park['agencyURLs']
+            p.parkURLs = park['parkURLs']
+            p.parktypeId = park['parktypeId']
+            p.parktypeDesc = park['parktypeDesc']
+            p.locationDesc = park['locationDesc']
+            p.locationName = park['locationName']
+            p.entityId = park['entityId']
+            p.entityName = park['entityName']
+            p.referencePrefix = park['referencePrefix']
+            p.entityDeleted = park['entityDeleted']
+            p.firstActivator = park['firstActivator']
+            p.firstActivationDate = park['firstActivationDate']
+            p.firstActivationDate = park['firstActivationDate']
+            p.website = park['website']
 
         self.session.commit()
 

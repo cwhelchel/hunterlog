@@ -13,6 +13,7 @@ import { AppContextProvider } from './components/AppContext'
 import SpotViewer from './components/SpotViewer/SpotViewer'
 import QsoEntry from './components/QsoEntry/QsoEntry'
 import LeafMap from './components/Map/Map'
+import ParkInfo from './components/Map/ParkInfo'
 import ConfigModal from './components/Config/ConfigModal'
 import { ActivatorInfo } from './components/ActivatorInfo/ActivatorInfo'
 import { FilterBar } from './components/FilterBar/FilterBar'
@@ -70,7 +71,8 @@ const App = function () {
                                     <ActivatorInfo />
                                 </Grid>
                                 <Grid item xs={4}>
-                                    <LeafMap />
+                                    {/* <LeafMap /> */}
+                                    <ParkInfo/>
                                 </Grid>
                                 <Grid item xs={12}>
                                     <FilterBar />
