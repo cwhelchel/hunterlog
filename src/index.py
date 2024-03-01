@@ -2,13 +2,13 @@ import os
 import threading
 import webview
 import logging
-from time import time
 
 from api import JsApi
 from db import DataBase
 from pota import PotaApi
 
 # put filename='index.log' for deployment
+# logging.basicConfig(filename='index.log', level=logging.DEBUG)
 logging.basicConfig(level=logging.DEBUG)
 
 pota = PotaApi()
@@ -67,9 +67,10 @@ def update_ticker():
     logging.debug('updating db')
     do_update()
 
-    if len(webview.windows) > 0:
-        webview.windows[0].evaluate_js(
-            'window.pywebview.state.setTicker("%d")' % time())
+    # if len(webview.windows) > 0:
+    #     js = 'window.pywebview.state.setVersion("%s")' % __version__
+    #     logging.debug(js)
+    #     webview.windows[0].evaluate_js(js)
 
 
 if __name__ == '__main__':

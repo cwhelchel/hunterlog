@@ -13,6 +13,7 @@ from db.models.spots import SpotSchema
 from db.models.user_config import UserConfigSchema
 from pota import PotaApi, PotaStats
 from utils import AdifLog
+from version import __version__
 
 from cat import CAT
 from utils.distance import Distance
@@ -87,6 +88,9 @@ class JsApi:
         '''
         cfg = self.db.get_user_config()
         return UserConfigSchema().dumps(cfg)
+    
+    def get_version_num(self):
+        return __version__
 
     def import_adif(self):
         '''

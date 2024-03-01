@@ -1,6 +1,8 @@
 export interface Qso {
     //qso_id: number;
     call: string;
+    name: string;
+    state: string;
     rst_sent: string;
     rst_recv: string;
     freq: string;

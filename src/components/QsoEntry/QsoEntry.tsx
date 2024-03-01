@@ -7,6 +7,7 @@ import utc from 'dayjs/plugin/utc';
 import './QsoEntry.scss'
 import { Qso } from '../../@types/QsoTypes';
 import QsoTimeEntry from './QsoTimeEntry';
+import { Park } from '../../@types/Parks';
 
 dayjs.extend(utc);
 
@@ -33,6 +34,7 @@ let defaultQso: Qso = {
 export default function QsoEntry() {
     const [qso, setQso] = React.useState(defaultQso);
     const [qsoTime, setQsoTime] = React.useState<Dayjs>(dayjs('2022-04-17T15:30'));
+    const [park, setPark] = React.useState<Park>();
     const { contextData, setData } = useAppContext();
 
     function handleLogQsoClick(
@@ -40,7 +42,9 @@ export default function QsoEntry() {
     ) {
         console.log("logging qso...");
 
-        qso.comment = `[POTA ${qso.sig_info} todo add more] ` + qso.comment;
+        window.pywebview.api.log_qso(qso.sig_info)
+
+        qso.comment = `[POTA ${qso.sig_info} ${qso.state} ${qso.gridsquare} ${park?.name} ] ` + qso.comment;
         qso.time_on = (qsoTime) ? qsoTime.toISOString() : dayjs().toISOString();
         window.pywebview.api.log_qso(qso);
         setQso(defaultQso);
@@ -60,6 +64,15 @@ export default function QsoEntry() {
     // we need to update our TextFields
     React.useEffect(() => {
         updateQsoEntry();
+
+        if (window.pywebview === undefined)
+            return;
+
+        window.pywebview.api.get_park(qso.sig_info)
+            .then((r: string) => {
+                let p = JSON.parse(r) as Park;
+                setPark(p);
+            });
     }, [contextData.qso]);
 
     const textFieldStyle = { style: { fontSize: 14 } };
@@ -69,7 +82,7 @@ export default function QsoEntry() {
             <Grid container
                 spacing={{ xs: 1, md: 2 }}
                 m={1}
-                >
+            >
                 <Grid item xs={2}>
                     <TextField id="callsign" label="Callsign"
                         value={qso.call}
