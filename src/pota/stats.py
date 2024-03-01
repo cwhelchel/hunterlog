@@ -15,13 +15,13 @@ class PotaStats:
     and activator csv files.
     '''
 
-    def __init__(self) -> None:
+    def __init__(self, hunt_file: str, act_file: str = '') -> None:
         self.activated_parks = []
         self.hunted_parks = []
         self.loc_stats: dict[str, LocationStat] = {}
         self.hunted_park_stats: dict[str, int] = {}
-        self._get_activations_csv()
-        self._get_hunts_csv()
+        self._get_activations_csv(act_file)
+        self._get_hunts_csv(hunt_file)
 
     def has_hunted(self, ref: str) -> bool:
         '''Returns true if the user has hunted the given POTA reference'''
@@ -56,12 +56,12 @@ class PotaStats:
         '''Returns a list of all the hunted parks'''
         return self.hunted_parks
 
-    def _get_activations_csv(self):
+    def _get_activations_csv(self, act_file: str):
         '''
         Read activations downloaded from EXPORT CSV on Users POTA My Stats page
         see https://pota.app/#/user/stats
         '''
-        file_n = "activator_parks.csv"
+        file_n = act_file  # "activator_parks.csv"
 
         if not os.path.exists(file_n):
             return
@@ -78,14 +78,14 @@ class PotaStats:
                     self._inc_activations(location)
                     self.activated_parks.append(row['Reference'])
 
-    def _get_hunts_csv(self):
+    def _get_hunts_csv(self, hunt_file: str):
         '''
         Read hunted parks downloaded from EXPORT CSV button on the POTA User's
         My Stats page.
 
         - see https://pota.app/#/user/stats
         '''
-        file_n = "hunter_parks.csv"
+        file_n = hunt_file  # "hunter_parks.csv"
 
         if not os.path.exists(file_n):
             return

@@ -4,7 +4,7 @@ import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
-import MenuIcon from '@mui/icons-material/Menu';
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 import { useAppContext } from '../AppContext';
 import ConfigModal from '../Config/ConfigModal';
@@ -12,7 +12,7 @@ import { UpdateStats } from '../Stats/UpdateStats';
 import { ImportAdif } from '../Stats/ImportAdif';
 import { UserConfig } from '../../@types/Config';
 import { ActivatorData } from '../../@types/ActivatorTypes';
-import { Avatar } from '@mui/material';
+import { Avatar, Tooltip } from '@mui/material';
 
 export default function AppMenu() {
 
@@ -55,6 +55,13 @@ export default function AppMenu() {
                     <ConfigModal />
                     <UpdateStats />
                     <ImportAdif />
+                    <Tooltip title="Refresh">
+                        <IconButton onClick={() => {
+                            location.reload();
+                        }}>
+                            <RefreshIcon color='primary' />
+                        </IconButton>
+                    </Tooltip>
                 </Toolbar>
             </AppBar>
         </Box>

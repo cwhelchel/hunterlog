@@ -1,5 +1,5 @@
 import * as React from 'react'
-import Button from '@mui/material/Button'
+import { Tooltip, Button } from '@mui/material';
 
 
 export const ImportAdif = () => {
@@ -11,8 +11,10 @@ export const ImportAdif = () => {
     };
 
     return (
-        <Button onClick={handleClick}>
-            Import ADIF
-        </Button>
+        <Tooltip title="Load in old QSOs to track Operator hunts">
+            <Button onClick={handleClick}>
+                Import ADIF
+            </Button>
+        </Tooltip>
     );
 };

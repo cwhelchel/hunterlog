@@ -7,15 +7,13 @@ from time import time
 from api import JsApi
 from db import DataBase
 from pota import PotaApi
-from pota import PotaStats
 
 # put filename='index.log' for deployment
 logging.basicConfig(level=logging.DEBUG)
 
 pota = PotaApi()
 the_db = DataBase()
-the_stats = PotaStats()
-the_api = JsApi(the_db, pota, the_stats)
+the_api = JsApi(the_db, pota)
 
 
 def do_update():

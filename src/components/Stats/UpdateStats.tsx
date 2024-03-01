@@ -1,5 +1,5 @@
 import * as React from 'react'
-import Button from '@mui/material/Button'
+import { Tooltip, Button } from '@mui/material';
 
 
 export const UpdateStats = () => {
@@ -11,8 +11,10 @@ export const UpdateStats = () => {
     };
 
     return (
-        <Button onClick={handleClick}>
-            Update Stats
-        </Button>
+        <Tooltip title="Update stats from hunter_parks.csv">
+            <Button onClick={handleClick}>
+                Update Stats
+            </Button>
+        </Tooltip>
     );
 };

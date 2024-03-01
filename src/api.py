@@ -22,10 +22,9 @@ logging = L.getLogger("api")
 
 
 class JsApi:
-    def __init__(self, the_db: DataBase, pota_api: PotaApi, stats: PotaStats):
+    def __init__(self, the_db: DataBase, pota_api: PotaApi):
         self.db = the_db
         self.pota = pota_api
-        self.pota_stats = stats
         self.adif_log = AdifLog()
         logging.debug("init CAT...")
         cfg = self.db.get_user_config()
@@ -211,10 +210,20 @@ class JsApi:
         Will use the current pota stats from hunter.csv to update the db with
         new park hunt numbers
         '''
-        hunts = self.pota_stats.get_all_hunts()
+        ft = ('CSV files (*.csv;*.txt)', 'All files (*.*)')
+        filename = webview.windows[0] \
+            .create_file_dialog(
+                webview.OPEN_DIALOG,
+            file_types=ft)
+        if not filename:
+            return
+
+        logging.info(f"updating park hunts from {filename[0]}")
+        stats = PotaStats(filename[0])
+        hunts = stats.get_all_hunts()
 
         for park in hunts:
-            count = self.pota_stats.get_park_hunt_count(park)
+            count = stats.get_park_hunt_count(park)
             j = {'reference': park, 'hunts': count}
             self.db.update_park_hunts(j, count)
 
