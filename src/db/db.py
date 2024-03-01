@@ -139,8 +139,9 @@ class DataBase:
             .first()
 
     def get_activator_name(self, callsign: str) -> str:
+        basecall = self._get_basecall(callsign)
         return self.session.query(Activator.name) \
-            .filter(Activator.callsign == callsign) \
+            .filter(Activator.callsign == basecall) \
             .first()
 
     def get_activator_by_id(self, id: int) -> Activator:
