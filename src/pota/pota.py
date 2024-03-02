@@ -1,5 +1,6 @@
 import requests
 import logging as L
+import urllib.parse
 
 logging = L.getLogger("potaApi")
 
@@ -21,8 +22,15 @@ class Api():
             return json
 
     def get_spot_comments(self, activator, park):
-        '''Return all spot + comments from a given activation'''
-        url = SPOT_COMMENTS_URL.format(act=activator, park=park)
+        '''
+        Return all spot + comments from a given activation
+
+        :param str activator: Full call of activator including stroke pre and
+            suffixes. Will be URL encoded for the request.
+        :param str park: the park reference.
+        '''
+        quoted = urllib.parse.quote_plus(activator)
+        url = SPOT_COMMENTS_URL.format(act=quoted, park=park)
         response = requests.get(url)
         if response.status_code == 200:
             json = response.json()

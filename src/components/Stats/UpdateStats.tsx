@@ -11,7 +11,7 @@ export const UpdateStats = () => {
     };
 
     return (
-        <Tooltip title="Update stats from hunter_parks.csv">
+        <Tooltip title="Update park hunt stats from hunter_parks.csv">
             <Button onClick={handleClick}>
                 Update Stats
             </Button>

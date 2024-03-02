@@ -168,19 +168,19 @@ export default function SpotViewer() {
             getSpots();
     }, [contextData.bandFilter, contextData.regionFilter]);
 
-    // setup a timer
-    React.useEffect(() => {
-        const interval: any = setInterval(() => {
-            const x = time - 1;
-            if (x < 0) {
-                console.log('tmr tick: getting spots...');
-                getSpots();
-                return setTime(30);
-            }
-            return setTime(time - 1);
-        }, 1000);
-        return () => clearInterval(interval);
-    });
+    // // setup a timer
+    // React.useEffect(() => {
+    //     const interval: any = setInterval(() => {
+    //         const x = time - 1;
+    //         if (x < 0) {
+    //             console.log('tmr tick: getting spots...');
+    //             getSpots();
+    //             return setTime(30);
+    //         }
+    //         return setTime(time - 1);
+    //     }, 1000);
+    //     return () => clearInterval(interval);
+    // });
 
 
     // return the correct PK id for our rows

@@ -67,10 +67,10 @@ def update_ticker():
     logging.debug('updating db')
     do_update()
 
-    # if len(webview.windows) > 0:
-    #     js = 'window.pywebview.state.setVersion("%s")' % __version__
-    #     logging.debug(js)
-    #     webview.windows[0].evaluate_js(js)
+    if len(webview.windows) > 0:
+        js = 'window.pywebview.state.getSpots()'
+        logging.debug('refreshing spots in frontend: ' + js)
+        webview.windows[0].evaluate_js(js)
 
 
 if __name__ == '__main__':
