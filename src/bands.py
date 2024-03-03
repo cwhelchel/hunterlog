@@ -24,10 +24,17 @@ class Bands(Enum):
     FIFTEEN = 8
     TWELVE = 9
     TEN = 10
+    SIX = 11
+    TWO = 12
+    ONEPTWOFIVE = 13
+    SEVENTYCM = 14
+    THIRTYTHREECM = 15
+    TWENTYTHREECM = 16
 
 
 bandNames = [
-    'NA', '160m', '80m', '60m', '40m', '30m', '20m', '17m', '15m', '12m', '10m'
+    'NA', '160m', '80m', '60m', '40m', '30m', '20m', '17m', '15m', '12m',
+    '10m', '6m', '1.25m', '70cm', '33cm', '23cm'
 ]
 
 bandLimits = {
@@ -41,6 +48,12 @@ bandLimits = {
     Bands.FIFTEEN: (21000.0, 21450.0),
     Bands.TWELVE: (24890.0, 24990.0),
     Bands.TEN: (28000.0, 29700.0),
+    Bands.SIX: (50000.0, 54000.0),
+    Bands.TWO: (144_000.0, 148_000.0),
+    Bands.ONEPTWOFIVE: (219_000.0, 225_000.0),
+    Bands.SEVENTYCM:  (420_000.0, 450_000.0),
+    Bands.THIRTYTHREECM: (902_000.0, 928_000.0),
+    Bands.TWENTYTHREECM: (1_270_000.0, 1_300_000.0)
 }
 
 

@@ -41,7 +41,7 @@ class AdifLog():
                 sig_info_check = ('SIG_INFO' in qso.keys()
                                   and re.match(pattern, qso["SIG_INFO"]))
                 if (sig_check or sig_info_check):
-                    if not sig_info_check: 
+                    if not sig_info_check:
                         # we got pota sig but no sig_info
                         # check the comments
                         if 'COMMENT' in qso.keys():

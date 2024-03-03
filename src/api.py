@@ -12,7 +12,7 @@ from db.models.spot_comments import SpotCommentSchema
 from db.models.spots import SpotSchema
 from db.models.user_config import UserConfigSchema
 from pota import PotaApi, PotaStats
-from utils import AdifLog
+from utils.adif import AdifLog
 from version import __version__
 
 from cat import CAT
@@ -136,15 +136,16 @@ class JsApi:
 
         :param any qso_data: dict of qso data from the UI
         '''
-        park_json = self.pota.get_park(qso_data['sig_info'])
-        logging.debug(f"updating park stat for: {park_json}")
-        self.db.inc_park_hunt(park_json)
+        try:
+            park_json = self.pota.get_park(qso_data['sig_info'])
+            logging.debug(f"updating park stat for: {park_json}")
+            self.db.inc_park_hunt(park_json)
 
-        logging.debug(f"logging qso: {qso_data}")
-        id = self.db.log_qso(qso_data)
-
-        j = self.pota.get_spots()
-        self.db.update_all_spots(j)
+            logging.debug(f"logging qso: {qso_data}")
+            id = self.db.log_qso(qso_data)
+        except Exception as e:
+            logging.error("Error logging QSO to db:")
+            logging.error(e)
 
         # get the data to log to the adif file and remote adif host
         qso = self.db.get_qso(id)
@@ -152,6 +153,9 @@ class JsApi:
         act = self.db.get_activator_name(qso_data['call'])
         qso.name = act if act is not None else 'ERROR NONAME'
         self.adif_log.log_qso(qso, cfg)
+
+        j = self.pota.get_spots()
+        self.db.update_all_spots(j)
 
         webview.windows[0].evaluate_js(
             'window.pywebview.state.getSpots()')

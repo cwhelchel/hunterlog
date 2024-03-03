@@ -1,6 +1,7 @@
 import requests
 import logging as L
 import urllib.parse
+from  utils.callsigns import get_basecall
 
 logging = L.getLogger("potaApi")
 
@@ -38,11 +39,7 @@ class Api():
 
     def get_activator_stats(self, activator: str):
         '''Return all spot + comments from a given activation'''
-        x = activator.split('/')
-        if len(x) == 3:
-            s = x[1]
-        else:
-            s = x[0]
+        s = get_basecall(activator)
 
         url = ACTIVATOR_URL.format(call=s)
         response = requests.get(url)

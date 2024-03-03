@@ -6,6 +6,7 @@ import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 
+
 from bands import bandLimits, bandNames, Bands, get_band
 from db.models.qsos import Qso
 from db.models.activators import Activator, ActivatorSchema
@@ -13,6 +14,7 @@ from db.models.spot_comments import SpotComment, SpotCommentSchema
 from db.models.spots import Spot, SpotSchema
 from db.models.user_config import UserConfig, UserConfigSchema
 from db.models.parks import Park, ParkSchema
+from utils.callsigns import get_basecall
 
 Base = declarative_base()
 
@@ -88,6 +90,25 @@ class DataBase:
                 if re.match(r'\bqrt\b', to_add.comments.lower()):
                     to_add.is_qrt = True
 
+        # test data
+        # test = Spot()
+        # test.activator = "VP5/WD5JR"
+        # test.reference = "TC-0001"
+        # test.grid6 = "FL31vt"
+        # test.spotTime = datetime.utcnow()
+        # test.spotter = "HUNTERLOG"
+        # test.mode = "CW"
+        # test.locationDesc = "TC-TC"
+        # test.latitude = "21.8022"
+        # test.longitude = "-72.17"
+        # test.name = "TEST"
+        # test.parkName = "TEST"
+        # test.comments = "A TEST SPOT FROM HL"
+        # test.frequency = "14001.0"
+        # test.hunted_bands = ""
+        # test.is_qrt = False
+        # test.hunted = False
+        # self.session.add(test)
         self.session.commit()
 
     def update_spot_comments(self, spot_comments_json):
@@ -140,17 +161,17 @@ class DataBase:
         return x
 
     def get_activator(self, callsign: str) -> Activator:
-        basecall = self._get_basecall(callsign)
-
+        basecall = get_basecall(callsign)
+        logging.debug(f"get_activator() basecall {basecall}")
         return self.session.query(Activator) \
             .filter(Activator.callsign == basecall) \
             .first()
 
     def get_activator_name(self, callsign: str) -> str:
-        basecall = self._get_basecall(callsign)
+        basecall = get_basecall(callsign)
         return self.session.query(Activator.name) \
             .filter(Activator.callsign == basecall) \
-            .first()
+            .first()[0]
 
     def get_activator_by_id(self, id: int) -> Activator:
         return self.session.query(Activator).get(id)
@@ -217,6 +238,13 @@ class DataBase:
         :param any qso: json from the frontend.
         '''
 
+        def trim_z(input: str):
+            temp: str = input
+            if temp.endswith('Z'):
+                # fromisoformat doesnt like trailing Z
+                temp = temp[:-1]
+            return temp
+
         # passing in the QSO object from init_from_spot
         # doesn't seem to ever work. recreate a QSO object
         # and add it directly
@@ -229,11 +257,9 @@ class DataBase:
         q.freq_rx = qso['freq_rx']
         q.mode = qso['mode']
         q.comment = qso['comment']
-        q.qso_date = datetime.fromisoformat(qso['qso_date'])
-        temp: str = qso['time_on']
-        if temp.endswith('Z'):
-            # fromisoformat doesnt like trailing Z
-            temp = temp[:-1]
+        temp: str = trim_z(qso['qso_date'])
+        q.qso_date = datetime.fromisoformat(temp)
+        temp: str = trim_z(qso['time_on'])
         q.time_on = datetime.fromisoformat(temp)
         q.tx_pwr = qso['tx_pwr']
         q.rx_pwr = qso['rx_pwr']
@@ -303,6 +329,9 @@ class DataBase:
         :param any park: the json for a POTA park returned from POTA api
         '''
         schema = ParkSchema()
+        if park is None: 
+            # user logged something w/o a park 
+            return
         p = self.get_park(park['reference'])
 
         if p is None:
@@ -402,7 +431,10 @@ class DataBase:
 
         for q in qsos:
             band = get_band(q.freq)
-            hunted_b.append(bandNames[band.value])
+            if band is None:
+                logging.warn(f"unknown band for freq {q.freq}")
+            else:
+                hunted_b.append(bandNames[band.value])
 
         result = ",".join(hunted_b)
 
@@ -453,18 +485,6 @@ class DataBase:
             return [Spot.is_qrt == False]  # noqa E712
         terms = []
         return terms
-
-    def _get_basecall(self, callsign: str) -> str:
-        if callsign is None:
-            return ""
-
-        if "/" in callsign:
-            basecall = max(
-                callsign.split("/")[0], callsign.split("/")[1],
-                key=len)
-        else:
-            basecall = callsign
-        return basecall
 
 
 if __name__ == "__main__":
