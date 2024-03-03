@@ -45,7 +45,11 @@ export default function QsoEntry() {
 
         let cmt = qso.comment ?? '';
         let name = `${contextData.park?.name} ${contextData.park?.parktypeDesc}`;
-        qso.comment = `[POTA ${qso.sig_info} ${qso.state} ${qso.gridsquare} ${name}] ` + cmt;
+
+        // NOTE: compress this for multi location parks like PotaPlus?
+        let loc = contextData.park?.locationDesc;
+
+        qso.comment = `[POTA ${qso.sig_info} ${loc} ${qso.gridsquare} ${name}] ` + cmt;
         qso.time_on = (qsoTime) ? qsoTime.toISOString() : dayjs().toISOString();
         
         window.pywebview.api.log_qso(qso);

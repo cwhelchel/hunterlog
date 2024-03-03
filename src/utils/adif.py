@@ -17,19 +17,38 @@ BACKUP_LOG_FN = "hunter.adi"
 
 
 class AdifLog():
-    def __init__(self):
+    def __init__(self, filename: str = BACKUP_LOG_FN):
+        self.filename = filename
         self._init_adif_log()
 
-    def log_qso(self, qso: Qso, config: UserConfig):
-        adif = self._get_adif(qso, config)
+    def log_qso_and_send(self, qso: Qso, config: UserConfig):
+        '''
+        Logs the QSO the the ADIF file and sends a UDP msg to the remote host.
+        '''
+        adif = self._get_adif(qso, config.my_call, config.my_grid6)
         self._send_msg(adif, config.adif_host, config.adif_port)
         self.write_adif_log(adif)
 
+    def log_qso(self, qso: Qso, config: UserConfig):
+        '''
+        Logs the QSO the the ADIF file.
+        '''
+        adif = self._get_adif(qso, config.my_call, config.my_grid6)
+        self.write_adif_log(adif)
+
     def write_adif_log(self, adif):
-        with open(BACKUP_LOG_FN, "a", encoding='UTF-8') as file:
+        with open(self.filename, "a", encoding='UTF-8') as file:
             file.write(adif + "\n")
 
-    def import_from_log(self, file_name: str, the_db: DataBase):
+    @staticmethod
+    def import_from_log(file_name: str, the_db: DataBase):
+        '''
+        Imports the ADIF records from the given file into the given Database.
+
+        :param str file_name: the path of the ADIF file to import.
+        :param DataBase the_db: the instance of the DataBase object to insert
+            qso records into.
+        '''
         logging.info(f"importing adif from {file_name}")
         pattern = r'([A-Z]+-[0-9]*)'
         if os.path.exists(file_name):
@@ -54,8 +73,10 @@ class AdifLog():
             the_db.commit_session()
 
     def _init_adif_log(self):
-        if not os.path.exists(BACKUP_LOG_FN):
-            with open(BACKUP_LOG_FN, "w", encoding='UTF-8') as f:
+        filename = self.filename
+
+        if not os.path.exists(filename):
+            with open(filename, "w", encoding='UTF-8') as f:
                 v = self._get_adif_field("programversion", __version__)
                 pid = self._get_adif_field("programid", "hunterlog")
 
@@ -82,7 +103,7 @@ class AdifLog():
     def _get_adif_field(self, field_name: str, field_data: str) -> str:
         return f"<{field_name.upper()}:{len(field_data)}>{field_data}\n"
 
-    def _get_adif(self, qso: Qso, config: UserConfig) -> str:
+    def _get_adif(self, qso: Qso, my_call: str, my_grid6: str) -> str:
         band_name = bands.get_band_name(qso.freq)
 
         # todo:
@@ -94,23 +115,25 @@ class AdifLog():
         fs = str(f)
         q_date = qso.qso_date.strftime('%Y%m%d')
         q_time_on = qso.time_on.strftime('%H%M%S')
+        state = qso.state if qso.state else ''
 
         adif = self._get_adif_field("band", band_name) + \
             self._get_adif_field("call", qso.call) + \
-            self._get_adif_field("name", qso.name) + \
+            self._get_adif_field("name", qso.name if qso.name else '') + \
             self._get_adif_field("comment", qso.comment) + \
             self._get_adif_field("sig", qso.sig) + \
             self._get_adif_field("sig_info", qso.sig_info) + \
             self._get_adif_field("gridsquare", qso.gridsquare) + \
+            self._get_adif_field("state", state) + \
             self._get_adif_field("distance", str(qso.distance)) + \
             self._get_adif_field("mode", qso.mode) + \
-            self._get_adif_field("operator", config.my_call) + \
+            self._get_adif_field("operator", my_call) + \
             self._get_adif_field("rst_rcvd", qso.rst_recv) + \
             self._get_adif_field("rst_sent", qso.rst_sent) + \
             self._get_adif_field("freq", fs) + \
             self._get_adif_field("qso_date", q_date) + \
             self._get_adif_field("time_on", q_time_on) + \
-            self._get_adif_field("my_gridsquare", config.my_grid6) + \
+            self._get_adif_field("my_gridsquare", my_grid6) + \
             "<EOR>\n"
 
         return adif

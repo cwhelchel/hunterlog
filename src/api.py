@@ -1,3 +1,4 @@
+import json
 import socket
 import webview
 import logging as L
@@ -110,7 +111,12 @@ class JsApi:
         return UserConfigSchema().dumps(cfg)
 
     def get_version_num(self):
-        return __version__
+        result = {
+            'success': True,
+            'app_ver': __version__,
+            'db_ver': self.db.get_version()
+        }
+        return json.dumps(result)
 
     def import_adif(self):
         '''
@@ -126,8 +132,7 @@ class JsApi:
             return
 
         logging.info("starting import of ADIF file...")
-        adif = AdifLog()
-        adif.import_from_log(filename[0], self.db)
+        AdifLog.import_from_log(filename[0], self.db)
 
     def log_qso(self, qso_data):
         '''
@@ -143,22 +148,36 @@ class JsApi:
 
             logging.debug(f"logging qso: {qso_data}")
             id = self.db.log_qso(qso_data)
-        except Exception as e:
-            logging.error("Error logging QSO to db:")
-            logging.error(e)
+        except Exception:
+            logging.exception("Error logging QSO to db")
 
         # get the data to log to the adif file and remote adif host
         qso = self.db.get_qso(id)
         cfg = self.db.get_user_config()
         act = self.db.get_activator_name(qso_data['call'])
         qso.name = act if act is not None else 'ERROR NONAME'
-        self.adif_log.log_qso(qso, cfg)
+        self.adif_log.log_qso_and_send(qso, cfg)
 
         j = self.pota.get_spots()
         self.db.update_all_spots(j)
 
         webview.windows[0].evaluate_js(
             'window.pywebview.state.getSpots()')
+
+    def export_qsos(self):
+        '''
+        Exports the QSOs logged with this logger app into a file.
+        '''
+        try:
+            qs = self.db.get_qsos_from_app()
+            cfg = self.db.get_user_config()
+
+            dt = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+            log = AdifLog(filename=f"{dt}_export.adi")
+            for q in qs:
+                log.log_qso(q, cfg)
+        except Exception:
+            logging.exception("Error exporting the DB")
 
     def set_user_config(self, config_json: any):
         logging.debug(f"setting config {config_json}")
@@ -269,8 +288,8 @@ class JsApi:
             with socket.socket(socket.AF_INET, type) as sock:
                 sock.connect((host, port))
                 sock.send(msg.encode())
-        except Exception as err:
-            logging.warn("send_msg exception:", err)
+        except Exception:
+            logging.exception("send_msg exception")
 
     def _get_activator(self, callsign: str) -> Activator:
         ''''

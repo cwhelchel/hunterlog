@@ -39,7 +39,7 @@ class Qso(Base):
         rst = self.get_default_rst(spot.mode)
         self.call = spot.activator
         self.name = name
-        self.state = spot.locationDesc
+        self.state = self.get_state(spot.locationDesc)
         self.rst_sent = rst
         self.rst_recv = rst
         self.freq = spot.frequency
@@ -59,6 +59,20 @@ class Qso(Base):
             return "+00"
 
         return ""
+
+    def get_state(self, locationDesc: str) -> str:
+        if not locationDesc:
+            return ''
+        x = locationDesc
+        if ',' in locationDesc:
+            # take the first one
+            x = locationDesc.split(',')[0]
+
+        pre, post = x.split('-')
+        if pre in ["US", "CA"]:
+            return post
+
+        return ''
 
     def init_from_adif(self, adif: dict):
         '''

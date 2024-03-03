@@ -187,6 +187,16 @@ class DataBase:
     def get_qso(self, id: int) -> Qso:
         return self.session.query(Qso).get(id)
 
+    def get_qsos_from_app(self) -> List[Qso]:
+        x = self.session.query(Qso) \
+            .filter(Qso.from_app == True).all()   # noqa E712
+        return x
+
+    def get_version(self) -> str:
+        sql = 'SELECT version_num FROM alembic_version'
+        v = self.session.execute(sa.text(sql))
+        return v.fetchone()[0]
+
     def insert_qso(self, qso: Qso, delay_commit: bool = True):
         self.session.add(qso)
         if not delay_commit:
@@ -264,6 +274,7 @@ class DataBase:
         q.tx_pwr = qso['tx_pwr']
         q.rx_pwr = qso['rx_pwr']
         q.gridsquare = qso['gridsquare']
+        q.state = qso['state']
         q.sig = qso['sig']
         q.sig_info = qso['sig_info']
         q.from_app = True
@@ -329,8 +340,8 @@ class DataBase:
         :param any park: the json for a POTA park returned from POTA api
         '''
         schema = ParkSchema()
-        if park is None: 
-            # user logged something w/o a park 
+        if park is None:
+            # user logged something w/o a park
             return
         p = self.get_park(park['reference'])
 
