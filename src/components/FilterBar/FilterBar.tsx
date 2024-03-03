@@ -8,6 +8,8 @@ import Select, { SelectChangeEvent } from '@mui/material/Select';
 
 import './FilterBar.scss'
 import { createEqualityFilter, useAppContext } from '../AppContext';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
 
 
 // https://mui.com/material-ui/react-table/
@@ -20,6 +22,7 @@ export const FilterBar = (props: IFilterBarPros) => {
     const [mode, setMode] = React.useState('');
     const [band, setBand] = React.useState('');
     const [region, setRegion] = React.useState('');
+    const [qrt, setQrt] = React.useState(true);
 
     const { contextData, setData } = useAppContext();
 
@@ -69,6 +72,15 @@ export const FilterBar = (props: IFilterBarPros) => {
         setData(next);
     };
 
+    function handleQrtSwitch(event: any, checked: boolean): void {
+        console.log("changing qrt filter to: " + checked);
+        window.pywebview.api.set_qrt_filter(checked);
+
+        let next = { ...contextData, qrtFilter: checked};
+        setData(next);
+        setQrt(checked);
+    }
+
     return (
         <div className='filter-bar'>
             <Box
@@ -79,6 +91,7 @@ export const FilterBar = (props: IFilterBarPros) => {
                 noValidate
                 autoComplete="off"
             >
+                <FormControlLabel control={<Switch onChange={handleQrtSwitch} checked={qrt} />} label="Hide QRT" />
                 <FormControl size='small'>
                     <InputLabel id="band-label">Band</InputLabel>
                     <Select

@@ -1,4 +1,5 @@
 from datetime import datetime
+import re
 from typing import List
 import logging as L
 import sqlalchemy as sa
@@ -31,6 +32,7 @@ class DataBase:
         self.init_config()
         self.band_filter = Bands.NOBAND
         self.region_filter = None
+        self.qrt_filter_on = True  # filter out QRT spots by default
 
     def commit_session(self):
         '''
@@ -79,6 +81,12 @@ class DataBase:
 
             to_add.hunted = hunted
             to_add.hunted_bands = bands
+
+            to_add.is_qrt = False
+
+            if to_add.comments is not None:
+                if re.match(r'\bqrt\b', to_add.comments.lower()):
+                    to_add.is_qrt = True
 
         self.session.commit()
 
@@ -408,8 +416,14 @@ class DataBase:
         logging.debug(f"db setting region filter to {region}")
         self.region_filter = region
 
+    def set_qrt_filter(self, is_on: bool):
+        logging.debug(f"db setting QRT filter to {is_on}")
+        self.qrt_filter_on = is_on
+
     def _get_all_filters(self) -> list[sa.ColumnElement[bool]]:
-        return self._get_band_filters() + self._get_region_filters()
+        return self._get_band_filters() + \
+            self._get_region_filters() + \
+            self._get_qrt_filter()
 
     def _get_band_filters(self) -> list[sa.ColumnElement[bool]]:
         band = Bands(self.band_filter)  # not sure why cast is needed
@@ -431,6 +445,13 @@ class DataBase:
         if (region is None):
             return []
         terms = [Spot.locationDesc.startswith(region)]
+        return terms
+
+    def _get_qrt_filter(self) -> list[sa.ColumnElement[bool]]:
+        qrt = self.qrt_filter_on
+        if qrt:
+            return [Spot.is_qrt == False]  # noqa E712
+        terms = []
         return terms
 
     def _get_basecall(self, callsign: str) -> str:

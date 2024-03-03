@@ -14,6 +14,7 @@ const defData: ContextData = {
     bandFilter: 0,
     regions: [],
     regionFilter: '',
+    qrtFilter: true
 };
 
 export const AppContext = React.createContext<AppContextType | null>(null);
@@ -28,7 +29,8 @@ export const AppContextProvider = ({ children }) => {
             bandFilter: ctx.bandFilter,
             regions: ctx.regions,
             regionFilter: ctx.regionFilter,
-            park: ctx.park
+            park: ctx.park,
+            qrtFilter: ctx.qrtFilter
         }
         setContextData(newContext);
     };

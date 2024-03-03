@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Button from '@mui/material/Button';
 import { Badge } from '@mui/material';
-import { DataGrid, GridColDef, GridValueGetterParams, GridValueFormatterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridValueGetterParams, GridValueFormatterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams, GridRowClassNameParams } from '@mui/x-data-grid';
 import { GridEventListener } from '@mui/x-data-grid';
 
 import { useAppContext } from '../AppContext';
@@ -99,7 +99,6 @@ var currentSortFilter = { field: 'spotTime', sort: 'desc' as GridSortDirection }
 
 
 export default function SpotViewer() {
-    const [time, setTime] = React.useState(30)
     const [spots, setSpots] = React.useState(rows)
     const [sortModel, setSortModel] = React.useState<GridSortModel>([currentSortFilter]);
     const { contextData, setData } = useAppContext();
@@ -166,22 +165,7 @@ export default function SpotViewer() {
         // get the spots from the db
         if (window.pywebview !== undefined)
             getSpots();
-    }, [contextData.bandFilter, contextData.regionFilter]);
-
-    // // setup a timer
-    // React.useEffect(() => {
-    //     const interval: any = setInterval(() => {
-    //         const x = time - 1;
-    //         if (x < 0) {
-    //             console.log('tmr tick: getting spots...');
-    //             getSpots();
-    //             return setTime(30);
-    //         }
-    //         return setTime(time - 1);
-    //     }, 1000);
-    //     return () => clearInterval(interval);
-    // });
-
+    }, [contextData.bandFilter, contextData.regionFilter, contextData.qrtFilter]);
 
     // return the correct PK id for our rows
     function getRowId(row: { spotId: any; }) {
@@ -201,6 +185,13 @@ export default function SpotViewer() {
         setData(contextData);
     };
 
+    function getClassName(params: GridRowClassNameParams<SpotRow>) {
+        if (params.row.is_qrt)
+            return 'spotviewer-row-qrt';
+        else 
+            return 'spotviewer-row';
+    }
+
     return (
         <div className='spots-container'>
             <DataGrid
@@ -218,6 +209,7 @@ export default function SpotViewer() {
                 onRowClick={handleRowClick}
                 sortModel={sortModel}
                 onSortModelChange={(e) => setSortModel(e)}
+                getRowClassName={getClassName}
             />
         </div >
     );

@@ -168,6 +168,10 @@ class JsApi:
         logging.debug(f"api setting region filter to: {region}")
         self.db.set_region_filter(region)
 
+    def set_qrt_filter(self, is_qrt: bool):
+        logging.debug(f"api setting qrt filter to: {is_qrt}")
+        self.db.set_qrt_filter(is_qrt)
+
     def update_activator_stats(self, callsign: str) -> int:
         j = self.pota.get_activator_stats(callsign)
 

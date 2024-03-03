@@ -43,3 +43,12 @@ div.spotCmtText {
     max-height: 0;
     border: 1px solid #333;
 }
+
+.spotviewer-row-qrt {
+    opacity: 0.5;
+    filter: grayscale(100%);
+}
+
+.spotviewer-row-qrt:hover {
+    opacity: 1.0;
+}

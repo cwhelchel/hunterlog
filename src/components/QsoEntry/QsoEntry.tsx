@@ -87,7 +87,7 @@ export default function QsoEntry() {
                 spacing={{ xs: 1, md: 2 }}
                 m={1}
             >
-                <Grid item xs={2}>
+                <Grid item xs={3}>
                     <TextField id="callsign" label="Callsign"
                         value={qso.call}
                         inputProps={textFieldStyle}
@@ -95,7 +95,7 @@ export default function QsoEntry() {
                             setQso({ ...qso, call: e.target.value });
                         }} />
                 </Grid>
-                <Grid item xs={2}>
+                <Grid item xs={3}>
                     <TextField id="freq" label="Frequency"
                         value={qso.freq}
                         inputProps={textFieldStyle}
@@ -127,6 +127,8 @@ export default function QsoEntry() {
                             setQso({ ...qso, rst_recv: e.target.value });
                         }} />
                 </Grid>
+
+
                 <Grid item xs={2}>
                     <TextField id="park" label="Park"
                         value={qso.sig_info}
@@ -143,10 +145,10 @@ export default function QsoEntry() {
                             setQso({ ...qso, gridsquare: e.target.value });
                         }} />
                 </Grid>
-                <Grid item xs={4}>
+                <Grid item xs={3}>
                     <QsoTimeEntry qsoTime={qsoTime} setQsoTime={setQsoTime} />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={5}>
                     <TextField id="comments" label="Comments"
                         value={qso.comment}
                         inputProps={textFieldStyle}
