@@ -23,6 +23,15 @@ logging = L.getLogger("db")
 # L.getLogger('sqlalchemy.engine').setLevel(L.INFO)
 
 
+VER_FROM_ALEMBIC = 'de225609f3b5'
+'''
+This value indicates the version of the DB scheme the app is made for.
+
+TODO: UPDATE THIS VERSION WHENEVER A ALEMBIC MIGRATION IS CREATED. This is
+typically done by running `alembic revision` in the root of the project.
+'''
+
+
 class DataBase:
     def __init__(self):
         engine = sa.create_engine("sqlite:///spots.db", poolclass=sa.NullPool)
@@ -35,6 +44,8 @@ class DataBase:
         self.band_filter = Bands.NOBAND
         self.region_filter = None
         self.qrt_filter_on = True  # filter out QRT spots by default
+
+        self._init_alembic_ver()
 
     def commit_session(self):
         '''
@@ -78,8 +89,9 @@ class DataBase:
             to_add.op_hunts = count
 
             hunted = self.get_spot_hunted_flag(
-                to_add.activator, to_add.frequency)
-            bands = self.get_spot_hunted_bands(to_add.activator)
+                to_add.activator, to_add.frequency, to_add.reference)
+            bands = self.get_spot_hunted_bands(
+                to_add.activator, to_add.reference)
 
             to_add.hunted = hunted
             to_add.hunted_bands = bands
@@ -401,12 +413,16 @@ class DataBase:
             .filter(Qso.call == call) \
             .count()
 
-    def get_spot_hunted_flag(self, activator, freq: str) -> bool:
+    def get_spot_hunted_flag(self,
+                             activator: str,
+                             freq: str,
+                             ref: str) -> bool:
         '''
         Gets the flag indicating if a given spot has been hunted already today
 
         :param str activator: activators callsign
         :param str freq: frequency in MHz
+        :param str ref: the park reference (ex K-7465)
         :returns true if the spot has already been hunted
         '''
         now = datetime.utcnow()
@@ -420,15 +436,17 @@ class DataBase:
         flag = self.session.query(Qso) \
             .filter(Qso.call == activator,
                     Qso.time_on > now.date(),
+                    Qso.sig_info == ref,
                     sa.and_(*terms)) \
             .count() > 0
         return flag
 
-    def get_spot_hunted_bands(self, activator) -> str:
+    def get_spot_hunted_bands(self, activator: str, ref: str) -> str:
         '''
         Gets the string of all hunted bands, this spot has been hunted today
 
         :param str activator: activators callsign
+        :param str ref: park reference
         :returns list of hunted bands for today
         '''
         now = datetime.utcnow()
@@ -437,6 +455,7 @@ class DataBase:
 
         qsos = self.session.query(Qso) \
             .filter(Qso.call == activator,
+                    Qso.sig_info == ref,
                     Qso.time_on > now.date()) \
             .all()
 
@@ -496,6 +515,13 @@ class DataBase:
             return [Spot.is_qrt == False]  # noqa E712
         terms = []
         return terms
+
+    def _init_alembic_ver(self):
+        v = VER_FROM_ALEMBIC
+        self.session.execute(sa.text('DROP TABLE IF EXISTS alembic_version;'))
+        self.session.execute(sa.text('CREATE TABLE alembic_version(version_num varchar(32) NOT NULL);'))  # noqa E501
+        self.session.execute(sa.text(f"INSERT INTO alembic_version(version_num) VALUES ('{v}');"))  # noqa E501
+        self.session.commit()
 
 
 if __name__ == "__main__":
