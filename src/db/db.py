@@ -32,26 +32,11 @@ typically done by running `alembic revision` in the root of the project.
 '''
 
 
-class DataBase:
-    def __init__(self):
-        engine = sa.create_engine("sqlite:///spots.db", poolclass=sa.NullPool)
-        self.session = scoped_session(sessionmaker(bind=engine))
-        Base.metadata.create_all(engine)
+class Query:
+    '''Internal DB queries stored here.'''
 
-        self.session.execute(sa.text('DELETE FROM spots;'))
-        self.session.commit()
-        self.init_config()
-        self.band_filter = Bands.NOBAND
-        self.region_filter = None
-        self.qrt_filter_on = True  # filter out QRT spots by default
-
-        self._init_alembic_ver()
-
-    def commit_session(self):
-        '''
-        Calls session.commit to save any pending changes to db.
-        '''
-        self.session.commit()
+    def __init__(self, session: scoped_session):
+        self.session = session
 
     def init_config(self):
         current = self.session.query(UserConfig).first()
@@ -70,6 +55,108 @@ class DataBase:
             self.session.add(default_config)
             self.session.commit()
 
+    def init_alembic_ver(self):
+        v = VER_FROM_ALEMBIC
+        self.session.execute(sa.text('DROP TABLE IF EXISTS alembic_version;'))
+        self.session.execute(sa.text('CREATE TABLE alembic_version(version_num varchar(32) NOT NULL);'))  # noqa E501
+        self.session.execute(sa.text(f"INSERT INTO alembic_version(version_num) VALUES ('{v}');"))  # noqa E501
+        self.session.commit()
+
+    def get_op_qso_count(self, call: str) -> int:
+        return self.session.query(Qso) \
+            .filter(Qso.call == call) \
+            .count()
+
+    def get_spot_hunted_flag(self,
+                             activator: str,
+                             freq: str,
+                             ref: str) -> bool:
+        '''
+        Gets the flag indicating if a given spot has been hunted already today
+
+        :param str activator: activators callsign
+        :param str freq: frequency in MHz
+        :param str ref: the park reference (ex K-7465)
+        :returns true if the spot has already been hunted
+        '''
+        now = datetime.utcnow()
+        band = get_band(freq)
+        # logging.debug(f"using band {band} for freq {freq}")
+        if band is not None:
+            terms = Query.get_band_lmt_terms(band, Qso.freq)
+        else:
+            terms = [1 == 1]
+
+        flag = self.session.query(Qso) \
+            .filter(Qso.call == activator,
+                    Qso.time_on > now.date(),
+                    Qso.sig_info == ref,
+                    sa.and_(*terms)) \
+            .count() > 0
+        return flag
+
+    def get_spot_hunted_bands(self, activator: str, ref: str) -> str:
+        '''
+        Gets the string of all hunted bands, this spot has been hunted today
+
+        :param str activator: activators callsign
+        :param str ref: park reference
+        :returns list of hunted bands for today
+        '''
+        now = datetime.utcnow()
+        result = ""
+        hunted_b = []
+
+        qsos = self.session.query(Qso) \
+            .filter(Qso.call == activator,
+                    Qso.sig_info == ref,
+                    Qso.time_on > now.date()) \
+            .all()
+
+        for q in qsos:
+            band = get_band(q.freq)
+            if band is None:
+                logging.warn(f"unknown band for freq {q.freq}")
+            else:
+                hunted_b.append(bandNames[band.value])
+
+        result = ",".join(hunted_b)
+
+        return result
+
+    @staticmethod
+    def get_band_lmt_terms(band: Bands, col: sa.Column) \
+            -> list[sa.ColumnElement[bool]]:
+        ll = bandLimits[band][0]
+        ul = bandLimits[band][1]
+        terms = [sa.cast(col, sa.Float) < ul,
+                 sa.cast(col, sa.Float) > ll]
+        return terms
+
+
+class DataBase:
+    def __init__(self):
+        engine = sa.create_engine("sqlite:///spots.db", poolclass=sa.NullPool)
+        self.session = scoped_session(sessionmaker(bind=engine))
+        Base.metadata.create_all(engine)
+
+        self.session.execute(sa.text('DELETE FROM spots;'))
+        self.session.commit()
+        # self.init_config()
+        self.q = Query(self.session)
+        self.q.init_config()
+        self.band_filter = Bands.NOBAND
+        self.region_filter = None
+        self.qrt_filter_on = True  # filter out QRT spots by default
+
+        self.q.init_alembic_ver()
+
+    def commit_session(self):
+        '''
+        Calls session.commit to save any pending changes to db.
+        '''
+        self.session.commit()
+
     def update_all_spots(self, spots_json):
         schema = SpotSchema()
 
@@ -85,12 +172,12 @@ class DataBase:
             else:
                 to_add.park_hunts = 0
 
-            count = self.get_op_qso_count(to_add.activator)
+            count = self.q.get_op_qso_count(to_add.activator)
             to_add.op_hunts = count
 
-            hunted = self.get_spot_hunted_flag(
+            hunted = self.q.get_spot_hunted_flag(
                 to_add.activator, to_add.frequency, to_add.reference)
-            bands = self.get_spot_hunted_bands(
+            bands = self.q.get_spot_hunted_bands(
                 to_add.activator, to_add.reference)
 
             to_add.hunted = hunted
@@ -123,13 +210,6 @@ class DataBase:
         # self.session.add(test)
         self.session.commit()
 
-    def update_spot_comments(self, spot_comments_json):
-        schema = SpotCommentSchema()
-        for s in spot_comments_json:
-            to_add = schema.load(s, session=self.session)
-            self.session.add(to_add)
-        self.session.commit()
-
     def update_activator_stat(self, activator_stat_json) -> int:
         schema = ActivatorSchema()
         x = self.get_activator(activator_stat_json['callsign'])
@@ -145,12 +225,15 @@ class DataBase:
         return x.activator_id
 
     def get_spots(self):
+        '''
+        Get all the spots after applying the current filters: band, region, and
+        QRT filters
+        '''
         terms = self._get_all_filters()
         x = self.session.query(Spot) \
             .filter(sa.and_(*terms)) \
             .all()
         return x
-        # return self.session.query(Spot).all()
 
     def get_spot(self, id: int) -> Spot:
         return self.session.query(Spot).get(id)
@@ -161,16 +244,6 @@ class DataBase:
                     SpotComment.park == park) \
             .order_by(SpotComment.spotTime.desc()) \
             .all()
-
-    def get_by_mode(self, mode: str) -> List[Spot]:
-        return self.session.query(Spot).filter(Spot.mode == mode).all()
-
-    def get_by_band(self, band: Bands) -> List[Spot]:
-        terms = self._get_all_filters()
-        x = self.session.query(Spot) \
-            .filter(sa.and_(*terms)) \
-            .all()
-        return x
 
     def get_activator(self, callsign: str) -> Activator:
         basecall = get_basecall(callsign)
@@ -311,7 +384,7 @@ class DataBase:
         if p is None:
             logging.debug(f"inserting new {park['reference']}")
             to_add: Park = schema.load(park, session=self.session)
-            logging.debug(to_add)
+            # logging.debug(to_add)
             self.session.add(to_add)
             p = to_add
         else:
@@ -361,7 +434,7 @@ class DataBase:
             logging.debug(f"adding new park row for {park['reference']}")
             to_add: Park = schema.load(park, session=self.session)
             to_add.hunts = 1
-            logging.debug(to_add)
+            # logging.debug(to_add)
             self.session.add(to_add)
             p = to_add
         else:
@@ -408,68 +481,6 @@ class DataBase:
             .filter(Park.reference == park) \
             .first()
 
-    def get_op_qso_count(self, call: str) -> int:
-        return self.session.query(Qso) \
-            .filter(Qso.call == call) \
-            .count()
-
-    def get_spot_hunted_flag(self,
-                             activator: str,
-                             freq: str,
-                             ref: str) -> bool:
-        '''
-        Gets the flag indicating if a given spot has been hunted already today
-
-        :param str activator: activators callsign
-        :param str freq: frequency in MHz
-        :param str ref: the park reference (ex K-7465)
-        :returns true if the spot has already been hunted
-        '''
-        now = datetime.utcnow()
-        band = get_band(freq)
-        # logging.debug(f"using band {band} for freq {freq}")
-        if band is not None:
-            terms = self._get_band_lmt_terms(band, Qso.freq)
-        else:
-            terms = [1 == 1]
-
-        flag = self.session.query(Qso) \
-            .filter(Qso.call == activator,
-                    Qso.time_on > now.date(),
-                    Qso.sig_info == ref,
-                    sa.and_(*terms)) \
-            .count() > 0
-        return flag
-
-    def get_spot_hunted_bands(self, activator: str, ref: str) -> str:
-        '''
-        Gets the string of all hunted bands, this spot has been hunted today
-
-        :param str activator: activators callsign
-        :param str ref: park reference
-        :returns list of hunted bands for today
-        '''
-        now = datetime.utcnow()
-        result = ""
-        hunted_b = []
-
-        qsos = self.session.query(Qso) \
-            .filter(Qso.call == activator,
-                    Qso.sig_info == ref,
-                    Qso.time_on > now.date()) \
-            .all()
-
-        for q in qsos:
-            band = get_band(q.freq)
-            if band is None:
-                logging.warn(f"unknown band for freq {q.freq}")
-            else:
-                hunted_b.append(bandNames[band.value])
-
-        result = ",".join(hunted_b)
-
-        return result
-
     def set_band_filter(self, band: Bands):
         logging.debug(f"db setting band filter to {band}")
         self.band_filter = band
@@ -491,15 +502,7 @@ class DataBase:
         band = Bands(self.band_filter)  # not sure why cast is needed
         if band == Bands.NOBAND:
             return []
-        terms = self._get_band_lmt_terms(band, Spot.frequency)
-        return terms
-
-    def _get_band_lmt_terms(self, band: Bands, col: sa.Column) \
-            -> list[sa.ColumnElement[bool]]:
-        ll = bandLimits[band][0]
-        ul = bandLimits[band][1]
-        terms = [sa.cast(col, sa.Float) < ul,
-                 sa.cast(col, sa.Float) > ll]
+        terms = Query.get_band_lmt_terms(band, Spot.frequency)
         return terms
 
     def _get_region_filters(self) -> list[sa.ColumnElement[bool]]:
@@ -515,13 +518,6 @@ class DataBase:
             return [Spot.is_qrt == False]  # noqa E712
         terms = []
         return terms
-
-    def _init_alembic_ver(self):
-        v = VER_FROM_ALEMBIC
-        self.session.execute(sa.text('DROP TABLE IF EXISTS alembic_version;'))
-        self.session.execute(sa.text('CREATE TABLE alembic_version(version_num varchar(32) NOT NULL);'))  # noqa E501
-        self.session.execute(sa.text(f"INSERT INTO alembic_version(version_num) VALUES ('{v}');"))  # noqa E501
-        self.session.commit()
 
 
 if __name__ == "__main__":

@@ -1,13 +1,31 @@
 .activator-info {
-    margin: 1rem;
     width: 100%;
-}
-
-.activator-info span {
-    font-size: 0.875em;
 }
 
 .activator-info img {
     float: left;
     margin-right: 0.75rem;
+}
+
+.activatorTitle {
+    width: 100%;
+}
+
+.activatorTitle span {
+    font-size: larger;
+    font-family: 'Roboto Condensed', 'Helvetica Neue', sans-serif;
+}
+
+.activatorTitle hr {
+    max-width: 100%;
+    height: 0;
+    max-height: 0;
+    border: 1px solid #333;
+}
+
+.activatorData {
+    width: 100%;
+    font-size: smaller;
+    font-weight: 300;
+    font-style: italic;
 }

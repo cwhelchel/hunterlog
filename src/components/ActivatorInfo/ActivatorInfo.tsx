@@ -44,12 +44,12 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
         if (window.pywebview === undefined) {
             return;
         }
-        
+
         if (contextData.qso == null) {
             setActivator(defaultActData);
             return;
         }
-        
+
         const actCall = contextData?.qso?.call;
         const q = window.pywebview.api.get_activator_stats(actCall);
 
@@ -73,15 +73,20 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
         <div className='activator-info'>
             {activator !== null && activator.activator_id !== 0 &&
                 <>
-                    <h3>{activator?.callsign} - {activator?.name}</h3>
-                    <img src={getUserAvatarURL(activator?.gravatar)} />
-                    <span>{activator?.qth}</span>
-                    <br />
-                    <span><em>{activator?.activator.activations} activations {activator?.activator.parks} parks {activator?.activator.qsos} qsos</em></span>
-                    <br />
-                    <span><em>Hunted {activator?.hunter.parks} parks {activator?.hunter.qsos} qsos</em></span>
-                    <br />
-                    <span><em>You have {huntCount} QSOs with {activator?.callsign}</em></span>
+                    <div className="activatorTitle">
+                        <span>{activator?.callsign} - {activator?.name}</span>
+                        <hr role='separator' />
+                    </div>
+                    <img src={getUserAvatarURL(activator?.gravatar)} style={{ float: "left" }} />
+                    <div className='activatorData'>
+                        <span>{activator?.qth}</span>
+                        <br />
+                        <span><em>{activator?.activator.activations} activations {activator?.activator.parks} parks {activator?.activator.qsos} qsos</em></span>
+                        <br />
+                        <span><em>Hunted {activator?.hunter.parks} parks {activator?.hunter.qsos} qsos</em></span>
+                        <br />
+                        <span><em>You have {huntCount} QSOs with {activator?.callsign}</em></span>
+                    </div>
                 </>
             }
         </div>
