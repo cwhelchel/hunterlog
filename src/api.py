@@ -35,12 +35,12 @@ class JsApi:
 
     def get_spots(self):
         logging.debug('py getting spots')
-        spots = self.db.get_spots()
+        spots = self.db.spots.get_spots()
         ss = SpotSchema(many=True)
         return ss.dumps(spots)
 
     def get_spot_comments(self, spot_id: int):
-        spot = self.db.get_spot(spot_id)
+        spot = self.db.spots.get_spot(spot_id)
         comms = self.pota.get_spot_comments(spot.activator, spot.reference)
         self.db.insert_spot_comments(spot.activator, spot.reference, comms)
 

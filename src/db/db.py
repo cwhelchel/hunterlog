@@ -15,6 +15,7 @@ from db.models.user_config import UserConfig, UserConfigSchema
 from db.park_query import ParkQuery
 from db.qso_query import QsoQuery
 from db.loc_query import LocationQuery
+from db.spot_query import SpotQuery
 from utils.callsigns import get_basecall
 
 Base = declarative_base()
@@ -77,11 +78,11 @@ class DataBase:
         self.lq = LocationQuery(self.session)
         self._qq = QsoQuery(self.session)
         self._pq = ParkQuery(self.session)
+        self._sq = SpotQuery(self.session, func=self._get_all_filters)
         self.q.init_config()
         self.band_filter = Bands.NOBAND
         self.region_filter = None
         self.qrt_filter_on = True  # filter out QRT spots by default
-
         self.q.init_alembic_ver()
 
     def commit_session(self):
@@ -98,10 +99,22 @@ class DataBase:
     def parks(self) -> ParkQuery:
         return self._pq
 
-    def update_all_spots(self, spots_json):
-        schema = SpotSchema()
+    @property
+    def spots(self) -> SpotQuery:
+        return self._sq
 
+    def update_all_spots(self, spots_json):
+        '''
+        Updates all the spots in the database.
+
+        First will delete all previous spots, read the ones passed in
+        and perform the logic to update meta info about the spots
+
+        :param dict spots_json: the dict from the pota api
+        '''
+        schema = SpotSchema()
         self.session.execute(sa.text('DELETE FROM spots;'))
+
         for s in spots_json:
             to_add: Spot = schema.load(s, session=self.session)
             self.session.add(to_add)
@@ -130,25 +143,6 @@ class DataBase:
                 if re.match(r'\bqrt\b', to_add.comments.lower()):
                     to_add.is_qrt = True
 
-        # test data
-        # test = Spot()
-        # test.activator = "VP5/WD5JR"
-        # test.reference = "TC-0001"
-        # test.grid6 = "FL31vt"
-        # test.spotTime = datetime.utcnow()
-        # test.spotter = "HUNTER-LOG"
-        # test.mode = "CW"
-        # test.locationDesc = "TC-TC"
-        # test.latitude = "21.8022"
-        # test.longitude = "-72.17"
-        # test.name = "TEST"
-        # test.parkName = "TEST"
-        # test.comments = "A TEST SPOT FROM HL"
-        # test.frequency = "14001.0"
-        # test.hunted_bands = ""
-        # test.is_qrt = False
-        # test.hunted = False
-        # self.session.add(test)
         self.session.commit()
 
     def update_activator_stat(self, activator_stat_json) -> int:
@@ -164,20 +158,6 @@ class DataBase:
 
         self.session.commit()
         return x.activator_id
-
-    def get_spots(self):
-        '''
-        Get all the spots after applying the current filters: band, region, and
-        QRT filters
-        '''
-        terms = self._get_all_filters()
-        x = self.session.query(Spot) \
-            .filter(sa.and_(*terms)) \
-            .all()
-        return x
-
-    def get_spot(self, id: int) -> Spot:
-        return self.session.query(Spot).get(id)
 
     def get_spot_comments(self, activator, park: str) -> List[SpotComment]:
         return self.session.query(SpotComment) \
@@ -238,7 +218,7 @@ class DataBase:
         self.session.commit()
 
     def build_qso_from_spot(self, spot_id: int) -> Qso:
-        s = self.get_spot(spot_id)
+        s = self.spots.get_spot(spot_id)
         if (s is None):
             q = Qso()
             q.comment = "Error no spot"
