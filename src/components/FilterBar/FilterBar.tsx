@@ -68,15 +68,18 @@ export const FilterBar = (props: IFilterBarPros) => {
             createEqualityFilter('mode', '')
         );
         window.pywebview.api.set_band_filter(0);
-        let next = { ...contextData, bandFilter: 0 };
+        window.pywebview.api.set_region_filter("");
+
+        let next = { ...contextData, bandFilter: 0, regionFilter: "" };
         setData(next);
+        setRegion("");
     };
 
     function handleQrtSwitch(event: any, checked: boolean): void {
         console.log("changing qrt filter to: " + checked);
         window.pywebview.api.set_qrt_filter(checked);
 
-        let next = { ...contextData, qrtFilter: checked};
+        let next = { ...contextData, qrtFilter: checked };
         setData(next);
         setQrt(checked);
     }

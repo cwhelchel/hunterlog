@@ -26,11 +26,21 @@ export default function Ticker() {
         }
     }
 
+    function handleLoadLocData() {
+        if (window.pywebview) {
+            window.pywebview.api.load_location_data()
+        }
+    }
+
+
     return (
         <div className="footer">
             <span id="versionNum">{version} - db: {dbVersion}</span>
             <Link href="#" onClick={() => {handleOnClick()}}  ml={1}>
                 Export Logged QSOs
+            </Link>
+            <Link href="#" onClick={() => {handleLoadLocData()}}  ml={1}>
+                Load Location Data
             </Link>
         </div>
     )

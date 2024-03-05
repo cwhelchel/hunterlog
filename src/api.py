@@ -67,7 +67,7 @@ class JsApi:
 
     def get_activator_hunts(self, callsign):
         logging.debug("getting hunt count stats...")
-        return self.db.get_activator_hunts(callsign)
+        return self.db.qsos.get_activator_hunts(callsign)
 
     def get_park(self, ref: str, pull_from_pota: bool = True) -> str:
         '''
@@ -85,20 +85,20 @@ class JsApi:
 
         logging.debug(f"get_park: getting park {ref}")
 
-        park = self.db.get_park(ref)
+        park = self.db.parks.get_park(ref)
 
         if park is None and pull_from_pota:
             logging.debug(f"get_park: park was None {ref}")
             api_res = self.pota.get_park(ref)
             logging.debug(f"get_park: park from api {api_res}")
-            self.db.update_park_data(api_res)
-            park = self.db.get_park(ref)
+            self.db.parks.update_park_data(api_res)
+            park = self.db.parks.get_park(ref)
         elif park.name is None:
             logging.debug(f"get_park: park Name was None {ref}")
             api_res = self.pota.get_park(ref)
             logging.debug(f"get_park: park from api {api_res}")
-            self.db.update_park_data(api_res)
-            park = self.db.get_park(ref)
+            self.db.parks.update_park_data(api_res)
+            park = self.db.parks.get_park(ref)
 
         ps = ParkSchema()
         return ps.dumps(park)
@@ -144,15 +144,15 @@ class JsApi:
         try:
             park_json = self.pota.get_park(qso_data['sig_info'])
             logging.debug(f"updating park stat for: {park_json}")
-            self.db.inc_park_hunt(park_json)
+            self.db.parks.inc_park_hunt(park_json)
 
             logging.debug(f"logging qso: {qso_data}")
-            id = self.db.log_qso(qso_data)
+            id = self.db.qsos.insert_new_qso(qso_data)
         except Exception:
             logging.exception("Error logging QSO to db")
 
         # get the data to log to the adif file and remote adif host
-        qso = self.db.get_qso(id)
+        qso = self.db.qsos.get_qso(id)
         cfg = self.db.get_user_config()
         act = self.db.get_activator_name(qso_data['call'])
         qso.name = act if act is not None else 'ERROR NONAME'
@@ -169,7 +169,7 @@ class JsApi:
         Exports the QSOs logged with this logger app into a file.
         '''
         try:
-            qs = self.db.get_qsos_from_app()
+            qs = self.db.qsos.get_qsos_from_app()
             cfg = self.db.get_user_config()
 
             dt = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -210,6 +210,9 @@ class JsApi:
         self.pw = webview.create_window(
             title='POTA APP', url='https://pota.app/#/user/stats')
 
+    def load_location_data(self):
+        locations = PotaApi.get_locations()
+        self.db.init_location_data(locations)
         # self.pw.evaluate_js
         # (token, cookies) = self.get_id_token(self.pw)
         # logging.debug(f"token: {token}")
@@ -252,7 +255,7 @@ class JsApi:
         self.cat.set_mode(mode)
         self.cat.set_vfo(x)
 
-    def update_park_hunts(self):
+    def update_park_hunts_from_csv(self):
         '''
         Will use the current pota stats from hunter.csv to update the db with
         new park hunt numbers
@@ -272,7 +275,7 @@ class JsApi:
         for park in hunts:
             count = stats.get_park_hunt_count(park)
             j = {'reference': park, 'hunts': count}
-            self.db.update_park_hunts(j, count)
+            self.db.parks.update_park_hunts(j, count)
 
         self.db.commit_session()
 

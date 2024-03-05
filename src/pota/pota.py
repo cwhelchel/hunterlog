@@ -1,7 +1,7 @@
 import requests
 import logging as L
 import urllib.parse
-from  utils.callsigns import get_basecall
+from utils.callsigns import get_basecall
 
 logging = L.getLogger("potaApi")
 
@@ -10,6 +10,7 @@ SPOT_URL = "https://api.pota.app/spot/activator"
 SPOT_COMMENTS_URL = "https://api.pota.app/spot/comments/{act}/{park}"
 ACTIVATOR_URL = "https://api.pota.app/stats/user/{call}"
 PARK_URL = "https://api.pota.app/park/{park}"
+LOCATIONS_URL = "https://api.pota.app/programs/locations/"
 
 
 class Api():
@@ -51,6 +52,17 @@ class Api():
 
     def get_park(self, park_ref: str):
         url = PARK_URL.format(park=park_ref)
+        response = requests.get(url)
+        if response.status_code == 200:
+            json = response.json()
+            return json
+
+    @staticmethod
+    def get_locations():
+        '''
+        This file is quite large
+        '''
+        url = LOCATIONS_URL
         response = requests.get(url)
         if response.status_code == 200:
             json = response.json()

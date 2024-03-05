@@ -68,7 +68,7 @@ class AdifLog():
                             sig_info = m[0]
                             qso['SIG_INFO'] = sig_info
                     q.init_from_adif(qso)
-                    the_db.insert_qso(q)
+                    the_db.qsos.insert_qso(q)
 
             the_db.commit_session()
 

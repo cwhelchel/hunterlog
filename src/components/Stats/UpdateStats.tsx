@@ -6,7 +6,7 @@ export const UpdateStats = () => {
 
     const handleClick = () => {
         if (window.pywebview !== undefined) {
-            window.pywebview.api.update_park_hunts();
+            window.pywebview.api.update_park_hunts_from_csv();
         }
     };
 
