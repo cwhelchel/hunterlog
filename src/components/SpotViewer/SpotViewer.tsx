@@ -51,7 +51,35 @@ const columns: GridColDef[] = [
         }
     },
     { field: 'mode', headerName: 'Mode', width: 100 },
-    { field: 'locationDesc', headerName: 'Loc', width: 100 },
+    {
+        field: 'locationDesc', headerName: 'Loc', width: 200,
+        renderCell: (x) => {
+            function dodo() {
+                return (
+                    <>{x.row.park_hunts} / {999} </>
+                )
+            };
+            return (
+                <>
+                    {x.row.park_hunts > 0 && (
+                        <Badge
+                            badgeContent={dodo()}
+                            color="secondary"
+                            max={999}
+                            anchorOrigin={{
+                                vertical: 'top',
+                                horizontal: 'right',
+                            }}>
+                            <span id="locationDesc">{x.row.locationDesc}</span>
+                        </Badge>
+                    )}
+                    {x.row.park_hunts == 0 && (
+                        <span id="locationDesc">{x.row.locationDesc}</span>
+                    )}
+                </>
+            )
+        }
+    },
     {
         field: 'reference', headerName: 'Park', width: 400,
         renderCell: (x) => {
@@ -188,7 +216,7 @@ export default function SpotViewer() {
     function getClassName(params: GridRowClassNameParams<SpotRow>) {
         if (params.row.is_qrt)
             return 'spotviewer-row-qrt';
-        else 
+        else
             return 'spotviewer-row';
     }
 

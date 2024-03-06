@@ -5,7 +5,7 @@ from db.models.parks import Park, ParkSchema
 
 
 class ParkQuery:
-    def __init__(self, session):
+    def __init__(self, session: scoped_session):
         self.session = session
 
     def get_park(self, park: str) -> Park:
@@ -13,12 +13,16 @@ class ParkQuery:
             .filter(Park.reference == park) \
             .first()
 
-    def update_park_data(self, park: scoped_session):
+    def get_parks(self) -> list[Park]:
+        return self.session.query(Park).all()
+
+    def update_park_data(self, park: any, delay_commit: bool = False):
         '''
         Parks added from stats do not have anything besides hunt count and
         the reference. This method updates the rest of the data.
 
         :param any park: the json for a POTA park returned from POTA api
+        :param bool delay_commit: true to not commit the session
         '''
         if park is None:
             return
@@ -61,7 +65,8 @@ class ParkQuery:
             p.firstActivationDate = park['firstActivationDate']
             p.website = park['website']
 
-        self.session.commit()
+        if delay_commit:
+            self.session.commit()
 
     def inc_park_hunt(self, park: any):
         '''

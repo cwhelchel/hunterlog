@@ -1,5 +1,6 @@
 import json
 import socket
+import time
 import webview
 import logging as L
 import datetime
@@ -118,7 +119,7 @@ class JsApi:
         }
         return json.dumps(result)
 
-    def import_adif(self):
+    def import_adif(self) -> str:
         '''
         Opens a Open File Dialog to allow the user to select a ADIF file
         containing POTA QSOs to be imported into the app's database.
@@ -129,10 +130,16 @@ class JsApi:
                 webview.OPEN_DIALOG,
             file_types=ft)
         if not filename:
-            return
+            return json.dumps({'success': True, 'message': "user cancel"})
 
         logging.info("starting import of ADIF file...")
         AdifLog.import_from_log(filename[0], self.db)
+
+        result = {
+            'success': True,
+            'message': "completed adif import successfully",
+        }
+        return json.dumps(result)
 
     def log_qso(self, qso_data):
         '''
@@ -212,7 +219,7 @@ class JsApi:
 
     def load_location_data(self):
         locations = PotaApi.get_locations()
-        self.db.init_location_data(locations)
+        self.db.locations.load_location_data(locations)
         # self.pw.evaluate_js
         # (token, cookies) = self.get_id_token(self.pw)
         # logging.debug(f"token: {token}")
@@ -255,10 +262,12 @@ class JsApi:
         self.cat.set_mode(mode)
         self.cat.set_vfo(x)
 
-    def update_park_hunts_from_csv(self):
+    def update_park_hunts_from_csv(self) -> str:
         '''
         Will use the current pota stats from hunter.csv to update the db with
-        new park hunt numbers
+        new park hunt numbers. It will then update all the parks with data from
+        the POTA API. This method will run a while depending on how many parks
+        are in the csv file.
         '''
         ft = ('CSV files (*.csv;*.txt)', 'All files (*.*)')
         filename = webview.windows[0] \
@@ -266,7 +275,7 @@ class JsApi:
                 webview.OPEN_DIALOG,
             file_types=ft)
         if not filename:
-            return
+            return json.dumps({'success': True, 'message': "user cancel"})
 
         logging.info(f"updating park hunts from {filename[0]}")
         stats = PotaStats(filename[0])
@@ -278,6 +287,28 @@ class JsApi:
             self.db.parks.update_park_hunts(j, count)
 
         self.db.commit_session()
+
+        return self._update_all_parks()
+
+    def _update_all_parks(self) -> str:
+        logging.info("updating all parks in db")
+
+        parks = self.db.parks.get_parks()
+        for park in parks:
+            if park.name is not None:
+                continue
+
+            api_res = self.pota.get_park(park.reference)
+            self.db.parks.update_park_data(api_res, delay_commit=True)
+
+            time.sleep(0.005)  # dont want to hurt POTA
+
+        self.db.commit_session()
+
+        return json.dumps({
+            'success': True,
+            'message': "completed park update successfully",
+        })
 
     def _send_msg(self, msg: str):
         """

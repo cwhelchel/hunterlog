@@ -2,6 +2,7 @@ import sqlalchemy as sa
 from sqlalchemy.orm import scoped_session
 
 from db.models.location import Location, LocationSchema
+from db.models.parks import Park
 from db.models.qsos import Qso
 
 
@@ -54,9 +55,22 @@ class LocationQuery:
         loc = self.get_location_by_desc(descriptor)
         total = loc.parks
         hunts = self.session.query(Qso) \
-            .filter(Qso.sig_info == descriptor).count()
+            .join(Park, Park.reference == Qso.sig_info) \
+            .join(Location, Location.descriptor.contains(descriptor)) \
+            .count()
         return (hunts, total)
 
     def clear_locations(self):
         self.session.execute(sa.text("DELETE FROM LOCATIONS;"))
         self.session.commit()
+
+
+'''
+this should do for the QSO count for a given location but parks dont always
+have data filled out.
+
+SELECT *
+FROM qsos
+JOIN parks ON (parks.reference = qsos.sig_info and parks.locationDesc LIKE '%' || 'US-GA' || '%' )
+JOIN locations ON (locations.descriptor LIKE '%' || 'US-GA' || '%')
+'''

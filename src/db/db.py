@@ -25,7 +25,7 @@ logging = L.getLogger("db")
 # L.getLogger('sqlalchemy.engine').setLevel(L.INFO)
 
 
-VER_FROM_ALEMBIC = '6f1777640ea8'
+VER_FROM_ALEMBIC = 'd087ce5d50a6'
 '''
 This value indicates the version of the DB scheme the app is made for.
 
@@ -34,7 +34,7 @@ typically done by running `alembic revision` in the root of the project.
 '''
 
 
-class Query:
+class InitQuery:
     '''Internal DB queries stored here.'''
 
     def __init__(self, session: scoped_session):
@@ -71,25 +71,32 @@ class DataBase:
         self.session = scoped_session(sessionmaker(bind=engine))
         Base.metadata.create_all(engine)
 
-        self.session.execute(sa.text('DELETE FROM spots;'))
-        self.session.commit()
-        # self.init_config()
-        self.q = Query(self.session)
-        self.lq = LocationQuery(self.session)
+        self._iq = InitQuery(self.session)
+        self._lq = LocationQuery(self.session)
         self._qq = QsoQuery(self.session)
         self._pq = ParkQuery(self.session)
         self._sq = SpotQuery(self.session, func=self._get_all_filters)
-        self.q.init_config()
+        self._sq.delete_all_spots()
+        self._iq.init_config()
+        self._iq.init_alembic_ver()
+
         self.band_filter = Bands.NOBAND
         self.region_filter = None
         self.qrt_filter_on = True  # filter out QRT spots by default
-        self.q.init_alembic_ver()
 
     def commit_session(self):
         '''
         Calls session.commit to save any pending changes to db.
+
+        May be required when for methods that use `delay_commit` param
         '''
         self.session.commit()
+
+    '''
+    These properties provide methods that were refactored from this class. If
+    a method remains, we can assume its to integrated with other parts to be
+    easily refactored.
+    '''
 
     @property
     def qsos(self) -> QsoQuery:
@@ -102,6 +109,10 @@ class DataBase:
     @property
     def spots(self) -> SpotQuery:
         return self._sq
+
+    @property
+    def locations(self) -> LocationQuery:
+        return self._lq
 
     def update_all_spots(self, spots_json):
         '''
@@ -136,6 +147,10 @@ class DataBase:
 
             to_add.hunted = hunted
             to_add.hunted_bands = bands
+
+            # if park is not None:
+            #     loc_hunts = self._lq.get_location_hunts(park.locationDesc)
+            #     to_add.loc_hunts = loc_hunts
 
             to_add.is_qrt = False
 
@@ -218,6 +233,14 @@ class DataBase:
         self.session.commit()
 
     def build_qso_from_spot(self, spot_id: int) -> Qso:
+        '''
+        Builds a new `Qso` with data in the spot table.
+
+        Also uses data from Activators table.
+
+        :param int spot_id: the spot PK.
+        :returns an untracked `Qso` object with initialized data.
+        '''
         s = self.spots.get_spot(spot_id)
         if (s is None):
             q = Qso()
@@ -240,12 +263,6 @@ class DataBase:
     def set_qrt_filter(self, is_on: bool):
         logging.debug(f"db setting QRT filter to {is_on}")
         self.qrt_filter_on = is_on
-
-    def init_location_data(self, data: dict):
-        self.lq.load_location_data(data)
-
-    def get_location_hunt_count(self, loc_descriptor: str) -> tuple[int, int]:
-        return self.lq.get_location_hunts(loc_descriptor)
 
     def _get_all_filters(self) -> list[sa.ColumnElement[bool]]:
         return self._get_band_filters() + \
@@ -272,10 +289,3 @@ class DataBase:
             return [Spot.is_qrt == False]  # noqa E712
         terms = []
         return terms
-
-
-if __name__ == "__main__":
-    db = DataBase()
-    # db.update_spot_comments("KU8T", "K-2263")
-    # comments = db.get_spot_comments()
-    # print(*text, sep='\n')
