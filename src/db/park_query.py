@@ -65,7 +65,7 @@ class ParkQuery:
             p.firstActivationDate = park['firstActivationDate']
             p.website = park['website']
 
-        if delay_commit:
+        if not delay_commit:
             self.session.commit()
 
     def inc_park_hunt(self, park: any):

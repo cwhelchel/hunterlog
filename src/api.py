@@ -299,11 +299,11 @@ class JsApi:
                 continue
 
             api_res = self.pota.get_park(park.reference)
-            self.db.parks.update_park_data(api_res, delay_commit=True)
+            self.db.parks.update_park_data(api_res)  # delay_commit=True
 
-            time.sleep(0.005)  # dont want to hurt POTA
+            time.sleep(0.001)  # dont want to hurt POTA
 
-        self.db.commit_session()
+        # self.db.commit_session()
 
         return json.dumps({
             'success': True,
