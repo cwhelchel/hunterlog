@@ -28,19 +28,36 @@ export default function Ticker() {
 
     function handleLoadLocData() {
         if (window.pywebview) {
-            window.pywebview.api.load_location_data()
+            window.pywebview.api.load_location_data();
         }
     }
 
+    function handleExportParkData() {
+        if (window.pywebview) {
+            window.pywebview.api.export_park_data();
+        }
+    }
+
+    function handleImportParkData() {
+        if (window.pywebview) {
+            window.pywebview.api.import_park_data();
+        }
+    }
 
     return (
         <div className="footer">
             <span id="versionNum">{version} - db: {dbVersion}</span>
-            <Link href="#" onClick={() => {handleOnClick()}}  ml={1}>
+            <Link href="#" onClick={() => {handleOnClick()}}  ml={1} mr={1}>
                 Export Logged QSOs
             </Link>
-            <Link href="#" onClick={() => {handleLoadLocData()}}  ml={1}>
+            <Link href="#" onClick={() => {handleLoadLocData()}}  ml={1} mr={1}>
                 Load Location Data
+            </Link>
+            <Link href="#" onClick={() => {handleExportParkData()}}  ml={1} mr={1}>
+                Export Park Info
+            </Link>
+            <Link href="#" onClick={() => {handleImportParkData()}}  ml={1} mr={1}>
+                Import Park Info
             </Link>
         </div>
     )

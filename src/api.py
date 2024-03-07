@@ -162,7 +162,7 @@ class JsApi:
         qso = self.db.qsos.get_qso(id)
         cfg = self.db.get_user_config()
         act = self.db.get_activator_name(qso_data['call'])
-        qso.name = act if act is not None else 'ERROR NONAME'
+        qso.name = act if act is not None else 'ERROR NO NAME'
         self.adif_log.log_qso_and_send(qso, cfg)
 
         j = self.pota.get_spots()
@@ -289,6 +289,52 @@ class JsApi:
         self.db.commit_session()
 
         return self._update_all_parks()
+
+    def export_park_data(self) -> str:
+        '''
+        Dumps the entire parks table into a file named 'park_export.json'.
+
+        This can then be later used to import. This is useful to avoid having
+        to download park info from the POTA endpoints.
+        '''
+        logging.debug("export_park_data: dumping parks table...")
+        parks = self.db.parks.get_parks()
+        schema = ParkSchema()
+        data = schema.dumps(parks, many=True)
+
+        with open("park_export.json", "w") as out:
+            out.write(data)
+
+        return json.dumps({
+            'success': True,
+            'message': "park data exported successfully",
+        })
+
+    def import_park_data(self) -> str:
+        '''
+        Loads previously exported park data from a file into the parks table.
+
+        The opposite of :meth:`export_park_data`
+        '''
+        logging.debug("import_park_data: loading table...")
+
+        ft = ('JSON files (*.json)', 'All files (*.*)')
+        filename = webview.windows[0] \
+            .create_file_dialog(
+                webview.OPEN_DIALOG,
+            file_types=ft)
+        if not filename:
+            return json.dumps({'success': True, 'message': "user cancel"})
+
+        with open(filename[0], "r") as input:
+            text = input.read()
+            obj = json.loads(text)
+            self.db.parks.import_park_data(obj)
+
+        return json.dumps({
+            'success': True,
+            'message': "park data import successfully",
+        })
 
     def _update_all_parks(self) -> str:
         logging.info("updating all parks in db")

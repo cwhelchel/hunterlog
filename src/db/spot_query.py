@@ -1,9 +1,9 @@
-import re
+import datetime
 from typing import Callable
 import sqlalchemy as sa
 from sqlalchemy.orm import scoped_session
 
-from db.models.spots import Spot, SpotSchema
+from db.models.spots import Spot
 
 
 class SpotQuery:
@@ -22,27 +22,6 @@ class SpotQuery:
         self.session.execute(sa.text('DELETE FROM spots;'))
         self.session.commit()
 
-        # # test data
-        # # test = Spot()
-        # # test.activator = "VP5/WD5JR"
-        # # test.reference = "TC-0001"
-        # # test.grid6 = "FL31vt"
-        # # test.spotTime = datetime.utcnow()
-        # # test.spotter = "HUNTER-LOG"
-        # # test.mode = "CW"
-        # # test.locationDesc = "TC-TC"
-        # # test.latitude = "21.8022"
-        # # test.longitude = "-72.17"
-        # # test.name = "TEST"
-        # # test.parkName = "TEST"
-        # # test.comments = "A TEST SPOT FROM HL"
-        # # test.frequency = "14001.0"
-        # # test.hunted_bands = ""
-        # # test.is_qrt = False
-        # # test.hunted = False
-        # # self.session.add(test)
-        # self.session.commit()
-
     def get_spots(self):
         '''
         Get all the spots after applying the current filters: band, region, and
@@ -59,3 +38,25 @@ class SpotQuery:
 
     def get_spot(self, id: int) -> Spot:
         return self.session.query(Spot).get(id)
+
+    def insert_test_spot(self):
+        # test data
+        test = Spot()
+        test.activator = "VP5/WD5JR"
+        test.reference = "TC-0001"
+        test.grid6 = "FL31vt"
+        test.spotTime = datetime.datetime.utcnow()
+        test.spotter = "HUNTER-LOG"
+        test.mode = "CW"
+        test.locationDesc = "TC-TC"
+        test.latitude = "21.8022"
+        test.longitude = "-72.17"
+        test.name = "TEST"
+        test.parkName = "TEST"
+        test.comments = "A TEST SPOT QRT FROM HL"
+        test.frequency = "14001.0"
+        test.hunted_bands = ""
+        test.is_qrt = False
+        test.hunted = False
+        self.session.add(test)
+        self.session.commit()

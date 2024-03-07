@@ -1,4 +1,5 @@
 import logging
+import sqlalchemy as sa
 from sqlalchemy.orm import scoped_session
 
 from db.models.parks import Park, ParkSchema
@@ -15,6 +16,19 @@ class ParkQuery:
 
     def get_parks(self) -> list[Park]:
         return self.session.query(Park).all()
+
+    def insert_parks(self, parks: list[Park]):
+        self.session.add_all(parks)
+        self.session.commit()
+
+    def delete_parks(self):
+        self.session.execute(sa.text("DELETE FROM parks;"))
+        self.session.commit()
+
+    def import_park_data(self, json_obj: dict):
+        schema = ParkSchema()
+        data = schema.load(json_obj, session=self.session, many=True)
+        self.insert_parks(data)
 
     def update_park_data(self, park: any, delay_commit: bool = False):
         '''

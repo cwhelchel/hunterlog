@@ -126,6 +126,8 @@ class DataBase:
         schema = SpotSchema()
         self.session.execute(sa.text('DELETE FROM spots;'))
 
+        # self._sq.insert_test_spot()  # testing code
+
         for s in spots_json:
             to_add: Spot = schema.load(s, session=self.session)
             self.session.add(to_add)
@@ -151,14 +153,14 @@ class DataBase:
             # if park is not None:
             if ',' not in to_add.locationDesc:
                 x, y = self._lq.get_location_hunts(to_add.locationDesc)
-                logging.debug(f"got location hunts {x} / {y}")
+                # logging.debug(f"got location hunts {x} / {y}")
                 to_add.loc_hunts = x
                 to_add.loc_total = y
 
             to_add.is_qrt = False
 
             if to_add.comments is not None:
-                if re.match(r'.*\bqrt\b.*', to_add.comments.lower()):
+                if re.match(r'.*qrt.*', to_add.comments.lower()):
                     to_add.is_qrt = True
 
         self.session.commit()

@@ -67,14 +67,3 @@ class LocationQuery:
     def clear_locations(self):
         self.session.execute(sa.text("DELETE FROM LOCATIONS;"))
         self.session.commit()
-
-
-'''
-this should do for the QSO count for a given location but parks dont always
-have data filled out.
-
-SELECT *
-FROM qsos
-JOIN parks ON (parks.reference = qsos.sig_info and parks.locationDesc LIKE '%' || 'US-GA' || '%' )
-JOIN locations ON (locations.descriptor LIKE '%' || 'US-GA' || '%')
-'''
