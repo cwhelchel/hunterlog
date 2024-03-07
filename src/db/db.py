@@ -25,7 +25,7 @@ logging = L.getLogger("db")
 # L.getLogger('sqlalchemy.engine').setLevel(L.INFO)
 
 
-VER_FROM_ALEMBIC = 'd087ce5d50a6'
+VER_FROM_ALEMBIC = '5daac9aa5d91'
 '''
 This value indicates the version of the DB scheme the app is made for.
 
@@ -149,13 +149,16 @@ class DataBase:
             to_add.hunted_bands = bands
 
             # if park is not None:
-            #     loc_hunts = self._lq.get_location_hunts(park.locationDesc)
-            #     to_add.loc_hunts = loc_hunts
+            if ',' not in to_add.locationDesc:
+                x, y = self._lq.get_location_hunts(to_add.locationDesc)
+                logging.debug(f"got location hunts {x} / {y}")
+                to_add.loc_hunts = x
+                to_add.loc_total = y
 
             to_add.is_qrt = False
 
             if to_add.comments is not None:
-                if re.match(r'\bqrt\b', to_add.comments.lower()):
+                if re.match(r'.*\bqrt\b.*', to_add.comments.lower()):
                     to_add.is_qrt = True
 
         self.session.commit()

@@ -37,6 +37,7 @@ class Spot(Base):
     park_hunts = sa.Column(sa.Integer, nullable=True)
     op_hunts = sa.Column(sa.Integer, nullable=True)
     loc_hunts = sa.Column(sa.Integer, nullable=True)
+    loc_total = sa.Column(sa.Integer, nullable=True)
 
     # to be calculated by app
     is_qrt = sa.Column(sa.Boolean, nullable=True)

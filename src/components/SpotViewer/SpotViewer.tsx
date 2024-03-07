@@ -54,18 +54,17 @@ const columns: GridColDef[] = [
     {
         field: 'locationDesc', headerName: 'Loc', width: 200,
         renderCell: (x) => {
-            function dodo() {
+            function getContent() {
                 return (
-                    <>{x.row.park_hunts} / {999} </>
+                    <>{x.row.loc_hunts} / {x.row.loc_total} </>
                 )
             };
             return (
                 <>
-                    {x.row.park_hunts > 0 && (
+                    {x.row.loc_hunts > 0 && (
                         <Badge
-                            badgeContent={dodo()}
+                            badgeContent={getContent()}
                             color="secondary"
-                            max={999}
                             anchorOrigin={{
                                 vertical: 'top',
                                 horizontal: 'right',
@@ -73,7 +72,7 @@ const columns: GridColDef[] = [
                             <span id="locationDesc">{x.row.locationDesc}</span>
                         </Badge>
                     )}
-                    {x.row.park_hunts == 0 && (
+                    {x.row.loc_hunts == 0 && (
                         <span id="locationDesc">{x.row.locationDesc}</span>
                     )}
                 </>

@@ -22,5 +22,7 @@ export interface SpotRow {
     hunted_bands: string,
     park_hunts: number,
     op_hunts: number,
+    loc_hunts: number,
+    loc_total: number,
     is_qrt: boolean
 };

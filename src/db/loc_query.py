@@ -53,10 +53,14 @@ class LocationQuery:
         :returns tuple[0] = hunt count; tuple[1] = total park number
         '''
         loc = self.get_location_by_desc(descriptor)
+        if loc is None:
+            return (0, 0)
+
         total = loc.parks
-        hunts = self.session.query(Qso) \
-            .join(Park, Park.reference == Qso.sig_info) \
-            .join(Location, Location.descriptor.contains(descriptor)) \
+        hunts = self.session.query(Park.reference).distinct() \
+            .join(Qso, Park.reference == Qso.sig_info) \
+            .join(Location, sa.and_(Location.descriptor.contains(descriptor),
+                                    Park.locationDesc.contains(descriptor))) \
             .count()
         return (hunts, total)
 
