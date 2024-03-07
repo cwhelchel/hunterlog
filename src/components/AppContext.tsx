@@ -14,7 +14,10 @@ const defData: ContextData = {
     bandFilter: 0,
     regions: [],
     regionFilter: '',
-    qrtFilter: true
+    locationFilter: '',
+    qrtFilter: true,
+    locations: [],
+    huntedFilter: false
 };
 
 export const AppContext = React.createContext<AppContextType | null>(null);
@@ -30,7 +33,10 @@ export const AppContextProvider = ({ children }) => {
             regions: ctx.regions,
             regionFilter: ctx.regionFilter,
             park: ctx.park,
-            qrtFilter: ctx.qrtFilter
+            locationFilter: ctx.locationFilter,
+            qrtFilter: ctx.qrtFilter,
+            locations: ctx.locations,
+            huntedFilter: ctx.huntedFilter
         }
         setContextData(newContext);
     };

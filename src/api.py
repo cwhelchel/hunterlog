@@ -203,9 +203,17 @@ class JsApi:
         logging.debug(f"api setting region filter to: {region}")
         self.db.set_region_filter(region)
 
+    def set_location_filter(self, location: str):
+        logging.debug(f"setting region filter to {location}")
+        self.db.set_location_filter(location)
+
     def set_qrt_filter(self, is_qrt: bool):
         logging.debug(f"api setting qrt filter to: {is_qrt}")
         self.db.set_qrt_filter(is_qrt)
+
+    def set_hunted_filter(self, filter_hunted: bool):
+        logging.debug(f"api setting qrt filter to: {filter_hunted}")
+        self.db.set_hunted_filter(filter_hunted)
 
     def update_activator_stats(self, callsign: str) -> int:
         j = self.pota.get_activator_stats(callsign)

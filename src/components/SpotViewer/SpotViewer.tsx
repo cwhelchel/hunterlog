@@ -143,12 +143,20 @@ export default function SpotViewer() {
     React.useEffect(() => {
         // parse the current spots and pull out the region specifier from each
         // location
+        if (contextData.locationFilter === "")
+            contextData.locations = [];
+
         spots.map((spot) => {
-            let loc = spot.locationDesc.substring(0, 2);
-            if (!contextData.regions.includes(loc))
-                contextData.regions.push(loc);
+            let region = spot.locationDesc.substring(0, 2);
+            if (!contextData.regions.includes(region))
+                contextData.regions.push(region);
+
+            let location = spot.locationDesc.substring(0, 5);
+            if (!contextData.locations.includes(location))
+                contextData.locations.push(location);
         });
 
+        contextData.locations.sort();
         setData(contextData);
     }, [spots]);
 
@@ -192,7 +200,10 @@ export default function SpotViewer() {
         // get the spots from the db
         if (window.pywebview !== undefined)
             getSpots();
-    }, [contextData.bandFilter, contextData.regionFilter, contextData.qrtFilter]);
+    }, [contextData.bandFilter, contextData.regionFilter, 
+        contextData.qrtFilter, contextData.locationFilter,
+        contextData.huntedFilter]
+    );
 
     // return the correct PK id for our rows
     function getRowId(row: { spotId: any; }) {

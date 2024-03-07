@@ -82,7 +82,9 @@ class DataBase:
 
         self.band_filter = Bands.NOBAND
         self.region_filter = None
+        self.location_filter = None
         self.qrt_filter_on = True  # filter out QRT spots by default
+        self.hunted_filter_on = False  # filter out spots you hunted
 
     def commit_session(self):
         '''
@@ -269,14 +271,24 @@ class DataBase:
         logging.debug(f"db setting region filter to {region}")
         self.region_filter = region
 
+    def set_location_filter(self, location: str):
+        logging.debug(f"db setting location filter to {location}")
+        self.location_filter = location
+
     def set_qrt_filter(self, is_on: bool):
         logging.debug(f"db setting QRT filter to {is_on}")
         self.qrt_filter_on = is_on
 
+    def set_hunted_filter(self, is_on: bool):
+        logging.debug(f"db setting hunted filter to {is_on}")
+        self.hunted_filter_on = is_on
+
     def _get_all_filters(self) -> list[sa.ColumnElement[bool]]:
         return self._get_band_filters() + \
             self._get_region_filters() + \
-            self._get_qrt_filter()
+            self._get_location_filters() + \
+            self._get_qrt_filter() + \
+            self._get_hunted_filter()
 
     def _get_band_filters(self) -> list[sa.ColumnElement[bool]]:
         band = Bands(self.band_filter)  # not sure why cast is needed
@@ -292,9 +304,23 @@ class DataBase:
         terms = [Spot.locationDesc.startswith(region)]
         return terms
 
+    def _get_location_filters(self) -> list[sa.ColumnElement[bool]]:
+        loc = self.location_filter
+        if (loc is None):
+            return []
+        terms = [Spot.locationDesc.contains(loc)]
+        return terms
+
     def _get_qrt_filter(self) -> list[sa.ColumnElement[bool]]:
         qrt = self.qrt_filter_on
         if qrt:
             return [Spot.is_qrt == False]  # noqa E712
+        terms = []
+        return terms
+
+    def _get_hunted_filter(self) -> list[sa.ColumnElement[bool]]:
+        hunt_filter = self.hunted_filter_on
+        if hunt_filter:
+            return [Spot.hunted == False]  # noqa E712
         terms = []
         return terms

@@ -10,7 +10,10 @@ export interface ContextData {
     bandFilter: number;
     regions: string[];
     regionFilter: string;
+    locations: string[];
+    locationFilter: string;
     qrtFilter: boolean; // true to filter out QRT spots
+    huntedFilter: boolean; // true to filter out already hunted spots
 }
 
 export  interface AppContextType {

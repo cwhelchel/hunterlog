@@ -22,7 +22,9 @@ export const FilterBar = (props: IFilterBarPros) => {
     const [mode, setMode] = React.useState('');
     const [band, setBand] = React.useState('');
     const [region, setRegion] = React.useState('');
+    const [location, setLocation] = React.useState('');
     const [qrt, setQrt] = React.useState(true);
+    const [hunted, setHunted] = React.useState(false);
 
     const { contextData, setData } = useAppContext();
 
@@ -60,6 +62,16 @@ export const FilterBar = (props: IFilterBarPros) => {
         setRegion(r);
     }
 
+    const handleLocationChange = (event: SelectChangeEvent) => {
+        let l = event.target.value as string;
+        console.log("changing location to: " + l);
+        window.pywebview.api.set_location_filter(l);
+
+        let next = { ...contextData, locationFilter: l };
+        setData(next);
+        setLocation(l);
+    }
+
     const handleClear = () => {
         setMode("");
         setBand("0");
@@ -70,9 +82,10 @@ export const FilterBar = (props: IFilterBarPros) => {
         window.pywebview.api.set_band_filter(0);
         window.pywebview.api.set_region_filter("");
 
-        let next = { ...contextData, bandFilter: 0, regionFilter: "" };
+        let next = { ...contextData, bandFilter: 0, regionFilter: "", locationFilter: "" };
         setData(next);
         setRegion("");
+        setLocation("");
     };
 
     function handleQrtSwitch(event: any, checked: boolean): void {
@@ -82,6 +95,15 @@ export const FilterBar = (props: IFilterBarPros) => {
         let next = { ...contextData, qrtFilter: checked };
         setData(next);
         setQrt(checked);
+    }
+
+    function handleHuntedSwitch(event: any, checked: boolean): void {
+        console.log("changing hunted filter to: " + checked);
+        window.pywebview.api.set_hunted_filter(checked);
+
+        let next = { ...contextData, huntedFilter: checked };
+        setData(next);
+        setHunted(checked);
     }
 
     return (
@@ -95,6 +117,7 @@ export const FilterBar = (props: IFilterBarPros) => {
                 autoComplete="off"
             >
                 <FormControlLabel control={<Switch onChange={handleQrtSwitch} checked={qrt} />} label="Hide QRT" />
+                <FormControlLabel control={<Switch onChange={handleHuntedSwitch} checked={hunted} />} label="Hide Hunted" />
                 <FormControl size='small'>
                     <InputLabel id="band-label">Band</InputLabel>
                     <Select
@@ -152,6 +175,25 @@ export const FilterBar = (props: IFilterBarPros) => {
                         {contextData.regions.map((region) => (
                             <MenuItem key={region} value={region}>
                                 {region}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+                <FormControl size='small'>
+                    <InputLabel id="location-lbl">Location</InputLabel>
+                    <Select
+                        labelId="location-lbl"
+                        id="location"
+                        value={location}
+                        label="Location"
+                        variant='standard'
+                        sx={{ minWidth: 100 }}
+                        onChange={handleLocationChange}
+                    >
+                        <MenuItem value=""><em>None</em></MenuItem>
+                        {contextData.locations.map((loc) => (
+                            <MenuItem key={loc} value={loc}>
+                                {loc}
                             </MenuItem>
                         ))}
                     </Select>
