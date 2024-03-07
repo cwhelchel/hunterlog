@@ -19,7 +19,7 @@ import { ActivatorInfo } from './components/ActivatorInfo/ActivatorInfo'
 import { FilterBar } from './components/FilterBar/FilterBar'
 import { UpdateStats } from './components/Stats/UpdateStats'
 import AppMenu from './components/AppMenu/AppMenu'
-import VersionInfo from './components/VersionInfo'
+import Footer from './components/Footer/Footer'
 
 
 import './index.scss'
@@ -79,7 +79,7 @@ const App = function () {
                                 </Grid>
                             </Grid>
                             <SpotViewer />
-                            <VersionInfo />
+                            <Footer />
                         </Stack>
                     </ThemeProvider>
                 </AppContextProvider>

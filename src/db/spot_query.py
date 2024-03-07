@@ -42,7 +42,7 @@ class SpotQuery:
     def insert_test_spot(self):
         # test data
         test = Spot()
-        test.activator = "VP5/WD5JR"
+        test.activator = "OT4V/P"
         test.reference = "TC-0001"
         test.grid6 = "FL31vt"
         test.spotTime = datetime.datetime.utcnow()
@@ -53,7 +53,7 @@ class SpotQuery:
         test.longitude = "-72.17"
         test.name = "TEST"
         test.parkName = "TEST"
-        test.comments = "A TEST SPOT QRT FROM HL"
+        test.comments = "A TEST SPOT FROM HL"
         test.frequency = "14001.0"
         test.hunted_bands = ""
         test.is_qrt = False

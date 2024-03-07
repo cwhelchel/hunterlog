@@ -1,8 +1,9 @@
-import Link from '@mui/material/Link';
+import './Footer.scss'
+
 import * as React from 'react'
+import Link from '@mui/material/Link';
 
-
-export default function Ticker() {
+export default function Footer() {
     const [version, setVersion] = React.useState('');
     const [dbVersion, setDbVersion] = React.useState('');
 

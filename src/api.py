@@ -64,6 +64,11 @@ class JsApi:
     def get_activator_stats(self, callsign):
         logging.debug("getting activator stats...")
         ac = self._get_activator(callsign)
+        if ac is None:
+            return json.dumps({
+                'success': False,
+                'message': 'activator does not exists in POTA'
+            })
         return ActivatorSchema().dumps(ac)
 
     def get_activator_hunts(self, callsign):
@@ -382,6 +387,7 @@ class JsApi:
             if id > 0:
                 activator = self.db.get_activator_by_id(id)
                 return activator
+            return None
 
         ac = self.db.get_activator(callsign)
         if (ac is None):

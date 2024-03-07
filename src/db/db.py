@@ -194,10 +194,12 @@ class DataBase:
             .first()
 
     def get_activator_name(self, callsign: str) -> str:
-        basecall = get_basecall(callsign)
-        return self.session.query(Activator.name) \
-            .filter(Activator.callsign == basecall) \
-            .first()[0]
+        act = self.get_activator(callsign)
+
+        if act is None:
+            return ""
+
+        return act.name
 
     def get_activator_by_id(self, id: int) -> Activator:
         return self.session.query(Activator).get(id)
@@ -252,10 +254,12 @@ class DataBase:
             q.comment = "Error no spot"
             return q
         a = self.get_activator(s.activator)
-        if s is not None:
-            q = Qso()
-            q.init_from_spot(s, a.name)
-            return q
+
+        name = a.name if a is not None else ""
+
+        q = Qso()
+        q.init_from_spot(s, name)
+        return q
 
     def set_band_filter(self, band: Bands):
         logging.debug(f"db setting band filter to {band}")

@@ -54,7 +54,15 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
         const q = window.pywebview.api.get_activator_stats(actCall);
 
         q.then((r: string) => {
-            if (r === null) return;
+            if (r === null) {
+                setActivator(defaultActData);
+                return;
+            }
+
+            if (JSON.parse(r).success == false) {
+                setActivator(defaultActData);
+                return;
+            } 
 
             //console.log(`parsing activator data: ${r}`);
             var x = JSON.parse(r) as ActivatorData;
