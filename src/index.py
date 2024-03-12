@@ -2,6 +2,7 @@ import os
 import threading
 import webview
 import logging
+import platform
 
 from api import JsApi
 from db import DataBase
@@ -80,4 +81,8 @@ if __name__ == '__main__':
         js_api=the_api,
         min_size=(800, 600),
         text_select=True)
-    webview.start(update_ticker, private_mode=False, debug=True)
+    if platform.system() == "Linux":
+        webview.start(update_ticker, private_mode=False, debug=True, gui="gtk")
+    elif platform.system() == "Windows":
+        webview.start(update_ticker, private_mode=False, debug=True)
+
