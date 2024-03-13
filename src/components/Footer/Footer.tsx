@@ -2,6 +2,7 @@ import './Footer.scss'
 
 import * as React from 'react'
 import Link from '@mui/material/Link';
+import Tooltip from '@mui/material/Tooltip';
 
 export default function Footer() {
     const [version, setVersion] = React.useState('');
@@ -51,9 +52,11 @@ export default function Footer() {
             <Link href="#" onClick={() => {handleOnClick()}}  ml={1} mr={1}>
                 Export Logged QSOs
             </Link>
-            <Link href="#" onClick={() => {handleLoadLocData()}}  ml={1} mr={1}>
-                Load Location Data
-            </Link>
+            <Tooltip title="Load POTA locations for Stats">
+                <Link href="#" onClick={() => {handleLoadLocData()}}  ml={1} mr={1}>
+                    Load Location Data
+                </Link>
+            </Tooltip>
             <Link href="#" onClick={() => {handleExportParkData()}}  ml={1} mr={1}>
                 Export Park Info
             </Link>

@@ -140,6 +140,8 @@ class QsoQuery:
     @staticmethod
     def get_band_lmt_terms(band: Bands, col: sa.Column) \
             -> list[sa.ColumnElement[bool]]:
+        if band == Bands.NOBAND:
+            return []
         ll = bandLimits[band][0]
         ul = bandLimits[band][1]
         terms = [sa.cast(col, sa.Float) < ul,
