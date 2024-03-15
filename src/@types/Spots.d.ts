@@ -24,5 +24,7 @@ export interface SpotRow {
     op_hunts: number,
     loc_hunts: number,
     loc_total: number,
-    is_qrt: boolean
+    is_qrt: boolean,
+    act_cmts: string,
+    cw_wpm: number
 };

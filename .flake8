@@ -1,2 +1,2 @@
 [flake8]
-exclude = build,dist,src/test.py
+exclude = build,dist,src/test.py,src/cat/*.*

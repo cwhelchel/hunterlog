@@ -10,6 +10,8 @@ import { useAppContext } from '../AppContext';
 import { ActivatorData } from '../../@types/ActivatorTypes';
 
 import './ActivatorInfo.scss'
+import { SpotRow } from '../../@types/Spots';
+import { map } from 'leaflet';
 
 
 interface IActivatorInfoProps {
@@ -39,6 +41,8 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
     const { contextData, setData } = useAppContext();
     const [activator, setActivator] = React.useState<ActivatorData>(defaultActData);
     const [huntCount, setHuntCount] = React.useState(0);
+    const [actComments, setActComments] = React.useState(['']);
+    const [cwSpeed, setCwSpeed] = React.useState(-1);
 
     React.useEffect(() => {
         if (window.pywebview === undefined) {
@@ -49,6 +53,18 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
             setActivator(defaultActData);
             return;
         }
+
+        let pSpot = window.pywebview.api.get_spot(contextData?.spotId);
+
+        pSpot.then((r: string) => {
+            let spot = JSON.parse(r) as SpotRow;
+            if (spot) {
+                // pipe delimited
+                let comments = spot.act_cmts.split('|')
+                setActComments(comments);
+                setCwSpeed(spot.cw_wpm);
+            }
+        });
 
         const actCall = contextData?.qso?.call;
         const q = window.pywebview.api.get_activator_stats(actCall);
@@ -94,6 +110,19 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
                         <span><em>Hunted {activator?.hunter.parks} parks {activator?.hunter.qsos} qsos</em></span>
                         <br />
                         <span><em>You have {huntCount} QSOs with {activator?.callsign}</em></span>
+                        <br/>
+                    </div>
+                    <br/>
+                    <br/>
+                    <div className='activatorComments'>
+                        {actComments.map((comment) => (
+                            <span>{comment}<br/></span>
+                        ))}
+                    </div>
+                    <div className='activatorSpeed'>
+                        {cwSpeed > 0 && (
+                            <span>CW speed is {cwSpeed}<br/></span>
+                        )}
                     </div>
                 </>
             }

@@ -34,20 +34,35 @@ class JsApi:
         self.cat = CAT("flrig", cfg.flr_host, cfg.flr_port)
         self.pw = None
 
+    def get_spot(self, spot_id: int):
+        logging.debug('py get_spot')
+        spot = self.db.spots.get_spot(spot_id)
+        ss = SpotSchema()
+        return ss.dumps(spot)
+
     def get_spots(self):
-        logging.debug('py getting spots')
+        logging.debug('py get_spots')
         spots = self.db.spots.get_spots()
         ss = SpotSchema(many=True)
         return ss.dumps(spots)
 
     def get_spot_comments(self, spot_id: int):
         spot = self.db.spots.get_spot(spot_id)
-        comms = self.pota.get_spot_comments(spot.activator, spot.reference)
-        self.db.insert_spot_comments(spot.activator, spot.reference, comms)
 
         x = self.db.get_spot_comments(spot.activator, spot.reference)
         ss = SpotCommentSchema(many=True)
         return ss.dumps(x)
+
+    def insert_spot_comments(self, spot_id: int):
+        '''
+        Pulls the spot comments from the POTA api and inserts them into our
+        database.
+
+        :param int spot_id: spot id. pk in db
+        '''
+        spot = self.db.spots.get_spot(spot_id)
+        comms = self.pota.get_spot_comments(spot.activator, spot.reference)
+        self.db.insert_spot_comments(spot.activator, spot.reference, comms)
 
     def get_qso_from_spot(self, id: int):
         logging.debug('py getting qso data')

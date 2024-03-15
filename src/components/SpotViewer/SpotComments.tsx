@@ -7,7 +7,7 @@ import { SpotComments } from '../../@types/SpotComments';
 interface ISpotCommentsProps {
     spotId: number,
     spotter: string,
-    comments: string
+    comments: string,
 };
 
 export default function HuntedCheckbox(props: ISpotCommentsProps) {
@@ -54,7 +54,6 @@ export default function HuntedCheckbox(props: ISpotCommentsProps) {
     }
 
     return (
-
         <div>
             <Button variant='text' onClick={onClick}>
                 {cellVal}
@@ -66,11 +65,11 @@ export default function HuntedCheckbox(props: ISpotCommentsProps) {
 
                         {comments?.map(c => {
                             return (<>
-                                <div className={getClassName(c.source)}>
+                                <div className={getClassName(c)}>
                                     <div className="spotCmtTitle">
                                         {c.spotter} at {c.spotTime}
                                     </div>
-                                    <div className="spotCmtText">{c.comments}</div>
+                                    <div className="spotCmtText">{c.comments} on {c.frequency}</div>
                                     <hr role='separator' className='spotSep' />
                                 </div>
                             </>)
@@ -80,12 +79,14 @@ export default function HuntedCheckbox(props: ISpotCommentsProps) {
                 </ClickAwayListener>
             </StyledModal>
         </div >
-
     );
 
-    function getClassName(source: string): string {
-        if (source === 'RBN')
+    function getClassName(cmt: SpotComments): string {
+        if (cmt.source === 'RBN')
             return 'spotCmtItemRbn';
+
+        if (cmt.spotter == cmt.activator || cmt.activator.includes(cmt.spotter))
+            return "spotCmtItemAct";
 
         return 'spotCmtItem';
     }

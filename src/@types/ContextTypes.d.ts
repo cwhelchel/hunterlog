@@ -5,6 +5,7 @@ import { Park } from "./Parks";
 
 export interface ContextData {
     qso: Qso | null;
+    spotId: number;
     park: Park | null;
     filter: GridFilterModel;
     bandFilter: number;

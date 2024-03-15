@@ -9,8 +9,8 @@ from db import DataBase
 from pota import PotaApi
 
 # put filename='index.log' for deployment
-# logging.basicConfig(filename='index.log', level=logging.DEBUG)
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(filename='index.log', level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 
 pota = PotaApi()
 the_db = DataBase()

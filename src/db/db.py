@@ -25,7 +25,7 @@ logging = L.getLogger("db")
 # L.getLogger('sqlalchemy.engine').setLevel(L.INFO)
 
 
-VER_FROM_ALEMBIC = '5daac9aa5d91'
+VER_FROM_ALEMBIC = '53ee59dfaf8f'
 '''
 This value indicates the version of the DB scheme the app is made for.
 
@@ -127,6 +127,7 @@ class DataBase:
         '''
         schema = SpotSchema()
         self.session.execute(sa.text('DELETE FROM spots;'))
+        self.session.execute(sa.text('DELETE FROM comments;'))
 
         # self._sq.insert_test_spot()  # testing code
 
@@ -234,6 +235,9 @@ class DataBase:
         to_add = ss.load(comments, session=self.session)
         self.session.add_all(to_add)
         self.session.commit()
+
+        # grab more info from spot comments
+        self._sq._update_comment_metadata(activator, park)
 
     def update_user_config(self, json: any):
         schema = UserConfigSchema()

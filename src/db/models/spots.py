@@ -42,6 +42,10 @@ class Spot(Base):
     # to be calculated by app
     is_qrt = sa.Column(sa.Boolean, nullable=True)
 
+    # pulled from spot comments
+    act_cmts = sa.Column(sa.String, nullable=True)
+    cw_wpm = sa.Column(sa.Integer, nullable=True)
+
     def __repr__(self):
         return "<spot(id={self.spotId!r})>".format(self=self)
 

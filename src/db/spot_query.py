@@ -2,8 +2,13 @@ import datetime
 from typing import Callable
 import sqlalchemy as sa
 from sqlalchemy.orm import scoped_session
+import re
+import logging as L
 
+from db.models.spot_comments import SpotComment
 from db.models.spots import Spot
+
+logging = L.getLogger("spot_query")
 
 
 class SpotQuery:
@@ -39,6 +44,13 @@ class SpotQuery:
     def get_spot(self, id: int) -> Spot:
         return self.session.query(Spot).get(id)
 
+    def get_spot_by_actx(self, activator: str, park: str) -> Spot:
+        return self.session.query(Spot) \
+            .filter(
+                sa.and_(Spot.activator == activator,
+                        Spot.reference == park)) \
+            .first()
+
     def insert_test_spot(self):
         # test data
         test = Spot()
@@ -59,4 +71,31 @@ class SpotQuery:
         test.is_qrt = False
         test.hunted = False
         self.session.add(test)
+        self.session.commit()
+
+    def _update_comment_metadata(self, activator: str, park: str):
+        logging.debug(f"_update_comment_metadata: {activator} at {park}")
+        wpm = r'^RBN \d+ dB (\d+) WPM.*'
+        spot = self.get_spot_by_actx(activator, park)
+        if spot is None:
+            return
+
+        act_comments = []
+        comments = self.session.query(SpotComment) \
+            .filter(
+                sa.and_(SpotComment.activator == activator,
+                        SpotComment.park == park))\
+            .all()
+
+        for c in comments:
+            if c.source == "RBN" and c.mode == "CW":
+                m = re.match(wpm, c.comments)
+                if m and spot.cw_wpm is None:
+                    # logging.debug(f"got wpm {m.group(1)}")
+                    spot.cw_wpm = m.group(1)
+            if c.spotter == activator:
+                # logging.debug(f"appending activator cmt {c.comments}")
+                act_comments.append(c.comments)
+
+        spot.act_cmts = "|".join(act_comments)
         self.session.commit()

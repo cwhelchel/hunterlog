@@ -17,7 +17,8 @@ const defData: ContextData = {
     locationFilter: '',
     qrtFilter: true,
     locations: [],
-    huntedFilter: false
+    huntedFilter: false,
+    spotId: 0
 };
 
 export const AppContext = React.createContext<AppContextType | null>(null);
@@ -36,7 +37,8 @@ export const AppContextProvider = ({ children }) => {
             locationFilter: ctx.locationFilter,
             qrtFilter: ctx.qrtFilter,
             locations: ctx.locations,
-            huntedFilter: ctx.huntedFilter
+            huntedFilter: ctx.huntedFilter,
+            spotId: ctx.spotId
         }
         setContextData(newContext);
     };

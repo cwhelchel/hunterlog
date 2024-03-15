@@ -170,6 +170,7 @@ export default function SpotViewer() {
             var x = JSON.parse(r) as Qso;
             const newCtxData = { ...contextData };
 
+            newCtxData.spotId = id;
             newCtxData.qso = x;
 
             window.pywebview.api.get_park(x.sig_info)
@@ -215,7 +216,14 @@ export default function SpotViewer() {
         event,   // MuiEvent<React.MouseEvent<HTMLElement>>
         details, // GridCallbackDetails
     ) => {
-        getQsoData(params.row.spotId);
+        // load the spot's comments into the db
+        let x = window.pywebview.api.insert_spot_comments(params.row.spotId);
+
+        x.then(() => {
+            // wait to get the rest of the data until after the spot comments 
+            // are inserted
+            getQsoData(params.row.spotId);
+        });
     };
 
     function setFilterModel(e: GridFilterModel) {
