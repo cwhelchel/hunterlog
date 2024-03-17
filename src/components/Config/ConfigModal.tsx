@@ -5,6 +5,8 @@ import { Modal as BaseModal } from '@mui/base/Modal';
 import Button from '@mui/material/Button';
 import { UserConfig } from '../../@types/Config';
 import TextField from '@mui/material/TextField';
+import Stack from '@mui/material/Stack';
+import { FormControlLabel, Radio, RadioGroup } from '@mui/material';
 
 const def: UserConfig = {
     my_call: 'W1AW',
@@ -13,14 +15,23 @@ const def: UserConfig = {
     flr_host: '127.0.0.1',
     flr_port: 12345,
     adif_host: '127.0.0.1',
-    adif_port: 12345
+    adif_port: 12345,
+    logger_type: 0
 };
 
 export default function ConfigModal() {
     const [open, setOpen] = React.useState(false);
     const [config, setConfig] = React.useState<UserConfig>(def);
+
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        let x = (event.target as HTMLInputElement).value;
+        let y = parseInt(x);
+
+        let newCfg : UserConfig = {...config, logger_type: y};
+        setConfig(newCfg);
+    };
 
     React.useEffect(() => {
         window.addEventListener('pywebviewready', function () {
@@ -53,53 +64,71 @@ export default function ConfigModal() {
                 onClose={handleClose}
                 slots={{ backdrop: StyledBackdrop }}
             >
-                <ModalContent sx={{ width: 400 }}>
+                <ModalContent sx={{ width: 500 }}>
                     <h2 id="unstyled-modal-title" className="modal-title">
                         Configuration
                     </h2>
                     <p id="unstyled-modal-description" className="modal-description">
                         Please update your settings.
                     </p>
-                    <TextField id="my_call" label="My Callsign"
-                        value={config?.my_call}
-                        onChange={(e) => {
-                            setConfig({ ...config, my_call: e.target.value });
-                        }} />
-                    <TextField id="my_grid6" label="My Gridsquare (6 digit)"
-                        value={config?.my_grid6}
-                        onChange={(e) => {
-                            setConfig({ ...config, my_grid6: e.target.value });
-                        }} />
+                    <Stack direction={'row'} spacing={1}>
+                        <TextField id="my_call" label="My Callsign"
+                            value={config?.my_call}
+                            onChange={(e) => {
+                                setConfig({ ...config, my_call: e.target.value });
+                            }} />
+                        <TextField id="my_grid6" label="My Gridsquare (6 digit)"
+                            value={config?.my_grid6}
+                            onChange={(e) => {
+                                setConfig({ ...config, my_grid6: e.target.value });
+                            }} />
+                    </Stack>
                     <TextField id="default_pwr" label="Default TX Power"
                         value={config?.default_pwr}
                         onChange={(e) => {
                             setConfig({ ...config, default_pwr: Number.parseInt(e.target.value) });
                         }} />
-                    <TextField id="flr_host" label="FLRIG Host (IP)"
-                        value={config?.flr_host}
-                        onChange={(e) => {
-                            setConfig({ ...config, flr_host: e.target.value });
-                        }} />
-                    <TextField id="flr_port" label="FLRIG Port (number)"
-                        value={config?.flr_port}
-                        onChange={(e) => {
-                            setConfig({ ...config, flr_port: Number.parseInt(e.target.value) });
-                        }} />
-                    <TextField id="adif_host" label="Remote ADIF Host (IP)"
-                        value={config?.adif_host}
-                        onChange={(e) => {
-                            setConfig({ ...config, adif_host: e.target.value });
-                        }} />
-                    <TextField id="adif_port" label="Remote ADIF Port (number)"
-                        value={config?.adif_port}
-                        onChange={(e) => {
-                            setConfig({ ...config, adif_port: Number.parseInt(e.target.value) });
-                        }} />
+                    <Stack direction={'row'} spacing={1}>
+                        <TextField id="flr_host" label="FLRIG Host (IP)"
+                            value={config?.flr_host}
+                            onChange={(e) => {
+                                setConfig({ ...config, flr_host: e.target.value });
+                            }} />
+                        <TextField id="flr_port" label="FLRIG Port (number)"
+                            value={config?.flr_port}
+                            onChange={(e) => {
+                                setConfig({ ...config, flr_port: Number.parseInt(e.target.value) });
+                            }} />
+                    </Stack>
+                    <RadioGroup
+                        defaultValue="0"
+                        row
+                        name="radio-buttons-group"
+                        value={config?.logger_type}
+                        onChange={handleChange}
+                    >
+                        <FormControlLabel value="0" control={<Radio />} label="Default" />
+                        <FormControlLabel value="1" control={<Radio />} label="Log4om" />
+                        <FormControlLabel value="2" control={<Radio />} label="AcLog" />
+                    </RadioGroup>
+                    <Stack direction={'row'} spacing={1}>
+                        <TextField id="adif_host" label="Remote ADIF Host (IP)"
+                            value={config?.adif_host}
+                            onChange={(e) => {
+                                setConfig({ ...config, adif_host: e.target.value });
+                            }} />
+                        <TextField id="adif_port" label="Remote ADIF Port (number)"
+                            value={config?.adif_port}
+                            onChange={(e) => {
+                                setConfig({ ...config, adif_port: Number.parseInt(e.target.value) });
+                            }} />
+                    </Stack>
+
                     <Button onClick={handleSave}>Save</Button>
                     <Button onClick={handleClose}>Cancel</Button>
                 </ModalContent>
             </Modal>
-        </div>
+        </div >
     );
 }
 

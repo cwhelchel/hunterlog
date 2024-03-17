@@ -9,7 +9,10 @@ from db import DataBase
 from pota import PotaApi
 
 # put filename='index.log' for deployment
-logging.basicConfig(filename='index.log', level=logging.DEBUG)
+logging.basicConfig(filename='index.log',
+                    encoding='utf-8',
+                    format='%(asctime)s %(message)s',
+                    level=logging.DEBUG)
 # logging.basicConfig(level=logging.DEBUG)
 
 pota = PotaApi()
@@ -18,8 +21,15 @@ the_api = JsApi(the_db, pota)
 
 
 def do_update():
-    json = pota.get_spots()
-    the_db.update_all_spots(json)
+    logging.debug('updating db')
+
+    try:
+        json = pota.get_spots()
+        the_db.update_all_spots(json)
+    except Exception as ex:
+        logging.error("error caught in do_update")
+        logging.exception(ex)
+        raise
 
 
 # first lets update our spots w/ api data
@@ -62,16 +72,23 @@ def set_interval(interval):
 entry = get_entrypoint()
 
 
+def refresh_frontend():
+    try:
+        if len(webview.windows) > 0:
+            js = 'window.pywebview.state.getSpots()'
+            logging.debug('refreshing spots in frontend: ' + js)
+            webview.windows[0].evaluate_js(js)
+    except Exception as ex:
+        logging.error("error in refresh_frontend")
+        logging.exception(ex)
+        raise
+
+
 @set_interval(60)
 def update_ticker():
-
-    logging.debug('updating db')
+    logging.info("thread heartbeat")
     do_update()
-
-    if len(webview.windows) > 0:
-        js = 'window.pywebview.state.getSpots()'
-        logging.debug('refreshing spots in frontend: ' + js)
-        webview.windows[0].evaluate_js(js)
+    refresh_frontend()
 
 
 if __name__ == '__main__':
@@ -85,4 +102,3 @@ if __name__ == '__main__':
         webview.start(update_ticker, private_mode=False, debug=True, gui="gtk")
     elif platform.system() == "Windows":
         webview.start(update_ticker, private_mode=False, debug=True)
-

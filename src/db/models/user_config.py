@@ -1,3 +1,4 @@
+from enum import Enum
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
@@ -16,6 +17,12 @@ class UserConfig(Base):
     flr_port = sa.Column(sa.Integer)
     adif_host = sa.Column(sa.String)
     adif_port = sa.Column(sa.Integer)
+    logger_type = sa.Column(sa.Integer)
+
+    class LoggerType(Enum):
+        Default = 0
+        Log4om = 1
+        Aclog = 2
 
     def __repr__(self):
         return "<config({self.my_call!r}:{self.my_grid6!r})>" \

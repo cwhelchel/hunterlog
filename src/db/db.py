@@ -25,7 +25,7 @@ logging = L.getLogger("db")
 # L.getLogger('sqlalchemy.engine').setLevel(L.INFO)
 
 
-VER_FROM_ALEMBIC = '53ee59dfaf8f'
+VER_FROM_ALEMBIC = 'dfc792b4b40b'
 '''
 This value indicates the version of the DB scheme the app is made for.
 

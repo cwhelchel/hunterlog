@@ -113,17 +113,19 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
                         <br/>
                     </div>
                     <br/>
-                    <br/>
-                    <div className='activatorComments'>
-                        {actComments.map((comment) => (
-                            <span>{comment}<br/></span>
-                        ))}
-                    </div>
                     <div className='activatorSpeed'>
                         {cwSpeed > 0 && (
                             <span>CW speed is {cwSpeed}<br/></span>
                         )}
                     </div>
+                    <div className='activatorComments'>
+                        <span>Activator comments:</span>
+                        <hr role='separator' />
+                        {actComments.map((comment) => (
+                            <span>{comment}<br/></span>
+                        ))}
+                    </div>
+
                 </>
             }
         </div>

@@ -25,8 +25,19 @@ class AdifLog():
         '''
         Logs the QSO the the ADIF file and sends a UDP msg to the remote host.
         '''
-        adif = self._get_adif(qso, config.my_call, config.my_grid6)
-        self._send_msg(adif, config.adif_host, config.adif_port)
+        logging.debug(f"logging as {config.logger_type}")
+        if config.logger_type == config.LoggerType.Aclog.value:
+            type = socket.SOCK_STREAM
+            qso_adif = self._get_adif(qso, config.my_call, config.my_grid6)
+
+            # TODO: needs to be even more granular for ACLOG b/c there is a
+            # more feature rich version that can pull in more QSO data, send to
+            # LOTW, QRZ, etc (its FROM WD4DAN)
+            adif = f"<CMD><ADDADIFRECORD><VALUE>{qso_adif}</VALUE></CMD>"
+        else:
+            type = socket.SOCK_DGRAM
+            adif = self._get_adif(qso, config.my_call, config.my_grid6)
+        self._send_msg(adif, config.adif_host, config.adif_port, type)
         self.write_adif_log(adif)
 
     def log_qso(self, qso: Qso, config: UserConfig):
@@ -86,12 +97,11 @@ class AdifLog():
                 f.write(v)
                 f.write("<EOH>\n")
 
-    def _send_msg(self, msg: str, host: str, port: int):
+    def _send_msg(self, msg: str, host: str, port: int, type: int):
         """
         Send a UDP adif message to a remote endpoint
         """
-        type = socket.SOCK_DGRAM
-        logging.debug(f"logging to {host}:{port}")
+        logging.debug(f"logging to {host}:{port} with data {msg}")
 
         try:
             with socket.socket(socket.AF_INET, type) as sock:
