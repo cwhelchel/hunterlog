@@ -28,12 +28,6 @@ export default function Footer() {
         }
     }
 
-    function handleLoadLocData() {
-        if (window.pywebview) {
-            window.pywebview.api.load_location_data();
-        }
-    }
-
     function handleExportParkData() {
         if (window.pywebview) {
             window.pywebview.api.export_park_data();
@@ -52,11 +46,6 @@ export default function Footer() {
             <Link href="#" onClick={() => {handleOnClick()}}  ml={1} mr={1}>
                 Export Logged QSOs
             </Link>
-            <Tooltip title="Load POTA locations for Stats">
-                <Link href="#" onClick={() => {handleLoadLocData()}}  ml={1} mr={1}>
-                    Load Location Data
-                </Link>
-            </Tooltip>
             <Link href="#" onClick={() => {handleExportParkData()}}  ml={1} mr={1}>
                 Export Park Info
             </Link>

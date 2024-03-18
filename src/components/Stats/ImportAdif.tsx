@@ -2,16 +2,21 @@ import * as React from 'react'
 import { Tooltip, Button } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 
-export const ImportAdif = () => {
-    const [isWorking, setIsWorking] = React.useState(false);
+declare interface IImportAdifProps {
+    setIsWorking: (val: boolean) => void,
+}
+
+
+export const ImportAdif = (props: IImportAdifProps) => {
+    const [isWorking, _] = React.useState(false);
 
     const handleClick = () => {
         if (window.pywebview !== undefined) {
-            setIsWorking(true);
+            props.setIsWorking(true);
             window.pywebview.api.import_adif().then((r: string) => {
                 let x = JSON.parse(r);
                 if (x.success) {
-                    setIsWorking(false);
+                    props.setIsWorking(false);
                     console.log(x.message);
                 }
                 else
@@ -25,9 +30,9 @@ export const ImportAdif = () => {
 
     return (
         <>
-            <Tooltip title="Load in old QSOs to track Operator hunts">
+            <Tooltip title="Import ADIF log of QSOs to track Operator hunts. SIG, SIG_INFO, POTAPLUS comments should be present.">
                 <Button onClick={handleClick}>
-                    Import ADIF
+                    OP Stats
                 </Button>
             </Tooltip>
             {isWorking && (

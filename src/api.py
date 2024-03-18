@@ -246,11 +246,14 @@ class JsApi:
             title='POTA APP', url='https://pota.app/#/user/stats')
 
     def load_location_data(self):
+        logging.debug("downloading location data...")
         locations = PotaApi.get_locations()
         self.db.locations.load_location_data(locations)
-        # self.pw.evaluate_js
-        # (token, cookies) = self.get_id_token(self.pw)
-        # logging.debug(f"token: {token}")
+        result = {
+            'success': True,
+            'message': "downloaded location data successfully",
+        }
+        return json.dumps(result)
 
         # self.pota.get_user_hunt(token, cookies)
 
@@ -301,7 +304,7 @@ class JsApi:
         filename = webview.windows[0] \
             .create_file_dialog(
                 webview.OPEN_DIALOG,
-            file_types=ft)
+                file_types=ft)
         if not filename:
             return json.dumps({'success': True, 'message': "user cancel"})
 

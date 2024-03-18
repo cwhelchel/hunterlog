@@ -5,6 +5,10 @@ from db.models.location import Location, LocationSchema
 from db.models.parks import Park
 from db.models.qsos import Qso
 
+import logging as L
+
+logging = L.getLogger('location_query')
+
 
 class LocationQuery:
     '''Internal DB queries stored here.'''
@@ -18,6 +22,8 @@ class LocationQuery:
 
         :param dict data: the dict of json data.
         '''
+        logging.debug("load_location_data. entry")
+
         ls = LocationSchema()
         self.clear_locations()
 

@@ -1,47 +1,114 @@
-# pywebview-react-boilerplate
-This is a  simple boilerplate to help you start with _pywebview_ and React. It sets up the development environment, install dependencies, as well as provides scripts for building an executable. Stack is based on pywebview, React, SASS, Parcel bundler, pyinstaller (Windows/Linux) and py2app (macOS).
+# Hunterlog
 
-## Requirements
-- Python 3
-- Node
-- virtualenv
+*THIS IS NOT YOUR MAIN LOGGING PROGRAM!*
 
-## Installation
+This is a replacement for the excellent [potaplus](https://dwestbrook.net/projects/potaplus/) Chrome browser extension. If you have used that then this application
+should be very familiar.
 
-``` bash
-npm run init
-```
+This application allows you to browse the current POTA spots, QSY your rig via
+FLRIG, and log them to your logger through a remote ADIF message.
 
-This will create a virtual environment, install pip and Node dependencies. Alternatively you can perform these steps manually.
-
-``` bash
-npm install
-pip install -r requirements.txt
-```
-
-On Linux systems installation system makes educated guesses. If you run KDE, QT dependencies are installed, otherwise GTK is chosen. `apt` is used for installing GTK dependencies. In case you are running a non apt-based system, you will have to install GTK dependencies manually. See [installation](https://pywebview.flowrl.com/guide/installation.html) for details.
+![Screenshot of the goods](docs/img/main.png)
 
 ## Usage
 
-To launch the application.
+On Windows, run the executable in any folder. 
 
-``` bash
-npm run start
-```
+The very first thing you should notice is that the default configuration is for 
+W1AW. You probably aren't the ghost of Hiram Percy Maxim, so you should change
+your callsign. Click the `CONFIGURATION` button next to the callsign and input
+your callsign and your gridsquare. 
 
-To build an executable. The output binary will be produced in the `dist` directory.
 
-``` bash
-npm run build
-```
+### Configuration
 
-To start a development server (only for testing frontend code).
+Let's look at the configuration options.
 
-``` bash
-npm run dev
-```
+![Configuration options](docs/img/config.png)
+
+Default TX Power is used in logging. Put over legal limit if you want.
+
+FLRIG Host IP and Port:
+
+The app uses FLRIG to handle CAT control. These two values are the remote 
+endpoint of the FLRIG instance that's running. The default FLRIG port is 12345
+
+The radio buttons are for the logger. Select Default or Log4om to send the basic
+ADIF data to a remote logger. Select AClog if you use AcLog as it has to have
+the data wrapped in a different command. (Default and Log4om do the same thing currently)
+
+Remote ADIF Host and port:
+
+The remote endpoint data to send logged QSOs. Should be running Log4om or AClog
+or any other logger that accepts raw ADIF over UDP connections.
+
+Click save to store the changes. Then click the refresh button on the main 
+screen to see your callsign and your configured Gravatar. You have a POTA 
+account right?
+
+### Stats
+
+If you want to see your some nice stats like the POTAPlus addon, you need to
+update your stats using the `STATS` menu. There are three options here.
+
+![Stat Menu Buttons](docs/img/stats.png)
+
+**STATISTICAL DATA SHOWN IN THIS APP IS NOT AUTHORITATIVE** The authoritative data
+of record is your data in https://pota.app
+
+#### PARK STATS
+This is useful to show what parks you have hunted and how many times you've hunted
+them.
+
+You must to visit [https://pota.app/#stats/](https://pota.app/#/user/stats) and use the Hunted Parks "Export CSV" button to download the `hunter_parks.csv` file.
+
+Click the `PARK STATS` button, select your csv file, and wait for several minutes.
+This operation takes a long time as park data must be downloaded and stored in 
+the local `spots.db` database.
+
+This does take a long time, so there are export links at the bottom of the app
+so this data can be backed up.
+
+#### OP STATS
+This is an import of an ADIF copy of your 'main' log file. Your QSOs should have 
+the ADIF fields set as so:
+- SIG set to 'POTA'
+- SIG_INFO set to the park reference
+- COMMENT like the POTAPLUS comment ex: `[POTA K-4451 US-AL EM72el Tuskegee National Forest]`
+
+The import will try it's best to match the park and will worst case parse the POTAPlus
+comment. *This data is not used for Park hunt counts but only for Operator hunt counts.*
+
+#### LOC STATS
+Downloads and imports the locations data from the POTA website and stores them
+locally. No hunter data is in this file but the meta-data about locations and 
+prefixes is used to tabulate the parks hunted within a location. Ie you have 
+worked 78/224 in US-GA.
+
+### Logging QSOs
+
+I'm tired of writing: Click a spot to load the QSO info into the top portion
+of the screen. Click green frequency button to QSY with CAT control. Click
+Log QSO after you've had the contact. The app will update stats and send the 
+QSO data (with any modifications you do to the input) to your main logger. 
+
+*It also will store a copy locally in hunter.adi as well as in the database.* This
+is for your convenience.
+
+## Files
+
+Running the app will create the `spots.db` which is very important as it will 
+contain all your qsos, configuration settings and stats such as parks and 
+locations.
+
+The file `index.log` is the application's log file. It is not the same as the 
+Javascript console that maybe seen when inspecting the webpage.
 
 
 ## Bug reporting
 
-Please report _pywebview_ related bugs directly to [pywebview's repository](https://github.com/r0x0r/pywebview). This repository is only for the issues related to this boilerplate.
+This app is currently under pre-release. Please report bugs here on Github 
+issues.
+
+
+\- Cainan N9FZ

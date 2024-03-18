@@ -13,6 +13,8 @@ import { ImportAdif } from '../Stats/ImportAdif';
 import { UserConfig } from '../../@types/Config';
 import { ActivatorData } from '../../@types/ActivatorTypes';
 import { Avatar, Tooltip } from '@mui/material';
+import StatusMenu from './StatsMenu';
+import StatsMenu from './StatsMenu';
 
 export default function AppMenu() {
 
@@ -53,8 +55,7 @@ export default function AppMenu() {
                         {callsign}
                     </Typography>
                     <ConfigModal />
-                    <UpdateStats />
-                    <ImportAdif />
+                    <StatsMenu />
                     <Tooltip title="Refresh">
                         <IconButton onClick={() => {
                             location.reload();
@@ -62,6 +63,7 @@ export default function AppMenu() {
                             <RefreshIcon color='primary' />
                         </IconButton>
                     </Tooltip>
+                    
                 </Toolbar>
             </AppBar>
         </Box>
