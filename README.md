@@ -8,7 +8,7 @@ should be very familiar.
 This application allows you to browse the current POTA spots, QSY your rig via
 FLRIG, and log them to your logger through a remote ADIF message.
 
-![Screenshot of the goods](docs/img/main.png)
+![Demo of the goods](docs/img/demo.gif)
 
 ## Usage
 
