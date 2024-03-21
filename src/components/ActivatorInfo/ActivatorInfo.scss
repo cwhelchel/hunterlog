@@ -32,12 +32,21 @@
 
 .activatorComments {
     width: 100%;
+    height: 125px;
+    font-size: smaller;
+    font-weight: 400;
+    font-style: italic;
+    overflow-y:auto;
+}
+
+.activatorCmtsHdg {
+    width: 100%;
     font-size: smaller;
     font-weight: 400;
     font-style: italic;
 }
 
-.activatorComments hr {
+hr.separator {
     max-width: 100%;
     height: 0;
     max-height: 0;

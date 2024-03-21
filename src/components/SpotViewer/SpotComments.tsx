@@ -10,7 +10,7 @@ interface ISpotCommentsProps {
     comments: string,
 };
 
-export default function HuntedCheckbox(props: ISpotCommentsProps) {
+export default function SpotComments(props: ISpotCommentsProps) {
     const [open, setOpen] = React.useState(false);
     const [comments, setComments] = React.useState<null | SpotComments[]>(null);
 

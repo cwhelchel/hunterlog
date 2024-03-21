@@ -101,7 +101,7 @@ class JsApi:
         :returns JSON of park object in db or None if not found
         '''
         if ref is None:
-            logging.debug("get_park: ref param was None")
+            logging.error("get_park: ref param was None")
             return
 
         logging.debug(f"get_park: getting park {ref}")
@@ -123,6 +123,27 @@ class JsApi:
 
         ps = ParkSchema()
         return ps.dumps(park)
+
+    def get_park_hunts(self, ref: str) -> str:
+        '''
+        Returns a JSON object containing the number of QSOs with activators at
+        the given park reference.
+
+        :param str ref: the POTA park reference designator string
+
+        :returns JSON of park object in db or None if not found
+        '''
+        if ref is None:
+            logging.error("get_park: ref param was None")
+            return json.dumps({"success": False,
+                               "msg": 'ref: invalid argument'})
+
+        park = self.db.parks.get_park(ref)
+
+        if park is None:
+            return json.dumps({"success": True, "count": 0})
+        else:
+            return json.dumps({"success": True, "count": park.hunts})
 
     def get_user_config(self):
         '''

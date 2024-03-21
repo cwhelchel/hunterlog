@@ -15,6 +15,7 @@ import HuntedCheckbox from './HuntedCheckbox';
 import FreqButton from './FreqButton';
 import SpotComments from './SpotComments';
 import { Park } from '../../@types/Parks';
+import SpotTimeCell from './SpotTime';
 
 // https://mui.com/material-ui/react-table/
 
@@ -35,11 +36,10 @@ const columns: GridColDef[] = [
         valueGetter: (params: GridValueGetterParams) => {
             return new Date(params.row.spotTime);
         },
-        valueFormatter: (params: GridValueFormatterParams<Date>) => {
-            if (params.value === undefined) return '';
-            const hh = params.value.getHours().toString().padStart(2, '0');
-            const mm = params.value.getMinutes().toString().padStart(2, '0');
-            return `${hh}:${mm}`;
+        renderCell: (x) => {
+            return (
+                <SpotTimeCell dateTimeObj={x.row.spotTime} />
+            );
         }
     },
     {

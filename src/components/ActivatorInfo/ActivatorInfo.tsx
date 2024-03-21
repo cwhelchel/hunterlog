@@ -118,9 +118,9 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
                             <span>CW speed is {cwSpeed}<br/></span>
                         )}
                     </div>
+                    <span className='activatorCmtsHdg'>Activator comments:</span>
+                    <hr role='separator' className='separator'/>
                     <div className='activatorComments'>
-                        <span>Activator comments:</span>
-                        <hr role='separator' />
                         {actComments.map((comment) => (
                             <span>{comment}<br/></span>
                         ))}

@@ -7,7 +7,7 @@ interface IFreqButtonProps {
 };
 
 
-export default function HuntedCheckbox(props: IFreqButtonProps) {
+export default function FreqButton(props: IFreqButtonProps) {
     function onClick(e: string, m: string) {
         console.log("js qsy to...");
         console.log(`param ${e} ${m}`);

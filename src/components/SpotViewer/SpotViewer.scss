@@ -62,3 +62,24 @@ div.spotCmtText {
 .spotviewer-row-qrt:hover {
     opacity: 1.0;
 }
+
+span.timeBrandNew {
+    color:chartreuse;
+    font-weight: 600;
+}
+
+span.timeNew {
+    color:green;
+}
+
+span.timeAging {
+    color:goldenrod;
+}
+
+span.timeOld {
+    color:firebrick;
+}
+
+span.timeNormal {
+    color:inherit;
+}

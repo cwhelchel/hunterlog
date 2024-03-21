@@ -17,9 +17,10 @@ const customOpenPickerButton = ({ isPlayValue, setter }: CustomOpenPickerProps) 
     return (
         <IconButton
             aria-label="play-timer"
+            sx={{ minHeight: 0, minWidth: 0, padding: 0 }}
             onClick={(e) => setter(!isPlayValue)}>
-            {isPlayValue && (<PauseOutlinedIcon color='primary' />)}
-            {!isPlayValue && (<PlayArrowOutlinedIcon color='error' />)}
+            {isPlayValue && (<PauseOutlinedIcon color='primary' fontSize='small' />)}
+            {!isPlayValue && (<PlayArrowOutlinedIcon color='error' fontSize='small' />)}
         </IconButton>
     );
 };

@@ -9,6 +9,7 @@ import './ParkInfo.scss'
 export default function ParkInfo() {
     const { contextData, setData } = useAppContext();
     const [stats, setStats] = React.useState<ParkStats | null>(null);
+    const [hunts, setHunts]  = React.useState(0);
 
     function fn() {
         let park = contextData?.park?.reference || '';
@@ -16,6 +17,12 @@ export default function ParkInfo() {
             return;
         getParkStats(park).then((x: ParkStats) => {
             setStats(x);
+        });
+
+        window.pywebview.api.get_park_hunts(park).then((j: string) => {
+            let o = JSON.parse(j);
+            let hunts = parseInt(o.count);
+            setHunts(hunts);
         });
     }
 
@@ -37,7 +44,8 @@ export default function ParkInfo() {
                     <>
                         {parkStats()} <br />
                         {firstActivator()} <br/>
-                        {locationDesc()}
+                        {locationDesc()} <br/>
+                        {parkHunts()}
                     </>
                 )}
             </div>
@@ -57,5 +65,13 @@ export default function ParkInfo() {
     }
     function locationDesc(): React.ReactNode {
         return <span style={{overflow: "hidden"}}>LOC: {contextData?.park?.locationDesc}</span>;
+    }
+    function parkHunts(): React.ReactNode {
+        function getClassName(hunts: number) {
+            if (hunts == 0) 
+                return 'parkQsosNone';
+            return 'parkQsos';
+        }
+        return <span className={getClassName(hunts)}>You have {hunts} QSOs for {contextData?.park?.reference} </span>;
     }
 }
