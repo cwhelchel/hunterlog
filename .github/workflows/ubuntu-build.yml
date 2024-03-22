@@ -29,4 +29,7 @@ jobs:
       run: npm run init
     - name: Build Output
       run: npm run build
-    
+    - uses: actions/upload-artifact@v4
+      with:
+        name: hunterlog-ubuntu
+        path: dist/hunterlog
