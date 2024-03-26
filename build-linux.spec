@@ -3,6 +3,9 @@
 block_cipher = None
 added_files = [
     ('./gui', 'gui'),
+    ('./alembic.ini', '.'),
+    ('./src/alembic_src/env.py', 'alembic_src'),
+    ('./src/alembic_src/versions/*', 'alembic_src/versions'),
 ]
 
 a = Analysis(['./src/index.py'],
@@ -27,7 +30,7 @@ exe = EXE(pyz,
           a.zipfiles,
           a.datas,
           [],
-          name='pywebview-react',
+          name='hunterlog',
           debug=False,
           bootloader_ignore_signals=False,
           strip=True,

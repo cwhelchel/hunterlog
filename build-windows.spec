@@ -4,6 +4,9 @@
 block_cipher = None
 added_files = [
     ('.\\gui', 'gui'),
+    ('.\\alembic.ini', '.'),
+    ('.\\src\\alembic_src\\env.py', 'alembic_src'),
+    ('.\\src\\alembic_src\\versions\\*', 'alembic_src\\versions'),
 ]
 
 a = Analysis(['.\\src\\index.py'],
