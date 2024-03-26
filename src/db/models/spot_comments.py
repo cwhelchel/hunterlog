@@ -15,7 +15,7 @@ class SpotComment(Base):
     mode = sa.Column(sa.String(15))
     frequency = sa.Column(sa.String)
     band = sa.Column(sa.String(15))
-    source = sa.Column(sa.String(10))
+    source = sa.Column(sa.String)
     comments = sa.Column(sa.String)
 
     activator = sa.Column(sa.String, nullable=True)

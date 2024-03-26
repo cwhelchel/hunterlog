@@ -17,6 +17,7 @@ from db.qso_query import QsoQuery
 from db.loc_query import LocationQuery
 from db.spot_query import SpotQuery
 from utils.callsigns import get_basecall
+import upgrades
 
 Base = declarative_base()
 
@@ -58,11 +59,29 @@ class InitQuery:
             self.session.commit()
 
     def init_alembic_ver(self):
+
         v = VER_FROM_ALEMBIC
-        self.session.execute(sa.text('DROP TABLE IF EXISTS alembic_version;'))
-        self.session.execute(sa.text('CREATE TABLE alembic_version(version_num varchar(32) NOT NULL);'))  # noqa E501
-        self.session.execute(sa.text(f"INSERT INTO alembic_version(version_num) VALUES ('{v}');"))  # noqa E501
-        self.session.commit()
+
+        table_exists = self._check_for_table()
+
+        if not table_exists:
+            self.session.execute(sa.text('CREATE TABLE alembic_version(version_num varchar(32) NOT NULL);'))  # noqa E501
+            self.session.execute(sa.text(f"INSERT INTO alembic_version(version_num) VALUES ('{v}');"))  # noqa E501
+            self.session.commit()
+        else:
+            # we need to read the vernum
+            sql = 'SELECT version_num FROM alembic_version'
+            v = self.session.execute(sa.text(sql))
+            db_ver = v.fetchone()[0]
+
+            # after this. logging wont work for this execution.
+            if (db_ver != VER_FROM_ALEMBIC):
+                upgrades.do_upgrade()
+
+    def _check_for_table(self):
+        sql = """SELECT name FROM sqlite_master WHERE type='table' AND name='alembic_version';"""  # noqa E501
+        r = self.session.execute(sa.text(sql))
+        return len(r.all()) > 0
 
 
 class DataBase:

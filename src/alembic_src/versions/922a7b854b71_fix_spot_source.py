@@ -19,8 +19,11 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.alter_column("comments", "source", existing_type=sa.VARCHAR(10), type_=sa.VARCHAR)
+    # cant use alter column bc SQLITE doesn't support modifying columns
+    op.drop_column("comments", "source")
+    op.add_column("comments", sa.Column("source", sa.String, nullable=True))
 
 
 def downgrade() -> None:
-    op.alter_column("comments", "source", type_=sa.VARCHAR(10), existing_type=sa.VARCHAR)
+    op.drop_column("comments", "source")
+    op.add_column("comments", sa.Column("source", sa.String(10), nullable=True))

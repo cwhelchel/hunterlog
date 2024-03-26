@@ -6,7 +6,7 @@ from alembic.config import Config
 from alembic import command
 
 
-ROOT_PATH = Path(__file__).parent.parent
+ROOT_PATH = Path(__file__).parent.parent.parent.parent
 ALEMBIC_CFG = Config(ROOT_PATH / "alembic.ini")
 
 
@@ -20,3 +20,6 @@ def upgrade(revision="head"):
 
 def downgrade(revision):
     command.downgrade(ALEMBIC_CFG, revision)
+
+def ensure_versions():
+    command.ensure_version(ALEMBIC_CFG)
