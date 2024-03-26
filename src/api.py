@@ -16,6 +16,7 @@ from db.models.user_config import UserConfigSchema
 from pota import PotaApi, PotaStats
 from utils.adif import AdifLog
 from version import __version__
+import upgrades
 
 from cat import CAT
 from utils.distance import Distance
@@ -158,6 +159,17 @@ class JsApi:
             'app_ver': __version__,
             'db_ver': self.db.get_version()
         }
+        return json.dumps(result)
+
+    def upgrade_db(self):
+        upgrades.do_upgrade()
+
+        result = {
+            'success': True,
+            'app_ver': __version__,
+            'db_ver': self.db.get_version()
+        }
+
         return json.dumps(result)
 
     def import_adif(self) -> str:
