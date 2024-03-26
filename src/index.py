@@ -11,7 +11,7 @@ from pota import PotaApi
 # put filename='index.log' for deployment
 logging.basicConfig(filename='index.log',
                     encoding='utf-8',
-                    format='%(asctime)s %(message)s',
+                    format='%(asctime)s = %(levelname)-7.7s [%(name)s]: %(message)s',  # noqa E501
                     level=logging.DEBUG)
 # logging.basicConfig(level=logging.DEBUG)
 
