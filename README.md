@@ -10,9 +10,23 @@ FLRIG, and log them to your logger through a remote ADIF message.
 
 ![Demo of the goods](docs/img/demo.gif)
 
+## Download
+
+Hunterlog is currently in pre-release and any releases are not immediately obvious
+where the should be downloaded from. Here is a link to the latest release:
+
+Release page [v0.0.1L](https://github.com/cwhelchel/hunterlog/releases/tag/v0.0.1l)
+
+[Windows Download](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.1l/hunterlog_0.0.1L.zip)
+
+[Ubuntu Download](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.1l/hunterlog-ubuntu_0.0.1L.zip)
+
+
 ## Usage
 
 On Windows, run the executable in any folder. 
+
+On Linux, you may have to `chmod +777` the executable file and run it via the terminal.
 
 The very first thing you should notice is that the default configuration is for 
 W1AW. You probably aren't the ghost of Hiram Percy Maxim, so you should change
@@ -87,19 +101,24 @@ worked 78/224 in US-GA.
 
 ### Logging QSOs
 
-I'm tired of writing: Click a spot to load the QSO info into the top portion
-of the screen. Click green frequency button to QSY with CAT control. Click
-Log QSO after you've had the contact. The app will update stats and send the 
-QSO data (with any modifications you do to the input) to your main logger. 
+Click a spot to load the QSO info into the top portion of the screen. Click green frequency button to QSY with CAT control. Click Log QSO after you've had the contact. The app will update stats and send the QSO data (with any modifications you do to the input) to your main logger. 
 
 *It also will store a copy locally in hunter.adi as well as in the database.* This
 is for your convenience.
+
+### Spotting
+
+You can now spot/re-spot activators through Hunterlog. When this is done the 
+`RST Sent` and `COMMENT` QSO field are used to build the spot comment. Other
+posted spot info also comes from the QSO entry fields: Frequency, Callsign, and Mode.
+These will be sent to the POTA website and everyone will be able to see them.
 
 ## Files
 
 Running the app will create the `spots.db` which is very important as it will 
 contain all your qsos, configuration settings and stats such as parks and 
-locations.
+locations. You should back up this file occasionally and back it up before upgrading
+to newer versions of Hunterlog.
 
 The file `index.log` is the application's log file. It is not the same as the 
 Javascript console that maybe seen when inspecting the webpage.
@@ -108,7 +127,8 @@ Javascript console that maybe seen when inspecting the webpage.
 ## Bug reporting
 
 This app is currently under pre-release. Please report bugs here on Github 
-issues.
+issues. In your report, please include both the app version number and the db
+version number. Both are displayed at the very bottom of Hunterlog.
 
 
 \- Cainan N9FZ
