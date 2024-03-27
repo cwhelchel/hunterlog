@@ -59,8 +59,8 @@ const App = function () {
                                 direction="row"
                                 justifyContent="space-evenly"
                                 // divider={<Divider orientation="vertical" flexItem />}
-                                spacing={{ xs: 1, md: 2 }}
-                                height="50%">
+                                spacing={{ xs: 1, md: 1 }}
+                                height="30%">
                                 <Grid item xs={12} >
                                     <AppMenu />
                                 </Grid>

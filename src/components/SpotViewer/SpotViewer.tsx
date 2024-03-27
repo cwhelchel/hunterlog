@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Button from '@mui/material/Button';
 import { Badge } from '@mui/material';
-import { DataGrid, GridColDef, GridValueGetterParams, GridValueFormatterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams, GridRowClassNameParams } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridValueGetterParams, GridValueFormatterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams, GridRowClassNameParams, GridToolbar, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarColumnsButton, GridToolbarQuickFilter } from '@mui/x-data-grid';
 import { GridEventListener } from '@mui/x-data-grid';
 
 import { useAppContext } from '../AppContext';
@@ -238,10 +238,21 @@ export default function SpotViewer() {
             return 'spotviewer-row';
     }
 
+    function CustomToolbar() {
+        return (
+          <GridToolbarContainer>
+            <GridToolbarColumnsButton />
+            <GridToolbarDensitySelector />
+            <GridToolbarQuickFilter />
+          </GridToolbarContainer>
+        );
+      }
+
     return (
         <div className='spots-container'>
             <DataGrid
                 rows={spots}
+                slots={{ toolbar: CustomToolbar }}
                 columns={columns}
                 getRowId={getRowId}
                 initialState={{

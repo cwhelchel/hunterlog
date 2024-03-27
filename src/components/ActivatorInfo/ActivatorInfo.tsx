@@ -78,7 +78,7 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
             if (JSON.parse(r).success == false) {
                 setActivator(defaultActData);
                 return;
-            } 
+            }
 
             //console.log(`parsing activator data: ${r}`);
             var x = JSON.parse(r) as ActivatorData;
@@ -101,31 +101,33 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
                         <span>{activator?.callsign} - {activator?.name}</span>
                         <hr role='separator' />
                     </div>
-                    <img src={getUserAvatarURL(activator?.gravatar)} style={{ float: "left" }} />
                     <div className='activatorData'>
-                        <span>{activator?.qth}</span>
-                        <br />
-                        <span><em>{activator?.activator.activations} activations {activator?.activator.parks} parks {activator?.activator.qsos} qsos</em></span>
-                        <br />
-                        <span><em>Hunted {activator?.hunter.parks} parks {activator?.hunter.qsos} qsos</em></span>
-                        <br />
-                        <span><em>You have {huntCount} QSOs with {activator?.callsign}</em></span>
-                        <br/>
-                    </div>
-                    <br/>
-                    <div className='activatorSpeed'>
-                        {cwSpeed > 0 && (
-                            <span>CW speed is {cwSpeed}<br/></span>
-                        )}
-                    </div>
-                    <span className='activatorCmtsHdg'>Activator comments:</span>
-                    <hr role='separator' className='separator'/>
-                    <div className='activatorComments'>
-                        {actComments.map((comment) => (
-                            <span>{comment}<br/></span>
-                        ))}
-                    </div>
+                        <img src={getUserAvatarURL(activator?.gravatar)} style={{ float: "left", width:"80px", height:"80px" }} />
 
+                        <div className='activatorBasics'>
+                            <span>{activator?.qth}</span>
+                            <br />
+                            <span><em>{activator?.activator.activations} activations {activator?.activator.parks} parks {activator?.activator.qsos} qsos</em></span>
+                            <br />
+                            <span><em>Hunted {activator?.hunter.parks} parks {activator?.hunter.qsos} qsos</em></span>
+                            <br />
+                            <span><em>You have {huntCount} QSOs with {activator?.callsign}</em></span>
+                            <br />
+                        </div>
+                        <div className='activatorCommentMetaData'>
+                            <div className='activatorSpeed'>
+                                {cwSpeed > 0 && (
+                                    <span>CW speed is {cwSpeed}<br /></span>
+                                )}
+                            </div>
+                            <span className='activatorCmtsHdg'>Activator comments:</span>
+                            <div className='activatorComments'>
+                                {actComments.map((comment) => (
+                                    <span>{comment}<br /></span>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
                 </>
             }
         </div>

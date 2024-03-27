@@ -38,7 +38,7 @@ export default function Leaflet(props: ILeafletProps) {
         <MapContainer center={[lat, lon]}
             zoom={5}
             ref={mapRef}
-            style={{ height: "300px", width: "300px", float: "left" }}>
+            style={{ height: "200px", width: "300px", float: "left" }}>
             <TileLayer
                 attribution={attribution}
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

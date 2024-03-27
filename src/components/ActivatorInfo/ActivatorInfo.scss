@@ -25,15 +25,28 @@
 
 .activatorData {
     width: 100%;
+    display: flex;
     font-size: smaller;
     font-weight: 300;
     font-style: italic;
 }
 
+.activatorBasics {
+    flex: 1;
+}
+
+.activatorCommentMetaData {
+    width: 50%;
+    font-size: smaller;
+    font-weight: 300;
+    font-style: italic;
+    flex: 1;
+}
+
 .activatorComments {
     width: 100%;
     height: 125px;
-    font-size: smaller;
+    font-size: small;
     font-weight: 400;
     font-style: italic;
     overflow-y:auto;
@@ -41,9 +54,10 @@
 
 .activatorCmtsHdg {
     width: 100%;
-    font-size: smaller;
+    font-size: small;
     font-weight: 400;
     font-style: italic;
+    color: burlywood;
 }
 
 hr.separator {
@@ -55,7 +69,7 @@ hr.separator {
 
 .activatorSpeed {
     width: 100%;
-    font-size: smaller;
+    font-size: small;
     font-weight: 400;
     font-style: bold; 
     color: lightgreen;
