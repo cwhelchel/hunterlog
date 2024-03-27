@@ -2,6 +2,7 @@ import requests
 import logging as L
 import urllib.parse
 from utils.callsigns import get_basecall
+from version import __version__
 
 logging = L.getLogger("potaApi")
 
@@ -11,6 +12,7 @@ SPOT_COMMENTS_URL = "https://api.pota.app/spot/comments/{act}/{park}"
 ACTIVATOR_URL = "https://api.pota.app/stats/user/{call}"
 PARK_URL = "https://api.pota.app/park/{park}"
 LOCATIONS_URL = "https://api.pota.app/programs/locations/"
+POST_SPOT_URL = "https://api.pota.app/spot/"
 
 
 class Api():
@@ -68,38 +70,33 @@ class Api():
             json = response.json()
             return json
 
-    # def get_user_hunt(self, id_token: str, cookies: dict):
-    #     page = 1
-    #     size = 25
-    #     searchCall = "WB0RLJ"
-    #     url = f"https://api.pota.app/user/logbook?hunterOnly=1&page={page}
-    #             &size={size}"
-    #     headers = {
-    #         'authorization': id_token,
-    #         'origin': "https://pota.app",
-    #         'referer': "https://pota.app",
-    #         # 'accept': "application/json, text/plain, */*",
-    #         # 'Accept-Encoding': 'gzip, deflate, br, zstd',
-    #         # "Sec-Fetch-Dest": "empty",
-    #         # "Sec-Fetch-Mode": "cors",
-    #         # "Sec-Fetch-Site": "same-site",
-    #     }
+    @staticmethod
+    def post_spot(activator_call: str, park_ref: str,
+                  freq: str, mode: str,
+                  spotter_call: str, spotter_comments: str):
+        '''
+        Posts a spot to the POTA spot endpoint. Adding or re-spotting a
+        activation.
+        '''
+        url = POST_SPOT_URL
+        headers = {
+            "accept": "application/json, text/plain, */*",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "Content-Type": "application/json",
+            "origin": "https://pota.app",
+            "referer": "https://pota.app/",
+            'user-agent': f"hunterlog/{__version__}"
+        }
 
-    #     with requests.Session() as s:
-    #         s.headers.update(headers)
-    #         s.cookies.update(cookies)
-    #         response = s.options(url)
+        json_data = {
+            'activator': activator_call,
+            'spotter': spotter_call,
+            'frequency': freq,
+            'reference': park_ref,
+            'mode': mode,
+            'source': 'hunterlog',
+            'comments': spotter_comments
+        }
 
-    #         if response.status_code == 200:
-    #             json = response.json()
-    #             logging.debug(response.headers)
-    #             logging.debug(response.content)
-
-    #             response = s.get(url)
-    #             json = response.json()
-    #             logging.debug(response.headers)
-    #             logging.debug(response.content)
-    #             logging.debug(json)
-    #             return json
-
-    #     logging.debug(response.json())
+        r = requests.post(url=url, json=json_data, headers=headers)
+        logging.debug(f"code: {r.status_code} : {r.reason}")

@@ -61,7 +61,7 @@ class Qso(Base):
         return ""
 
     def get_state(self, locationDesc: str) -> str:
-        if not locationDesc:
+        if not locationDesc or locationDesc == 'None':  # None for k-test
             return ''
         x = locationDesc
         if ',' in locationDesc:

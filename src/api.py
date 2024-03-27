@@ -16,7 +16,6 @@ from db.models.user_config import UserConfigSchema
 from pota import PotaApi, PotaStats
 from utils.adif import AdifLog
 from version import __version__
-import upgrades
 
 from cat import CAT
 from utils.distance import Distance
@@ -161,16 +160,46 @@ class JsApi:
         }
         return json.dumps(result)
 
-    def upgrade_db(self):
-        upgrades.do_upgrade()
+    def spot_activator(self, qso_data, park: str) -> str:
+        '''
+        Spots the activator at the given park. The QSO data needs to be filled
+        out for this to work properly. Needs freq, call, and mode
 
-        result = {
-            'success': True,
-            'app_ver': __version__,
-            'db_ver': self.db.get_version()
-        }
+        :param any qso_data: dict of qso data from the UI
+        :param string spot_comment: the comment to add to the spot.
+        '''
+        f = qso_data['freq']
+        a = qso_data['call']
+        m = qso_data['mode']
+        r = qso_data['rst_sent']
+        c = str(qso_data['comment'])
 
-        return json.dumps(result)
+        logging.debug(f"sending spot for {a} on {f}")
+
+        cfg = self.db.get_user_config()
+
+        # if spot+log is used the comment is modified before coming here.
+        # remove boilerplate fluff and get the users comments for spot
+        if c.startswith("["):
+            x = c.index("]") + 1
+            c = c[x:]
+
+        spot_comment = f"[{r}] {c}"
+
+        try:
+            PotaApi.post_spot(activator_call=a,
+                              park_ref=park,
+                              freq=f,
+                              mode=m,
+                              spotter_call=cfg.my_call,
+                              spotter_comments=spot_comment)
+        except Exception as ex:
+            msg = "Error posting spot to pota api!"
+            logging.error(msg)
+            logging.exception(ex)
+            return self._response(False, msg, reason=f"reason: {ex}")
+
+        return self._response(True, "spot posted")
 
     def import_adif(self) -> str:
         '''
@@ -287,31 +316,6 @@ class JsApi:
             'message': "downloaded location data successfully",
         }
         return json.dumps(result)
-
-        # self.pota.get_user_hunt(token, cookies)
-
-        # self.pw.js_api_endpoint.e
-
-    # def get_id_token(self, win: webview.Window) -> tuple[str, any]:
-    #     logging.debug("looking thru cookies for idToken...")
-    #     cookies = win.get_cookies()
-    #     tok = None
-    #     jar = {}
-
-    #     for c in cookies:
-    #         co = c.output()
-    #         x = co.split('=')
-    #         k = x[0][12:]
-    #         jar[k] = x[1]
-    #         m = re.match(IDTOKENPAT, co)
-    #         if m:
-    #             # logging.debug(f"matched group {m.group(1)}")
-    #             tok = m.group(1)
-
-    #     logging.debug(jar)
-    #     if tok is None:
-    #         logging.warn("no POTA idToken found in cookies!")
-    #     return (tok, jar)
 
     def qsy_to(self, freq, mode: str):
         '''Use CAT control to QSY'''
@@ -458,3 +462,17 @@ class JsApi:
                 return update()
 
         return ac
+
+    def _response(self, success: bool, message: str, **kwargs) -> str:
+        '''
+        Returns a dumped json string from the given inputs.
+
+        :param bool success: indicates if response is pass or fail
+        :param str message: default message to return
+        :param any kwargs: any keyword arguments are included in the json
+        '''
+        return json.dumps({
+            'success': success,
+            'message': message,
+            **kwargs
+        })

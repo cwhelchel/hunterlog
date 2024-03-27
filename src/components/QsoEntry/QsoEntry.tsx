@@ -38,10 +38,8 @@ export default function QsoEntry() {
     const [qsoTime, setQsoTime] = React.useState<Dayjs>(dayjs('2022-04-17T15:30'));
     const { contextData, setData } = useAppContext();
 
-    function handleLogQsoClick(
-        event: React.MouseEvent<HTMLButtonElement, MouseEvent>
-    ) {
-        console.log(`qso at ${contextData.park?.name}`);
+    function logQso() {
+        console.log(`logging qso at ${contextData.park?.name}`);
 
         let cmt = qso.comment ?? '';
         let name = `${contextData.park?.name} ${contextData.park?.parktypeDesc}`;
@@ -51,11 +49,44 @@ export default function QsoEntry() {
 
         qso.comment = `[POTA ${qso.sig_info} ${loc} ${qso.gridsquare} ${name}] ` + cmt;
         qso.time_on = (qsoTime) ? qsoTime.toISOString() : dayjs().toISOString();
-        
-        window.pywebview.api.log_qso(qso);
 
+        window.pywebview.api.log_qso(qso);
+    }
+
+    function spotActivator() {
+        console.log(`spotting activator at ${contextData.park?.name}`);
+        let park = qso.sig_info;
+        window.pywebview.api.spot_activator(qso, park).then((r: string) => {
+            if (r !== undefined) {
+                let resp = JSON.parse(r);
+                if (!resp.success)
+                    // todo: lets not ALERT errors...
+                    alert(resp.message);
+            }
+        });
+    }
+
+    function handleLogQsoClick(
+        event: React.MouseEvent<HTMLButtonElement, MouseEvent>
+    ) {
+        logQso();
         handleClearClick(event);
     }
+
+    function handleSpotAndLogClick(
+        event: React.MouseEvent<HTMLButtonElement, MouseEvent>
+    ) {
+        logQso();
+        spotActivator();
+        handleClearClick(event);
+    };
+
+    function handleSpotOnlyClick(
+        event: React.MouseEvent<HTMLButtonElement, MouseEvent>
+    ) {
+        spotActivator();
+        handleClearClick(event);
+    };
 
     function handleClearClick(
         event: React.MouseEvent<HTMLButtonElement, MouseEvent>
@@ -169,6 +200,14 @@ export default function QsoEntry() {
             <Button variant="outlined" onClick={(e) => handleLogQsoClick(e)}
                 sx={{ 'm': 1, }} >
                 Log QSO
+            </Button>
+            <Button variant="outlined" onClick={(e) => handleSpotAndLogClick(e)}
+                sx={{ 'm': 1, }} >
+                Spot + Log
+            </Button>
+            <Button variant="outlined" onClick={(e) => handleSpotOnlyClick(e)}
+                sx={{ 'm': 1, }} >
+                Spot Only
             </Button>
             <Button variant="outlined" onClick={(e) => handleClearClick(e)}
                 sx={{ 'm': 1, }} >

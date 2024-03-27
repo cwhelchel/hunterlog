@@ -40,13 +40,6 @@ export default function Footer() {
         }
     }
 
-    function handleUpgradeDb() {
-        if (window.pywebview) {
-            console.log('upgrading db...')
-            window.pywebview.api.upgrade_db();
-        }
-    }
-
     return (
         <div className="footer">
             <span id="versionNum">{version} - db: {dbVersion}</span>
@@ -58,9 +51,6 @@ export default function Footer() {
             </Link>
             <Link href="#" onClick={() => {handleImportParkData()}}  ml={1} mr={1}>
                 Import Park Info
-            </Link>
-            <Link href="#" onClick={() => {handleUpgradeDb()}}  ml={1} mr={1}>
-                Upgrade DB
             </Link>
         </div>
     )
