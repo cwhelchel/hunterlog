@@ -4,6 +4,8 @@ import { ClickAwayListener } from '@mui/base/ClickAwayListener';
 import { styled, css } from '@mui/system';
 import { SpotComments } from '../../@types/SpotComments';
 
+import './SpotComments.scss'
+
 interface ISpotCommentsProps {
     spotId: number,
     spotter: string,
@@ -67,9 +69,12 @@ export default function SpotComments(props: ISpotCommentsProps) {
                             return (<>
                                 <div className={getClassName(c)}>
                                     <div className="spotCmtTitle">
-                                        {c.spotter} at {c.spotTime}
+                                        {c.spotter}
                                     </div>
-                                    <div className="spotCmtText">{c.comments} on {c.frequency}</div>
+                                    <div className="spotCmtInfo">
+                                        {c.mode} ({c.frequency}) at {c.spotTime} via {c.source}
+                                    </div>
+                                    <div className="spotCmtText">{c.comments}</div>
                                     <hr role='separator' className='spotSep' />
                                 </div>
                             </>)
@@ -87,6 +92,9 @@ export default function SpotComments(props: ISpotCommentsProps) {
 
         if (cmt.spotter == cmt.activator || cmt.activator.includes(cmt.spotter))
             return "spotCmtItemAct";
+
+        if (cmt.source === 'hunterlog')
+            return 'spotCmtItemHl';
 
         return 'spotCmtItem';
     }
