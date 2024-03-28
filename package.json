@@ -55,8 +55,8 @@
     "react-leaflet": "^4.2.1"
   },
   "devDependencies": {
-    "@parcel/transformer-sass": "^2.0.0-beta.2",
-    "parcel": "^2.11.0",
+    "@parcel/transformer-sass": "^2.12.0",
+    "parcel": "^2.12.0",
     "process": "^0.11.10",
     "run-script-os": "^1.1.6",
     "sass": "^1.63.6",
