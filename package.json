@@ -15,7 +15,7 @@
     "frontend:dev": "parcel build src/index.html --public-url . --dist-dir gui",
     "frontend:prod": "parcel build src/index.html --public-url . --no-source-maps --dist-dir gui",
     "init": "npm install && run-script-os",
-    "init:windows": "python -m venv . && .\\.venv\\Scripts\\pip install -r requirements.txt",
+    "init:windows": "python -m venv .venv && .\\.venv\\Scripts\\pip install -r requirements.txt",
     "init:linux": "python3 -m venv .venv && if [[ -z \"${KDE_FULL_SESSION}\" ]]; then npm run init:qt5; else npm run init:gtk; fi",
     "init:default": "python -m venv && .venv/bin/pip install -r requirements.txt",
     "init:qt5": ".venv/bin/pip install pyqt5 pyqtwebengine -r requirements.txt",
