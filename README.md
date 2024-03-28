@@ -62,42 +62,22 @@ account right?
 
 ### Stats
 
-If you want to see your some nice stats like the POTAPlus addon, you need to
-update your stats using the `STATS` menu. There are three options here.
-
-![Stat Menu Buttons](docs/img/stats.png)
-
 **STATISTICAL DATA SHOWN IN THIS APP IS NOT AUTHORITATIVE** The authoritative data
 of record is your data in https://pota.app
 
-#### PARK STATS
-This is useful to show what parks you have hunted and how many times you've hunted
-them.
+👉
+**For instructions on importing stats** [See the STAT guide](docs/STATS.md)
+👈
 
-You must to visit [https://pota.app/#stats/](https://pota.app/#/user/stats) and use the Hunted Parks "Export CSV" button to download the `hunter_parks.csv` file.
 
-Click the `PARK STATS` button, select your csv file, and wait for several minutes.
-This operation takes a long time as park data must be downloaded and stored in 
-the local `spots.db` database.
+If you want to see your some nice stats like the POTAPlus addon, you need to
+update your stats using the `STATS` menu. There are three options here: 
 
-This does take a long time, so there are export links at the bottom of the app
-so this data can be backed up.
 
-#### OP STATS
-This is an import of an ADIF copy of your 'main' log file. Your QSOs should have 
-the ADIF fields set as so:
-- SIG set to 'POTA'
-- SIG_INFO set to the park reference
-- COMMENT like the POTAPLUS comment ex: `[POTA K-4451 US-AL EM72el Tuskegee National Forest]`
+![Stat Menu Buttons](docs/img/stats.png)
 
-The import will try it's best to match the park and will worst case parse the POTAPlus
-comment. *This data is not used for Park hunt counts but only for Operator hunt counts.*
-
-#### LOC STATS
-Downloads and imports the locations data from the POTA website and stores them
-locally. No hunter data is in this file but the meta-data about locations and 
-prefixes is used to tabulate the parks hunted within a location. Ie you have 
-worked 78/224 in US-GA.
+The most important one is the PARK STATS. You will want that to import that so
+you can see what parks you need to hunt.
 
 ### Logging QSOs
 
