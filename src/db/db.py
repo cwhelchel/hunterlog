@@ -47,7 +47,7 @@ class InitQuery:
         if current is None:
             cs = UserConfigSchema()
             logging.debug("creating default user config...")
-            s = {'my_call': "W1AW",
+            s = {'my_call': "N0CALL",
                  'my_grid6': 'FN31pr',
                  'default_pwr': 1500,
                  'flr_host': "127.0.0.1",

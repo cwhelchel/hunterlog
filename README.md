@@ -29,9 +29,9 @@ On Windows, run the executable in any folder.
 On Linux, you may have to `chmod +777` the executable file and run it via the terminal.
 
 The very first thing you should notice is that the default configuration is for 
-W1AW. You probably aren't the ghost of Hiram Percy Maxim, so you should change
-your callsign. Click the `CONFIGURATION` button next to the callsign and input
-your callsign and your gridsquare. 
+N0CALL. You **must** change your callsign and gridsquare. Click the 
+`CONFIGURATION` button next to the callsign and input your callsign and your
+gridsquare. 
 
 
 ### Configuration

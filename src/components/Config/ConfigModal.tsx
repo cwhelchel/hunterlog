@@ -9,7 +9,7 @@ import Stack from '@mui/material/Stack';
 import { FormControlLabel, Radio, RadioGroup } from '@mui/material';
 
 const def: UserConfig = {
-    my_call: 'W1AW',
+    my_call: 'N0CALL',
     my_grid6: 'FN31pr',
     default_pwr: 0,
     flr_host: '127.0.0.1',
