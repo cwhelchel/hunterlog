@@ -9,6 +9,8 @@
 
 .activatorTitle {
     width: 100%;
+    display: flex;
+    align-items: center;
 }
 
 .activatorTitle span {
@@ -16,7 +18,7 @@
     font-family: 'Roboto Condensed', 'Helvetica Neue', sans-serif;
 }
 
-.activatorTitle hr {
+hr.titleSeparator {
     max-width: 100%;
     height: 0;
     max-height: 0;
@@ -73,4 +75,25 @@ hr.separator {
     font-weight: 400;
     font-style: bold; 
     color: lightgreen;
+}
+
+// svg {
+//     color: red;
+// }
+
+path {
+    text-indent:0;
+    text-align:start;
+    line-height:normal;
+    text-transform:none;
+    block-progression:tb;
+    -inkscape-font-specification:Sans
+}
+
+.activatorTitle svg {
+    color: #555;
+}
+
+.svg_icons {
+    transform: scale(0.75);
 }

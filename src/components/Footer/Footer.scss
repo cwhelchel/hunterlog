@@ -1,9 +1,26 @@
 .footer {
     font-size: smaller;
+    display: flex;
     margin: 0.25rem 1rem 1rem 1rem;
+    justify-content: space-between;
 }
 
 .footer #versionNum {
     font-size: small;
     color: #555;
 }
+
+.footer #attributionText {
+    font-size: small;
+    color: #555;
+    text-align: right;
+    float:right;
+}
+
+.footer #attributionText a:link {
+    color: darkgreen;
+}
+
+.footer #attributionText a:visited {
+    color: darkgreen;
+}   
