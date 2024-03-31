@@ -76,7 +76,9 @@ class Qso(Base):
 
     def init_from_adif(self, adif: dict):
         '''
-        Init the fields from dictionary of ADIF files. see adif-io in utils
+        Init the fields from dictionary of ADIF files. see adif-io in utils.
+
+        The QSO object created is assumed to be a POTA qso.
 
         There's a lot we don't import, namely any MY_ fields or Operator data.
         It's assumed to be the configured user is the my part of this.
@@ -99,8 +101,8 @@ class Qso(Base):
         self.call = adif['CALL']
         self.name = adif['NAME'] if 'NAME' in adif.keys() else ''
         self.state = adif['STATE'] if 'STATE' in adif.keys() else ''
-        self.rst_sent = adif['RST_SENT']
-        self.rst_recv = adif['RST_RCVD']
+        self.rst_sent = adif['RST_SENT'] if 'RST_SENT' in adif.keys() else self.get_default_rst(adif['MODE'])  # noqa E501
+        self.rst_recv = adif['RST_RCVD'] if 'RST_RCVD' in adif.keys() else self.get_default_rst(adif['MODE'])  # noqa E501
         self.freq = fs
         self.freq_rx = fs
         self.mode = adif['MODE']
@@ -108,7 +110,7 @@ class Qso(Base):
         self.qso_date = qd
         self.time_on = qt
         self.gridsquare = adif['GRIDSQUARE'] if 'GRIDSQUARE' in adif.keys() else ''  # noqa: E501
-        self.sig_info = adif['SIG_INFO']
+        self.sig_info = adif['SIG_INFO'] if 'SIG_INFO' in adif.keys() else ''
         # if we're importing from adif we may have a SIG_INFO with no SIG if so
         # go ahead and fix it (the checks look for valid pota park format in)
         self.sig = adif['SIG'] if 'SIG' in adif.keys() else 'POTA'

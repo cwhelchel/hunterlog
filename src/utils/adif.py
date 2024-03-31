@@ -61,7 +61,7 @@ class AdifLog():
             qso records into.
         '''
         logging.info(f"importing adif from {file_name}")
-        pattern = r'([A-Z]+-[0-9]*)'
+        pattern = r'([A-Z0-9]+-[0-9]*)'
         if os.path.exists(file_name):
             qsos, header = adif_io.read_from_file(file_name)
             logging.debug(f"adif hdr {header}")
