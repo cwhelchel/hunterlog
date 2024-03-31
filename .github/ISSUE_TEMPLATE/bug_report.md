@@ -25,10 +25,10 @@ If applicable, add screenshots to help explain your problem.
 
 **Desktop (please complete the following information):**
  - OS: [e.g. Windows, Ubuntu]
- - Hunterlog application version [e.g. 0.0.1L]
- - Hunterlog database version [e.g. db: 922a7b854b71]
+ - Hunterlog application version: [e.g. 0.0.1L]
+ - Hunterlog database version: [e.g. db: 922a7b854b71]
 
-The hunterlog version info is at the bottom of the application screen. Scroll down all the way to see it.
+*The hunterlog version info is at the bottom of the application screen. Scroll down all the way to see it.*
 
 
 **Additional context**
