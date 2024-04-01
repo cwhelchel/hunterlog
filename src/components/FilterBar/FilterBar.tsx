@@ -33,7 +33,7 @@ export const FilterBar = (props: IFilterBarPros) => {
     // API is ready
     React.useEffect(() => {
         window.addEventListener('pywebviewready', function () {
-            let bf = window.localStorage.getItem("BAND_FILTER") || '';
+            let bf = window.localStorage.getItem("BAND_FILTER") || '0';
             setBandFilter(bf);
             let rf = window.localStorage.getItem("REGION_FILTER") || '';
             setRegionFilter(rf);
