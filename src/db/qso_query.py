@@ -55,6 +55,7 @@ class QsoQuery:
         q.state = qso['state']
         q.sig = qso['sig']
         q.sig_info = qso['sig_info']
+        q.distance = qso['distance']
         q.from_app = True
         q.cnfm_hunt = False
         self.session.add(q)

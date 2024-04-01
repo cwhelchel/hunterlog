@@ -136,6 +136,7 @@ class AdifLog():
             self._get_adif_field("gridsquare", qso.gridsquare) + \
             self._get_adif_field("state", state) + \
             self._get_adif_field("distance", str(qso.distance)) + \
+            self._get_adif_field("tx_pwr", str(qso.tx_pwr)) + \
             self._get_adif_field("mode", qso.mode) + \
             self._get_adif_field("operator", my_call) + \
             self._get_adif_field("rst_rcvd", qso.rst_recv) + \

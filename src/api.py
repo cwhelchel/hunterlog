@@ -230,19 +230,22 @@ class JsApi:
 
         :param any qso_data: dict of qso data from the UI
         '''
+        cfg = self.db.get_user_config()
+
         try:
             park_json = self.pota.get_park(qso_data['sig_info'])
             logging.debug(f"updating park stat for: {park_json}")
             self.db.parks.inc_park_hunt(park_json)
 
+            qso_data['tx_pwr'] = cfg.default_pwr
             logging.debug(f"logging qso: {qso_data}")
             id = self.db.qsos.insert_new_qso(qso_data)
-        except Exception:
-            logging.exception("Error logging QSO to db")
+        except Exception as ex:
+            logging.error("Error logging QSO to db:")
+            logging.exception(ex)
 
         # get the data to log to the adif file and remote adif host
         qso = self.db.qsos.get_qso(id)
-        cfg = self.db.get_user_config()
         act = self.db.get_activator_name(qso_data['call'])
         qso.name = act if act is not None else 'ERROR NO NAME'
         self.adif_log.log_qso_and_send(qso, cfg)
