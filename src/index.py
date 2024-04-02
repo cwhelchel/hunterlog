@@ -26,8 +26,12 @@ def do_update():
     try:
         json = pota.get_spots()
         the_db.update_all_spots(json)
+    except ConnectionError as con_ex:
+        logging.warning("Connection error in do_update: ")
+        logging.exception(con_ex)
     except Exception as ex:
-        logging.error("error caught in do_update")
+        logging.error("Unhandled error caught in do_update: ")
+        logging.error(type(ex).__name__)
         logging.exception(ex)
         raise
 
