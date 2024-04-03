@@ -17,11 +17,11 @@ class UserConfig(Base):
     flr_port = sa.Column(sa.Integer)
     adif_host = sa.Column(sa.String)
     adif_port = sa.Column(sa.Integer)
-    logger_type = sa.Column(sa.Integer)
+    logger_type = sa.Column(sa.Integer, default=0)
 
     class LoggerType(Enum):
-        Default = 0
-        Log4om = 1
+        Tcp = 0
+        UdpLog4om = 1
         Aclog = 2
 
     def __repr__(self):

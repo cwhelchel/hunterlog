@@ -95,9 +95,12 @@ class DataBase:
         self._qq = QsoQuery(self.session)
         self._pq = ParkQuery(self.session)
         self._sq = SpotQuery(self.session, func=self._get_all_filters)
+
+        # do this FIRST. will upgrade the db to latest schema
+        self._iq.init_alembic_ver()
+
         self._sq.delete_all_spots()
         self._iq.init_config()
-        self._iq.init_alembic_ver()
 
         self.band_filter = Bands.NOBAND
         self.region_filter = None

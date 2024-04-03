@@ -107,8 +107,8 @@ export default function ConfigModal() {
                         value={config?.logger_type}
                         onChange={handleChange}
                     >
-                        <FormControlLabel value="0" control={<Radio />} label="Default" />
-                        <FormControlLabel value="1" control={<Radio />} label="Log4om" />
+                        <FormControlLabel value="0" control={<Radio />} label="TCP (Logger32)" />
+                        <FormControlLabel value="1" control={<Radio />} label="UDP (Log4om)" />
                         <FormControlLabel value="2" control={<Radio />} label="AcLog" />
                     </RadioGroup>
                     <Stack direction={'row'} spacing={1}>

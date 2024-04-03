@@ -34,8 +34,11 @@ class AdifLog():
             # more feature rich version that can pull in more QSO data, send to
             # LOTW, QRZ, etc (its FROM WD4DAN)
             adif = f"<CMD><ADDADIFRECORD><VALUE>{qso_adif}</VALUE></CMD>"
-        else:
+        elif config.logger_type == config.LoggerType.UdpLog4om.value:
             type = socket.SOCK_DGRAM
+            adif = self._get_adif(qso, config.my_call, config.my_grid6)
+        elif config.logger_type == config.LoggerType.Tcp.value:
+            type = socket.SOCK_STREAM
             adif = self._get_adif(qso, config.my_call, config.my_grid6)
         self._send_msg(adif, config.adif_host, config.adif_port, type)
         self.write_adif_log(adif)

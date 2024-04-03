@@ -53,8 +53,12 @@ the data wrapped in a different command. (Default and Log4om do the same thing c
 
 Remote ADIF Host and port:
 
-The remote endpoint data to send logged QSOs. Should be running Log4om or AClog
-or any other logger that accepts raw ADIF over UDP connections.
+The remote endpoint data to send logged QSOs. This computer should be running
+Logger32, Log4om, AClog, or any other logger that accepts raw ADIF over network
+connections.
+
+Select **TCP** for loggers that use a TCP socket (ex: Logger32), **UDP** for loggers that
+use a UDP (ex: Log4om), or **AcLog** for N3FJP's Amatuer contact logger.
 
 Click save to store the changes. Then click the refresh button on the main 
 screen to see your callsign and your configured Gravatar. You have a POTA 
