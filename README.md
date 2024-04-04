@@ -1,5 +1,8 @@
 # Hunterlog
 
+[![GitHub Release](https://img.shields.io/github/v/release/cwhelchel/hunterlog?style=flat-square)](https://github.com/cwhelchel/hunterlog/releases)
+
+
 *THIS IS NOT YOUR MAIN LOGGING PROGRAM!*
 
 This is a replacement for the excellent [potaplus](https://dwestbrook.net/projects/potaplus/) Chrome browser extension. If you have used that then this application
@@ -12,14 +15,13 @@ FLRIG, and log them to your logger through a remote ADIF message.
 
 ## Download
 
-Hunterlog is currently in pre-release and any releases are not immediately obvious
-where the should be downloaded from. Here is a link to the latest release:
+Hunterlog is in active development and any feedback is welcome. Here are the download links:
 
-Release page [v0.0.1L](https://github.com/cwhelchel/hunterlog/releases/tag/v0.0.1l)
+Release page [v0.0.2](https://github.com/cwhelchel/hunterlog/releases/tag/v0.0.2)
 
-[Windows Download](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.1l/hunterlog_0.0.1L.zip)
+[Windows Download](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.2/hunterlog_0.0.2.zip)
 
-[Ubuntu Download](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.1l/hunterlog-ubuntu_0.0.1L.zip)
+[Ubuntu Download](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.2/hunterlog-ubuntu_0.0.2.zip)
 
 
 ## Usage
