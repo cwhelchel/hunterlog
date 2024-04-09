@@ -4,6 +4,7 @@ import time
 import webview
 import logging as L
 import datetime
+import threading
 from datetime import timedelta
 
 from db.db import DataBase
@@ -25,9 +26,10 @@ logging = L.getLogger("api")
 
 
 class JsApi:
-    def __init__(self, the_db: DataBase, pota_api: PotaApi):
-        self.db = the_db
-        self.pota = pota_api
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.db = DataBase()
+        self.pota = PotaApi()
         self.adif_log = AdifLog()
         logging.debug("init CAT...")
         cfg = self.db.get_user_config()
@@ -62,7 +64,11 @@ class JsApi:
         '''
         spot = self.db.spots.get_spot(spot_id)
         comms = self.pota.get_spot_comments(spot.activator, spot.reference)
-        self.db.insert_spot_comments(spot.activator, spot.reference, comms)
+        try:
+            self.lock.acquire()
+            self.db.insert_spot_comments(spot.activator, spot.reference, comms)
+        finally:
+            self.lock.release()
 
     def get_qso_from_spot(self, id: int):
         logging.debug('py getting qso data')
@@ -230,6 +236,9 @@ class JsApi:
 
         :param any qso_data: dict of qso data from the UI
         '''
+        logging.debug('acquiring lock to log qso')
+        self.lock.acquire()
+
         cfg = self.db.get_user_config()
 
         try:
@@ -243,6 +252,8 @@ class JsApi:
         except Exception as ex:
             logging.error("Error logging QSO to db:")
             logging.exception(ex)
+            self.lock.release()
+            return self._response(False, "Error logging QSO.", ext=str(ex))
 
         # get the data to log to the adif file and remote adif host
         qso = self.db.qsos.get_qso(id)
@@ -253,8 +264,12 @@ class JsApi:
         j = self.pota.get_spots()
         self.db.update_all_spots(j)
 
+        self.lock.release()
+
         webview.windows[0].evaluate_js(
             'window.pywebview.state.getSpots()')
+
+        return self._response(True, "QSO logged successfully")
 
     def export_qsos(self):
         '''
@@ -406,6 +421,26 @@ class JsApi:
             'success': True,
             'message': "park data import successfully",
         })
+
+    def _do_update(self):
+        '''
+        The main update method. Called on a timer
+        '''
+        logging.debug('updating db')
+        self.lock.acquire()
+
+        try:
+            json = self.pota.get_spots()
+            self.db.update_all_spots(json)
+        except ConnectionError as con_ex:
+            logging.warning("Connection error in do_update: ")
+            logging.exception(con_ex)
+        except Exception as ex:
+            logging.error("Unhandled error caught in do_update: ")
+            logging.error(type(ex).__name__)
+            logging.exception(ex)
+        finally:
+            self.lock.release()
 
     def _update_all_parks(self) -> str:
         logging.info("updating all parks in db")

@@ -132,6 +132,8 @@ export default function SpotViewer() {
 
     function getSpots() {
         // get the spots from the db
+        // NOTE: this gets called from the python backend on a timer and when
+        // a qso is logged
         const spots = window.pywebview.api.get_spots()
         spots.then((r: string) => {
             var x = JSON.parse(r);

@@ -5,8 +5,6 @@ import logging
 import platform
 
 from api import JsApi
-from db import DataBase
-from pota import PotaApi
 
 # put filename='index.log' for deployment
 logging.basicConfig(filename='index.log',
@@ -15,25 +13,25 @@ logging.basicConfig(filename='index.log',
                     level=logging.DEBUG)
 # logging.basicConfig(level=logging.DEBUG)
 
-pota = PotaApi()
-the_db = DataBase()
-the_api = JsApi(the_db, pota)
+the_api = JsApi()
 
 
 def do_update():
     logging.debug('updating db')
 
-    try:
-        json = pota.get_spots()
-        the_db.update_all_spots(json)
-    except ConnectionError as con_ex:
-        logging.warning("Connection error in do_update: ")
-        logging.exception(con_ex)
-    except Exception as ex:
-        logging.error("Unhandled error caught in do_update: ")
-        logging.error(type(ex).__name__)
-        logging.exception(ex)
-        raise
+    the_api._do_update()
+
+    # try:
+    #     json = pota.get_spots()
+    #     the_db.update_all_spots(json)
+    # except ConnectionError as con_ex:
+    #     logging.warning("Connection error in do_update: ")
+    #     logging.exception(con_ex)
+    # except Exception as ex:
+    #     logging.error("Unhandled error caught in do_update: ")
+    #     logging.error(type(ex).__name__)
+    #     logging.exception(ex)
+    #     raise
 
 
 # first lets update our spots w/ api data
@@ -105,4 +103,6 @@ if __name__ == '__main__':
     if platform.system() == "Linux":
         webview.start(update_ticker, private_mode=False, debug=True, gui="gtk")
     elif platform.system() == "Windows":
+        webview.start(update_ticker, private_mode=False, debug=True)
+    elif platform.system() == "Darwin":
         webview.start(update_ticker, private_mode=False, debug=True)
