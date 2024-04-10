@@ -1,7 +1,7 @@
 '''
 This file is basically taken directly from augratin project. thx
 '''
-from math import radians, sin, cos, asin, sqrt
+from math import radians, sin, cos, asin, sqrt, atan2, pi
 
 
 class Distance:
@@ -67,3 +67,26 @@ class Distance:
         two in miles.
         """
         return round(Distance.distance(grid1, grid2) * 0.621371)
+
+    @staticmethod
+    def bearing(grid1: str, grid2: str) -> float:
+        """
+        Takes two maidenhead gridsquares and returns the bearing from the first
+        to the second
+        """
+        lat1, lon1 = Distance.grid_to_latlon(grid1)
+        lat2, lon2 = Distance.grid_to_latlon(grid2)
+        lat1 = radians(lat1)
+        lon1 = radians(lon1)
+        lat2 = radians(lat2)
+        lon2 = radians(lon2)
+        londelta = lon2 - lon1
+        why = sin(londelta) * cos(lat2)
+        exs = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(londelta)
+        brng = atan2(why, exs)
+        brng *= 180 / pi
+
+        if brng < 0:
+            brng += 360
+
+        return round(brng)

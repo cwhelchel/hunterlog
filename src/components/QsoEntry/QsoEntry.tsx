@@ -28,6 +28,7 @@ let defaultQso: Qso = {
     sig: "",
     sig_info: "",
     distance: 0,
+    bearing: 0,
     name: '',
     state: ''
 }
@@ -195,6 +196,8 @@ export default function QsoEntry() {
 
             <div className='qsoMetaData'>
                 <span>Distance: {qso.distance}</span>
+                &nbsp;
+                <span>Bearing: {qso.bearing}&deg;</span>
             </div>
 
             <Button variant="outlined" onClick={(e) => handleLogQsoClick(e)}

@@ -77,8 +77,10 @@ class JsApi:
             return {"success": False}
 
         cfg = self.db.get_user_config()
-        d = Distance.distance_miles(cfg.my_grid6, q.gridsquare)
-        q.distance = d
+        dist = Distance.distance_miles(cfg.my_grid6, q.gridsquare)
+        bearing = Distance.bearing(cfg.my_grid6, q.gridsquare)
+        q.distance = dist
+        q.bearing = bearing
         qs = QsoSchema()
         return qs.dumps(q)
 
