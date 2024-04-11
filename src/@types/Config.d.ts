@@ -6,5 +6,8 @@ export interface UserConfig {
     flr_port: number,
     adif_host: string,
     adif_port: number,
-    logger_type: number
+    logger_type: number,
+    size_x: number,
+    size_y: number,
+    is_max: boolean
 }

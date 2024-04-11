@@ -93,13 +93,40 @@ def update_ticker():
     refresh_frontend()
 
 
+def on_closing():
+    sz = (window.width, window.height)
+    logging.debug(f"close: saving winow data: {sz}")
+    the_api._store_win_size(sz)
+
+
+def on_maximized():
+    the_api._store_win_maxi(True)
+
+
+def on_restore():
+    the_api._store_win_maxi(False)
+
+
 if __name__ == '__main__':
+    (x, y) = the_api._get_win_size()
+    maxi = the_api._get_win_maximized()
+
+    logging.debug(f"load winow data: {x} x {y} - {maxi}")
+
     window = webview.create_window(
         'HUNTER LOG',
         entry,
         js_api=the_api,
+        maximized=maxi,
+        width=x,
+        height=y,
         min_size=(800, 600),
         text_select=True)
+
+    window.events.closing += on_closing
+    window.events.maximized += on_maximized
+    window.events.restored += on_restore
+
     if platform.system() == "Linux":
         webview.start(update_ticker, private_mode=False, debug=True, gui="gtk")
     elif platform.system() == "Windows":

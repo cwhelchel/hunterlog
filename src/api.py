@@ -516,3 +516,31 @@ class JsApi:
             'message': message,
             **kwargs
         })
+
+    def _get_win_size(self) -> tuple[int, int]:
+        '''
+        Get the stored windows size.
+        '''
+        cfg = self.db.get_user_config()
+        return (cfg.size_x, cfg.size_y)
+
+    def _get_win_maximized(self) -> bool:
+        '''
+        Get the stored windows size.
+        '''
+        cfg = self.db.get_user_config()
+        return cfg.is_max
+
+    def _store_win_size(self, size: tuple[int, int]):
+        '''
+        Get the stored windows size.
+        '''
+        cfg = self.db.get_user_config()
+        cfg.size_x = size[0]
+        cfg.size_y = size[1]
+        self.db.commit_session()
+
+    def _store_win_maxi(self, is_max: bool):
+        cfg = self.db.get_user_config()
+        cfg.is_max = 1 if is_max else 0
+        self.db.commit_session()
