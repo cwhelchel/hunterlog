@@ -6,7 +6,7 @@ import Button from '@mui/material/Button';
 import { UserConfig } from '../../@types/Config';
 import TextField from '@mui/material/TextField';
 import Stack from '@mui/material/Stack';
-import { FormControlLabel, Radio, RadioGroup } from '@mui/material';
+import { Box, FormControlLabel, Radio, RadioGroup } from '@mui/material';
 import Checkbox from '@mui/material/Checkbox';
 
 const def: UserConfig = {
@@ -20,7 +20,9 @@ const def: UserConfig = {
     logger_type: 0,
     size_x: 0, // not displayed in frontend
     size_y: 0, // not displayed in frontend
-    is_max: false // not displayed in frontend
+    is_max: false, // not displayed in frontend
+    cw_mode: 'CW',
+    ftx_mode: 'USB'
 };
 
 export default function ConfigModal() {
@@ -64,6 +66,8 @@ export default function ConfigModal() {
     const handleCheckedChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setImperialChecked(event.target.checked);
         let x = event.target.checked ? '1' : '0';
+        // this is a display only config so we dont put this in the db
+        // we put this into localstorage
         window.localStorage.setItem("USE_FREEDOM_UNITS", x);
     };
 
@@ -79,7 +83,7 @@ export default function ConfigModal() {
                 onClose={handleClose}
                 slots={{ backdrop: StyledBackdrop }}
             >
-                <ModalContent sx={{ width: 500 }}>
+                <ModalContent sx={{ width: 500   }}>
                     <h2 id="unstyled-modal-title" className="modal-title">
                         Configuration
                     </h2>
@@ -145,8 +149,27 @@ export default function ConfigModal() {
                             }} />
                     </Stack>
 
-                    <Button onClick={handleSave}>Save</Button>
-                    <Button onClick={handleClose}>Cancel</Button>
+                    <p className="modal-config-text">
+                        Mode strings used to specify a custom mode for RIG control
+                        (CW may need to be CW-R or CW-L if that is what your rig expects)
+                    </p>
+                    <Stack direction={'row'} spacing={1}>
+                        <TextField id="cw_mode" label="CW Mode"
+                            value={config?.cw_mode}
+                            onChange={(e) => {
+                                setConfig({ ...config, cw_mode: e.target.value });
+                            }} />
+                        <TextField id="ftx_mode" label="FT-x modes"
+                            value={config?.ftx_mode}
+                            onChange={(e) => {
+                                setConfig({ ...config, ftx_mode: e.target.value });
+                            }} />
+                    </Stack>
+
+                    <Stack direction={'row'} spacing={1} sx={{'align-items': 'stretch'}} useFlexGap>
+                        <Button onClick={handleSave}>Save</Button>
+                        <Button onClick={handleClose}>Cancel</Button>
+                    </Stack>
                 </ModalContent>
             </Modal>
         </div >
@@ -211,6 +234,7 @@ const ModalContent = styled('div')(
     /*font-family: 'IBM Plex Sans', sans-serif;*/
     font-weight: 500;
     text-align: start;
+    align-items: stretch;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -237,6 +261,15 @@ const ModalContent = styled('div')(
       color: ${theme.palette.mode === 'dark' ? grey[400] : grey[800]};
       margin-bottom: 4px;
     }
+
+    & .modal-config-text {
+        margin: 0;
+        line-height: 1.1rem;
+        font-weight: 300;
+        font-size: smaller;
+        color: ${theme.palette.mode === 'dark' ? grey[400] : grey[800]};
+        margin-bottom: 2px;
+      }
   `,
 );
 

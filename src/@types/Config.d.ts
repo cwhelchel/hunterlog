@@ -9,5 +9,7 @@ export interface UserConfig {
     logger_type: number,
     size_x: number,
     size_y: number,
-    is_max: boolean
+    is_max: boolean,
+    cw_mode: string,
+    ftx_mode: string
 }

@@ -21,6 +21,8 @@ class UserConfig(Base):
     size_x = sa.Column(sa.Integer, default=800)
     size_y = sa.Column(sa.Integer, default=600)
     is_max = sa.Column(sa.Boolean, default=False)
+    cw_mode = sa.Column(sa.String, default='CW')
+    ftx_mode = sa.Column(sa.String, default='USB')
 
     class LoggerType(Enum):
         Tcp = 0
