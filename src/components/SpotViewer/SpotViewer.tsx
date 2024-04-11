@@ -197,6 +197,14 @@ export default function SpotViewer() {
 
             window.pywebview.state.getSpots = getSpots;
         })
+
+        try {
+            let j = window.localStorage.getItem("SORT_MODEL") || '';
+            let sm = JSON.parse(j) as GridSortModel;
+            setSortModel(sm);
+        } catch {
+            console.log("ignored error loading sortmodel. using default");
+        }
     }, []);
 
     React.useEffect(() => {
@@ -233,12 +241,17 @@ export default function SpotViewer() {
         setData(contextData);
     };
 
+    function setSortModelAndSave(newModel: GridSortModel) {
+        setSortModel(newModel);
+        window.localStorage.setItem("SORT_MODEL", JSON.stringify(newModel));
+    }
+
     function getClassName(params: GridRowClassNameParams<SpotRow>) {
         if (params.row.is_qrt)
             return 'spotviewer-row-qrt';
         else
             return 'spotviewer-row';
-    }
+    };
 
     function CustomToolbar() {
         return (
@@ -267,7 +280,7 @@ export default function SpotViewer() {
                 onFilterModelChange={(v) => setFilterModel(v)}
                 onRowClick={handleRowClick}
                 sortModel={sortModel}
-                onSortModelChange={(e) => setSortModel(e)}
+                onSortModelChange={(e) => setSortModelAndSave(e)}
                 getRowClassName={getClassName}
             />
         </div >
