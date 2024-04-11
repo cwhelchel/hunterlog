@@ -109,6 +109,19 @@ export default function QsoEntry() {
         setQso(x);
     }
 
+    function getDistance() {
+        // default to yes
+        let units = window.localStorage.getItem("USE_FREEDOM_UNITS") || '1';
+        let use_imperial = parseInt(units);
+
+        if (use_imperial) {
+            let mi = Math.trunc(qso.distance * 0.621371);
+            return `${mi} mi`;
+        }
+        else
+            return `${qso.distance} km`;
+    }
+
     // when the app context changes (ie a user clicks on a different spot)
     // we need to update our TextFields
     React.useEffect(() => {
@@ -195,8 +208,8 @@ export default function QsoEntry() {
             </Grid>
 
             <div className='qsoMetaData'>
-                <span>Distance: {qso.distance}</span>
-                &nbsp;
+                <span>Distance: {getDistance()}</span>
+                &nbsp;-&nbsp;
                 <span>Bearing: {qso.bearing}&deg;</span>
             </div>
 

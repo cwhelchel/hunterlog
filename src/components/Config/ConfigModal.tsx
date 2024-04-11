@@ -7,6 +7,7 @@ import { UserConfig } from '../../@types/Config';
 import TextField from '@mui/material/TextField';
 import Stack from '@mui/material/Stack';
 import { FormControlLabel, Radio, RadioGroup } from '@mui/material';
+import Checkbox from '@mui/material/Checkbox';
 
 const def: UserConfig = {
     my_call: 'N0CALL',
@@ -16,12 +17,16 @@ const def: UserConfig = {
     flr_port: 12345,
     adif_host: '127.0.0.1',
     adif_port: 12345,
-    logger_type: 0
+    logger_type: 0,
+    size_x: 0, // not displayed in frontend
+    size_y: 0, // not displayed in frontend
+    is_max: false // not displayed in frontend
 };
 
 export default function ConfigModal() {
     const [open, setOpen] = React.useState(false);
     const [config, setConfig] = React.useState<UserConfig>(def);
+    const [imperialChecked, setImperialChecked] = React.useState(true);
 
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
@@ -29,7 +34,7 @@ export default function ConfigModal() {
         let x = (event.target as HTMLInputElement).value;
         let y = parseInt(x);
 
-        let newCfg : UserConfig = {...config, logger_type: y};
+        let newCfg: UserConfig = { ...config, logger_type: y };
         setConfig(newCfg);
     };
 
@@ -42,6 +47,10 @@ export default function ConfigModal() {
                 var cfg = JSON.parse(r) as UserConfig;
                 setConfig(cfg);
             });
+
+            let units = window.localStorage.getItem("USE_FREEDOM_UNITS") || '1';
+            let use_imperial = parseInt(units);
+            setImperialChecked(use_imperial != 0 ? true : false);
         });
     }, []);
 
@@ -50,6 +59,12 @@ export default function ConfigModal() {
             window.pywebview.api.set_user_config(config);
             handleClose();
         }
+    };
+
+    const handleCheckedChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setImperialChecked(event.target.checked);
+        let x = event.target.checked ? '1' : '0';
+        window.localStorage.setItem("USE_FREEDOM_UNITS", x);
     };
 
     return (
@@ -83,11 +98,17 @@ export default function ConfigModal() {
                                 setConfig({ ...config, my_grid6: e.target.value });
                             }} />
                     </Stack>
-                    <TextField id="default_pwr" label="Default TX Power"
-                        value={config?.default_pwr}
-                        onChange={(e) => {
-                            setConfig({ ...config, default_pwr: Number.parseInt(e.target.value) });
-                        }} />
+                    <Stack direction={'row'} spacing={1}>
+                        <TextField id="default_pwr" label="Default TX Power"
+                            value={config?.default_pwr}
+                            onChange={(e) => {
+                                setConfig({ ...config, default_pwr: Number.parseInt(e.target.value) });
+                            }} />
+                        <FormControlLabel control={
+                            <Checkbox defaultChecked checked={imperialChecked}
+                                onChange={handleCheckedChange} />
+                        } label="Display Imperial Units" />
+                    </Stack>
                     <Stack direction={'row'} spacing={1}>
                         <TextField id="flr_host" label="FLRIG Host (IP)"
                             value={config?.flr_host}
