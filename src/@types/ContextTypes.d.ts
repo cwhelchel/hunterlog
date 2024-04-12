@@ -15,6 +15,8 @@ export interface ContextData {
     locationFilter: string;
     qrtFilter: boolean; // true to filter out QRT spots
     huntedFilter: boolean; // true to filter out already hunted spots
+    errorMsg: string; // when set to a value, an alert is displayed in AppMenu
+    errorSeverity: string;
 }
 
 export  interface AppContextType {

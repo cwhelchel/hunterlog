@@ -5,6 +5,7 @@ import { getParkStats } from '../../pota';
 import { ParkStats } from '../../@types/PotaTypes';
 
 import './ParkInfo.scss'
+import { checkApiResponse } from '../../util';
 
 export default function ParkInfo() {
     const { contextData, setData } = useAppContext();
@@ -20,7 +21,7 @@ export default function ParkInfo() {
         });
 
         window.pywebview.api.get_park_hunts(park).then((j: string) => {
-            let o = JSON.parse(j);
+            let o = checkApiResponse(j, contextData, setData);
             let hunts = parseInt(o.count);
             setHunts(hunts);
         });

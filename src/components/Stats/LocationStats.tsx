@@ -1,6 +1,8 @@
 import * as React from 'react'
 import { Tooltip, Button } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
+import { checkApiResponse } from '../../util';
+import { useAppContext } from '../AppContext';
 
 declare interface ILocationStatsButtonProps {
     setIsWorking: (val: boolean) => void,
@@ -9,17 +11,17 @@ declare interface ILocationStatsButtonProps {
 
 export const LocationStatsButton = (props: ILocationStatsButtonProps) => {
     const [isWorking, _] = React.useState(false);
+    const {contextData, setData} = useAppContext();
 
     const handleClick = () => {
         if (window.pywebview !== undefined) {
             props.setIsWorking(true);
             let x = window.pywebview.api.load_location_data();
             x.then((r: string) => {
-                if (r === null)
-                    return;
-                let x = JSON.parse(r);
+                props.setIsWorking(false);
+
+                let x = checkApiResponse(r, contextData, setData);
                 if (x.success) {
-                    props.setIsWorking(false);
                     console.log(x.message);
                 }
             });

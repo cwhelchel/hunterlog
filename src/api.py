@@ -88,10 +88,7 @@ class JsApi:
         logging.debug("getting activator stats...")
         ac = self._get_activator(callsign)
         if ac is None:
-            return json.dumps({
-                'success': False,
-                'message': 'activator does not exists in POTA'
-            })
+            return self._response(False, f"Activator {callsign} not found")
         return ActivatorSchema().dumps(ac)
 
     def get_activator_hunts(self, callsign):
@@ -143,15 +140,14 @@ class JsApi:
         '''
         if ref is None:
             logging.error("get_park: ref param was None")
-            return json.dumps({"success": False,
-                               "msg": 'ref: invalid argument'})
+            return self._response(False, "park references invalid")
 
         park = self.db.parks.get_park(ref)
 
         if park is None:
-            return json.dumps({"success": True, "count": 0})
+            return self._response(True, "", count=0)
         else:
-            return json.dumps({"success": True, "count": park.hunts})
+            return self._response(True, "", count=park.hunts)
 
     def get_user_config(self):
         '''
@@ -161,12 +157,11 @@ class JsApi:
         return UserConfigSchema().dumps(cfg)
 
     def get_version_num(self):
-        result = {
-            'success': True,
-            'app_ver': __version__,
-            'db_ver': self.db.get_version()
-        }
-        return json.dumps(result)
+        return self._response(
+            True,
+            "",
+            app_ver=__version__,
+            db_ver=self.db.get_version())
 
     def spot_activator(self, qso_data, park: str) -> str:
         '''
@@ -205,7 +200,7 @@ class JsApi:
             msg = "Error posting spot to pota api!"
             logging.error(msg)
             logging.exception(ex)
-            return self._response(False, msg, reason=f"reason: {ex}")
+            return self._response(False, msg)
 
         return self._response(True, "spot posted")
 
@@ -220,16 +215,12 @@ class JsApi:
                 webview.OPEN_DIALOG,
             file_types=ft)
         if not filename:
-            return json.dumps({'success': True, 'message': "user cancel"})
+            return self._response(True, "")
 
         logging.info("starting import of ADIF file...")
         AdifLog.import_from_log(filename[0], self.db)
 
-        result = {
-            'success': True,
-            'message': "completed adif import successfully",
-        }
-        return json.dumps(result)
+        return self._response(True, "Completed ADIF import")
 
     def log_qso(self, qso_data):
         '''
@@ -331,11 +322,7 @@ class JsApi:
         logging.debug("downloading location data...")
         locations = PotaApi.get_locations()
         self.db.locations.load_location_data(locations)
-        result = {
-            'success': True,
-            'message': "downloaded location data successfully",
-        }
-        return json.dumps(result)
+        return self._response(True, "Downloaded location data successfully")
 
     def qsy_to(self, freq, mode: str):
         '''Use CAT control to QSY'''
@@ -368,7 +355,7 @@ class JsApi:
                 webview.OPEN_DIALOG,
                 file_types=ft)
         if not filename:
-            return json.dumps({'success': True, 'message': "user cancel"})
+            return self._response(True, "user cancelled")
 
         logging.info(f"updating park hunts from {filename[0]}")
         stats = PotaStats(filename[0])
@@ -462,27 +449,8 @@ class JsApi:
 
             time.sleep(0.001)  # dont want to hurt POTA
 
-        # self.db.commit_session()
-
-        return json.dumps({
-            'success': True,
-            'message': "completed park update successfully",
-        })
-
-    def _send_msg(self, msg: str):
-        """
-        Send a UDP adif message to a remote endpoint
-        """
-        host = self.settings.get("host", "127.0.0.1")
-        port = self.settings.get("port", 8073)
-        type = socket.SOCK_DGRAM
-
-        try:
-            with socket.socket(socket.AF_INET, type) as sock:
-                sock.connect((host, port))
-                sock.send(msg.encode())
-        except Exception:
-            logging.exception("send_msg exception")
+        return self._response(
+            True, "Park Data updated successfully", persist=True)
 
     def _get_activator(self, callsign: str) -> Activator:
         ''''

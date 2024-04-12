@@ -5,9 +5,9 @@ import dayjs, { Dayjs } from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 
 import './QsoEntry.scss'
-import { Qso } from '../../@types/QsoTypes';
 import QsoTimeEntry from './QsoTimeEntry';
-import { Park } from '../../@types/Parks';
+import { Qso } from '../../@types/QsoTypes';
+import { checkApiResponse } from '../../util';
 
 dayjs.extend(utc);
 
@@ -51,19 +51,16 @@ export default function QsoEntry() {
         qso.comment = `[POTA ${qso.sig_info} ${loc} ${qso.gridsquare} ${name}] ` + cmt;
         qso.time_on = (qsoTime) ? qsoTime.toISOString() : dayjs().toISOString();
 
-        window.pywebview.api.log_qso(qso);
+        window.pywebview.api.log_qso(qso).then((x: string) => {
+            checkApiResponse(x, contextData, setData);
+        })
     }
 
     function spotActivator() {
         console.log(`spotting activator at ${contextData.park?.name}`);
         let park = qso.sig_info;
         window.pywebview.api.spot_activator(qso, park).then((r: string) => {
-            if (r !== undefined) {
-                let resp = JSON.parse(r);
-                if (!resp.success)
-                    // todo: lets not ALERT errors...
-                    alert(resp.message);
-            }
+            checkApiResponse(r, contextData, setData);
         });
     }
 
