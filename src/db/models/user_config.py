@@ -23,6 +23,7 @@ class UserConfig(Base):
     is_max = sa.Column(sa.Boolean, default=False)
     cw_mode = sa.Column(sa.String, default='CW')
     ftx_mode = sa.Column(sa.String, default='USB')
+    qth_string = sa.Column(sa.String, nullable=True)
 
     class LoggerType(Enum):
         Tcp = 0

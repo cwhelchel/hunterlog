@@ -12,4 +12,5 @@ export interface UserConfig {
     is_max: boolean,
     cw_mode: string,
     ftx_mode: string
+    qth_string: string
 }

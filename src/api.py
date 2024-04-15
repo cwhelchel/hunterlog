@@ -187,7 +187,12 @@ class JsApi:
             x = c.index("]") + 1
             c = c[x:]
 
-        spot_comment = f"[{r}] {c}"
+        qth = cfg.qth_string
+
+        if qth is not None:
+            spot_comment = f"[{r} {qth}] {c}"
+        else:
+            spot_comment = f"[{r}] {c}"
 
         try:
             PotaApi.post_spot(activator_call=a,

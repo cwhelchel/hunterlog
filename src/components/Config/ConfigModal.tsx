@@ -22,7 +22,8 @@ const def: UserConfig = {
     size_y: 0, // not displayed in frontend
     is_max: false, // not displayed in frontend
     cw_mode: 'CW',
-    ftx_mode: 'USB'
+    ftx_mode: 'USB',
+    qth_string: ''
 };
 
 export default function ConfigModal() {
@@ -165,6 +166,16 @@ export default function ConfigModal() {
                                 setConfig({ ...config, ftx_mode: e.target.value });
                             }} />
                     </Stack>
+
+                    <p className="modal-config-text">
+                        QTH string is inserted when posting spots to POTA.app ex: 'mid GA'
+                        is inserted into comment like '[599 mid GA] thx fb qso'
+                    </p>
+                    <TextField id="qth_string" label="QTH String"
+                            value={config?.qth_string}
+                            onChange={(e) => {
+                                setConfig({ ...config, qth_string: e.target.value });
+                            }} />
 
                     <Stack direction={'row'} spacing={1} sx={{'align-items': 'stretch'}} useFlexGap>
                         <Button onClick={handleSave}>Save</Button>
