@@ -263,21 +263,8 @@ export default function SpotViewer() {
         );
     }
 
-    const SpotContainer = styled('div')(({ theme }) => ({
-        padding: theme.spacing(1),
-        [theme.breakpoints.down('md')]: {
-            height: '40vh'
-        },
-        [theme.breakpoints.up('md')]: {
-            height: '45vh'
-        },
-        [theme.breakpoints.up('lg')]: {
-            height: '55vh'
-        }
-    }));
-
     return (
-        <SpotContainer className='spots-container'>
+        <div className='spots-container'>
             <DataGrid
                 rows={spots}
                 slots={{ toolbar: CustomToolbar }}
@@ -296,6 +283,6 @@ export default function SpotViewer() {
                 onSortModelChange={(e) => setSortModelAndSave(e)}
                 getRowClassName={getClassName}
             />
-        </SpotContainer >
+        </div>
     );
 }

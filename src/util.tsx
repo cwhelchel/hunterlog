@@ -30,7 +30,7 @@ export function checkApiResponse(x: string, contextData: ContextData, setData: (
             setToastMsg(j['message'], contextData, setData);
 
     } else {
-        setErrorMsg(x, contextData, setData);
+        setErrorMsg(j['message'], contextData, setData);
     }
 
     return j;
