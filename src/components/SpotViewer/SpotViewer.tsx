@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Button from '@mui/material/Button';
-import { Badge } from '@mui/material';
+import { Badge, styled } from '@mui/material';
 import { DataGrid, GridColDef, GridValueGetterParams, GridValueFormatterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams, GridRowClassNameParams, GridToolbar, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarColumnsButton, GridToolbarQuickFilter } from '@mui/x-data-grid';
 import { GridEventListener } from '@mui/x-data-grid';
 
@@ -211,9 +211,9 @@ export default function SpotViewer() {
         // get the spots from the db
         if (window.pywebview !== undefined)
             getSpots();
-    }, [contextData.bandFilter, contextData.regionFilter, 
-        contextData.qrtFilter, contextData.locationFilter,
-        contextData.huntedFilter]
+    }, [contextData.bandFilter, contextData.regionFilter,
+    contextData.qrtFilter, contextData.locationFilter,
+    contextData.huntedFilter]
     );
 
     // return the correct PK id for our rows
@@ -255,16 +255,29 @@ export default function SpotViewer() {
 
     function CustomToolbar() {
         return (
-          <GridToolbarContainer>
-            <GridToolbarColumnsButton />
-            <GridToolbarDensitySelector />
-            <GridToolbarQuickFilter />
-          </GridToolbarContainer>
+            <GridToolbarContainer>
+                <GridToolbarColumnsButton />
+                <GridToolbarDensitySelector />
+                <GridToolbarQuickFilter />
+            </GridToolbarContainer>
         );
-      }
+    }
+
+    const SpotContainer = styled('div')(({ theme }) => ({
+        padding: theme.spacing(1),
+        [theme.breakpoints.down('md')]: {
+            height: '40vh'
+        },
+        [theme.breakpoints.up('md')]: {
+            height: '45vh'
+        },
+        [theme.breakpoints.up('lg')]: {
+            height: '55vh'
+        }
+    }));
 
     return (
-        <div className='spots-container'>
+        <SpotContainer className='spots-container'>
             <DataGrid
                 rows={spots}
                 slots={{ toolbar: CustomToolbar }}
@@ -283,6 +296,6 @@ export default function SpotViewer() {
                 onSortModelChange={(e) => setSortModelAndSave(e)}
                 getRowClassName={getClassName}
             />
-        </div >
+        </SpotContainer >
     );
 }
