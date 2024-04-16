@@ -11,6 +11,7 @@ export interface UserConfig {
     size_y: number,
     is_max: boolean,
     cw_mode: string,
-    ftx_mode: string
-    qth_string: string
+    ftx_mode: string,
+    qth_string: string,
+    rig_if_type: string,
 }

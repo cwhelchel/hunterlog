@@ -33,7 +33,7 @@ class JsApi:
         self.adif_log = AdifLog()
         logging.debug("init CAT...")
         cfg = self.db.get_user_config()
-        self.cat = CAT("flrig", cfg.flr_host, cfg.flr_port)
+        self.cat = CAT(cfg.rig_if_type, cfg.flr_host, cfg.flr_port)
         self.pw = None
 
     def get_spot(self, spot_id: int):
