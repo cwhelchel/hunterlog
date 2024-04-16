@@ -4,6 +4,7 @@ import time
 import webview
 import logging as L
 import datetime
+import threading
 from datetime import timedelta
 
 from db.db import DataBase
@@ -25,13 +26,14 @@ logging = L.getLogger("api")
 
 
 class JsApi:
-    def __init__(self, the_db: DataBase, pota_api: PotaApi):
-        self.db = the_db
-        self.pota = pota_api
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.db = DataBase()
+        self.pota = PotaApi()
         self.adif_log = AdifLog()
         logging.debug("init CAT...")
         cfg = self.db.get_user_config()
-        self.cat = CAT("flrig", cfg.flr_host, cfg.flr_port)
+        self.cat = CAT(cfg.rig_if_type, cfg.flr_host, cfg.flr_port)
         self.pw = None
 
     def get_spot(self, spot_id: int):
@@ -62,7 +64,11 @@ class JsApi:
         '''
         spot = self.db.spots.get_spot(spot_id)
         comms = self.pota.get_spot_comments(spot.activator, spot.reference)
-        self.db.insert_spot_comments(spot.activator, spot.reference, comms)
+        try:
+            self.lock.acquire()
+            self.db.insert_spot_comments(spot.activator, spot.reference, comms)
+        finally:
+            self.lock.release()
 
     def get_qso_from_spot(self, id: int):
         logging.debug('py getting qso data')
@@ -71,8 +77,10 @@ class JsApi:
             return {"success": False}
 
         cfg = self.db.get_user_config()
-        d = Distance.distance_miles(cfg.my_grid6, q.gridsquare)
-        q.distance = d
+        dist = Distance.distance(cfg.my_grid6, q.gridsquare)
+        bearing = Distance.bearing(cfg.my_grid6, q.gridsquare)
+        q.distance = dist
+        q.bearing = bearing
         qs = QsoSchema()
         return qs.dumps(q)
 
@@ -80,10 +88,7 @@ class JsApi:
         logging.debug("getting activator stats...")
         ac = self._get_activator(callsign)
         if ac is None:
-            return json.dumps({
-                'success': False,
-                'message': 'activator does not exists in POTA'
-            })
+            return self._response(False, f"Activator {callsign} not found")
         return ActivatorSchema().dumps(ac)
 
     def get_activator_hunts(self, callsign):
@@ -135,15 +140,14 @@ class JsApi:
         '''
         if ref is None:
             logging.error("get_park: ref param was None")
-            return json.dumps({"success": False,
-                               "msg": 'ref: invalid argument'})
+            return self._response(False, "park references invalid")
 
         park = self.db.parks.get_park(ref)
 
         if park is None:
-            return json.dumps({"success": True, "count": 0})
+            return self._response(True, "", count=0)
         else:
-            return json.dumps({"success": True, "count": park.hunts})
+            return self._response(True, "", count=park.hunts)
 
     def get_user_config(self):
         '''
@@ -153,12 +157,11 @@ class JsApi:
         return UserConfigSchema().dumps(cfg)
 
     def get_version_num(self):
-        result = {
-            'success': True,
-            'app_ver': __version__,
-            'db_ver': self.db.get_version()
-        }
-        return json.dumps(result)
+        return self._response(
+            True,
+            "",
+            app_ver=__version__,
+            db_ver=self.db.get_version())
 
     def spot_activator(self, qso_data, park: str) -> str:
         '''
@@ -184,7 +187,12 @@ class JsApi:
             x = c.index("]") + 1
             c = c[x:]
 
-        spot_comment = f"[{r}] {c}"
+        qth = cfg.qth_string
+
+        if qth is not None:
+            spot_comment = f"[{r} {qth}] {c}"
+        else:
+            spot_comment = f"[{r}] {c}"
 
         try:
             PotaApi.post_spot(activator_call=a,
@@ -197,7 +205,7 @@ class JsApi:
             msg = "Error posting spot to pota api!"
             logging.error(msg)
             logging.exception(ex)
-            return self._response(False, msg, reason=f"reason: {ex}")
+            return self._response(False, msg)
 
         return self._response(True, "spot posted")
 
@@ -212,16 +220,12 @@ class JsApi:
                 webview.OPEN_DIALOG,
             file_types=ft)
         if not filename:
-            return json.dumps({'success': True, 'message': "user cancel"})
+            return self._response(True, "")
 
         logging.info("starting import of ADIF file...")
         AdifLog.import_from_log(filename[0], self.db)
 
-        result = {
-            'success': True,
-            'message': "completed adif import successfully",
-        }
-        return json.dumps(result)
+        return self._response(True, "Completed ADIF import")
 
     def log_qso(self, qso_data):
         '''
@@ -230,6 +234,9 @@ class JsApi:
 
         :param any qso_data: dict of qso data from the UI
         '''
+        logging.debug('acquiring lock to log qso')
+        self.lock.acquire()
+
         cfg = self.db.get_user_config()
 
         try:
@@ -243,6 +250,8 @@ class JsApi:
         except Exception as ex:
             logging.error("Error logging QSO to db:")
             logging.exception(ex)
+            self.lock.release()
+            return self._response(False, "Error logging QSO.", ext=str(ex))
 
         # get the data to log to the adif file and remote adif host
         qso = self.db.qsos.get_qso(id)
@@ -253,8 +262,12 @@ class JsApi:
         j = self.pota.get_spots()
         self.db.update_all_spots(j)
 
+        self.lock.release()
+
         webview.windows[0].evaluate_js(
             'window.pywebview.state.getSpots()')
+
+        return self._response(True, "QSO logged successfully")
 
     def export_qsos(self):
         '''
@@ -314,21 +327,22 @@ class JsApi:
         logging.debug("downloading location data...")
         locations = PotaApi.get_locations()
         self.db.locations.load_location_data(locations)
-        result = {
-            'success': True,
-            'message': "downloaded location data successfully",
-        }
-        return json.dumps(result)
+        return self._response(True, "Downloaded location data successfully")
 
     def qsy_to(self, freq, mode: str):
         '''Use CAT control to QSY'''
         logging.debug(f"qsy_to {freq} {mode}")
+        cfg = self.db.get_user_config()
         x = float(freq) * 1000.0
         logging.debug(f"adjusted freq {x}")
-        if mode == "SSB" and x > 10000000:
+        if mode == "SSB" and x >= 10000000:
             mode = "USB"
-        elif mode == "SSB":
+        elif mode == "SSB" and x < 10000000:
             mode = "LSB"
+        elif mode == "CW":
+            mode = cfg.cw_mode
+        elif mode.startswith("FT"):
+            mode = cfg.ftx_mode
         logging.debug(f"adjusted mode {mode}")
         self.cat.set_mode(mode)
         self.cat.set_vfo(x)
@@ -346,7 +360,7 @@ class JsApi:
                 webview.OPEN_DIALOG,
                 file_types=ft)
         if not filename:
-            return json.dumps({'success': True, 'message': "user cancel"})
+            return self._response(True, "user cancelled")
 
         logging.info(f"updating park hunts from {filename[0]}")
         stats = PotaStats(filename[0])
@@ -407,6 +421,26 @@ class JsApi:
             'message': "park data import successfully",
         })
 
+    def _do_update(self):
+        '''
+        The main update method. Called on a timer
+        '''
+        logging.debug('updating db')
+        self.lock.acquire()
+
+        try:
+            json = self.pota.get_spots()
+            self.db.update_all_spots(json)
+        except ConnectionError as con_ex:
+            logging.warning("Connection error in do_update: ")
+            logging.exception(con_ex)
+        except Exception as ex:
+            logging.error("Unhandled error caught in do_update: ")
+            logging.error(type(ex).__name__)
+            logging.exception(ex)
+        finally:
+            self.lock.release()
+
     def _update_all_parks(self) -> str:
         logging.info("updating all parks in db")
 
@@ -420,27 +454,8 @@ class JsApi:
 
             time.sleep(0.001)  # dont want to hurt POTA
 
-        # self.db.commit_session()
-
-        return json.dumps({
-            'success': True,
-            'message': "completed park update successfully",
-        })
-
-    def _send_msg(self, msg: str):
-        """
-        Send a UDP adif message to a remote endpoint
-        """
-        host = self.settings.get("host", "127.0.0.1")
-        port = self.settings.get("port", 8073)
-        type = socket.SOCK_DGRAM
-
-        try:
-            with socket.socket(socket.AF_INET, type) as sock:
-                sock.connect((host, port))
-                sock.send(msg.encode())
-        except Exception:
-            logging.exception("send_msg exception")
+        return self._response(
+            True, "Park Data updated successfully", persist=True)
 
     def _get_activator(self, callsign: str) -> Activator:
         ''''
@@ -479,3 +494,31 @@ class JsApi:
             'message': message,
             **kwargs
         })
+
+    def _get_win_size(self) -> tuple[int, int]:
+        '''
+        Get the stored windows size.
+        '''
+        cfg = self.db.get_user_config()
+        return (cfg.size_x, cfg.size_y)
+
+    def _get_win_maximized(self) -> bool:
+        '''
+        Get the stored windows size.
+        '''
+        cfg = self.db.get_user_config()
+        return cfg.is_max
+
+    def _store_win_size(self, size: tuple[int, int]):
+        '''
+        Get the stored windows size.
+        '''
+        cfg = self.db.get_user_config()
+        cfg.size_x = size[0]
+        cfg.size_y = size[1]
+        self.db.commit_session()
+
+    def _store_win_maxi(self, is_max: bool):
+        cfg = self.db.get_user_config()
+        cfg.is_max = 1 if is_max else 0
+        self.db.commit_session()

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Button from '@mui/material/Button';
-import { Badge } from '@mui/material';
+import { Badge, styled } from '@mui/material';
 import { DataGrid, GridColDef, GridValueGetterParams, GridValueFormatterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams, GridRowClassNameParams, GridToolbar, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarColumnsButton, GridToolbarQuickFilter } from '@mui/x-data-grid';
 import { GridEventListener } from '@mui/x-data-grid';
 
@@ -132,6 +132,8 @@ export default function SpotViewer() {
 
     function getSpots() {
         // get the spots from the db
+        // NOTE: this gets called from the python backend on a timer and when
+        // a qso is logged
         const spots = window.pywebview.api.get_spots()
         spots.then((r: string) => {
             var x = JSON.parse(r);
@@ -195,15 +197,23 @@ export default function SpotViewer() {
 
             window.pywebview.state.getSpots = getSpots;
         })
+
+        try {
+            let j = window.localStorage.getItem("SORT_MODEL") || '';
+            let sm = JSON.parse(j) as GridSortModel;
+            setSortModel(sm);
+        } catch {
+            console.log("ignored error loading sortmodel. using default");
+        }
     }, []);
 
     React.useEffect(() => {
         // get the spots from the db
         if (window.pywebview !== undefined)
             getSpots();
-    }, [contextData.bandFilter, contextData.regionFilter, 
-        contextData.qrtFilter, contextData.locationFilter,
-        contextData.huntedFilter]
+    }, [contextData.bandFilter, contextData.regionFilter,
+    contextData.qrtFilter, contextData.locationFilter,
+    contextData.huntedFilter]
     );
 
     // return the correct PK id for our rows
@@ -231,22 +241,27 @@ export default function SpotViewer() {
         setData(contextData);
     };
 
+    function setSortModelAndSave(newModel: GridSortModel) {
+        setSortModel(newModel);
+        window.localStorage.setItem("SORT_MODEL", JSON.stringify(newModel));
+    }
+
     function getClassName(params: GridRowClassNameParams<SpotRow>) {
         if (params.row.is_qrt)
             return 'spotviewer-row-qrt';
         else
             return 'spotviewer-row';
-    }
+    };
 
     function CustomToolbar() {
         return (
-          <GridToolbarContainer>
-            <GridToolbarColumnsButton />
-            <GridToolbarDensitySelector />
-            <GridToolbarQuickFilter />
-          </GridToolbarContainer>
+            <GridToolbarContainer>
+                <GridToolbarColumnsButton />
+                <GridToolbarDensitySelector />
+                <GridToolbarQuickFilter />
+            </GridToolbarContainer>
         );
-      }
+    }
 
     return (
         <div className='spots-container'>
@@ -265,9 +280,9 @@ export default function SpotViewer() {
                 onFilterModelChange={(v) => setFilterModel(v)}
                 onRowClick={handleRowClick}
                 sortModel={sortModel}
-                onSortModelChange={(e) => setSortModel(e)}
+                onSortModelChange={(e) => setSortModelAndSave(e)}
                 getRowClassName={getClassName}
             />
-        </div >
+        </div>
     );
 }

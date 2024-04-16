@@ -1,6 +1,8 @@
 import * as React from 'react'
 import { Tooltip, Button } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
+import { checkApiResponse } from '../../util';
+import { useAppContext } from '../AppContext';
 
 declare interface IImportAdifProps {
     setIsWorking: (val: boolean) => void,
@@ -9,18 +11,14 @@ declare interface IImportAdifProps {
 
 export const ImportAdif = (props: IImportAdifProps) => {
     const [isWorking, _] = React.useState(false);
+    const { contextData, setData } = useAppContext();
 
     const handleClick = () => {
         if (window.pywebview !== undefined) {
             props.setIsWorking(true);
             window.pywebview.api.import_adif().then((r: string) => {
-                let x = JSON.parse(r);
-                if (x.success) {
-                    props.setIsWorking(false);
-                    console.log(x.message);
-                }
-                else
-                    alert(x.message);
+                props.setIsWorking(false);
+                checkApiResponse(r, contextData, setData);
             },
                 () => {
                     //alert("hi");
@@ -36,7 +34,7 @@ export const ImportAdif = (props: IImportAdifProps) => {
                 </Button>
             </Tooltip>
             {isWorking && (
-                <div style={{'display':'flex'}}>
+                <div style={{ 'display': 'flex' }}>
                     <CircularProgress />
                 </div>
             )}

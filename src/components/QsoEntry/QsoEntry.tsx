@@ -1,13 +1,13 @@
 import * as React from 'react';
-import { Button, TextField, Grid } from '@mui/material';
+import { Button, TextField, Grid, Stack } from '@mui/material';
 import { useAppContext } from '../AppContext';
 import dayjs, { Dayjs } from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 
 import './QsoEntry.scss'
-import { Qso } from '../../@types/QsoTypes';
 import QsoTimeEntry from './QsoTimeEntry';
-import { Park } from '../../@types/Parks';
+import { Qso } from '../../@types/QsoTypes';
+import { checkApiResponse } from '../../util';
 
 dayjs.extend(utc);
 
@@ -28,6 +28,7 @@ let defaultQso: Qso = {
     sig: "",
     sig_info: "",
     distance: 0,
+    bearing: 0,
     name: '',
     state: ''
 }
@@ -50,19 +51,16 @@ export default function QsoEntry() {
         qso.comment = `[POTA ${qso.sig_info} ${loc} ${qso.gridsquare} ${name}] ` + cmt;
         qso.time_on = (qsoTime) ? qsoTime.toISOString() : dayjs().toISOString();
 
-        window.pywebview.api.log_qso(qso);
+        window.pywebview.api.log_qso(qso).then((x: string) => {
+            checkApiResponse(x, contextData, setData);
+        })
     }
 
     function spotActivator() {
         console.log(`spotting activator at ${contextData.park?.name}`);
         let park = qso.sig_info;
         window.pywebview.api.spot_activator(qso, park).then((r: string) => {
-            if (r !== undefined) {
-                let resp = JSON.parse(r);
-                if (!resp.success)
-                    // todo: lets not ALERT errors...
-                    alert(resp.message);
-            }
+            checkApiResponse(r, contextData, setData);
         });
     }
 
@@ -108,6 +106,19 @@ export default function QsoEntry() {
         setQso(x);
     }
 
+    function getDistance() {
+        // default to yes
+        let units = window.localStorage.getItem("USE_FREEDOM_UNITS") || '1';
+        let use_imperial = parseInt(units);
+
+        if (use_imperial) {
+            let mi = Math.trunc(qso.distance * 0.621371);
+            return `${mi} mi`;
+        }
+        else
+            return `${qso.distance} km`;
+    }
+
     // when the app context changes (ie a user clicks on a different spot)
     // we need to update our TextFields
     React.useEffect(() => {
@@ -119,10 +130,9 @@ export default function QsoEntry() {
     return (
         <div className="qso-container">
             <Grid container
-                spacing={{ xs: 1, md: 2 }}
-                m={1}
+                spacing={{ xs: 1, md: 1, lg: 2 }}
             >
-                <Grid item xs={3}>
+                <Grid item xs={4} lg={3}>
                     <TextField id="callsign" label="Callsign"
                         value={qso.call}
                         inputProps={textFieldStyle}
@@ -130,7 +140,7 @@ export default function QsoEntry() {
                             setQso({ ...qso, call: e.target.value });
                         }} />
                 </Grid>
-                <Grid item xs={3}>
+                <Grid item xs={4} lg={3}>
                     <TextField id="freq" label="Frequency"
                         value={qso.freq}
                         inputProps={textFieldStyle}
@@ -138,7 +148,7 @@ export default function QsoEntry() {
                             setQso({ ...qso, freq: e.target.value });
                         }} />
                 </Grid>
-                <Grid item xs={2}>
+                <Grid item xs={4} lg={2}>
                     <TextField id="mode" label="Mode"
                         value={qso.mode}
                         inputProps={textFieldStyle}
@@ -146,7 +156,7 @@ export default function QsoEntry() {
                             setQso({ ...qso, mode: e.target.value });
                         }} />
                 </Grid>
-                <Grid item xs={2}>
+                <Grid item xs={4} lg={2}>
                     <TextField id="rstSent" label="RST Sent"
                         value={qso.rst_sent}
                         inputProps={textFieldStyle}
@@ -154,7 +164,7 @@ export default function QsoEntry() {
                             setQso({ ...qso, rst_sent: e.target.value });
                         }} />
                 </Grid>
-                <Grid item xs={2}>
+                <Grid item xs={4} lg={2}>
                     <TextField id="rstRecv" label="RST Recv"
                         value={qso.rst_recv}
                         inputProps={textFieldStyle}
@@ -164,7 +174,7 @@ export default function QsoEntry() {
                 </Grid>
 
 
-                <Grid item xs={2}>
+                <Grid item xs={4} lg={2}>
                     <TextField id="park" label="Park"
                         value={qso.sig_info}
                         inputProps={textFieldStyle}
@@ -172,7 +182,7 @@ export default function QsoEntry() {
                             setQso({ ...qso, sig_info: e.target.value });
                         }} />
                 </Grid>
-                <Grid item xs={2}>
+                <Grid item xs={4} lg={2}>
                     <TextField id="grid" label="Grid"
                         value={qso.gridsquare}
                         inputProps={textFieldStyle}
@@ -180,10 +190,10 @@ export default function QsoEntry() {
                             setQso({ ...qso, gridsquare: e.target.value });
                         }} />
                 </Grid>
-                <Grid item xs={3}>
+                <Grid item xs={6} lg={3}>
                     <QsoTimeEntry qsoTime={qsoTime} setQsoTime={setQsoTime} />
                 </Grid>
-                <Grid item xs={5}>
+                <Grid item xs={12} lg={5}>
                     <TextField id="comments" label="Comments"
                         value={qso.comment}
                         inputProps={textFieldStyle}
@@ -194,25 +204,28 @@ export default function QsoEntry() {
             </Grid>
 
             <div className='qsoMetaData'>
-                <span>Distance: {qso.distance}</span>
+                <span>Distance: {getDistance()}</span>
+                &nbsp;-&nbsp;
+                <span>Bearing: {qso.bearing}&deg;</span>
             </div>
 
-            <Button variant="outlined" onClick={(e) => handleLogQsoClick(e)}
-                sx={{ 'm': 1, }} >
-                Log QSO
-            </Button>
-            <Button variant="outlined" onClick={(e) => handleSpotAndLogClick(e)}
-                sx={{ 'm': 1, }} >
-                Spot + Log
-            </Button>
-            <Button variant="outlined" onClick={(e) => handleSpotOnlyClick(e)}
-                sx={{ 'm': 1, }} >
-                Spot Only
-            </Button>
-            <Button variant="outlined" onClick={(e) => handleClearClick(e)}
-                sx={{ 'm': 1, }} >
-                Clear
-            </Button>
-        </div>
+            <Stack
+                direction={{ xs: 'row', sm: 'row', md:'row' }}
+                spacing={{ xs: 1, sm: 1, md: 2 }}>
+                <Button variant="outlined" onClick={(e) => handleLogQsoClick(e)}>
+                    Log QSO
+                </Button>
+                <Button variant='contained' onClick={(e) => handleSpotAndLogClick(e)}>
+                    Spot + Log
+                </Button>
+                <Button variant="outlined" onClick={(e) => handleSpotOnlyClick(e)}>
+                    Spot Only
+                </Button>
+                <Button variant="outlined" onClick={(e) => handleClearClick(e)}
+                    color='secondary'>
+                    Clear
+                </Button>
+            </Stack>
+        </div >
     );
 };

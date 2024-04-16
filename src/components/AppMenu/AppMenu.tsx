@@ -5,22 +5,23 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import CloseIcon from '@mui/icons-material/Close';
 
 import { useAppContext } from '../AppContext';
 import ConfigModal from '../Config/ConfigModal';
-import { UpdateStats } from '../Stats/UpdateStats';
-import { ImportAdif } from '../Stats/ImportAdif';
 import { UserConfig } from '../../@types/Config';
 import { ActivatorData } from '../../@types/ActivatorTypes';
-import { Avatar, Tooltip } from '@mui/material';
-import StatusMenu from './StatsMenu';
+import { Alert, Avatar, Tooltip, AlertColor, Snackbar, Button } from '@mui/material';
 import StatsMenu from './StatsMenu';
 
 export default function AppMenu() {
 
     const { contextData, setData } = useAppContext();
-    const [callsign, setCallsign] = React.useState('')
-    const [gravatar, setGravatar] = React.useState('')
+    const [callsign, setCallsign] = React.useState('');
+    const [gravatar, setGravatar] = React.useState('');
+    const [snackOpen, setSnackOpen] = React.useState(false);
+    const [errorSeverity, seterrorSeverity] = React.useState<AlertColor>('info');
+    const [alertHidden, setAlertHidden] = React.useState(true);
 
     React.useEffect(() => {
         window.addEventListener('pywebviewready', function () {
@@ -39,10 +40,62 @@ export default function AppMenu() {
         })
     }, []);
 
+
+    function fn() {
+        console.log("errorMsg Changed: " + contextData.errorMsg);
+
+        if (contextData.errorMsg !== '') {
+            if (["error", "warning", "info"].includes(contextData.errorSeverity)) {
+                setAlertHidden(false);
+                seterrorSeverity(contextData.errorSeverity as AlertColor);
+            } else if (["success"].includes(contextData.errorSeverity)) {
+                setSnackOpen(true);
+            }
+        }
+        else {
+            setAlertHidden(true);
+            seterrorSeverity('info');
+        }
+    };
+
+    React.useEffect(() => {
+        fn();
+    }, [contextData.errorMsg]);
+
     function getGravatarUrl(md5: string) {
         //console.log(md5);
         return `https://gravatar.com/avatar/${md5}?d=identicon`;
     }
+
+    function handleAlertClose() {
+        const x = { ...contextData };
+        x.errorMsg = '';
+        setData(x);
+    }
+
+
+    const handleSnackClose = (event: React.SyntheticEvent | Event, reason?: string) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+
+        setSnackOpen(false);
+        // clearout the msg to recieve new ones
+        handleAlertClose();
+    };
+
+    const action = (
+        <React.Fragment>
+            <IconButton
+                size="small"
+                aria-label="close"
+                color="inherit"
+                onClick={handleSnackClose}
+            >
+                <CloseIcon fontSize="small" />
+            </IconButton>
+        </React.Fragment>
+    );
 
     return (
         <Box sx={{ flexGrow: 1 }}>
@@ -63,9 +116,24 @@ export default function AppMenu() {
                             <RefreshIcon color='primary' />
                         </IconButton>
                     </Tooltip>
-                    
+
+                    {/* this Typography contains nothing but it fills space to push our alert to right */}
+                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                        &nbsp;
+                    </Typography>
+                    {!alertHidden &&
+                        <Alert variant="filled" severity={errorSeverity} onClose={() => { handleAlertClose() }} >{contextData.errorMsg}</Alert>
+                    }
                 </Toolbar>
             </AppBar>
+
+            <Snackbar
+                open={snackOpen}
+                autoHideDuration={6000}
+                onClose={handleSnackClose}
+                message={contextData.errorMsg}
+                action={action}
+            />
         </Box>
     );
 }

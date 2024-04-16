@@ -28,6 +28,7 @@ class Qso(Base):
     rx_pwr = sa.Column(sa.Integer)
     gridsquare = sa.Column(sa.String(6))
     distance = sa.Column(sa.Float, nullable=True)
+    bearing = sa.Column(sa.Float, nullable=True)
     sig = sa.Column(sa.String)
     sig_info = sa.Column(sa.String)
     # custom app-only data:

@@ -18,6 +18,13 @@ class UserConfig(Base):
     adif_host = sa.Column(sa.String)
     adif_port = sa.Column(sa.Integer)
     logger_type = sa.Column(sa.Integer, default=0)
+    size_x = sa.Column(sa.Integer, default=800)
+    size_y = sa.Column(sa.Integer, default=600)
+    is_max = sa.Column(sa.Boolean, default=False)
+    cw_mode = sa.Column(sa.String, default='CW')
+    ftx_mode = sa.Column(sa.String, default='USB')
+    qth_string = sa.Column(sa.String, nullable=True)
+    rig_if_type = sa.Column(sa.String, default="flrig")
 
     class LoggerType(Enum):
         Tcp = 0

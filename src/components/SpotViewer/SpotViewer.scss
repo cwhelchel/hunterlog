@@ -1,8 +1,39 @@
 .spots-container {
     text-align: center;
-    margin: 1.75rem 0rem 1rem 0rem;
+    margin: 0.5rem 0rem 0.5rem 0rem;
     width: 100%;
+    height: 58vh;
 }
+
+/*
+MUI break points. these were in styled div but it kept re-rendering
+the below media queries keep the spotviewer from taking up too much
+vertical space
+
+xs, extra-small: 0px
+sm, small: 600px
+md, medium: 900px
+lg, large: 1200px
+xl, extra-large: 1536px
+*/
+@media screen and (min-width: 600px) {
+    .spots-container {
+        height: 40vh;
+    }
+}
+
+@media screen and (min-width: 900px) {
+    .spots-container {
+        height: 46vh;
+    }
+}
+
+@media screen and (min-width: 1200px) {
+    .spots-container {
+        height: 58vh;
+    }
+}
+
 
 #parkName {
     margin-left: 0.75rem;
@@ -31,22 +62,22 @@
 }
 
 span.timeBrandNew {
-    color:chartreuse;
+    color: chartreuse;
     font-weight: 600;
 }
 
 span.timeNew {
-    color:green;
+    color: green;
 }
 
 span.timeAging {
-    color:goldenrod;
+    color: goldenrod;
 }
 
 span.timeOld {
-    color:firebrick;
+    color: firebrick;
 }
 
 span.timeNormal {
-    color:inherit;
+    color: inherit;
 }

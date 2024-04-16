@@ -6,6 +6,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { IconButton, Tooltip } from '@mui/material';
 
 import './ActivatorInfo.scss'
+import { checkApiResponse, setErrorMsg, setToastMsg } from '../../util';
 
 interface IActivatorInfoProps {
 }
@@ -68,7 +69,8 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
                 return;
             }
 
-            if (JSON.parse(r).success == false) {
+            let j = checkApiResponse(r,  contextData, setData)
+            if (j.success == false) {
                 setActivator(defaultActData);
                 return;
             }
