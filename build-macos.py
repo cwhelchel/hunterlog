@@ -22,6 +22,7 @@ OPTIONS = {
     'argv_emulation': False,
     'strip': False,
     'iconfile': 'src/assets/logo.icns',
+    'includes': ['charset_normalizer.md__mypyc'],
     'packages': ['WebKit', 'Foundation', 'webview'],
     'plist': {
         'NSRequiresAquaSystemAppearance': False
@@ -31,6 +32,7 @@ OPTIONS = {
 
 setup(
     app=ENTRY_POINT,
+    name='Hunterlog',
     options={'py2app': OPTIONS},
     setup_requires=['py2app'],
 )
