@@ -17,11 +17,11 @@ FLRIG, and log them to your logger through a remote ADIF message.
 
 Hunterlog is in active development and any feedback is welcome. Here are the download links:
 
-Release page [v0.0.2](https://github.com/cwhelchel/hunterlog/releases/tag/v0.0.2)
+Release page [v0.0.3](https://github.com/cwhelchel/hunterlog/releases/tag/v0.0.3)
 
-[Windows Download](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.2/hunterlog_0.0.2.zip)
+[Windows Download](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.3/hunterlog_0.0.3.zip)
 
-[Ubuntu Download](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.2/hunterlog-ubuntu_0.0.2.zip)
+[Ubuntu Download](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.3/hunterlog-ubuntu_0.0.3.zip)
 
 
 ## Usage
@@ -42,25 +42,29 @@ Let's look at the configuration options.
 
 ![Configuration options](docs/img/config.png)
 
-Default TX Power is used in logging. Put over legal limit if you want.
+*My Callsign* and *My Gridsquare* are your base callsign and home QTH 6 digit Maidenhead gridsquare. Your call should also be what your POTA user
+account is registerd as. 
 
-FLRIG Host IP and Port:
+#### CAT settings 
+First is a drop down selection of CAT interface types. Currently those
+are FLRIG or RIGCTLD (hopefully more will be added). Host and Port are the two needed values are the remote endpoint of the CAT control instance that's running. The default FLRIG port is 12345.
 
-The app uses FLRIG to handle CAT control. These two values are the remote 
-endpoint of the FLRIG instance that's running. The default FLRIG port is 12345
+The modes strings are for setting specific modes if your rig needs something
+besides CW for setting CW mode or something besides USB for FT-x modes.
 
-The radio buttons are for the logger. Select Default or Log4om to send the basic
-ADIF data to a remote logger. Select AClog if you use AcLog as it has to have
-the data wrapped in a different command. (Default and Log4om do the same thing currently)
+#### Logger settings
+
+The logger settings includes radio buttons for the logger type. Select **TCP**  to use a TCP socket (a la Logger32) or **UDP** to use a UDP socket (a la Log4OM). These two both send raw ADIF data to the remote endpoint. 
+
+Select **AcLog** if you use N3FJP's AcLog as it has special requirements for the data.
 
 Remote ADIF Host and port:
 
-The remote endpoint data to send logged QSOs. This computer should be running
-Logger32, Log4om, AClog, or any other logger that accepts raw ADIF over network
-connections.
+The remote endpoint data to send logged QSOs. This computer should be running Logger32, Log4om, AClog, or any other logger that accepts raw ADIF over network connections.
 
-Select **TCP** for loggers that use a TCP socket (ex: Logger32), **UDP** for loggers that
-use a UDP (ex: Log4om), or **AcLog** for N3FJP's Amatuer contact logger.
+#### QTH string
+
+When spotting on the POTA network the RST you put in the QSO entry is added to your spot comment. This string is appended directly after the RST sent with a whitespace before it.
 
 Click save to store the changes. Then click the refresh button on the main 
 screen to see your callsign and your configured Gravatar. You have a POTA 
@@ -83,7 +87,8 @@ update your stats using the `STATS` menu. There are three options here:
 ![Stat Menu Buttons](docs/img/stats.png)
 
 The most important one is the PARK STATS. You will want that to import that so
-you can see what parks you need to hunt.
+you can see what parks you need to hunt. 
+**Importing the park stats can take a long time** so go read the STATS guide
 
 ### Logging QSOs
 

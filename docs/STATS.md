@@ -18,14 +18,15 @@ is just a nicety.
 
 All this is done through the buttons in the STATS menu:
 
-![Stat Menu Buttons](img/stats.png)
+*✏️ Note: Each import task will display a spinning circle indicating that it's working.*
 
-Each task will display a spinning circle indicating that the task is on going.
+![Stat Menu Buttons](img/stats.png)
 
 
 ## PARK STATS
 
-This probably the single most useful thing to import and it also takes the longest.
+This probably the single most useful thing to import and it also ***takes the longest amount of time***.
+
 Once imported the park stats will allow hunter log to show you what parks you have hunted and how many times you've hunted them. More importantly it shows you what 
 parks you _haven't_ hunted.
 
@@ -44,18 +45,24 @@ This operation takes a long time as park data must be downloaded and stored in
 the local `spots.db` database. 
 
 This operation could take upwards of 5 - 10 minutes depending on how many parks
-you have hunted. But don't worry; if something happens, you can restart the app
-and import again and it won't have to download what has already been downloaded.
-Also, if you re-download your `hunter_parks.csv` and re-import it will be quicker
-as it already has the park info. This will reset your park hunt counts to 
-whatever is in `hunter_parks.csv`.
+you have hunted. 
 
-Also as you hunt parks and use the app more parks get added. This should be a one
-time process. But just in case, there are export links at the bottom of the app
-so this data can be backed up and restored to hunterlog.
 
-After this you will see parks with a badge showing how many contacts you have made
-with activators at that park.
+> If something happens during this process, *don't worry*.
+> 
+> You can restart the app and import again and it will continue where 
+> it left off. It downloads and commits park data for each park as it gets 
+> it.
+
+As the import progresses, you will see badges showing up on the spot viewer for the parks you have worked. (Well, if there are any in the current spot list).
+
+If you re-download your `hunter_parks.csv` and re-import it will reset your park hunt counts to whatever is in the csv without having to download the Park data.
+
+Also, as you hunt parks and use the app more parks get added. 
+
+
+#### Backing Up Park Data
+Since this _should_ be a one time process and since it takes _so long_, I added the ability to export and import previously loaded in Park data. At the bottom of the app there are links to export and restore the park data to hunterlog.
 
 
 ## OPEARTOR STATS

@@ -51,20 +51,24 @@ the options described here. When clicked this modal dialog will be displayed:
 - My Girdsquare: your 6 digit maidenhead gridsquare locator. Used in logging.
 - Default TX Power: TX power. this is a holdover from potaplus.
 
-### FLRIG Host IP and Port
+### CAT settings 
+First is a drop down selection of CAT interface types. Currently those
+are FLRIG or RIGCTLD (hopefully more will be added). Host and Port are the two needed values are the remote endpoint of the CAT control instance that's running. The default FLRIG port is 12345.
 
-The app uses FLRIG to handle CAT control. These two values are the remote 
-endpoint of the FLRIG instance that's running. The default FLRIG port is 12345
+The modes strings are for setting specific modes if your rig needs something
+besides CW for setting CW mode or something besides USB for FT-x modes.
 
-### Logger types
-The radio buttons are for the logger type. Select Default or Log4om to send the basic
-ADIF data to a remote logger. Select AClog if you use AcLog as it has to have
-the data wrapped in a different command. (Default and Log4om do the same thing currently)
+### Logger settings
 
-### Remote ADIF Host and port
+The logger settings includes radio buttons for the logger type. Select **TCP**  to use a TCP socket (a la Logger32) or **UDP** to use a UDP socket (a la Log4OM). These two both send raw ADIF data to the remote endpoint. 
 
-The remote endpoint data to send logged QSOs. Should be running Log4om or AClog
-or any other logger that accepts raw ADIF over UDP connections.
+Select **AcLog** if you use N3FJP's AcLog as it has special requirements for the data.
+
+Remote ADIF Host and port:
+
+The remote endpoint data to send logged QSOs. This computer should be running Logger32, Log4om, AClog, or any other logger that accepts raw ADIF over network connections.
+
+### Saving
 
 Click save to store the changes. Then click the refresh button on the main 
 screen to see your callsign and your configured Gravatar. You have a POTA 
