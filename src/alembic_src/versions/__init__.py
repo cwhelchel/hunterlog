@@ -11,7 +11,7 @@ from alembic import config
 
 def get_app_global_path():
     '''Returns the correct location for a bundled pyinstaller executable file'''
-    if getattr(sys, 'frozen', False):
+    if getattr(sys, 'frozen', False) and getattr(sys, '_MEIPASS', False):
         return sys._MEIPASS
     elif __file__:
         # were running from source (npm run start) and this file is in 
