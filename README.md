@@ -13,6 +13,12 @@ FLRIG, and log them to your logger through a remote ADIF message.
 
 ![Demo of the goods](docs/img/demo.gif)
 
+## Community
+
+If you're not comfortable using Github to submit issues and enhancement requests, feel free to join our Discord community server. Hop in and ask questions, share comments, propose new features or get help using Hunterlog.
+
+[Discord Invite Link](https://discord.gg/DfqMVMuMnG)
+
 ## Download
 
 Hunterlog is in active development and any feedback is welcome. Here are the download links:
