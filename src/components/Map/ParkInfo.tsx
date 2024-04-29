@@ -53,8 +53,13 @@ export default function ParkInfo() {
         </div>
     );
 
-    function parkTitle(): React.ReactNode {
-        return <span id="parkTitle">{contextData?.park?.reference} - {contextData?.park?.name} {contextData?.park?.parktypeDesc}</span>;
+    function parkTitle(): any {
+        const url = `https://pota.app/#/park/${contextData?.park?.reference}`;
+        const text = `${contextData?.park?.reference} - ${contextData?.park?.name} ${contextData?.park?.parktypeDesc}`;
+
+        return <span id="parkTitle" onClick={() => {
+            window.open(url);
+        }}>{text}</span>;
     }
 
     function parkStats(): React.ReactNode {

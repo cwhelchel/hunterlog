@@ -3,10 +3,12 @@ import { useAppContext } from '../AppContext';
 import { ActivatorData } from '../../@types/ActivatorTypes';
 import { SpotRow } from '../../@types/Spots';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import { IconButton, Tooltip } from '@mui/material';
+import LanguageIcon from '@mui/icons-material/Language';
+import { Tooltip } from '@mui/material';
+import TimelineIcon from '@mui/icons-material/Timeline';
 
 import './ActivatorInfo.scss'
-import { checkApiResponse, setErrorMsg, setToastMsg } from '../../util';
+import { checkApiResponse } from '../../util';
 
 interface IActivatorInfoProps {
 }
@@ -69,7 +71,7 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
                 return;
             }
 
-            let j = checkApiResponse(r,  contextData, setData)
+            let j = checkApiResponse(r, contextData, setData)
             if (j.success == false) {
                 setActivator(defaultActData);
                 return;
@@ -109,6 +111,33 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
         navigator.clipboard.writeText(text);
     }
 
+    function openQrzLink() {
+        if (contextData.qso == null) {
+            return;
+        }
+        let qso = contextData.qso;
+
+        let url = `http://www.qrz.com/db/${qso.call}`;
+        window.open(url);
+    }
+
+    function openRbnLink() {
+        if (contextData.qso == null) {
+            return;
+        }
+        let qso = contextData.qso;
+
+        let pskRptUrl = `https://pskreporter.info/pskmap.html?callsign=${qso.call}&mode=${qso.mode}`
+        let url = `https://www.reversebeacon.net/main.php?spotted_call=${qso.call}&rows=30&timerange=900`;
+
+        if (qso.mode.startsWith('FT')) {
+            window.open(pskRptUrl);
+        }
+        else {
+            window.open(url);
+        }
+    }
+
     function discordIcon() {
         return (
             <svg xmlns="http://www.w3.org/2000/svg"
@@ -139,6 +168,29 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
                                 <ContentCopyIcon className="svg_icons" fontSize='small' />
                             </Tooltip>
                         </span>
+                        <span style={{ marginLeft: '3px', height: '16px', width: '16px' }}
+                            onClick={() => openQrzLink()}>
+                            <Tooltip title="QRZ">
+                                <LanguageIcon className="svg_icons" fontSize='small' />
+                            </Tooltip>
+                        </span>
+                        {contextData.qso?.mode == 'CW' && (
+                            <span style={{ marginLeft: '3px', height: '16px', width: '16px' }}
+                                onClick={() => openRbnLink()}>
+                                <Tooltip title="RBN">
+                                    <TimelineIcon className="svg_icons" fontSize='small' />
+                                </Tooltip>
+                            </span>
+                        )}
+
+                        {contextData.qso?.mode.startsWith('FT') && (
+                            <span style={{ marginLeft: '3px', height: '16px', width: '16px' }}
+                                onClick={() => openRbnLink()}>
+                                <Tooltip title="PSK">
+                                    <TimelineIcon className="svg_icons" fontSize='small' />
+                                </Tooltip>
+                            </span>
+                        )}
                     </div>
                     <hr className='titleSeparator' role='separator' />
                     <div className='activatorData'>
