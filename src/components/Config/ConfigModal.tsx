@@ -36,6 +36,8 @@ export default function ConfigModal() {
     const [config, setConfig] = React.useState<UserConfig>(def);
     const [imperialChecked, setImperialChecked] = React.useState(true);
     const [useDarkMode, setUseDarkMode] = React.useState(true);
+    const [showSpotAge, setShowSpotAge] = React.useState(true);
+
     const { contextData, setData } = useAppContext();
 
 
@@ -61,7 +63,13 @@ export default function ConfigModal() {
             newCtx.themeMode = 'light';
 
         setData(newCtx);
-        window.localStorage.setItem("USE_DARK_MODE", newMode ? '1': '0');
+        window.localStorage.setItem("USE_DARK_MODE", newMode ? '1' : '0');
+    };
+
+    const toggleShowSpotAge = () => {
+        const newMode = !showSpotAge;
+        setShowSpotAge(newMode);
+        window.localStorage.setItem("SHOW_SPOT_AGE", newMode ? '1' : '0');
     };
 
     React.useEffect(() => {
@@ -81,6 +89,10 @@ export default function ConfigModal() {
             let darkMode = window.localStorage.getItem("USE_DARK_MODE") || '1';
             let darkModeInt = parseInt(darkMode);
             setUseDarkMode(darkModeInt == 1 ? true : false);
+
+            let spotAgeStr = window.localStorage.getItem("SHOW_SPOT_AGE") || '1';
+            let showSage = parseInt(spotAgeStr);
+            setShowSpotAge(showSage == 1 ? true : false);
         });
     }, []);
 
@@ -147,6 +159,13 @@ export default function ConfigModal() {
                             <Switch checked={useDarkMode}
                                 onChange={toggleDarkTheme} />
                         } label="Dark Mode" />
+
+                        <Tooltip title="Show spot time as age: '5 min' vs 'hh:mm'" >
+                            <FormControlLabel control={
+                                <Switch checked={showSpotAge}
+                                    onChange={toggleShowSpotAge} />
+                            } label="Show Spot Age" />
+                        </Tooltip>
                     </Stack>
 
                     <fieldset>
