@@ -109,13 +109,7 @@ export default function AppMenu() {
                     </Typography>
                     <ConfigModal />
                     <StatsMenu />
-                    <Tooltip title="Refresh">
-                        <IconButton onClick={() => {
-                            location.reload();
-                        }}>
-                            <RefreshIcon color='primary' />
-                        </IconButton>
-                    </Tooltip>
+
 
                     {/* this Typography contains nothing but it fills space to push our alert to right */}
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
@@ -124,6 +118,13 @@ export default function AppMenu() {
                     {!alertHidden &&
                         <Alert variant="filled" severity={errorSeverity} onClose={() => { handleAlertClose() }} >{contextData.errorMsg}</Alert>
                     }
+                    <Tooltip title="Refresh">
+                        <IconButton onClick={() => {
+                            location.reload();
+                        }}>
+                            <RefreshIcon color='secondary' />
+                        </IconButton>
+                    </Tooltip>
                 </Toolbar>
             </AppBar>
 

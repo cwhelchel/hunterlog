@@ -20,12 +20,13 @@ const defData: ContextData = {
     huntedFilter: false,
     spotId: 0,
     errorMsg: '',
-    errorSeverity: ''
+    errorSeverity: '',
+    themeMode: 'dark'
 };
 
 export const AppContext = React.createContext<AppContextType | null>(null);
 
-export const AppContextProvider = ({ children }) => {
+export const AppContextProvider = ( {children}: any ) => {
     const [contextData, setContextData] = React.useState<ContextData>(defData);
 
     const setData = (ctx: ContextData) => {
@@ -42,7 +43,8 @@ export const AppContextProvider = ({ children }) => {
             huntedFilter: ctx.huntedFilter,
             spotId: ctx.spotId,
             errorMsg: ctx.errorMsg,
-            errorSeverity: ctx.errorSeverity
+            errorSeverity: ctx.errorSeverity,
+            themeMode: ctx.themeMode
         }
         setContextData(newContext);
     };

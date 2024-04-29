@@ -1,15 +1,17 @@
 import * as React from 'react';
 import clsx from 'clsx';
 import { styled, css } from '@mui/system';
+import { useTheme } from '@mui/material/styles';
 import { Modal as BaseModal } from '@mui/base/Modal';
 import Button from '@mui/material/Button';
 import { UserConfig } from '../../@types/Config';
 import TextField from '@mui/material/TextField';
 import Stack from '@mui/material/Stack';
-import { Box, FormControlLabel, MenuItem, Radio, RadioGroup, Select, Tooltip } from '@mui/material';
+import { Box, FormControlLabel, MenuItem, Radio, RadioGroup, Select, Switch, Tooltip, createTheme } from '@mui/material';
 import Checkbox from '@mui/material/Checkbox';
 
 import './ConfigModal.scss'
+import { useAppContext } from '../AppContext';
 
 const def: UserConfig = {
     my_call: 'N0CALL',
@@ -33,6 +35,9 @@ export default function ConfigModal() {
     const [open, setOpen] = React.useState(false);
     const [config, setConfig] = React.useState<UserConfig>(def);
     const [imperialChecked, setImperialChecked] = React.useState(true);
+    const [useDarkMode, setUseDarkMode] = React.useState(true);
+    const { contextData, setData } = useAppContext();
+
 
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
@@ -42,6 +47,21 @@ export default function ConfigModal() {
 
         let newCfg: UserConfig = { ...config, logger_type: y };
         setConfig(newCfg);
+    };
+
+    // function to toggle the dark mode as true or false
+    const toggleDarkTheme = () => {
+        const newMode = !useDarkMode;
+        setUseDarkMode(newMode);
+
+        const newCtx = { ...contextData };
+        if (newMode)
+            newCtx.themeMode = 'dark';
+        else
+            newCtx.themeMode = 'light';
+
+        setData(newCtx);
+        window.localStorage.setItem("USE_DARK_MODE", newMode ? '1': '0');
     };
 
     React.useEffect(() => {
@@ -57,6 +77,10 @@ export default function ConfigModal() {
             let units = window.localStorage.getItem("USE_FREEDOM_UNITS") || '1';
             let use_imperial = parseInt(units);
             setImperialChecked(use_imperial != 0 ? true : false);
+
+            let darkMode = window.localStorage.getItem("USE_DARK_MODE") || '1';
+            let darkModeInt = parseInt(darkMode);
+            setUseDarkMode(darkModeInt == 1 ? true : false);
         });
     }, []);
 
@@ -76,8 +100,10 @@ export default function ConfigModal() {
     };
 
     return (
-        <div>
-            <Button color='primary' onClick={handleOpen}>
+        <>
+            <Button onClick={handleOpen} style={{
+                color: "#bdbdbd"
+            }}>
                 Configuration
             </Button>
             <Modal
@@ -116,6 +142,11 @@ export default function ConfigModal() {
                             <Checkbox defaultChecked checked={imperialChecked}
                                 onChange={handleCheckedChange} />
                         } label="Display Imperial Units" />
+
+                        <FormControlLabel control={
+                            <Switch checked={useDarkMode}
+                                onChange={toggleDarkTheme} />
+                        } label="Dark Mode" />
                     </Stack>
 
                     <fieldset>
@@ -210,7 +241,7 @@ export default function ConfigModal() {
                     </Stack>
                 </ModalContent>
             </Modal>
-        </div >
+        </>
     );
 }
 

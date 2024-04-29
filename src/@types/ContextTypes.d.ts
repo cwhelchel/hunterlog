@@ -17,6 +17,7 @@ export interface ContextData {
     huntedFilter: boolean; // true to filter out already hunted spots
     errorMsg: string; // when set to a value, an alert is displayed in AppMenu
     errorSeverity: string;
+    themeMode: string;
 }
 
 export  interface AppContextType {
