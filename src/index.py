@@ -128,8 +128,8 @@ if __name__ == '__main__':
     window.events.restored += on_restore
 
     if platform.system() == "Linux":
-        webview.start(update_ticker, private_mode=False, debug=True, gui="gtk")
+        webview.start(update_ticker, private_mode=False, debug=False, gui="gtk")
     elif platform.system() == "Windows":
-        webview.start(update_ticker, private_mode=False, debug=True)
+        webview.start(update_ticker, private_mode=False, debug=False)
     elif platform.system() == "Darwin":
-        webview.start(update_ticker, private_mode=False, debug=True)
+        webview.start(update_ticker, private_mode=False, debug=False)
