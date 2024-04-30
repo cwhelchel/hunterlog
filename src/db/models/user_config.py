@@ -25,6 +25,8 @@ class UserConfig(Base):
     ftx_mode = sa.Column(sa.String, default='USB')
     qth_string = sa.Column(sa.String, nullable=True)
     rig_if_type = sa.Column(sa.String, default="flrig")
+    pos_x = sa.Column(sa.Integer, default=0)
+    pos_y = sa.Column(sa.Integer, default=0)
 
     class LoggerType(Enum):
         Tcp = 0

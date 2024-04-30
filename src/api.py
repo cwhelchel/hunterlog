@@ -502,6 +502,13 @@ class JsApi:
         cfg = self.db.get_user_config()
         return (cfg.size_x, cfg.size_y)
 
+    def _get_win_pos(self) -> tuple[int, int]:
+        '''
+        Get the stored windows position.
+        '''
+        cfg = self.db.get_user_config()
+        return (cfg.pos_x, cfg.pos_y)
+
     def _get_win_maximized(self) -> bool:
         '''
         Get the stored windows size.
@@ -511,11 +518,20 @@ class JsApi:
 
     def _store_win_size(self, size: tuple[int, int]):
         '''
-        Get the stored windows size.
+        Save the window size to the database
         '''
         cfg = self.db.get_user_config()
         cfg.size_x = size[0]
         cfg.size_y = size[1]
+        self.db.commit_session()
+
+    def _store_win_pos(self, position: tuple[int, int]):
+        '''
+        Save the window position to the database
+        '''
+        cfg = self.db.get_user_config()
+        cfg.pos_x = position[0]
+        cfg.pos_y = position[1]
         self.db.commit_session()
 
     def _store_win_maxi(self, is_max: bool):

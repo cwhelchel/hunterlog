@@ -3,6 +3,7 @@ import threading
 import webview
 import logging
 import platform
+import argparse
 
 from api import JsApi
 
@@ -14,6 +15,10 @@ logging.basicConfig(filename='index.log',
 # logging.basicConfig(level=logging.DEBUG)
 
 the_api = JsApi()
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-w", "--reset-win", action="store_true",
+                    help="reset the window size and position to default")
 
 
 def do_update():
@@ -95,8 +100,10 @@ def update_ticker():
 
 def on_closing():
     sz = (window.width, window.height)
+    pos = (window.x, window.y)
     logging.debug(f"close: saving winow data: {sz}")
     the_api._store_win_size(sz)
+    the_api._store_win_pos(pos)
 
 
 def on_maximized():
@@ -108,18 +115,28 @@ def on_restore():
 
 
 if __name__ == '__main__':
-    (x, y) = the_api._get_win_size()
+    args = parser.parse_args()
+
+    (width, height) = the_api._get_win_size()
+    (x, y) = the_api._get_win_pos()
     maxi = the_api._get_win_maximized()
 
-    logging.debug(f"load winow data: {x} x {y} - {maxi}")
+    if args.reset_win:
+        logging.info('resetting window size and position to defaults')
+        (width, height) = (800, 600)
+        (x, y) = (0, 0)
+
+    logging.debug(f"load winow data: {width} x {height} - {maxi}")
 
     window = webview.create_window(
         'HUNTER LOG',
         entry,
         js_api=the_api,
         maximized=maxi,
-        width=x,
-        height=y,
+        width=width,
+        height=height,
+        x=x,
+        y=y,
         min_size=(800, 600),
         text_select=True)
 
@@ -128,7 +145,7 @@ if __name__ == '__main__':
     window.events.restored += on_restore
 
     if platform.system() == "Linux":
-        webview.start(update_ticker, private_mode=False, debug=False, gui="gtk")
+        webview.start(update_ticker, private_mode=False, debug=False, gui="gtk")  # noqa E501
     elif platform.system() == "Windows":
         webview.start(update_ticker, private_mode=False, debug=False)
     elif platform.system() == "Darwin":
