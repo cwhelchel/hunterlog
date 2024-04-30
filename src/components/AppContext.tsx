@@ -21,7 +21,8 @@ const defData: ContextData = {
     spotId: 0,
     errorMsg: '',
     errorSeverity: '',
-    themeMode: 'dark'
+    themeMode: 'dark',
+    onlyNewFilter: false
 };
 
 export const AppContext = React.createContext<AppContextType | null>(null);
@@ -44,7 +45,8 @@ export const AppContextProvider = ( {children}: any ) => {
             spotId: ctx.spotId,
             errorMsg: ctx.errorMsg,
             errorSeverity: ctx.errorSeverity,
-            themeMode: ctx.themeMode
+            themeMode: ctx.themeMode,
+            onlyNewFilter: ctx.onlyNewFilter,
         }
         setContextData(newContext);
     };

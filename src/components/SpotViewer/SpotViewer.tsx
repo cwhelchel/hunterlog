@@ -52,7 +52,7 @@ const columns: GridColDef[] = [
     },
     { field: 'mode', headerName: 'Mode', width: 100 },
     {
-        field: 'locationDesc', headerName: 'Loc', width: 200,
+        field: 'locationDesc', headerName: 'Loc', width: 150,
         renderCell: (x) => {
             function getContent() {
                 return (
@@ -209,11 +209,12 @@ export default function SpotViewer() {
 
     React.useEffect(() => {
         // get the spots from the db
-        if (window.pywebview !== undefined)
+        if (window.pywebview !== undefined) {
             getSpots();
+        }
     }, [contextData.bandFilter, contextData.regionFilter,
     contextData.qrtFilter, contextData.locationFilter,
-    contextData.huntedFilter]
+    contextData.huntedFilter, contextData.onlyNewFilter]
     );
 
     // return the correct PK id for our rows

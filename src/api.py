@@ -308,6 +308,10 @@ class JsApi:
         logging.debug(f"api setting qrt filter to: {filter_hunted}")
         self.db.set_hunted_filter(filter_hunted)
 
+    def set_only_new_filter(self, filter_only_new: bool):
+        logging.debug(f"api setting ATNO filter to: {filter_only_new}")
+        self.db.set_only_new_filter(filter_only_new)
+
     def update_activator_stats(self, callsign: str) -> int:
         j = self.pota.get_activator_stats(callsign)
 

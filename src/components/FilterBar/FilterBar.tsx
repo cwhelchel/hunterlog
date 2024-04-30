@@ -3,15 +3,14 @@ import Button from '@mui/material/Button';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
-import Box from '@mui/material/Box';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
-
-import './FilterBar.scss'
-import { createEqualityFilter, useAppContext } from '../AppContext';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
-import { ContextData } from '../../@types/ContextTypes';
+import { Stack, Typography, createStyles, useTheme } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import { createEqualityFilter, useAppContext } from '../AppContext';
 
+import './FilterBar.scss'
 
 // https://mui.com/material-ui/react-table/
 
@@ -26,6 +25,7 @@ export const FilterBar = (props: IFilterBarPros) => {
     const [location, setLocation] = React.useState('');
     const [qrt, setQrt] = React.useState(true);
     const [hunted, setHunted] = React.useState(false);
+    const [onlyNew, setOnlyNew] = React.useState(false);
 
     const { contextData, setData } = useAppContext();
 
@@ -46,8 +46,10 @@ export const FilterBar = (props: IFilterBarPros) => {
             setQrtFilter((qrtF === "true"));
             let hf = window.localStorage.getItem("HUNTED_FILTER");
             setHuntedFilter((hf === "true"));
+            let on = window.localStorage.getItem("ATNO_FILTER");
+            setOnlyNewFilter((on === "true"));
         });
-    },[]);
+    }, []);
 
     const handleChange = (event: SelectChangeEvent) => {
         let m = event.target.value as string
@@ -85,26 +87,31 @@ export const FilterBar = (props: IFilterBarPros) => {
         window.pywebview.api.set_region_filter("");
         window.pywebview.api.set_qrt_filter(true);
         window.pywebview.api.set_hunted_filter(false);
-
-        let next = { ...contextData, 
-            bandFilter: 0, 
-            regionFilter: "", 
-            locationFilter: "", 
-            qrtFilter: true, 
-            huntedFilter: false};
-        setData(next);
+        window.pywebview.api.set_only_new_filter(false);
         setRegion("");
         setLocation("");
         setQrt(true);
         setHunted(false);
+        setOnlyNew(false);
 
         window.localStorage.setItem("BAND_FILTER", '0');
-        window.localStorage.setItem("REGION_FILTER",'');
+        window.localStorage.setItem("REGION_FILTER", '');
         window.localStorage.setItem("MODE_FILTER", '');
         window.localStorage.setItem("LOCATION_FILTER", '');
         window.localStorage.setItem("QRT_FILTER", 'true');
         window.localStorage.setItem("HUNTED_FILTER", 'false');
-
+        window.localStorage.setItem("ATNO_FILTER", 'false');
+        
+        const next = {
+            ...contextData,
+            bandFilter: 0,
+            regionFilter: "",
+            locationFilter: "",
+            qrtFilter: true,
+            huntedFilter: false,
+            onlyNew: false
+        };
+        setData(next);
     };
 
     function handleQrtSwitch(event: any, checked: boolean): void {
@@ -116,7 +123,12 @@ export const FilterBar = (props: IFilterBarPros) => {
         setHuntedFilter(checked);
         window.localStorage.setItem("HUNTED_FILTER", checked.toString());
     }
-    
+
+    function handleOnlyNewSwitch(event: any, checked: boolean): void {
+        setOnlyNewFilter(checked);
+        window.localStorage.setItem("ATNO_FILTER", checked.toString());
+    }
+
     function setQrtFilter(checked: boolean) {
         console.log("changing qrt filter to: " + checked);
         window.pywebview.api.set_qrt_filter(checked);
@@ -135,6 +147,15 @@ export const FilterBar = (props: IFilterBarPros) => {
         setHunted(checked);
     }
 
+    function setOnlyNewFilter(checked: boolean) {
+        console.log("changing onlynew filter to: " + checked);
+        window.pywebview.api.set_only_new_filter(checked);
+
+        let next = { ...contextData, onlyNewFilter: checked };
+        setData(next);
+        setOnlyNew(checked);
+    }
+
     function setModeFilter(m: string) {
         setMode(m); // it doesn't work without this?????
 
@@ -150,12 +171,12 @@ export const FilterBar = (props: IFilterBarPros) => {
         let x = parseInt(m);
         console.log("changing band to: " + m);
         window.pywebview.api.set_band_filter(x);
-    
+
         let next = { ...contextData, bandFilter: x };
         setData(next);
         setBand(m);
     }
-    
+
     function setRegionFilter(r: string) {
         console.log("changing region to: " + r);
         window.pywebview.api.set_region_filter(r);
@@ -174,27 +195,50 @@ export const FilterBar = (props: IFilterBarPros) => {
         setLocation(l);
     }
 
+    const StyledTypoGraphy = styled(Typography)(({ theme }) =>
+        theme.unstable_sx({
+            fontSize: {
+                lg: 16,
+                md: 16,
+                sm: 12,
+                xs: 10
+            }
+        }),
+    );
+
+    const StyledInputLabel = styled(InputLabel)(({ theme }) =>
+        theme.unstable_sx({
+            fontSize: {
+                lg: 16,
+                md: 16,
+                sm: 12,
+                xs: 10
+            }
+        }),
+    );
+
     return (
         <div className='filter-bar'>
-            <Box
-                component="form"
-                sx={{
-                    '& > :not(style)': { m: 1 },
-                }}
-                noValidate
-                autoComplete="off"
+            <Stack
+                direction='row'
+                spacing={{ md: 1, sm: 0, lg: 1.25 }}
             >
-                <FormControlLabel control={<Switch onChange={handleQrtSwitch} checked={qrt} />} label="Hide QRT" />
-                <FormControlLabel control={<Switch onChange={handleHuntedSwitch} checked={hunted} />} label="Hide Hunted" />
+                <FormControlLabel
+                    control={<Switch onChange={handleQrtSwitch} checked={qrt} />}
+                    label={<StyledTypoGraphy>Hide QRT</StyledTypoGraphy>} />
+                <FormControlLabel
+                    control={<Switch onChange={handleHuntedSwitch} checked={hunted} />}
+                    label={<StyledTypoGraphy>Hide Hunted</StyledTypoGraphy>} />
+                <FormControlLabel
+                    control={<Switch onChange={handleOnlyNewSwitch} checked={onlyNew} />}
+                    label={<StyledTypoGraphy>Only New</StyledTypoGraphy>} />
                 <FormControl size='small'>
-                    <InputLabel id="band-label">Band</InputLabel>
+                    <StyledInputLabel id="band-label">Band</StyledInputLabel>
                     <Select
                         labelId="band-label"
                         id="band"
                         value={band}
-                        label="Band"
                         variant='standard'
-                        sx={{ minWidth: 75 }}
                         onChange={handleBandChange}
                     >
                         {/* use style={{ display: "none" }} to hide these later */}
@@ -212,12 +256,11 @@ export const FilterBar = (props: IFilterBarPros) => {
                     </Select>
                 </FormControl>
                 <FormControl size='small'>
-                    <InputLabel id="demo-simple-select-label">Mode</InputLabel>
+                    <StyledInputLabel id="demo-simple-select-label">Mode</StyledInputLabel>
                     <Select
                         labelId="demo-simple-select-label"
                         id="demo-simple-select"
                         value={mode}
-                        label="Mode"
                         variant='standard'
                         sx={{ minWidth: 75 }}
                         onChange={handleChange}
@@ -229,12 +272,11 @@ export const FilterBar = (props: IFilterBarPros) => {
                     </Select>
                 </FormControl>
                 <FormControl size='small'>
-                    <InputLabel id="region-lbl">Region</InputLabel>
+                    <StyledInputLabel id="region-lbl">Region</StyledInputLabel>
                     <Select
                         labelId="region-lbl"
                         id="region"
                         value={region}
-                        label="Region"
                         variant='standard'
                         sx={{ minWidth: 100 }}
                         onChange={handleRegionChange}
@@ -248,12 +290,11 @@ export const FilterBar = (props: IFilterBarPros) => {
                     </Select>
                 </FormControl>
                 <FormControl size='small'>
-                    <InputLabel id="location-lbl">Location</InputLabel>
+                    <StyledInputLabel id="location-lbl">Location</StyledInputLabel>
                     <Select
                         labelId="location-lbl"
                         id="location"
                         value={location}
-                        label="Location"
                         variant='standard'
                         sx={{ minWidth: 100 }}
                         onChange={handleLocationChange}
@@ -266,10 +307,11 @@ export const FilterBar = (props: IFilterBarPros) => {
                         ))}
                     </Select>
                 </FormControl>
-                <Button onClick={handleClear} variant="outlined">
-                    Clear Filters
+                <Button onClick={handleClear} variant="outlined"
+                    sx={{ maxWidth: 100 }}>
+                    Clear
                 </Button>
-            </Box>
+            </Stack>
         </div>
 
     );

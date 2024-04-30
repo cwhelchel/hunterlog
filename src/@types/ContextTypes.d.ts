@@ -18,6 +18,7 @@ export interface ContextData {
     errorMsg: string; // when set to a value, an alert is displayed in AppMenu
     errorSeverity: string;
     themeMode: string;
+    onlyNewFilter: boolean;
 }
 
 export  interface AppContextType {

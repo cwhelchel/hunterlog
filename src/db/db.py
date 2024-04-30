@@ -107,6 +107,7 @@ class DataBase:
         self.location_filter = None
         self.qrt_filter_on = True  # filter out QRT spots by default
         self.hunted_filter_on = False  # filter out spots you hunted
+        self.only_new_on = False  # filter out parks you have never worked
 
     def commit_session(self):
         '''
@@ -309,12 +310,17 @@ class DataBase:
         logging.debug(f"db setting hunted filter to {is_on}")
         self.hunted_filter_on = is_on
 
+    def set_only_new_filter(self, is_on: bool):
+        logging.debug(f"db setting ATNO filter to {is_on}")
+        self.only_new_on = is_on
+
     def _get_all_filters(self) -> list[sa.ColumnElement[bool]]:
         return self._get_band_filters() + \
             self._get_region_filters() + \
             self._get_location_filters() + \
             self._get_qrt_filter() + \
-            self._get_hunted_filter()
+            self._get_hunted_filter() + \
+            self._get_only_new_filter()
 
     def _get_band_filters(self) -> list[sa.ColumnElement[bool]]:
         band = Bands(self.band_filter)  # not sure why cast is needed
@@ -332,7 +338,7 @@ class DataBase:
 
     def _get_location_filters(self) -> list[sa.ColumnElement[bool]]:
         loc = self.location_filter
-        if (loc is None):
+        if (loc is None or loc == ''):
             return []
         terms = [Spot.locationDesc.contains(loc)]
         return terms
@@ -348,5 +354,13 @@ class DataBase:
         hunt_filter = self.hunted_filter_on
         if hunt_filter:
             return [Spot.hunted == False]  # noqa E712
+        terms = []
+        return terms
+
+    def _get_only_new_filter(self) -> list[sa.ColumnElement[bool]]:
+        new_filter = self.only_new_on
+        logging.debug(f'newfilter is {new_filter}')
+        if new_filter:
+            return [Spot.park_hunts == 0]  # noqa E712
         terms = []
         return terms
