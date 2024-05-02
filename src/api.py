@@ -1,5 +1,4 @@
 import json
-import socket
 import time
 import webview
 import logging as L
@@ -33,7 +32,11 @@ class JsApi:
         self.adif_log = AdifLog()
         logging.debug("init CAT...")
         cfg = self.db.get_user_config()
-        self.cat = CAT(cfg.rig_if_type, cfg.flr_host, cfg.flr_port)
+        try:
+            self.cat = CAT(cfg.rig_if_type, cfg.flr_host, cfg.flr_port)
+        except Exception:
+            logging.error("Error creating CAT object: ", exc_info=True)
+            self.cat = None
         self.pw = None
 
     def get_spot(self, spot_id: int):
@@ -336,6 +339,11 @@ class JsApi:
     def qsy_to(self, freq, mode: str):
         '''Use CAT control to QSY'''
         logging.debug(f"qsy_to {freq} {mode}")
+
+        if self.cat is None:
+            logging.warn("CAT is None. not qsy-ing")
+            return self._response(False, "CAT control failure.")
+
         cfg = self.db.get_user_config()
         x = float(freq) * 1000.0
         logging.debug(f"adjusted freq {x}")
@@ -350,6 +358,8 @@ class JsApi:
         logging.debug(f"adjusted mode {mode}")
         self.cat.set_mode(mode)
         self.cat.set_vfo(x)
+
+        return self._response(True, "")
 
     def update_park_hunts_from_csv(self) -> str:
         '''

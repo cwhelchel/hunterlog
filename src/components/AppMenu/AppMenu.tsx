@@ -20,6 +20,7 @@ export default function AppMenu() {
     const [callsign, setCallsign] = React.useState('');
     const [gravatar, setGravatar] = React.useState('');
     const [snackOpen, setSnackOpen] = React.useState(false);
+    const [errorMsg, setErrorMsg] = React.useState('');
     const [errorSeverity, seterrorSeverity] = React.useState<AlertColor>('info');
     const [alertHidden, setAlertHidden] = React.useState(true);
 
@@ -48,11 +49,13 @@ export default function AppMenu() {
             if (["error", "warning", "info"].includes(contextData.errorSeverity)) {
                 setAlertHidden(false);
                 seterrorSeverity(contextData.errorSeverity as AlertColor);
+                setErrorMsg(contextData.errorMsg);
             } else if (["success"].includes(contextData.errorSeverity)) {
                 setSnackOpen(true);
             }
         }
-        else {
+        else if (errorMsg === '') {
+            // dont hide if there's still a message
             setAlertHidden(true);
             seterrorSeverity('info');
         }
@@ -71,6 +74,9 @@ export default function AppMenu() {
         const x = { ...contextData };
         x.errorMsg = '';
         setData(x);
+        // this indicates user has cleared the message
+        setErrorMsg('');
+        setAlertHidden(true);
     }
 
 
@@ -116,7 +122,7 @@ export default function AppMenu() {
                         &nbsp;
                     </Typography>
                     {!alertHidden &&
-                        <Alert variant="filled" severity={errorSeverity} onClose={() => { handleAlertClose() }} >{contextData.errorMsg}</Alert>
+                        <Alert variant="filled" severity={errorSeverity} onClose={() => { handleAlertClose() }} >{errorMsg}</Alert>
                     }
                     <Tooltip title="Refresh">
                         <IconButton onClick={() => {
