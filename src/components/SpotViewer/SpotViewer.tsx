@@ -170,16 +170,12 @@ export default function SpotViewer() {
             if (r['success'] == false)
                 return;
             var x = JSON.parse(r) as Qso;
-            const newCtxData = { ...contextData };
-
-            newCtxData.spotId = id;
-            newCtxData.qso = x;
-
             window.pywebview.api.get_park(x.sig_info)
                 .then((r: string) => {
-                    //console.log(`spotviewer: got park (raw) ${r}`);
                     let p = JSON.parse(r) as Park;
-                    //console.log(`spotviewer: setting park ${p}`);
+                    const newCtxData = { ...contextData };
+                    newCtxData.spotId = id;
+                    newCtxData.qso = x;
                     newCtxData.park = p;
                     setData(newCtxData);
                 });

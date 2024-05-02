@@ -8,6 +8,9 @@ import './QsoEntry.scss'
 import QsoTimeEntry from './QsoTimeEntry';
 import { Qso } from '../../@types/QsoTypes';
 import { checkApiResponse } from '../../util';
+import { getParkInfo } from '../../pota';
+import { Park } from '../../@types/Parks';
+import { ParkInfo } from '../../@types/PotaTypes';
 
 dayjs.extend(utc);
 
@@ -119,13 +122,97 @@ export default function QsoEntry() {
             return `${qso.distance} km`;
     }
 
+    function onCallsignEntry(entry: string) {
+        if (entry === null || entry === '')
+            return;
+
+        setQso({ ...qso, call: entry });
+
+        const newCtxData = { ...contextData };
+
+        if (newCtxData.qso === null) {
+            newCtxData.qso = { ...defaultQso, call: entry };
+        } else if (newCtxData.qso.call != entry) {
+            newCtxData.qso = { ...newCtxData.qso, call: entry };
+        }
+
+        //console.log(newCtxData.qso?.call);
+
+        setData(newCtxData);
+    }
+
+    function onParkEntry(park: string) {
+        if (park === null || park === '')
+            return;
+
+        function localGetState(locDesc: string): string {
+            let loc = locDesc.split(',')[0];
+
+            let arr = loc.split('-');
+            console.log(`${arr[0]} === ${arr[1]}`);
+
+            if (arr[0] === 'US' || arr[0] == 'CA') {
+                return arr[1];
+            }
+            return '';
+        };
+        function localFunc(): any {
+            let p = getParkInfo(park);
+            p.then((apiData: ParkInfo) => {
+                let x: Park = {
+                    id: apiData.parkId,
+                    reference: apiData.reference,
+                    name: apiData.name,
+                    grid6: apiData.grid6,
+                    active: apiData.active == 1,
+                    latitude: apiData.latitude,
+                    longitude: apiData.longitude,
+                    parkComments: '',
+                    parktypeId: 0,
+                    parktypeDesc: apiData.parktypeDesc,
+                    locationDesc: apiData.locationDesc,
+                    firstActivator: apiData.firstActivator,
+                    firstActivationDate: apiData.firstActivationDate,
+                    website: ''
+                };
+
+                newCtxData.park = x;
+
+                if (newCtxData.qso != null) {
+                    newCtxData.qso.gridsquare = apiData.grid6;
+                    newCtxData.qso.sig = 'POTA';
+                    newCtxData.qso.sig_info = apiData.reference;
+                    newCtxData.qso.state = localGetState(apiData.locationDesc);
+                    setData(newCtxData);
+                }
+
+                let newQso = {...qso};
+                newQso.gridsquare = apiData.grid6;
+                newQso.sig = 'POTA';
+                newQso.sig_info = apiData.reference;
+                newQso.state = localGetState(apiData.locationDesc);
+                
+                setQso(newQso);
+            });
+        }
+
+        const newCtxData = { ...contextData };
+        if (newCtxData.park === null) {
+            localFunc();
+        }
+        else if (newCtxData.park.reference != park) {
+            localFunc();
+        }
+    };
+
     // when the app context changes (ie a user clicks on a different spot)
     // we need to update our TextFields
     React.useEffect(() => {
         updateQsoEntry();
     }, [contextData.qso]);
 
-    const textFieldStyle = { style: { fontSize: 14 } };
+    const textFieldStyle: React.CSSProperties = { fontSize: 14, textTransform: "uppercase" };
+    const commentStyle: React.CSSProperties = { fontSize: 14 };
 
     return (
         <div className="qso-container">
@@ -135,7 +222,8 @@ export default function QsoEntry() {
                 <Grid item xs={4} lg={3}>
                     <TextField id="callsign" label="Callsign"
                         value={qso.call}
-                        inputProps={textFieldStyle}
+                        inputProps={{ style: textFieldStyle }}
+                        onBlur={(e) => { onCallsignEntry(e.target.value); }}
                         onChange={(e) => {
                             setQso({ ...qso, call: e.target.value });
                         }} />
@@ -143,7 +231,7 @@ export default function QsoEntry() {
                 <Grid item xs={4} lg={3}>
                     <TextField id="freq" label="Frequency"
                         value={qso.freq}
-                        inputProps={textFieldStyle}
+                        inputProps={{ style: textFieldStyle }}
                         onChange={(e) => {
                             setQso({ ...qso, freq: e.target.value });
                         }} />
@@ -151,7 +239,7 @@ export default function QsoEntry() {
                 <Grid item xs={4} lg={2}>
                     <TextField id="mode" label="Mode"
                         value={qso.mode}
-                        inputProps={textFieldStyle}
+                        inputProps={{ style: textFieldStyle }}
                         onChange={(e) => {
                             setQso({ ...qso, mode: e.target.value });
                         }} />
@@ -159,7 +247,7 @@ export default function QsoEntry() {
                 <Grid item xs={4} lg={2}>
                     <TextField id="rstSent" label="RST Sent"
                         value={qso.rst_sent}
-                        inputProps={textFieldStyle}
+                        inputProps={{ style: textFieldStyle }}
                         onChange={(e) => {
                             setQso({ ...qso, rst_sent: e.target.value });
                         }} />
@@ -167,7 +255,7 @@ export default function QsoEntry() {
                 <Grid item xs={4} lg={2}>
                     <TextField id="rstRecv" label="RST Recv"
                         value={qso.rst_recv}
-                        inputProps={textFieldStyle}
+                        inputProps={{ style: textFieldStyle }}
                         onChange={(e) => {
                             setQso({ ...qso, rst_recv: e.target.value });
                         }} />
@@ -177,7 +265,10 @@ export default function QsoEntry() {
                 <Grid item xs={4} lg={2}>
                     <TextField id="park" label="Park"
                         value={qso.sig_info}
-                        inputProps={textFieldStyle}
+                        inputProps={{ style: textFieldStyle }}
+                        onBlur={(e) => {
+                            onParkEntry(e.target.value);
+                        }}
                         onChange={(e) => {
                             setQso({ ...qso, sig_info: e.target.value });
                         }} />
@@ -185,7 +276,7 @@ export default function QsoEntry() {
                 <Grid item xs={4} lg={2}>
                     <TextField id="grid" label="Grid"
                         value={qso.gridsquare}
-                        inputProps={textFieldStyle}
+                        inputProps={{ style: textFieldStyle }}
                         onChange={(e) => {
                             setQso({ ...qso, gridsquare: e.target.value });
                         }} />
@@ -196,7 +287,7 @@ export default function QsoEntry() {
                 <Grid item xs={12} lg={5}>
                     <TextField id="comments" label="Comments"
                         value={qso.comment}
-                        inputProps={textFieldStyle}
+                        inputProps={{ style: commentStyle }}
                         onChange={(e) => {
                             setQso({ ...qso, comment: e.target.value });
                         }} />
@@ -210,7 +301,7 @@ export default function QsoEntry() {
             </div>
 
             <Stack
-                direction={{ xs: 'row', sm: 'row', md:'row' }}
+                direction={{ xs: 'row', sm: 'row', md: 'row' }}
                 spacing={{ xs: 1, sm: 1, md: 2 }}>
                 <Button variant="outlined" onClick={(e) => handleLogQsoClick(e)}>
                     Log QSO
