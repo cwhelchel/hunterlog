@@ -183,7 +183,7 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
                             </span>
                         )}
 
-                        {contextData.qso?.mode.startsWith('FT') && (
+                        {contextData.qso?.mode?.startsWith('FT') && (
                             <span style={{ marginLeft: '3px', height: '16px', width: '16px' }}
                                 onClick={() => openRbnLink()}>
                                 <Tooltip title="PSK">
