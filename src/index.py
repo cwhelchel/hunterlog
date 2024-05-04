@@ -99,6 +99,7 @@ def update_ticker():
 
 
 def on_closing():
+    # this crashes on linux
     sz = (window.width, window.height)
     pos = (window.x, window.y)
     logging.debug(f"close: saving winow data: {sz}")
@@ -140,9 +141,10 @@ if __name__ == '__main__':
         min_size=(800, 600),
         text_select=True)
 
-    window.events.closing += on_closing
-    window.events.maximized += on_maximized
-    window.events.restored += on_restore
+    if platform.system() == 'Windows':
+        window.events.closing += on_closing
+        window.events.maximized += on_maximized
+        window.events.restored += on_restore    
 
     if platform.system() == "Linux":
         webview.start(update_ticker, private_mode=False, debug=False, gui="gtk")  # noqa E501
