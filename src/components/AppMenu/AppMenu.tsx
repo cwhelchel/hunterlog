@@ -24,21 +24,33 @@ export default function AppMenu() {
     const [errorSeverity, seterrorSeverity] = React.useState<AlertColor>('info');
     const [alertHidden, setAlertHidden] = React.useState(true);
 
+    function getCfg() {
+         // pywebview is ready so api can be called here:
+         let x = window.pywebview.api.get_user_config();
+         console.log('getting user config');
+         x.then((cfgStr: string) => {
+             console.log('got user confg: ' + cfgStr);
+             
+             let obj: UserConfig = JSON.parse(cfgStr) as UserConfig;
+             setCallsign(obj.my_call);
+             let y = window.pywebview.api.get_activator_stats(obj.my_call);
+             y.then((actStr: string) => {
+                 let actObj: ActivatorData = JSON.parse(actStr) as ActivatorData;
+                 let url = getGravatarUrl(actObj.gravatar);
+                 setGravatar(url);
+             });
+         })
+    };
+
     React.useEffect(() => {
-        window.addEventListener('pywebviewready', function () {
-            // pywebview is ready so api can be called here:
-            let x = window.pywebview.api.get_user_config();
-            x.then((cfgStr: string) => {
-                let obj: UserConfig = JSON.parse(cfgStr) as UserConfig;
-                setCallsign(obj.my_call);
-                let y = window.pywebview.api.get_activator_stats(obj.my_call);
-                y.then((actStr: string) => {
-                    let actObj: ActivatorData = JSON.parse(actStr) as ActivatorData;
-                    let url = getGravatarUrl(actObj.gravatar);
-                    setGravatar(url);
-                });
-            })
-        })
+        console.log('hooking for user config');
+
+        if (window.pywebview !== undefined && window.pywebview.api !== null) {
+           getCfg();
+        }
+        else {
+            window.addEventListener('pywebviewready', getCfg);
+        }
     }, []);
 
 

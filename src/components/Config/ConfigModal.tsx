@@ -73,7 +73,12 @@ export default function ConfigModal() {
     };
 
     React.useEffect(() => {
-        window.addEventListener('pywebviewready', function () {
+        if (window.pywebview !== undefined && window.pywebview.api !== null) 
+            initConfig();
+        else
+            window.addEventListener('pywebviewready', initConfig);
+
+        function initConfig() {
             let x = window.pywebview.api.get_user_config();
             x.then((r: string) => {
                 if (r == null) return;
@@ -93,7 +98,7 @@ export default function ConfigModal() {
             let spotAgeStr = window.localStorage.getItem("SHOW_SPOT_AGE") || '1';
             let showSage = parseInt(spotAgeStr);
             setShowSpotAge(showSage == 1 ? true : false);
-        });
+        }
     }, []);
 
     const handleSave = () => {

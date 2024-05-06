@@ -32,7 +32,12 @@ export const FilterBar = (props: IFilterBarPros) => {
     // load up all the data stored in localStorage and use them... after the 
     // API is ready
     React.useEffect(() => {
-        window.addEventListener('pywebviewready', function () {
+        if (window.pywebview !== undefined && window.pywebview.api !== null)
+            initFilters();
+        else
+            window.addEventListener('pywebviewready', initFilters);
+
+        function initFilters() {
             let bf = window.localStorage.getItem("BAND_FILTER") || '0';
             setBandFilter(bf);
             let rf = window.localStorage.getItem("REGION_FILTER") || '';
@@ -48,7 +53,7 @@ export const FilterBar = (props: IFilterBarPros) => {
             setHuntedFilter((hf === "true"));
             let on = window.localStorage.getItem("ATNO_FILTER");
             setOnlyNewFilter((on === "true"));
-        });
+        };
     }, []);
 
     const handleChange = (event: SelectChangeEvent) => {

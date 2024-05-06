@@ -40,7 +40,12 @@ export default function Main() {
     }, [contextData.themeMode]);
 
     React.useEffect(() => {
-        window.addEventListener('pywebviewready', function () {
+        if (window.pywebview !== undefined && window.pywebview.api !== null)
+            initTheme();
+        else
+            window.addEventListener('pywebviewready', initTheme);
+
+        function initTheme() {
             let darkMode = window.localStorage.getItem("USE_DARK_MODE") || '1';
             let darkModeInt = parseInt(darkMode);
 
@@ -51,10 +56,11 @@ export default function Main() {
             const newCtx = { ...contextData };
             if (isDark)
                 newCtx.themeMode = 'dark';
+
             else
                 newCtx.themeMode = 'light';
             setData(newCtx);
-        });
+        };
     }, []);
 
 

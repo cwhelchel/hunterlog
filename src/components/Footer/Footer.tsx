@@ -9,7 +9,12 @@ export default function Footer() {
     const [dbVersion, setDbVersion] = React.useState('');
 
     React.useEffect(() => {
-        window.addEventListener('pywebviewready', function () {
+        if (window.pywebview !== undefined && window.pywebview.api !== null)
+            initVersion();
+        else 
+            window.addEventListener('pywebviewready', initVersion);
+
+        function initVersion() {
             if (window.pywebview) {
                 window.pywebview.api.get_version_num()
                     .then((x: string) => {
@@ -19,7 +24,7 @@ export default function Footer() {
                         setDbVersion(verInfo.db_ver);
                     });
             }
-        })
+        }
     }, []);
 
     function handleOnClick() {

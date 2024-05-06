@@ -183,7 +183,12 @@ export default function SpotViewer() {
     }
 
     React.useEffect(() => {
-        window.addEventListener('pywebviewready', function () {
+        if (window.pywebview !== undefined && window.pywebview.api !== null)
+            initSpots();
+        else 
+            window.addEventListener('pywebviewready', initSpots);
+
+        function initSpots() {
             if (!window.pywebview.state) {
                 window.pywebview.state = {}
             }
@@ -192,7 +197,7 @@ export default function SpotViewer() {
             getSpots();
 
             window.pywebview.state.getSpots = getSpots;
-        })
+        }
 
         try {
             let j = window.localStorage.getItem("SORT_MODEL") || '';
