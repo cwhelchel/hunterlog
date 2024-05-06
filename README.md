@@ -23,18 +23,18 @@ If you're not comfortable using Github to submit issues and enhancement requests
 
 Hunterlog is in active development and any feedback is welcome. Here are the download links:
 
-Release page [v0.0.3](https://github.com/cwhelchel/hunterlog/releases/tag/v0.0.3)
+Release page [v0.0.4](https://github.com/cwhelchel/hunterlog/releases/tag/v0.0.4)
 
-[Windows Download](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.3/hunterlog_0.0.3.zip)
+[Windows Download](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.4/hunterlog_0.0.4.zip)
 
-[Ubuntu Download](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.3/hunterlog-ubuntu_0.0.3.zip)
+[Ubuntu Download](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.4/hunterlog-ubuntu_0.0.4hotfix.zip)
 
 
 ## Usage
 
 On Windows, run the executable in any folder. 
 
-On Linux, you may have to `chmod +777` the executable file and run it via the terminal.
+On Linux, you may have to `chmod +x` the executable file and run it via the terminal.
 
 The very first thing you should notice is that the default configuration is for 
 N0CALL. You **must** change your callsign and gridsquare. Click the 
@@ -49,7 +49,7 @@ Let's look at the configuration options.
 ![Configuration options](docs/img/config.png)
 
 *My Callsign* and *My Gridsquare* are your base callsign and home QTH 6 digit Maidenhead gridsquare. Your call should also be what your POTA user
-account is registerd as. 
+account is registered as. 
 
 #### CAT settings 
 First is a drop down selection of CAT interface types. Currently those
