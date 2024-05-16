@@ -153,11 +153,11 @@ if __name__ == '__main__':
     if platform.system() == 'Windows':
         window.events.closing += on_closing
         window.events.maximized += on_maximized
-        window.events.restored += on_restore    
+        window.events.restored += on_restore
 
     if platform.system() == "Linux":
-        webview.start(update_ticker, private_mode=False, debug=False, gui="gtk")  # noqa E501
+        webview.start(update_ticker, private_mode=False, debug=True, gui="gtk")  # noqa E501
     elif platform.system() == "Windows":
-        webview.start(update_ticker, private_mode=False, debug=False)
+        webview.start(update_ticker, private_mode=False, debug=True)
     elif platform.system() == "Darwin":
-        webview.start(update_ticker, private_mode=False, debug=False)
+        webview.start(update_ticker, private_mode=False, debug=True)
