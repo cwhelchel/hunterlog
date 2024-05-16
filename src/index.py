@@ -129,6 +129,15 @@ if __name__ == '__main__':
 
     logging.debug(f"load winow data: {width} x {height} - {maxi}")
 
+    webview.settings = {
+        'ALLOW_DOWNLOADS': False,  # Allow file downloads
+        'ALLOW_FILE_URLS': True,  # Allow access to file:// urls
+        # Open target=_blank links in an external browser
+        'OPEN_EXTERNAL_LINKS_IN_BROWSER': True,
+        # Automatically open devtools when `start(debug=True)`.
+        'OPEN_DEVTOOLS_IN_DEBUG': False,
+    }
+
     window = webview.create_window(
         'HUNTER LOG',
         entry,
