@@ -23,11 +23,11 @@ If you're not comfortable using Github to submit issues and enhancement requests
 
 Hunterlog is in active development and any feedback is welcome. Here are the download links:
 
-Release page [v0.0.4](https://github.com/cwhelchel/hunterlog/releases/tag/v0.0.4)
+Release page [v0.0.5](https://github.com/cwhelchel/hunterlog/releases/tag/v0.0.5)
 
-[Windows Download](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.4/hunterlog_0.0.4.zip)
+[Windows Download](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.5/hunterlog_0.0.5.zip)
 
-[Ubuntu Download](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.4/hunterlog-ubuntu_0.0.4hotfix.zip)
+[Ubuntu Download](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.5/hunterlog-ubuntu_0.0.5.zip)
 
 
 ## Usage
