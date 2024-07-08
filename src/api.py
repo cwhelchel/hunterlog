@@ -490,7 +490,7 @@ class JsApi:
             return update()
         else:
             # check timestamp
-            if (datetime.datetime.utcnow() - ac.updated < timedelta(days=1)):
+            if (datetime.datetime.utcnow() - ac.updated > timedelta(days=1)):
                 return update()
 
         return ac
