@@ -9,7 +9,7 @@ export interface Qso {
     freq_rx: string;
     mode: string;
     comment: string;
-    qso_date: Date;
+    qso_date: string;
     time_on: string;
     tx_pwr: number;
     rx_pwr: number;

@@ -23,7 +23,7 @@ let defaultQso: Qso = {
     freq_rx: "",
     mode: "",
     comment: "",
-    qso_date: new Date(),
+    qso_date: "",
     time_on: "1970-01-01T00:00",
     tx_pwr: 0,
     rx_pwr: 0,
@@ -45,18 +45,20 @@ export default function QsoEntry() {
     function logQso() {
         console.log(`logging qso at ${contextData.park?.name}`);
 
-        let cmt = qso.comment ?? '';
-        let name = `${contextData.park?.name} ${contextData.park?.parktypeDesc}`;
+        if (qso.sig_info !== undefined && qso.sig_info !== "" ) {
+            // NOTE: compress this for multi location parks like PotaPlus?
+            let loc = contextData.park?.locationDesc;
+            let cmt = qso.comment ?? '';
+            let name = `${contextData.park?.name} ${contextData.park?.parktypeDesc}`;
+            qso.comment = `[POTA ${qso.sig_info} ${loc} ${qso.gridsquare} ${name}] ` + cmt;
+        }
 
-        // NOTE: compress this for multi location parks like PotaPlus?
-        let loc = contextData.park?.locationDesc;
-
-        qso.comment = `[POTA ${qso.sig_info} ${loc} ${qso.gridsquare} ${name}] ` + cmt;
         qso.time_on = (qsoTime) ? qsoTime.toISOString() : dayjs().toISOString();
+        qso.qso_date = qso.time_on;
 
         window.pywebview.api.log_qso(qso).then((x: string) => {
             checkApiResponse(x, contextData, setData);
-        })
+        });
     }
 
     function spotActivator() {
