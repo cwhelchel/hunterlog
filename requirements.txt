@@ -2,7 +2,7 @@ adif-io==0.4.0
 alembic==1.13.1
 altgraph==0.17.4
 bottle==0.12.25
-certifi==2024.2.2
+certifi>=2024.07.04
 cffi==1.16.0
 charset-normalizer==3.3.2
 clr-loader==0.2.6
@@ -29,9 +29,9 @@ pythonnet==3.0.3
 pywebview==5.1
 pywin32==306; platform_system == "Windows"
 pywin32-ctypes==0.2.2; platform_system == "Windows"
-requests==2.31.0
+requests>=2.32.0
 SQLAlchemy==2.0.26
-tornado==6.4; platform_system == "Darwin"
+tornado>=6.4.1; platform_system == "Darwin"
 typing_extensions==4.9.0
-urllib3==2.2.0
+urllib3>=2.2.2
 zipp==3.17.0

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Button from '@mui/material/Button';
-import { Badge, styled } from '@mui/material';
+import { Backdrop, Badge, CircularProgress, styled } from '@mui/material';
 import { DataGrid, GridColDef, GridValueGetterParams, GridValueFormatterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams, GridRowClassNameParams, GridToolbar, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarColumnsButton, GridToolbarQuickFilter } from '@mui/x-data-grid';
 import { GridEventListener } from '@mui/x-data-grid';
 
@@ -128,16 +128,19 @@ var currentSortFilter = { field: 'spotTime', sort: 'desc' as GridSortDirection }
 export default function SpotViewer() {
     const [spots, setSpots] = React.useState(rows)
     const [sortModel, setSortModel] = React.useState<GridSortModel>([currentSortFilter]);
+    const [backdropOpen, setBackdropOpen] = React.useState(false);
     const { contextData, setData } = useAppContext();
 
     function getSpots() {
         // get the spots from the db
         // NOTE: this gets called from the python backend on a timer and when
         // a qso is logged
+        setBackdropOpen(true);
         const spots = window.pywebview.api.get_spots()
         spots.then((r: string) => {
             var x = JSON.parse(r);
             setSpots(x);
+            setBackdropOpen(false);
         });
     }
 
@@ -267,6 +270,13 @@ export default function SpotViewer() {
 
     return (
         <div className='spots-container'>
+            <Backdrop
+                sx={{ color: '#fff', zIndex: 1500 }}
+                open={backdropOpen}
+            >
+                <CircularProgress color="inherit" />
+            </Backdrop>
+
             <DataGrid
                 rows={spots}
                 slots={{ toolbar: CustomToolbar }}

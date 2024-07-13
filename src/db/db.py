@@ -280,7 +280,6 @@ class DataBase:
         s = self.spots.get_spot(spot_id)
         if (s is None):
             q = Qso()
-            q.comment = "Error no spot"
             return q
         a = self.get_activator(s.activator)
 
