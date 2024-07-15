@@ -258,6 +258,9 @@ export const FilterBar = (props: IFilterBarPros) => {
                         <MenuItem value="8">15</MenuItem>
                         <MenuItem value="9">12</MenuItem>
                         <MenuItem value="10">10</MenuItem>
+                        <MenuItem value="11">6</MenuItem>
+                        <MenuItem value="12">2</MenuItem>
+                        <MenuItem value="14">70cm</MenuItem>
                     </Select>
                 </FormControl>
                 <FormControl size='small'>
