@@ -1,6 +1,9 @@
 import * as React from 'react';
 import { Button, TextField, Grid, Stack } from '@mui/material';
 import { useAppContext } from '../AppContext';
+import { Typography } from '@mui/material';
+import { styled } from '@mui/material/styles';
+
 import dayjs, { Dayjs } from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 
@@ -39,13 +42,15 @@ let defaultQso: Qso = {
 
 export default function QsoEntry() {
     const [qso, setQso] = React.useState(defaultQso);
+    const [otherOps, setOtherOps] = React.useState('');
+    const [otherOpsHidden, setOtherOpsHidden] = React.useState(true);
     const [qsoTime, setQsoTime] = React.useState<Dayjs>(dayjs('2022-04-17T15:30'));
     const { contextData, setData } = useAppContext();
 
     function logQso() {
         console.log(`logging qso at ${contextData.park?.name}`);
 
-        if (qso.sig_info !== undefined && qso.sig_info !== "" ) {
+        if (qso.sig_info !== undefined && qso.sig_info !== "") {
             // NOTE: compress this for multi location parks like PotaPlus?
             let loc = contextData.park?.locationDesc;
             let cmt = qso.comment ?? '';
@@ -56,6 +61,31 @@ export default function QsoEntry() {
         qso.time_on = (qsoTime) ? qsoTime.toISOString() : dayjs().toISOString();
         qso.qso_date = qso.time_on;
 
+        let multiOps = otherOps;
+
+        // TODO: handle other ops string
+
+        if (multiOps !== null && multiOps != '') {
+            let ops = multiOps.split(',');
+
+            // log main window first then loop thru multiops
+            window.pywebview.api.log_qso(qso).then((x: string) => {
+                checkApiResponse(x, contextData, setData);
+            });
+
+            const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+            ops.forEach(async function (call) {
+                console.log(`logging multiop QSO: ${call}`);
+                await sleep(100);
+                let newQso = { ...qso };
+                newQso.call = call.trim();
+                window.pywebview.api.log_qso(newQso).then((x: string) => {
+                    checkApiResponse(x, contextData, setData);
+                });
+            });
+        }
+
         window.pywebview.api.log_qso(qso).then((x: string) => {
             checkApiResponse(x, contextData, setData);
         });
@@ -64,6 +94,20 @@ export default function QsoEntry() {
     function spotActivator() {
         console.log(`spotting activator at ${contextData.park?.name}`);
         let park = qso.sig_info;
+
+        let multiOps = otherOps;
+        if (multiOps !== null && multiOps != '') {
+            const ops = multiOps.split(',');
+            const x = ops.filter(e => e !== contextData.qso?.call);
+
+            x.forEach((call) => call = call.trim());
+
+            const l = x.join(',');
+            const cmt = ` {With: ${l}}`;
+
+            qso.comment += cmt;
+        }
+
         window.pywebview.api.spot_activator(qso, park).then((r: string) => {
             checkApiResponse(r, contextData, setData);
         });
@@ -98,8 +142,19 @@ export default function QsoEntry() {
         setQso(defaultQso);
         contextData.park = null;
         contextData.qso = null;
+        contextData.otherOperators = '';
         setData(contextData);
+
+        setOtherOpsHidden(true);
+        setOtherOps('');
     }
+
+    function handleMultiOpClick(
+        event: React.MouseEvent<HTMLButtonElement, MouseEvent>
+    ) {
+        setOtherOpsHidden(!otherOpsHidden);
+    }
+
 
     function updateQsoEntry() {
         let x = contextData?.qso;
@@ -188,12 +243,12 @@ export default function QsoEntry() {
                     setData(newCtxData);
                 }
 
-                let newQso = {...qso};
+                let newQso = { ...qso };
                 newQso.gridsquare = apiData.grid6;
                 newQso.sig = 'POTA';
                 newQso.sig_info = apiData.reference;
                 newQso.state = localGetState(apiData.locationDesc);
-                
+
                 setQso(newQso);
             });
         }
@@ -207,14 +262,56 @@ export default function QsoEntry() {
         }
     };
 
+    function updateOtherOperators(otherOperators: string) {
+        if (otherOperators == null || otherOperators === undefined) {
+            setOtherOps('');
+            setOtherOpsHidden(true);
+            return;
+        }
+
+        if (otherOperators == '') {
+            setOtherOps('');
+            setOtherOpsHidden(true);
+            return;
+        }
+
+        setOtherOpsHidden(false);
+        const ops = otherOperators.trim().split(',');
+
+        // remove current qso call if needed
+        let x = ops.filter(e => e !== contextData.qso?.call);
+
+        if (x.length > 0) {
+            setOtherOps(x.join(','));
+        }
+    }
+
+
     // when the app context changes (ie a user clicks on a different spot)
     // we need to update our TextFields
     React.useEffect(() => {
         updateQsoEntry();
     }, [contextData.qso]);
 
+    React.useEffect(() => {
+        updateOtherOperators(contextData.otherOperators);
+    }, [contextData.otherOperators]);
+
+
     const textFieldStyle: React.CSSProperties = { fontSize: 14, textTransform: "uppercase" };
+    const otherOpsStyle: React.CSSProperties = { fontSize: 14, textTransform: "uppercase", color: 'orange' };
     const commentStyle: React.CSSProperties = { fontSize: 14 };
+
+    const StyledTypoGraphy = styled(Typography)(({ theme }) =>
+        theme.unstable_sx({
+            fontSize: {
+                lg: 14,
+                md: 14,
+                sm: 11,
+                xs: 9
+            }
+        }),
+    );
 
     return (
         <div className="qso-container">
@@ -304,21 +401,49 @@ export default function QsoEntry() {
 
             <Stack
                 direction={{ xs: 'row', sm: 'row', md: 'row' }}
-                spacing={{ xs: 1, sm: 1, md: 2 }}>
+                spacing={{ xs: 0, sm: 1, md: 2 }}>
                 <Button variant="outlined" onClick={(e) => handleLogQsoClick(e)}>
-                    Log QSO
+                    <StyledTypoGraphy>
+                        Log
+                    </StyledTypoGraphy>
                 </Button>
                 <Button variant='contained' onClick={(e) => handleSpotAndLogClick(e)}>
-                    Spot + Log
+                    <StyledTypoGraphy>
+                        Spot+Log
+                    </StyledTypoGraphy>
                 </Button>
                 <Button variant="outlined" onClick={(e) => handleSpotOnlyClick(e)}>
-                    Spot Only
+                    <StyledTypoGraphy>
+                        Spot
+                    </StyledTypoGraphy>
                 </Button>
                 <Button variant="outlined" onClick={(e) => handleClearClick(e)}
                     color='secondary'>
-                    Clear
+                    <StyledTypoGraphy>
+                        Clear
+                    </StyledTypoGraphy>
+                </Button>
+                <Button variant={otherOpsHidden ? 'outlined' : 'contained'} onClick={(e) => handleMultiOpClick(e)}
+                    color='secondary'>
+                    <StyledTypoGraphy>
+                        MultiOp
+                    </StyledTypoGraphy>
                 </Button>
             </Stack>
+            <>
+                {!otherOpsHidden && (
+                    <TextField id="otherOps" label="Other OPs (comma separated)"
+                        value={otherOps}
+                        fullWidth
+                        color='warning'
+                        margin='normal'
+                        inputProps={{ style: otherOpsStyle }}
+                        onChange={(e) => {
+                            setOtherOps(e.target.value);
+                        }} />
+                )}
+            </>
         </div >
     );
 };
+

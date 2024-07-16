@@ -74,7 +74,7 @@ class JsApi:
             self.lock.release()
 
     def get_qso_from_spot(self, id: int):
-        logging.debug('py getting qso data')
+        logging.debug(f'py getting qso data from {id}')
         q = self.db.build_qso_from_spot(id)
         if q is None:
             return {"success": False}

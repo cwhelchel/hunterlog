@@ -19,6 +19,7 @@ export interface ContextData {
     errorSeverity: string;
     themeMode: string;
     onlyNewFilter: boolean;
+    otherOperators: string;
 }
 
 export  interface AppContextType {

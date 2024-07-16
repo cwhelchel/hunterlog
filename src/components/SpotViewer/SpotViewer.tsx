@@ -13,9 +13,10 @@ import { SpotRow } from '../../@types/Spots';
 import './SpotViewer.scss'
 import HuntedCheckbox from './HuntedCheckbox';
 import FreqButton from './FreqButton';
-import SpotComments from './SpotComments';
+import SpotCommentsButton from './SpotComments';
 import { Park } from '../../@types/Parks';
 import SpotTimeCell from './SpotTime';
+import { SpotComments } from '../../@types/SpotComments';
 
 // https://mui.com/material-ui/react-table/
 
@@ -104,7 +105,7 @@ const columns: GridColDef[] = [
         // do this to have a popup for all spots comments
         renderCell: (x) => {
             return (
-                <SpotComments spotId={x.row.spotId} spotter={x.row.spotter} comments={x.row.comments} />
+                <SpotCommentsButton spotId={x.row.spotId} spotter={x.row.spotter} comments={x.row.comments} />
             )
         }
     },
@@ -165,6 +166,30 @@ export default function SpotViewer() {
         setData(contextData);
     }, [spots]);
 
+    async function getOtherOps(spotId: number): Promise<string> {
+        const r = await window.pywebview.api.get_spot_comments(spotId);
+
+        let t = JSON.parse(r) as SpotComments[];
+        let filtered = t.filter(function (el) {
+            return el.comments.includes('{With:');
+        });
+
+        if (filtered.length > 0) {
+            const str = filtered[0].comments;
+            const re = new RegExp("{With:([^}]*)}");
+            const m = str.match(re);
+
+            if (m) {
+                return m[1];
+            }
+        } else {
+            return '';
+        }
+
+        return '';
+
+    }
+
     function getQsoData(id: number) {
         // use the spot to generate qso data (unsaved)
         const q = window.pywebview.api.get_qso_from_spot(id);
@@ -180,7 +205,10 @@ export default function SpotViewer() {
                     newCtxData.spotId = id;
                     newCtxData.qso = x;
                     newCtxData.park = p;
-                    setData(newCtxData);
+                    getOtherOps(id).then((oo) => {
+                        newCtxData.otherOperators = oo;
+                        setData(newCtxData);
+                    });
                 });
         });
     }
@@ -188,7 +216,7 @@ export default function SpotViewer() {
     React.useEffect(() => {
         if (window.pywebview !== undefined && window.pywebview.api !== null)
             initSpots();
-        else 
+        else
             window.addEventListener('pywebviewready', initSpots);
 
         function initSpots() {

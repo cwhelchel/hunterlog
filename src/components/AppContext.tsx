@@ -22,7 +22,8 @@ const defData: ContextData = {
     errorMsg: '',
     errorSeverity: '',
     themeMode: 'dark',
-    onlyNewFilter: false
+    onlyNewFilter: false,
+    otherOperators: ''
 };
 
 export const AppContext = React.createContext<AppContextType | null>(null);
@@ -47,6 +48,7 @@ export const AppContextProvider = ( {children}: any ) => {
             errorSeverity: ctx.errorSeverity,
             themeMode: ctx.themeMode,
             onlyNewFilter: ctx.onlyNewFilter,
+            otherOperators: ctx.otherOperators,
         }
         setContextData(newContext);
     };

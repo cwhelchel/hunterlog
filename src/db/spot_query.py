@@ -54,8 +54,8 @@ class SpotQuery:
     def insert_test_spot(self):
         # test data
         test = Spot()
-        test.activator = "OT4V/P"
-        test.reference = "TC-0001"
+        test.activator = "N9FZ"
+        test.reference = "K-TEST"
         test.grid6 = "FL31vt"
         test.spotTime = datetime.datetime.utcnow()
         test.spotter = "HUNTER-LOG"
@@ -66,11 +66,25 @@ class SpotQuery:
         test.name = "TEST"
         test.parkName = "TEST"
         test.comments = "A TEST SPOT FROM HL"
-        test.frequency = "14001.0"
+        test.frequency = "7200"
         test.hunted_bands = ""
         test.is_qrt = False
         test.hunted = False
         self.session.add(test)
+        self.session.commit()
+
+        test_cmt = SpotComment()
+        test_cmt.activator = 'N9FZ'
+        test_cmt.spotId = test.spotId
+        test_cmt.spotter = 'W1AW'
+        test_cmt.frequency = '7200'
+        test_cmt.mode = 'CW'
+        test_cmt.park = 'K-TEST'
+        test_cmt.comments = "{this is a test} {With: N0CALL,W1AW}"
+        test_cmt.source = "test"
+        test_cmt.band = "40m"
+        test_cmt.spotTime = datetime.datetime.now()
+        self.session.add(test_cmt)
         self.session.commit()
 
     def _update_comment_metadata(self, activator: str, park: str):
