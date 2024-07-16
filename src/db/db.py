@@ -242,9 +242,12 @@ class DataBase:
                              activator: str,
                              park: str,
                              comments: any):
-        sql = sa.text(f"DELETE FROM comments WHERE activator='{activator}' AND park='{park}' ;")  # noqa E501
-        self.session.execute(sql)
-        self.session.commit()
+
+        # TESTING. leave out for now. maybe add back. seems we can leave
+        # comments in place and it doesn't matter if it tries to add more...
+        # sql = sa.text(f"DELETE FROM comments WHERE activator='{activator}' AND park='{park}' ;")  # noqa E501
+        # self.session.execute(sql)
+        # self.session.commit()
 
         if comments is None:
             return

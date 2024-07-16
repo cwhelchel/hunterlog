@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, FormControlLabel, Modal, Switch } from '@mui/material';
+import { Box, Button, CircularProgress, FormControlLabel, Modal, Switch } from '@mui/material';
 import { ClickAwayListener } from '@mui/base/ClickAwayListener';
 import { styled, css } from '@mui/system';
 import { SpotComments } from '../../@types/SpotComments';
@@ -12,21 +12,29 @@ interface ISpotCommentsProps {
     comments: string,
 };
 
-export default function SpotComments(props: ISpotCommentsProps) {
+export default function SpotCommentsButton(props: ISpotCommentsProps) {
     const [open, setOpen] = React.useState(false);
+    const [spinnerOpen, setSpinnerOpen] = React.useState(false);
     const [comments, setComments] = React.useState<null | SpotComments[]>(null);
 
     const cellVal = `${props.spotter}: ${props.comments}`;
 
     function getSpotComments(spotId: number) {
         let id = spotId;
-        //console.log(`getting comments for ${id}`);
-        let p = window.pywebview.api.get_spot_comments(id);
 
-        p.then((x: string) => {
-            //console.log('comments json:');
-            let t = JSON.parse(x) as SpotComments[];
-            setComments(t);
+        setSpinnerOpen(true);
+        let q = window.pywebview.api.insert_spot_comments(id);
+
+        q.then((_: any) => {
+            let p = window.pywebview.api.get_spot_comments(id);
+
+            p.then((x: string) => {
+                //console.log('comments json:');
+                let t = JSON.parse(x) as SpotComments[];
+                setComments(t);
+
+                setSpinnerOpen(false);
+            });
         });
     }
 
@@ -60,10 +68,26 @@ export default function SpotComments(props: ISpotCommentsProps) {
             <Button variant='text' onClick={onClick}>
                 {cellVal}
             </Button>
+
             <StyledModal open={open}>
                 <ClickAwayListener onClickAway={handleClickAway}>
                     <ModalContent>
                         <FormControlLabel control={<Switch onChange={handleChange} />} label="Hide RBN" />
+
+                        <>
+                            {spinnerOpen && (
+                                <Box
+                                    display='flex'
+                                    width='100%'
+                                    height='100%'
+                                    alignItems='center'
+                                    justifyContent='center'
+                                    sx={{ color: '#fff', zIndex: 1500 }}
+                                >
+                                    <CircularProgress color="inherit" />
+                                </Box>
+                            )}
+                        </>
 
                         {comments?.map(c => {
                             return (<>
