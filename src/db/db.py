@@ -176,10 +176,10 @@ class DataBase:
             to_add.hunted = hunted
             to_add.hunted_bands = bands
 
-            # if park is not None:
-            if ',' not in to_add.locationDesc:
+            # sometimes locationDesc can be None. see GR-0071
+            if to_add.locationDesc is not None \
+                    and ',' not in to_add.locationDesc:
                 x, y = self._lq.get_location_hunts(to_add.locationDesc)
-                # logging.debug(f"got location hunts {x} / {y}")
                 to_add.loc_hunts = x
                 to_add.loc_total = y
 
