@@ -345,11 +345,11 @@ class JsApi:
             return self._response(False, "CAT control failure.")
 
         cfg = self.db.get_user_config()
-        x = float(freq) * 1000.0
-        logging.debug(f"adjusted freq {x}")
-        if mode == "SSB" and x >= 10000000:
+        hrz = float(freq) * 1000.0
+        logging.debug(f"adjusted freq {hrz}")
+        if mode == "SSB" and hrz >= 10000000:
             mode = "USB"
-        elif mode == "SSB" and x < 10000000:
+        elif mode == "SSB" and hrz < 10000000:
             mode = "LSB"
         elif mode == "CW":
             mode = cfg.cw_mode
@@ -357,7 +357,7 @@ class JsApi:
             mode = cfg.ftx_mode
         logging.debug(f"adjusted mode {mode}")
         self.cat.set_mode(mode)
-        self.cat.set_vfo(x)
+        self.cat.set_vfo(hrz)
 
         return self._response(True, "")
 
