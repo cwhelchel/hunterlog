@@ -34,4 +34,4 @@ SQLAlchemy==2.0.26
 tornado>=6.4.1; platform_system == "Darwin"
 typing_extensions==4.9.0
 urllib3>=2.2.2
-zipp==3.17.0
+zipp>=3.19.1
