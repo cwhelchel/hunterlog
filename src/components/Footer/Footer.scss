@@ -5,6 +5,11 @@
     justify-content: space-between;
 }
 
+.footer .left {
+    display: flex;
+    align-items: center;
+}
+
 .footer #versionNum {
     font-size: small;
     color: #555;

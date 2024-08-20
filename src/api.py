@@ -284,8 +284,12 @@ class JsApi:
             log = AdifLog(filename=f"{dt}_export.adi")
             for q in qs:
                 log.log_qso(q, cfg)
-        except Exception:
+
+            return self._response(True, "QSOs exported successfully")
+        except Exception as ex:
             logging.exception("Error exporting the DB")
+            return self._response(
+                False, "Error exporting QSOs from DB", ext=str(ex))
 
     def set_user_config(self, config_json: any):
         logging.debug(f"setting config {config_json}")
@@ -404,10 +408,8 @@ class JsApi:
         with open("park_export.json", "w") as out:
             out.write(data)
 
-        return json.dumps({
-            'success': True,
-            'message': "park data exported successfully",
-        })
+        return self._response(
+            True, "Park data exported successfully")
 
     def import_park_data(self) -> str:
         '''
@@ -422,18 +424,20 @@ class JsApi:
             .create_file_dialog(
                 webview.OPEN_DIALOG,
             file_types=ft)
+
         if not filename:
-            return json.dumps({'success': True, 'message': "user cancel"})
+            # user cancelled
+            return self._response(True, "")
 
         with open(filename[0], "r") as input:
             text = input.read()
             obj = json.loads(text)
             self.db.parks.import_park_data(obj)
 
-        return json.dumps({
-            'success': True,
-            'message': "park data import successfully",
-        })
+        logging.debug("import_park_data: import finished")
+
+        return self._response(
+            True, "Park data imported successfully", persist=True)
 
     def _do_update(self):
         '''
