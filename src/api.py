@@ -230,12 +230,14 @@ class JsApi:
 
         return self._response(True, "Completed ADIF import")
 
-    def log_qso(self, qso_data):
+    def log_qso(self, qso_data, update_spots: bool = True):
         '''
         Logs the QSO to the database, adif file, and updates stats. Will force
         a reload of the currently displayed spots.
 
         :param any qso_data: dict of qso data from the UI
+        :param bool update_spots: True to query the spots api and refresh the
+            current spots
         '''
         logging.debug('acquiring lock to log qso')
         self.lock.acquire()
@@ -262,13 +264,11 @@ class JsApi:
         qso.name = act if act is not None else 'ERROR NO NAME'
         self.adif_log.log_qso_and_send(qso, cfg)
 
-        j = self.pota.get_spots()
-        self.db.update_all_spots(j)
-
         self.lock.release()
 
-        webview.windows[0].evaluate_js(
-            'window.pywebview.state.getSpots()')
+        if update_spots:
+            self._do_update()
+            webview.windows[0].evaluate_js('window.pywebview.state.getSpots()')
 
         return self._response(True, "QSO logged successfully")
 

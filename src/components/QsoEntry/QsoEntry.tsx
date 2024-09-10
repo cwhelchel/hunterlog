@@ -63,13 +63,11 @@ export default function QsoEntry() {
 
         let multiOps = otherOps;
 
-        // TODO: handle other ops string
-
         if (multiOps !== null && multiOps != '') {
             let ops = multiOps.split(',');
 
             // log main window first then loop thru multiops
-            window.pywebview.api.log_qso(qso).then((x: string) => {
+            window.pywebview.api.log_qso(qso, false).then((x: string) => {
                 checkApiResponse(x, contextData, setData);
             });
 
@@ -80,15 +78,16 @@ export default function QsoEntry() {
                 await sleep(100);
                 let newQso = { ...qso };
                 newQso.call = call.trim();
-                window.pywebview.api.log_qso(newQso).then((x: string) => {
+                window.pywebview.api.log_qso(newQso, false).then((x: string) => {
                     checkApiResponse(x, contextData, setData);
                 });
             });
+        } else {
+            // log a single operator
+            window.pywebview.api.log_qso(qso).then((x: string) => {
+                checkApiResponse(x, contextData, setData);
+            });
         }
-
-        window.pywebview.api.log_qso(qso).then((x: string) => {
-            checkApiResponse(x, contextData, setData);
-        });
     }
 
     function spotActivator() {
