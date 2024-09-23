@@ -20,12 +20,13 @@ export function checkApiResponse(x: string, contextData: ContextData, setData: (
     }
 
     if (j['success']) {
-        // if a success response's message is empty string, dont toast
+        // extended flag from API. persist means show this as alert (not toast)
         if (j['persist']) {
             setInfoMsg(j['message'], contextData, setData);
             return j;
         }
-
+        
+        // if a success response's message is empty string, dont toast
         if (j['message'] !== "")
             setToastMsg(j['message'], contextData, setData);
 

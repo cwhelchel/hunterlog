@@ -256,13 +256,21 @@ class JsApi:
             logging.error("Error logging QSO to db:")
             logging.exception(ex)
             self.lock.release()
-            return self._response(False, "Error logging QSO.", ext=str(ex))
+            return self._response(False, f"Error logging QSO: {ex}")
 
         # get the data to log to the adif file and remote adif host
         qso = self.db.qsos.get_qso(id)
         act = self.db.get_activator_name(qso_data['call'])
         qso.name = act if act is not None else 'ERROR NO NAME'
-        self.adif_log.log_qso_and_send(qso, cfg)
+
+        try:
+            self.adif_log.log_qso_and_send(qso, cfg)
+        except Exception as log_ex:
+            logging.exception(
+                msg="Error logging QSO to as adif (local/remote):",
+                exc_info=log_ex)
+            self.lock.release()
+            return self._response(False, f"Error logging as ADIF: {log_ex}")
 
         self.lock.release()
 

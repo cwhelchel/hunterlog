@@ -240,15 +240,27 @@ export default function QsoEntry() {
                     newCtxData.qso.sig_info = apiData.reference;
                     newCtxData.qso.state = localGetState(apiData.locationDesc);
                     setData(newCtxData);
+
+                    let newQso = { ...qso };
+                    newQso.gridsquare = apiData.grid6;
+                    newQso.sig = 'POTA';
+                    newQso.sig_info = apiData.reference;
+                    newQso.state = localGetState(apiData.locationDesc);
+                    setQso(newQso);
                 }
+                else {
+                    // set the local qso object
+                    let newQso = { ...qso };
+                    newQso.gridsquare = apiData.grid6;
+                    newQso.sig = 'POTA';
+                    newQso.sig_info = apiData.reference;
+                    newQso.state = localGetState(apiData.locationDesc);
+                    setQso(newQso);
 
-                let newQso = { ...qso };
-                newQso.gridsquare = apiData.grid6;
-                newQso.sig = 'POTA';
-                newQso.sig_info = apiData.reference;
-                newQso.state = localGetState(apiData.locationDesc);
-
-                setQso(newQso);
+                    // create a qso object in context data
+                    newCtxData.qso = newQso;
+                    setData(newCtxData);
+                }
             });
         }
 
