@@ -1,5 +1,8 @@
 # Hunterlog
 
+[![GitHub Release](https://img.shields.io/badge/download-windows-green)](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.6/hunterlog_0.0.6.zip)
+[![GitHub Release](https://img.shields.io/badge/download-linux-green)](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.6/hunterlog-ubuntu_0.0.6.zip)
+[![GitHub Release](https://img.shields.io/badge/download-mac-green)](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.6/hunterlog-macos_0.0.6.zip)
 [![GitHub Release](https://img.shields.io/github/v/release/cwhelchel/hunterlog?style=flat-square)](https://github.com/cwhelchel/hunterlog/releases)
 
 
@@ -18,17 +21,6 @@ FLRIG, and log them to your logger through a remote ADIF message.
 If you're not comfortable using Github to submit issues and enhancement requests, feel free to join our Discord community server. Hop in and ask questions, share comments, propose new features or get help using Hunterlog.
 
 [Discord Invite Link](https://discord.gg/DfqMVMuMnG)
-
-## Download
-
-Hunterlog is in active development and any feedback is welcome. Here are the download links:
-
-Release page [v0.0.5](https://github.com/cwhelchel/hunterlog/releases/tag/v0.0.5)
-
-[Windows Download](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.5/hunterlog_0.0.5.zip)
-
-[Ubuntu Download](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.5/hunterlog-ubuntu_0.0.5.zip)
-
 
 ## Usage
 
