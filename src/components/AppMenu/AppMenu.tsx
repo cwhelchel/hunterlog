@@ -11,7 +11,7 @@ import { useAppContext } from '../AppContext';
 import ConfigModal from '../Config/ConfigModal';
 import { UserConfig } from '../../@types/Config';
 import { ActivatorData } from '../../@types/ActivatorTypes';
-import { Alert, Avatar, Tooltip, AlertColor, Snackbar, Button, Color } from '@mui/material';
+import { Alert, Avatar, Tooltip, AlertColor, Snackbar } from '@mui/material';
 import StatsMenu from './StatsMenu';
 
 export default function AppMenu() {

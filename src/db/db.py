@@ -16,6 +16,7 @@ from db.park_query import ParkQuery
 from db.qso_query import QsoQuery
 from db.loc_query import LocationQuery
 from db.spot_query import SpotQuery
+from sota import SotaApi
 from utils.callsigns import get_basecall
 import upgrades
 
@@ -26,7 +27,7 @@ logging = L.getLogger("db")
 # L.getLogger('sqlalchemy.engine').setLevel(L.INFO)
 
 
-VER_FROM_ALEMBIC = 'f01009b22b92'
+VER_FROM_ALEMBIC = 'fd67dfff009a'
 '''
 This value indicates the version of the DB scheme the app is made for.
 
@@ -139,7 +140,7 @@ class DataBase:
     def locations(self) -> LocationQuery:
         return self._lq
 
-    def update_all_spots(self, spots_json):
+    def update_all_spots(self, spots_json, sota_spots):
         '''
         Updates all the spots in the database.
 
@@ -147,6 +148,7 @@ class DataBase:
         and perform the logic to update meta info about the spots
 
         :param dict spots_json: the dict from the pota api
+        :param dict sota_spots: the dict from the sota api
         '''
         schema = SpotSchema()
         self.session.execute(sa.text('DELETE FROM spots;'))
@@ -156,6 +158,7 @@ class DataBase:
 
         for s in spots_json:
             to_add: Spot = schema.load(s, session=self.session)
+            to_add.spot_source = 'POTA'
             self.session.add(to_add)
 
             # get meta data for this spot
@@ -188,6 +191,28 @@ class DataBase:
             if to_add.comments is not None:
                 if re.match(r'.*qrt.*', to_add.comments.lower()):
                     to_add.is_qrt = True
+
+        for sota in sota_spots:
+            # the sota spots are returned in a descending spot time order. where
+            # the first spot is the newest. 
+            sota_to_add = Spot()
+            sota_to_add.init_from_sota(sota)
+
+            statement = sa.select(Spot) \
+                .filter_by(activator=sota['activatorCallsign']) \
+                .filter_by(spot_source='SOTA') \
+                .order_by(Spot.spotTime.desc())
+            row = self.session.execute(statement).first()
+
+            # if query returns something, dont add the old spot
+            if row:
+                if row[0].spotTime < sota_to_add.spotTime:
+                    # this check is probably not needed. so this'll prob die
+                    logging.debug("removing and replacing old sota spot")
+                    self.session.expunge(row[0])
+                    self.session.add(sota_to_add)
+            else:
+                self.session.add(sota_to_add)
 
         self.session.commit()
 
@@ -281,12 +306,24 @@ class DataBase:
         :returns an untracked `Qso` object with initialized data.
         '''
         s = self.spots.get_spot(spot_id)
+
         if (s is None):
             q = Qso()
             return q
-        a = self.get_activator(s.activator)
 
-        name = a.name if a is not None else ""
+        if (s.spot_source == 'POTA'):
+            a = self.get_activator(s.activator)
+            name = a.name if a is not None else ""
+        elif s.spot_source == 'SOTA' :
+            name = s.name
+            if s.grid4 == '':
+                sota_api = SotaApi()
+                summit = sota_api.get_summit(s.reference)
+                s.grid4 = summit['locator'][:4]
+                s.grid6 = summit['locator']
+                s.latitude = summit['latitude']
+                s.longitude = summit['longitude']
+                self.session.commit()
 
         q = Qso()
         q.init_from_spot(s, name)

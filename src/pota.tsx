@@ -1,4 +1,5 @@
 import { ParkInfo, ParkStats } from "./@types/PotaTypes";
+import { Summit } from "./@types/Summit";
 
 /*
 !!!!Dont use this!!!! the python api will take care of getting the park info
@@ -25,3 +26,12 @@ export function getParkStats(park: string): Promise<ParkStats> {
         })
 }
 
+export function getSummitInfo(summitCode: string): Promise<Summit> {
+    let url = "https://api2.sota.org.uk/api/summits/" + summitCode;
+
+    return fetch(url)
+        .then(res => res.json()) 
+        .then(res => {
+            return res as Summit;
+        })
+}

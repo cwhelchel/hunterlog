@@ -14,6 +14,7 @@ from db.models.spot_comments import SpotCommentSchema
 from db.models.spots import SpotSchema
 from db.models.user_config import UserConfigSchema
 from pota import PotaApi, PotaStats
+from sota import SotaApi
 from utils.adif import AdifLog
 from version import __version__
 
@@ -29,6 +30,7 @@ class JsApi:
         self.lock = threading.Lock()
         self.db = DataBase()
         self.pota = PotaApi()
+        self.sota = SotaApi()
         self.adif_log = AdifLog()
         logging.debug("init CAT...")
         cfg = self.db.get_user_config()
@@ -65,27 +67,41 @@ class JsApi:
 
         :param int spot_id: spot id. pk in db
         '''
+        self.lock.acquire()
         spot = self.db.spots.get_spot(spot_id)
+
+        if spot is None:
+            self.lock.release()
+            return
+
+        if spot.spot_source == 'SOTA':
+            self.lock.release()
+            return
+
         comms = self.pota.get_spot_comments(spot.activator, spot.reference)
         try:
-            self.lock.acquire()
             self.db.insert_spot_comments(spot.activator, spot.reference, comms)
         finally:
             self.lock.release()
 
     def get_qso_from_spot(self, id: int):
-        logging.debug(f'py getting qso data from {id}')
+        self.lock.acquire()
+
         q = self.db.build_qso_from_spot(id)
         if q is None:
             return {"success": False}
 
         cfg = self.db.get_user_config()
-        dist = Distance.distance(cfg.my_grid6, q.gridsquare)
-        bearing = Distance.bearing(cfg.my_grid6, q.gridsquare)
-        q.distance = dist
-        q.bearing = bearing
+        if q.gridsquare:
+            dist = Distance.distance(cfg.my_grid6, q.gridsquare)
+            bearing = Distance.bearing(cfg.my_grid6, q.gridsquare)
+            q.distance = dist
+            q.bearing = bearing
         qs = QsoSchema()
-        return qs.dumps(q)
+        result = qs.dumps(q)
+
+        self.lock.release()
+        return result
 
     def get_activator_stats(self, callsign):
         logging.debug("getting activator stats...")
@@ -456,7 +472,8 @@ class JsApi:
 
         try:
             json = self.pota.get_spots()
-            self.db.update_all_spots(json)
+            sota = self.sota.get_spots()
+            self.db.update_all_spots(json, sota)
         except ConnectionError as con_ex:
             logging.warning("Connection error in do_update: ")
             logging.exception(con_ex)

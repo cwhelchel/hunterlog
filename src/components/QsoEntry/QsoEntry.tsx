@@ -11,9 +11,10 @@ import './QsoEntry.scss'
 import QsoTimeEntry from './QsoTimeEntry';
 import { Qso } from '../../@types/QsoTypes';
 import { checkApiResponse } from '../../util';
-import { getParkInfo } from '../../pota';
+import { getParkInfo, getSummitInfo } from '../../pota';
 import { Park } from '../../@types/Parks';
 import { ParkInfo } from '../../@types/PotaTypes';
+import { Summit } from '../../@types/Summit';
 
 dayjs.extend(utc);
 
@@ -55,7 +56,7 @@ export default function QsoEntry() {
             let loc = contextData.park?.locationDesc;
             let cmt = qso.comment ?? '';
             let name = `${contextData.park?.name} ${contextData.park?.parktypeDesc}`;
-            qso.comment = `[POTA ${qso.sig_info} ${loc} ${qso.gridsquare} ${name}] ` + cmt;
+            qso.comment = `[${qso.sig} ${qso.sig_info} ${loc} ${qso.gridsquare} ${name}] ` + cmt;
         }
 
         qso.time_on = (qsoTime) ? qsoTime.toISOString() : dayjs().toISOString();
@@ -265,6 +266,20 @@ export default function QsoEntry() {
         }
 
         const newCtxData = { ...contextData };
+        if (newCtxData.qso?.sig == 'SOTA') {
+            console.log('doing a SOTA');
+            let p = getSummitInfo(park);
+            p.then((apiData: Summit) => {
+                console.log(apiData);
+                newCtxData.summit = apiData;
+                if (newCtxData.qso != null) {
+                    newCtxData.qso.gridsquare = apiData.locator;
+                    newCtxData.qso.sig = 'SOTA';
+                    newCtxData.qso.sig_info = apiData.summitCode;
+                }
+                setData(newCtxData);
+            });
+        }
         if (newCtxData.park === null) {
             localFunc();
         }

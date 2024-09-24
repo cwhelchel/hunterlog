@@ -33,6 +33,10 @@ export default function Leaflet(props: ILeafletProps) {
         handleOnSetView();
     }, [lat, lon]);
 
+    React.useEffect(() => {
+        setLatLonFromSota();
+    }, [contextData.summit]);
+
     return (
         // Make sure you set the height and width of the map container otherwise the map won't show
         <MapContainer center={[lat, lon]}
@@ -60,6 +64,22 @@ export default function Leaflet(props: ILeafletProps) {
             //console.log(`Leaflet: park in db ${park}`);
             setLat(park.latitude);
             setLon(park.longitude);
+        }
+    }
+
+    function setLatLonFromSota() {
+        const summit = contextData.summit;
+        if (summit === undefined)
+            return;
+
+        console.log(`Leaflet: ${summit?.name}`);
+
+        if (summit?.latitude == null || summit?.longitude == null) {
+            console.log(`Leaflet: invalid lat/lon for ${summit}.`);
+        } else {
+            //console.log(`Leaflet: park in db ${park}`);
+            setLat(summit.latitude);
+            setLon(summit.longitude);
         }
     }
 };

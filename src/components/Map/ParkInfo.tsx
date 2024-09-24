@@ -10,9 +10,9 @@ import { checkApiResponse } from '../../util';
 export default function ParkInfo() {
     const { contextData, setData } = useAppContext();
     const [stats, setStats] = React.useState<ParkStats | null>(null);
-    const [hunts, setHunts]  = React.useState(0);
+    const [hunts, setHunts] = React.useState(0);
 
-    function fn() {
+    function onParkChange() {
         let park = contextData?.park?.reference || '';
         if (park === null || park === '')
             return;
@@ -28,7 +28,7 @@ export default function ParkInfo() {
     }
 
     React.useEffect(() => {
-        fn();
+        onParkChange();
     }, [contextData.park]);
 
     return (
@@ -37,16 +37,24 @@ export default function ParkInfo() {
                 {contextData && contextData?.park && (
                     parkTitle()
                 )}
-                 <hr role='separator' className='sep' />
+                {contextData && contextData?.summit && (
+                    summitTitle()
+                )}
+                <hr role='separator' className='sep' />
             </div>
             <LeafMap />
             <div id="parkStatsContainer">
-                {stats && (
+                {stats && contextData?.park && (
                     <>
                         {parkStats()} <br />
-                        {firstActivator()} <br/>
-                        {locationDesc()} <br/>
+                        {firstActivator()} <br />
+                        {locationDesc()} <br />
                         {parkHunts()}
+                    </>
+                )}
+                {contextData?.summit && (
+                    <>
+                        {summitInfo()} <br />
                     </>
                 )}
             </div>
@@ -70,14 +78,30 @@ export default function ParkInfo() {
         return <span>First activator: {contextData?.park?.firstActivator} on {contextData?.park?.firstActivationDate} </span>;
     }
     function locationDesc(): React.ReactNode {
-        return <span style={{overflow: "hidden"}}>LOC: {contextData?.park?.locationDesc}</span>;
+        return <span style={{ overflow: "hidden" }}>LOC: {contextData?.park?.locationDesc}</span>;
     }
     function parkHunts(): React.ReactNode {
         function getClassName(hunts: number) {
-            if (hunts == 0) 
+            if (hunts == 0)
                 return 'parkQsosNone';
             return 'parkQsos';
         }
         return <span className={getClassName(hunts)}>You have {hunts} QSOs for {contextData?.park?.reference} </span>;
+    }
+
+    function summitTitle(): any {
+        //const url = `https://pota.app/#/park/${contextData?.park?.reference}`;
+        const text = `${contextData?.summit?.summitCode} - ${contextData?.summit?.name}`;
+
+        return <span id="parkTitle">{text}</span>;
+    }
+
+    function summitInfo(): React.ReactNode {
+        return <>
+            <span>region: {contextData?.summit?.regionName}</span> <br/>
+            <span>assn: {contextData?.summit?.associationName} - {contextData?.summit?.associationCode}</span> <br/>
+            <span>points: {contextData?.summit?.points}</span> <br/>
+            <span>alt: {contextData?.summit?.altFt} ft - {contextData?.summit?.altM} m</span>
+        </>;
     }
 }

@@ -40,7 +40,6 @@ class Qso(Base):
         rst = self.get_default_rst(spot.mode)
         self.call = spot.activator
         self.name = name
-        self.state = self.get_state(spot.locationDesc)
         self.rst_sent = rst
         self.rst_recv = rst
         self.freq = spot.frequency
@@ -49,7 +48,14 @@ class Qso(Base):
         self.qso_date = spot.spotTime
         self.gridsquare = spot.grid6
         self.sig_info = spot.reference
-        self.sig = 'POTA'  # todo support SOTA
+
+        if spot.spot_source == 'POTA':
+            self.sig = 'POTA'
+            self.state = self.get_state(spot.locationDesc)
+        elif spot.spot_source == 'SOTA':
+            self.sig = 'SOTA'
+            self.state = ''
+            self.name = spot.name
 
     def get_default_rst(self, mode: str) -> str:
         if (mode in ["SSB", "PHONE"]):
