@@ -150,18 +150,7 @@ class DataBase:
         :param dict spots_json: the dict from the pota api
         :param dict sota_spots: the dict from the sota api
         '''
-        schema = SpotSchema()
-        self.session.execute(sa.text('DELETE FROM spots;'))
-        self.session.execute(sa.text('DELETE FROM comments;'))
-
-        # self._sq.insert_test_spot()  # testing code
-
-        for s in spots_json:
-            to_add: Spot = schema.load(s, session=self.session)
-            to_add.spot_source = 'POTA'
-            self.session.add(to_add)
-
-            # get meta data for this spot
+        def get_spot_metadata(to_add: Spot):
             park = self.parks.get_park(to_add.reference)
             if park is not None and park.hunts > 0:
                 to_add.park_hunts = park.hunts
@@ -178,6 +167,20 @@ class DataBase:
 
             to_add.hunted = hunted
             to_add.hunted_bands = bands
+
+        schema = SpotSchema()
+        self.session.execute(sa.text('DELETE FROM spots;'))
+        self.session.execute(sa.text('DELETE FROM comments;'))
+
+        # self._sq.insert_test_spot()  # testing code
+
+        for s in spots_json:
+            to_add: Spot = schema.load(s, session=self.session)
+            to_add.spot_source = 'POTA'
+            self.session.add(to_add)
+
+            # get meta data for this spot
+            get_spot_metadata(to_add)
 
             # sometimes locationDesc can be None. see GR-0071
             if to_add.locationDesc is not None \
@@ -213,6 +216,8 @@ class DataBase:
                     self.session.add(sota_to_add)
             else:
                 self.session.add(sota_to_add)
+
+            get_spot_metadata(sota_to_add)
 
         self.session.commit()
 

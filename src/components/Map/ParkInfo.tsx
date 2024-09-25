@@ -16,9 +16,12 @@ export default function ParkInfo() {
         let park = contextData?.park?.reference || '';
         if (park === null || park === '')
             return;
-        getParkStats(park).then((x: ParkStats) => {
-            setStats(x);
-        });
+
+        if (contextData?.park?.parktypeId != 0) {
+            getParkStats(park).then((x: ParkStats) => {
+                setStats(x);
+            });
+        }
 
         window.pywebview.api.get_park_hunts(park).then((j: string) => {
             let o = checkApiResponse(j, contextData, setData);
@@ -34,17 +37,17 @@ export default function ParkInfo() {
     return (
         <div id="parkInfo">
             <div id="parkTitleContainer">
-                {contextData && contextData?.park && (
+                {contextData && contextData?.park && contextData?.park?.parktypeId != 0 && (
                     parkTitle()
                 )}
-                {contextData && contextData?.summit && (
+                {contextData && contextData?.park?.parktypeDesc == 'SOTA SUMMIT' && (
                     summitTitle()
                 )}
                 <hr role='separator' className='sep' />
             </div>
             <LeafMap />
             <div id="parkStatsContainer">
-                {stats && contextData?.park && (
+                {stats && contextData?.park && contextData?.park?.parktypeId != 0 && (
                     <>
                         {parkStats()} <br />
                         {firstActivator()} <br />
@@ -52,9 +55,10 @@ export default function ParkInfo() {
                         {parkHunts()}
                     </>
                 )}
-                {contextData?.summit && (
+                {contextData?.park?.parktypeDesc == 'SOTA SUMMIT' && (
                     <>
                         {summitInfo()} <br />
+                        {parkHunts()}
                     </>
                 )}
             </div>
@@ -90,18 +94,21 @@ export default function ParkInfo() {
     }
 
     function summitTitle(): any {
-        //const url = `https://pota.app/#/park/${contextData?.park?.reference}`;
-        const text = `${contextData?.summit?.summitCode} - ${contextData?.summit?.name}`;
+        const url = `${contextData?.park?.website}`;
+        const text = `🗻 ${contextData?.park?.reference} - ${contextData?.park?.name}`;
 
-        return <span id="parkTitle">{text}</span>;
+        return <span id="parkTitle" onClick={() => {
+            window.open(url);
+        }}>{text}</span>;
     }
 
     function summitInfo(): React.ReactNode {
+        // for random summit info we hijack some of the not-displayed pieces of park info
         return <>
-            <span>region: {contextData?.summit?.regionName}</span> <br/>
-            <span>assn: {contextData?.summit?.associationName} - {contextData?.summit?.associationCode}</span> <br/>
-            <span>points: {contextData?.summit?.points}</span> <br/>
-            <span>alt: {contextData?.summit?.altFt} ft - {contextData?.summit?.altM} m</span>
+            <span>region: {contextData?.park?.locationName}</span> <br />
+            <span>entity: {contextData?.park?.entityName}</span> <br />
+            <span>points: {contextData?.park?.accessMethods}</span> <br />
+            <span>alt: {contextData?.park?.activationMethods}</span> <br />
         </>;
     }
 }

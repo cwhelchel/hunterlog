@@ -76,8 +76,54 @@ class ParkQuery:
             p.entityDeleted = park['entityDeleted']
             p.firstActivator = park['firstActivator']
             p.firstActivationDate = park['firstActivationDate']
-            p.firstActivationDate = park['firstActivationDate']
             p.website = park['website']
+
+        if not delay_commit:
+            self.session.commit()
+
+    def update_summit_data(self, summit: any, delay_commit: bool = False):
+        '''
+        Update or insert a "park" with info from SOTA api for a summit
+
+        :param any summit: the json for a SOTA summit returned from SOTA api
+        :param bool delay_commit: true to not commit the session
+        '''
+        if summit is None:
+            return
+
+        p = self.get_park(summit['summitCode'])
+
+        if p is None:
+            logging.debug(f"inserting new {summit['summitCode']}")
+            to_add = Park()
+            to_add.reference = summit['summitCode']
+            to_add.name = summit['name']
+            to_add.grid4 = summit['locator'][:4]
+            to_add.grid6 = summit['locator']
+            to_add.active = 1 if bool(summit['valid']) else 0
+            to_add.latitude = summit['latitude']
+            to_add.longitude = summit['longitude']
+            to_add.parkComments = summit['notes']
+            to_add.accessibility = ''
+            to_add.sensitivity = ''
+            to_add.accessMethods = f"{summit['points']}"
+            to_add.activationMethods = f"{summit['altM']} m - {summit['altFt']} ft"  # noqa E501
+            to_add.agencies = ''
+            to_add.agencyURLs = ''
+            to_add.parkURLs = ''
+            to_add.parktypeId = 0
+            to_add.parktypeDesc = 'SOTA SUMMIT'
+            to_add.locationDesc = summit['regionCode']
+            to_add.locationName = summit['regionName']
+            to_add.entityId = 0
+            to_add.entityName = summit['associationName']
+            to_add.referencePrefix = summit['regionCode']
+            to_add.entityDeleted = 0
+            to_add.firstActivator = ''
+            to_add.firstActivationDate = ''
+            to_add.website = f"https://www.sotadata.org.uk/en/summit/{summit['summitCode']}"  # noqa E501
+
+            self.session.add(to_add)
 
         if not delay_commit:
             self.session.commit()
@@ -107,6 +153,22 @@ class ParkQuery:
             schema.load(park, session=self.session, instance=p)
 
         self.session.commit()
+
+    def inc_summit_hunt(self, summit_ref: str) -> bool:
+        '''
+        Increment the hunt count of a summit "park" by one.
+
+        :param string summit_ref: the summit code of the "park"
+        :returns true if a summit "park" was found and updated.
+        '''
+        p = self.get_park(summit_ref)
+
+        if p is None:
+            return False
+
+        p.hunts += 1
+        self.session.commit()
+        return True
 
     def update_park_hunts(self, park: any, hunts: int,
                           delay_commit: bool = True):

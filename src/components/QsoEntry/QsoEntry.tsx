@@ -92,6 +92,8 @@ export default function QsoEntry() {
     }
 
     function spotActivator() {
+        if (qso.sig != 'POTA')
+            return;
         console.log(`spotting activator at ${contextData.park?.name}`);
         let park = qso.sig_info;
 
@@ -230,7 +232,11 @@ export default function QsoEntry() {
                     locationDesc: apiData.locationDesc,
                     firstActivator: apiData.firstActivator,
                     firstActivationDate: apiData.firstActivationDate,
-                    website: ''
+                    website: '',
+                    locationName: '',
+                    entityName: '',
+                    accessMethods: '',
+                    activationMethods: ''
                 };
 
                 newCtxData.park = x;

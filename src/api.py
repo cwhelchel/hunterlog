@@ -148,6 +148,40 @@ class JsApi:
         ps = ParkSchema()
         return ps.dumps(park)
 
+    def get_summit(self, ref: str, pull_from_sota: bool = True) -> str:
+        '''
+        Returns the JSON for the summit (same schema as park) if in the db
+
+        :param str ref: the SOTA summit reference string
+        :param bool pull_from_pota: True (default) to force API query for 
+            summit
+
+        :returns JSON of park object in db or None if not found
+        '''
+        if ref is None:
+            logging.error("get_summit: ref param was None")
+            return
+
+        logging.debug(f"get_park: getting summit {ref}")
+
+        summit = self.db.parks.get_park(ref)
+
+        if summit is None and pull_from_sota:
+            api_res = self.sota.get_summit(ref)
+            logging.debug(f"get_park: summit pulled from api {api_res}")
+            self.db.parks.update_summit_data(api_res)
+            summit = self.db.parks.get_park(ref)
+        # we dont import any SOTA qsos yet so not needed
+        # elif summit.name is None:
+        #     logging.debug(f"get_park: park Name was None {ref}")
+        #     api_res = self.pota.get_park(ref)
+        #     logging.debug(f"get_park: park from api {api_res}")
+        #     self.db.parks.update_park_data(api_res)
+        #     summit = self.db.parks.get_park(ref)
+
+        ps = ParkSchema()
+        return ps.dumps(summit)
+
     def get_park_hunts(self, ref: str) -> str:
         '''
         Returns a JSON object containing the number of QSOs with activators at
@@ -261,9 +295,17 @@ class JsApi:
         cfg = self.db.get_user_config()
 
         try:
-            park_json = self.pota.get_park(qso_data['sig_info'])
-            logging.debug(f"updating park stat for: {park_json}")
-            self.db.parks.inc_park_hunt(park_json)
+            if qso_data['sig'] == 'POTA':
+                park_json = self.pota.get_park(qso_data['sig_info'])
+                logging.debug(f"updating park stat for: {park_json}")
+                self.db.parks.inc_park_hunt(park_json)
+            elif qso_data['sig'] == 'SOTA':
+                summit_code = qso_data['sig_info']
+                ok = self.db.parks.inc_summit_hunt(summit_code)
+                if not ok:
+                    summit = self.sota.get_summit(summit_code)
+                    self.db.parks.update_summit_data(summit)
+                    self.db.parks.inc_summit_hunt(summit_code)
 
             qso_data['tx_pwr'] = cfg.default_pwr
             logging.debug(f"logging qso: {qso_data}")

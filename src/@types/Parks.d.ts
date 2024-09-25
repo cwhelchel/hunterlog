@@ -10,6 +10,10 @@ export interface Park {
     parktypeId: number;
     parktypeDesc: string;
     locationDesc: string;
+    locationName: string;
+    entityName: string;
+    accessMethods: string;
+    activationMethods: string;
     firstActivator: string;
     firstActivationDate: string;
     website: string;
