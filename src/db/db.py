@@ -193,8 +193,8 @@ class DataBase:
                     to_add.is_qrt = True
 
         for sota in sota_spots:
-            # the sota spots are returned in a descending spot time order. where
-            # the first spot is the newest. 
+            # the sota spots are returned in a descending spot time order.
+            # where the first spot is the newest.
             sota_to_add = Spot()
             sota_to_add.init_from_sota(sota)
 
@@ -314,7 +314,7 @@ class DataBase:
         if (s.spot_source == 'POTA'):
             a = self.get_activator(s.activator)
             name = a.name if a is not None else ""
-        elif s.spot_source == 'SOTA' :
+        elif s.spot_source == 'SOTA':
             name = s.name
             if s.grid4 == '':
                 sota_api = SotaApi()
@@ -353,13 +353,17 @@ class DataBase:
         logging.debug(f"db setting ATNO filter to {is_on}")
         self.only_new_on = is_on
 
+    def set_sig_filter(self, sig: str):
+        self.sig_filter = sig
+
     def _get_all_filters(self) -> list[sa.ColumnElement[bool]]:
         return self._get_band_filters() + \
             self._get_region_filters() + \
             self._get_location_filters() + \
             self._get_qrt_filter() + \
             self._get_hunted_filter() + \
-            self._get_only_new_filter()
+            self._get_only_new_filter() + \
+            self._get_sig_filter()
 
     def _get_band_filters(self) -> list[sa.ColumnElement[bool]]:
         band = Bands(self.band_filter)  # not sure why cast is needed
@@ -402,4 +406,11 @@ class DataBase:
         if new_filter:
             return [Spot.park_hunts == 0]  # noqa E712
         terms = []
+        return terms
+
+    def _get_sig_filter(self) -> list[sa.ColumnElement[bool]]:
+        sig = self.sig_filter
+        if (sig is None or sig == ''):
+            return []
+        terms = [Spot.spot_source == sig]
         return terms

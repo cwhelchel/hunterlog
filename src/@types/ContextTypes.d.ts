@@ -21,6 +21,7 @@ export interface ContextData {
     errorSeverity: string;
     themeMode: string;
     onlyNewFilter: boolean;
+    sigFilter: string;
     otherOperators: string;
 }
 

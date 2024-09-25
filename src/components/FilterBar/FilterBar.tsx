@@ -23,6 +23,7 @@ export const FilterBar = (props: IFilterBarPros) => {
     const [band, setBand] = React.useState('');
     const [region, setRegion] = React.useState('');
     const [location, setLocation] = React.useState('');
+    const [sig, setSig] = React.useState('');
     const [qrt, setQrt] = React.useState(true);
     const [hunted, setHunted] = React.useState(false);
     const [onlyNew, setOnlyNew] = React.useState(false);
@@ -53,6 +54,9 @@ export const FilterBar = (props: IFilterBarPros) => {
             setHuntedFilter((hf === "true"));
             let on = window.localStorage.getItem("ATNO_FILTER");
             setOnlyNewFilter((on === "true"));
+
+            let sf = window.localStorage.getItem("SIG_FILTER") || '';
+            setSigFilter(sf);
         };
     }, []);
 
@@ -81,6 +85,12 @@ export const FilterBar = (props: IFilterBarPros) => {
         window.localStorage.setItem("LOCATION_FILTER", l);
     }
 
+    const handleSigChange = (event: SelectChangeEvent) => {
+        let sig = event.target.value as string;
+        setSigFilter(sig);
+        window.localStorage.setItem("SIG_FILTER", sig);
+    }
+
     const handleClear = () => {
         setMode("");
         setBand("0");
@@ -93,11 +103,13 @@ export const FilterBar = (props: IFilterBarPros) => {
         window.pywebview.api.set_qrt_filter(true);
         window.pywebview.api.set_hunted_filter(false);
         window.pywebview.api.set_only_new_filter(false);
+        window.pywebview.api.set_sig_filter("");
         setRegion("");
         setLocation("");
         setQrt(true);
         setHunted(false);
         setOnlyNew(false);
+        setSig("");
 
         window.localStorage.setItem("BAND_FILTER", '0');
         window.localStorage.setItem("REGION_FILTER", '');
@@ -106,7 +118,7 @@ export const FilterBar = (props: IFilterBarPros) => {
         window.localStorage.setItem("QRT_FILTER", 'true');
         window.localStorage.setItem("HUNTED_FILTER", 'false');
         window.localStorage.setItem("ATNO_FILTER", 'false');
-        
+
         const next = {
             ...contextData,
             bandFilter: 0,
@@ -200,6 +212,16 @@ export const FilterBar = (props: IFilterBarPros) => {
         setLocation(l);
     }
 
+    function setSigFilter(sig: string) {
+        console.log("changing sig filt to: " + sig);
+        window.pywebview.api.set_sig_filter(sig);
+
+        let next = { ...contextData, locationFilter: sig };
+        setData(next);
+        setSig(sig);
+    }
+
+
     const StyledTypoGraphy = styled(Typography)(({ theme }) =>
         theme.unstable_sx({
             fontSize: {
@@ -277,6 +299,7 @@ export const FilterBar = (props: IFilterBarPros) => {
                         <MenuItem value='CW'>CW</MenuItem>
                         <MenuItem value='SSB'>SSB</MenuItem>
                         <MenuItem value='FT8'>FT8</MenuItem>
+                        <MenuItem value='FT4'>FT4</MenuItem>
                     </Select>
                 </FormControl>
                 <FormControl size='small'>
@@ -313,6 +336,21 @@ export const FilterBar = (props: IFilterBarPros) => {
                                 {loc}
                             </MenuItem>
                         ))}
+                    </Select>
+                </FormControl>
+                <FormControl size='small'>
+                    <StyledInputLabel id="sig-lbl">SIG</StyledInputLabel>
+                    <Select
+                        labelId="sig-lbl"
+                        id="sig"
+                        value={sig}
+                        variant='standard'
+                        sx={{ minWidth: 100 }}
+                        onChange={handleSigChange}
+                    >
+                        <MenuItem value=""><em>None</em></MenuItem>
+                        <MenuItem value='POTA'>POTA</MenuItem>
+                        <MenuItem value='SOTA'>SOTA</MenuItem>
                     </Select>
                 </FormControl>
                 <Button onClick={handleClear} variant="outlined"

@@ -343,6 +343,15 @@ class JsApi:
         logging.debug(f"api setting ATNO filter to: {filter_only_new}")
         self.db.set_only_new_filter(filter_only_new)
 
+    def set_sig_filter(self, sig_filter: str):
+        '''
+        Set the Special Interest Group (sig) filter.
+
+        :param string sig_filter: only POTA or SOTA
+        '''
+        logging.debug(f"api setting SIG filter to: {sig_filter}")
+        self.db.set_sig_filter(sig_filter)
+
     def update_activator_stats(self, callsign: str) -> int:
         j = self.pota.get_activator_stats(callsign)
 
