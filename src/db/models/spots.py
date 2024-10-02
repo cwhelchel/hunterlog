@@ -56,7 +56,7 @@ class Spot(Base):
         self.spotId = json['id']
         self.activator = json['activatorCallsign']
         self.frequency = float(json['frequency']) * 1000  # MHz to kHz
-        self.mode = json['mode']
+        self.mode = str(json['mode']).upper()
         self.reference = f"{json['associationCode']}/{json['summitCode']}"
         # parkName isnt really used use it for activator from sota
         self.parkName = json['activatorName']

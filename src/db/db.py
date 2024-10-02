@@ -195,6 +195,11 @@ class DataBase:
                 if re.match(r'.*qrt.*', to_add.comments.lower()):
                     to_add.is_qrt = True
 
+        if sota_spots is None:
+            logging.warning('sota spots object is Null')
+            self.session.commit()
+            return
+
         for sota in sota_spots:
             # the sota spots are returned in a descending spot time order.
             # where the first spot is the newest.

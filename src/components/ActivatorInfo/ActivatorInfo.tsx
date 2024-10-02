@@ -63,25 +63,28 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
         });
 
         const actCall = contextData?.qso?.call;
-        const q = window.pywebview.api.get_activator_stats(actCall);
 
-        q.then((r: string) => {
-            if (r === null) {
-                setActivator(defaultActData);
-                return;
-            }
+        if (actCall !== null && actCall !== '') {
+            const q = window.pywebview.api.get_activator_stats(actCall);
 
-            let j = checkApiResponse(r, contextData, setData)
-            if (j.success == false) {
-                setActivator(defaultActData);
-                return;
-            }
+            q.then((r: string) => {
+                if (r === null) {
+                    setActivator(defaultActData);
+                    return;
+                }
 
-            //console.log(`parsing activator data: ${r}`);
-            var x = JSON.parse(r) as ActivatorData;
-            //console.log(x);
-            setActivator(x);
-        });
+                let j = checkApiResponse(r, contextData, setData)
+                if (j.success == false) {
+                    setActivator(defaultActData);
+                    return;
+                }
+
+                //console.log(`parsing activator data: ${r}`);
+                var x = JSON.parse(r) as ActivatorData;
+                //console.log(x);
+                setActivator(x);
+            });
+        }
 
         let hunts = window.pywebview.api.get_activator_hunts(actCall);
         hunts.then((x: number) => {

@@ -35,3 +35,15 @@ export function getSummitInfo(summitCode: string): Promise<Summit> {
             return res as Summit;
         })
 }
+
+export function getStateFromLocDesc(locDesc: string): string {
+    let loc = locDesc.split(',')[0];
+
+    let arr = loc.split('-');
+    console.log(`${arr[0]} === ${arr[1]}`);
+
+    if (arr[0] === 'US' || arr[0] == 'CA') {
+        return arr[1];
+    }
+    return '';
+};

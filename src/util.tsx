@@ -58,3 +58,8 @@ export function setInfoMsg(msg: string, contextData: ContextData, setData: (d: C
     newCtxData.errorSeverity = 'info';
     setData(newCtxData);
 }
+
+export function checkReferenceForSota(ref: string) {
+    var regex = new RegExp('[a-zA-Z0-9]{2,3}\/[a-zA-Z0-9]{2}-[0-9]{3}');
+    return regex.test(ref);
+}

@@ -153,7 +153,7 @@ class JsApi:
         Returns the JSON for the summit (same schema as park) if in the db
 
         :param str ref: the SOTA summit reference string
-        :param bool pull_from_pota: True (default) to force API query for 
+        :param bool pull_from_pota: True (default) to force API query for
             summit
 
         :returns JSON of park object in db or None if not found
@@ -168,7 +168,7 @@ class JsApi:
 
         if summit is None and pull_from_sota:
             api_res = self.sota.get_summit(ref)
-            logging.debug(f"get_park: summit pulled from api {api_res}")
+            logging.debug(f"get_summit: summit pulled from api {api_res}")
             self.db.parks.update_summit_data(api_res)
             summit = self.db.parks.get_park(ref)
         # we dont import any SOTA qsos yet so not needed
@@ -329,6 +329,8 @@ class JsApi:
                 exc_info=log_ex)
             self.lock.release()
             return self._response(False, f"Error logging as ADIF: {log_ex}")
+
+        self.db.commit_session()
 
         self.lock.release()
 
