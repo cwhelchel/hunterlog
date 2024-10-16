@@ -1,10 +1,13 @@
 from datetime import datetime
+import logging as L
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 
 Base = declarative_base()
 engine = sa.create_engine("sqlite:///spots.db")
+
+log = L.getLogger("db.spots")
 
 
 class Spot(Base):
@@ -55,7 +58,12 @@ class Spot(Base):
     def init_from_sota(self, json: any):
         self.spotId = json['id']
         self.activator = json['activatorCallsign']
-        self.frequency = float(json['frequency']) * 1000  # MHz to kHz
+        try:
+            f = str(json['frequency']).replace(',', '.')  # locale fix
+            self.frequency = float(f) * 1000  # MHz to kHz
+        except Exception as ex:
+            log.warning('error reading sota freq', exc_info=ex)
+            self.frequency = 0.0
         self.mode = str(json['mode']).upper()
         self.reference = f"{json['associationCode']}/{json['summitCode']}"
         # parkName isnt really used use it for activator from sota
