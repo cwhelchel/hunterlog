@@ -140,6 +140,24 @@ class DataBase:
     def locations(self) -> LocationQuery:
         return self._lq
 
+    def get_spot_metadata(self, to_add: Spot):
+        park = self.parks.get_park(to_add.reference)
+        if park is not None and park.hunts > 0:
+            to_add.park_hunts = park.hunts
+        else:
+            to_add.park_hunts = 0
+
+        count = self.qsos.get_op_qso_count(to_add.activator)
+        to_add.op_hunts = count
+
+        hunted = self.qsos.get_spot_hunted_flag(
+            to_add.activator, to_add.frequency, to_add.reference)
+        bands = self.qsos.get_spot_hunted_bands(
+            to_add.activator, to_add.reference)
+
+        to_add.hunted = hunted
+        to_add.hunted_bands = bands
+
     def update_all_spots(self, spots_json, sota_spots):
         '''
         Updates all the spots in the database.
@@ -150,23 +168,6 @@ class DataBase:
         :param dict spots_json: the dict from the pota api
         :param dict sota_spots: the dict from the sota api
         '''
-        def get_spot_metadata(to_add: Spot):
-            park = self.parks.get_park(to_add.reference)
-            if park is not None and park.hunts > 0:
-                to_add.park_hunts = park.hunts
-            else:
-                to_add.park_hunts = 0
-
-            count = self.qsos.get_op_qso_count(to_add.activator)
-            to_add.op_hunts = count
-
-            hunted = self.qsos.get_spot_hunted_flag(
-                to_add.activator, to_add.frequency, to_add.reference)
-            bands = self.qsos.get_spot_hunted_bands(
-                to_add.activator, to_add.reference)
-
-            to_add.hunted = hunted
-            to_add.hunted_bands = bands
 
         schema = SpotSchema()
         self.session.execute(sa.text('DELETE FROM spots;'))
@@ -180,7 +181,7 @@ class DataBase:
             self.session.add(to_add)
 
             # get meta data for this spot
-            get_spot_metadata(to_add)
+            self.get_spot_metadata(to_add)
 
             # sometimes locationDesc can be None. see GR-0071
             if to_add.locationDesc is not None \
@@ -222,8 +223,23 @@ class DataBase:
             else:
                 self.session.add(sota_to_add)
 
-            get_spot_metadata(sota_to_add)
+            self.get_spot_metadata(sota_to_add)
 
+        self.session.commit()
+
+    def update_spot(self, spot_id: int, call: str, ref: str):
+        logging.info(f"doing single spot update {spot_id}")
+        to_mod: Spot = self.spots.get_spot(spot_id)
+
+        if to_mod is None:
+            logging.warning("update_spot: didn't find a spot for this id")
+            spot_id = self.spots.get_spot_by_actx(call, ref).spotId
+            to_mod = self.spots.get_spot(spot_id)
+            if to_mod is None:
+                self.session.commit()
+                return
+
+        self.get_spot_metadata(to_mod)
         self.session.commit()
 
     def update_activator_stat(self, activator_stat_json) -> int:

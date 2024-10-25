@@ -70,7 +70,7 @@ export default function QsoEntry() {
             let ops = multiOps.split(',');
 
             // log main window first then loop thru multiops
-            window.pywebview.api.log_qso(qso, false).then((x: string) => {
+            window.pywebview.api.log_qso(qso).then((x: string) => {
                 checkApiResponse(x, contextData, setData);
 
                 ops.forEach(async function (call) {
@@ -78,7 +78,7 @@ export default function QsoEntry() {
                     await sleep(100);
                     let newQso = { ...qso };
                     newQso.call = call.trim();
-                    window.pywebview.api.log_qso(newQso, false).then((x: string) => {
+                    window.pywebview.api.log_qso(newQso).then((x: string) => {
                         checkApiResponse(x, contextData, setData);
                     });
                 });
@@ -86,7 +86,12 @@ export default function QsoEntry() {
         } else {
             // log a single operator
             window.pywebview.api.log_qso(qso).then((x: string) => {
-                checkApiResponse(x, contextData, setData);
+                let json = checkApiResponse(x, contextData, setData);
+
+                window.pywebview.api.refresh_spot(contextData.spotId,  qso.call, qso.sig_info)
+                .then((x: string) => {
+                    window.pywebview.state.getSpots();
+                });
             });
         }
     }

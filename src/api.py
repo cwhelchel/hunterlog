@@ -280,14 +280,12 @@ class JsApi:
 
         return self._response(True, "Completed ADIF import")
 
-    def log_qso(self, qso_data, update_spots: bool = True):
+    def log_qso(self, qso_data):
         '''
         Logs the QSO to the database, adif file, and updates stats. Will force
         a reload of the currently displayed spots.
 
         :param any qso_data: dict of qso data from the UI
-        :param bool update_spots: True to query the spots api and refresh the
-            current spots
         '''
         logging.debug('acquiring lock to log qso')
         self.lock.acquire()
@@ -334,11 +332,27 @@ class JsApi:
 
         self.lock.release()
 
-        if update_spots:
-            self._do_update()
-            webview.windows[0].evaluate_js('window.pywebview.state.getSpots()')
-
         return self._response(True, "QSO logged successfully")
+
+    def refresh_spot(self, spot_id: int, call: str, ref: str):
+        '''
+        Refreshes the data for a given spot. If the spot_id is out of date from
+        a refresh, this will lookup the new spot by call and ref.
+
+        :param int spot_id: valid id of spot in db (this id from endpoints)
+        :param str call: callsign of activator
+        :param str ref:  sig_info ie. park reference
+
+        :return: see API._response(). `False` if a bad id was given
+        '''
+        logging.debug(f"spot id = {spot_id}")
+
+        if spot_id <= 0:
+            logging.warning('bad spot id passed to refresh_spot')
+            return self._response(False, "")
+
+        self.db.update_spot(spot_id, call, ref)
+        return self._response(True, "")
 
     def export_qsos(self):
         '''
@@ -527,6 +541,8 @@ class JsApi:
             json = self.pota.get_spots()
             sota = self.sota.get_spots()
             self.db.update_all_spots(json, sota)
+            self.curr_pota_spots = json
+            self.curr_sota_spots = sota
         except ConnectionError as con_ex:
             logging.warning("Connection error in do_update: ")
             logging.exception(con_ex)
