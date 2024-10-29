@@ -3,7 +3,7 @@ import logging as L
 
 # not having this in the file seemed to mess up logging to index.log
 # in index.py. alembic issue?
-logging = L.getLogger("upgrades")
+logging = L.getLogger(__name__)
 
 
 def do_upgrade():

@@ -5,7 +5,7 @@ from cachetools.func import ttl_cache
 from utils.callsigns import get_basecall
 from version import __version__
 
-logging = L.getLogger("potaApi")
+logging = L.getLogger(__name__)
 
 
 SPOT_URL = "https://api.pota.app/spot/activator"

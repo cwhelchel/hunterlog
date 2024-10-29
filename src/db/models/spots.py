@@ -7,7 +7,7 @@ from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 Base = declarative_base()
 engine = sa.create_engine("sqlite:///spots.db")
 
-log = L.getLogger("db.spots")
+log = L.getLogger(__name__)
 
 
 class Spot(Base):

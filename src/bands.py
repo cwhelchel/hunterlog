@@ -9,7 +9,7 @@ get_band(freq) for a method to take a freq and return a BAND enum.
 
 from enum import Enum
 import logging as L
-logging = L.getLogger("bands")
+logging = L.getLogger(__name__)
 
 
 class Bands(Enum):

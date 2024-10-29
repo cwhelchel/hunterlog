@@ -21,7 +21,7 @@ from version import __version__
 from cat import CAT
 from utils.distance import Distance
 
-logging = L.getLogger("api")
+logging = L.getLogger(__name__)
 # IDTOKENPAT = r"^.*CognitoIdentityServiceProvider\..+\.idToken=([\w\.-]*\;)"
 
 

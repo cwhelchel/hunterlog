@@ -7,7 +7,7 @@ from db.models.qsos import Qso
 
 import logging as L
 
-logging = L.getLogger('location_query')
+logging = L.getLogger(__name__)
 
 
 class LocationQuery:

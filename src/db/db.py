@@ -22,7 +22,7 @@ import upgrades
 
 Base = declarative_base()
 
-logging = L.getLogger("db")
+logging = L.getLogger(__name__)
 # show sql
 # L.getLogger('sqlalchemy.engine').setLevel(L.INFO)
 

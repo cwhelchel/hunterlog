@@ -11,7 +11,7 @@ import xmlrpc.client
 if __name__ == "__main__":
     print("I'm not the program you are looking for.")
 
-logger = logging.getLogger("cat")
+logger = logging.getLogger(__name__)
 
 
 class CAT:

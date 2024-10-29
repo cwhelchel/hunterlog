@@ -4,7 +4,7 @@ from cachetools.func import ttl_cache
 # import urllib.parse
 # from utils.callsigns import get_basecall
 
-logging = L.getLogger("sotaApi")
+logging = L.getLogger(__name__)
 
 # -1 gets last hour of spots
 SPOT_URL = "https://api2.sota.org.uk/api/spots/-1/all"
