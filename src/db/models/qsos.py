@@ -58,7 +58,7 @@ class Qso(Base):
             self.name = spot.name
 
     def get_default_rst(self, mode: str) -> str:
-        if (mode in ["SSB", "PHONE"]):
+        if (mode in ["SSB", "PHONE", "AM", "FM"]):
             return "59"
         if (mode == "CW"):
             return "599"

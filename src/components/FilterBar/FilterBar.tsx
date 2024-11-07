@@ -298,6 +298,8 @@ export const FilterBar = (props: IFilterBarPros) => {
                         <MenuItem value=""><em>None</em></MenuItem>
                         <MenuItem value='CW'>CW</MenuItem>
                         <MenuItem value='SSB'>SSB</MenuItem>
+                        <MenuItem value='AM'>AM</MenuItem>
+                        <MenuItem value='FM'>FM</MenuItem>
                         <MenuItem value='FT8'>FT8</MenuItem>
                         <MenuItem value='FT4'>FT4</MenuItem>
                     </Select>
