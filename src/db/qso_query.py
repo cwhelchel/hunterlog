@@ -33,17 +33,32 @@ class QsoQuery:
                 temp = temp[:-1]
             return temp
 
+        def check_float(input: str):
+            try:
+                float(input)
+            except ValueError:
+                return False
+            return True
+
         # passing in the QSO object from init_from_spot
         # doesn't seem to ever work. recreate a QSO object
         # and add it directly
         logging.debug(f"inserting qso: {qso}")
         q = Qso()
         q.call = qso['call']
+        if q.call is None or not q.call.strip():
+            raise ValueError("Empty Callsign")
         q.rst_sent = qso['rst_sent']
         q.rst_recv = qso['rst_recv']
         q.freq = qso['freq']
+        if q.freq is None or not q.freq.strip():
+            raise ValueError("Empty Frequency")
+        elif not check_float(q.freq):
+            raise ValueError("Invalid Frequency number")
         q.freq_rx = qso['freq_rx']
         q.mode = qso['mode']
+        if q.mode is None or not q.mode.strip():
+            raise ValueError("Empty Mode")
         q.comment = qso['comment']
         temp: str = trim_z(qso['qso_date'])
         q.qso_date = datetime.fromisoformat(temp)

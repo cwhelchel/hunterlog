@@ -1,9 +1,13 @@
+from datetime import datetime
+import logging as L
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 
 Base = declarative_base()
 engine = sa.create_engine("sqlite:///spots.db")
+
+log = L.getLogger(__name__)
 
 
 class Spot(Base):
@@ -46,8 +50,45 @@ class Spot(Base):
     act_cmts = sa.Column(sa.String, nullable=True)
     cw_wpm = sa.Column(sa.Integer, nullable=True)
 
+    spot_source = sa.Column(sa.String)
+
     def __repr__(self):
         return "<spot(id={self.spotId!r})>".format(self=self)
+
+    def init_from_sota(self, json: any):
+        self.spotId = json['id']
+        self.activator = json['activatorCallsign']
+        try:
+            f = str(json['frequency']).replace(',', '.')  # locale fix
+            self.frequency = float(f) * 1000  # MHz to kHz
+        except Exception as ex:
+            log.warning('error reading sota freq', exc_info=ex)
+            self.frequency = 0.0
+        self.mode = str(json['mode']).upper()
+        self.reference = f"{json['associationCode']}/{json['summitCode']}"
+        # parkName isnt really used use it for activator from sota
+        self.parkName = json['activatorName']
+        try:
+            temp = datetime.strptime(json['timeStamp'], "%Y-%m-%dT%H:%M:%S.%f")
+        except ValueError:
+            temp = datetime.strptime(json['timeStamp'], "%Y-%m-%dT%H:%M:%S")
+        self.spotTime = temp
+        self.spotter = json['callsign']
+        self.comments = json['comments']
+        self.source = json['callsign']
+        self.invalid = False
+        self.name = json['summitDetails']
+        self.locationDesc = json['associationCode']
+        self.grid4 = ''
+        self.grid6 = ''
+        self.latitude = 0.0
+        self.longitude = 0.0
+        self.count = 0
+        self.expire = 0
+        self.spot_source = 'SOTA'
+        self.hunted_bands = ""
+        self.is_qrt = False
+        self.act_cmts = ''
 
 
 class SpotSchema(SQLAlchemyAutoSchema):

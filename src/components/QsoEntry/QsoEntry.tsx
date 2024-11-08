@@ -10,10 +10,11 @@ import utc from 'dayjs/plugin/utc';
 import './QsoEntry.scss'
 import QsoTimeEntry from './QsoTimeEntry';
 import { Qso } from '../../@types/QsoTypes';
-import { checkApiResponse } from '../../util';
-import { getParkInfo } from '../../pota';
+import { checkApiResponse, checkReferenceForSota } from '../../util';
+import { getParkInfo, getStateFromLocDesc, getSummitInfo } from '../../pota';
 import { Park } from '../../@types/Parks';
 import { ParkInfo } from '../../@types/PotaTypes';
+import { Summit } from '../../@types/Summit';
 
 dayjs.extend(utc);
 
@@ -48,6 +49,8 @@ export default function QsoEntry() {
     const { contextData, setData } = useAppContext();
 
     function logQso() {
+        const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
         console.log(`logging qso at ${contextData.park?.name}`);
 
         if (qso.sig_info !== undefined && qso.sig_info !== "") {
@@ -55,7 +58,7 @@ export default function QsoEntry() {
             let loc = contextData.park?.locationDesc;
             let cmt = qso.comment ?? '';
             let name = `${contextData.park?.name} ${contextData.park?.parktypeDesc}`;
-            qso.comment = `[POTA ${qso.sig_info} ${loc} ${qso.gridsquare} ${name}] ` + cmt;
+            qso.comment = `[${qso.sig} ${qso.sig_info} ${loc} ${qso.gridsquare} ${name}] ` + cmt;
         }
 
         qso.time_on = (qsoTime) ? qsoTime.toISOString() : dayjs().toISOString();
@@ -63,35 +66,39 @@ export default function QsoEntry() {
 
         let multiOps = otherOps;
 
-        // TODO: handle other ops string
-
         if (multiOps !== null && multiOps != '') {
             let ops = multiOps.split(',');
 
             // log main window first then loop thru multiops
             window.pywebview.api.log_qso(qso).then((x: string) => {
                 checkApiResponse(x, contextData, setData);
+
+                ops.forEach(async function (call) {
+                    console.log(`logging multiop QSO: ${call}`);
+                    await sleep(100);
+                    let newQso = { ...qso };
+                    newQso.call = call.trim();
+                    window.pywebview.api.log_qso(newQso).then((x: string) => {
+                        checkApiResponse(x, contextData, setData);
+                    });
+                });
             });
+        } else {
+            // log a single operator
+            window.pywebview.api.log_qso(qso).then((x: string) => {
+                let json = checkApiResponse(x, contextData, setData);
 
-            const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-            ops.forEach(async function (call) {
-                console.log(`logging multiop QSO: ${call}`);
-                await sleep(100);
-                let newQso = { ...qso };
-                newQso.call = call.trim();
-                window.pywebview.api.log_qso(newQso).then((x: string) => {
-                    checkApiResponse(x, contextData, setData);
+                window.pywebview.api.refresh_spot(contextData.spotId,  qso.call, qso.sig_info)
+                .then((x: string) => {
+                    window.pywebview.state.getSpots();
                 });
             });
         }
-
-        window.pywebview.api.log_qso(qso).then((x: string) => {
-            checkApiResponse(x, contextData, setData);
-        });
     }
 
     function spotActivator() {
+        if (qso.sig != 'POTA')
+            return;
         console.log(`spotting activator at ${contextData.park?.name}`);
         let park = qso.sig_info;
 
@@ -202,18 +209,59 @@ export default function QsoEntry() {
         if (park === null || park === '')
             return;
 
-        function localGetState(locDesc: string): string {
-            let loc = locDesc.split(',')[0];
-
-            let arr = loc.split('-');
-            console.log(`${arr[0]} === ${arr[1]}`);
-
-            if (arr[0] === 'US' || arr[0] == 'CA') {
-                return arr[1];
+        function updateQsoData(grid6: string, sig: string, sig_info: string, state: string) {
+            function setLocalQso() 
+            {
+                let newQso = { ...qso };
+                newQso.gridsquare = grid6;
+                newQso.sig = sig;
+                newQso.sig_info = sig_info;
+                newQso.state = state;
+                setQso(newQso);
+                return newQso;
             }
-            return '';
-        };
-        function localFunc(): any {
+
+            if (newCtxData.qso != null) {
+                // a qso object exists in current context. update that one
+                newCtxData.qso.gridsquare = grid6;
+                newCtxData.qso.sig = sig;
+                newCtxData.qso.sig_info = sig_info;
+                newCtxData.qso.state = state; 
+                setData(newCtxData);
+
+                setLocalQso();
+            }
+            else {
+                let newQso = setLocalQso();
+
+                // create a qso object in context data
+                newCtxData.qso = newQso;
+                setData(newCtxData);
+            }
+        }
+
+        function getRefInfo(): any {
+            let isSota = checkReferenceForSota(park);
+
+            if (isSota) {
+                console.log('doing a SOTA');
+
+                window.pywebview.api.get_summit(park)
+                    .then((r: string) => {
+                        let summit = JSON.parse(r) as Park;
+                        newCtxData.park = summit;
+
+                        updateQsoData(
+                            summit.grid6,
+                            'SOTA',
+                            summit.reference,
+                            ''
+                        );
+                    });
+                return;
+            }
+
+            // TODO: why not use api func to pull from db / from api?
             let p = getParkInfo(park);
             p.then((apiData: ParkInfo) => {
                 let x: Park = {
@@ -225,40 +273,37 @@ export default function QsoEntry() {
                     latitude: apiData.latitude,
                     longitude: apiData.longitude,
                     parkComments: '',
-                    parktypeId: 0,
+                    parktypeId: apiData.parktypeId,
                     parktypeDesc: apiData.parktypeDesc,
                     locationDesc: apiData.locationDesc,
                     firstActivator: apiData.firstActivator,
                     firstActivationDate: apiData.firstActivationDate,
-                    website: ''
+                    website: '',
+                    locationName: '',
+                    entityName: '',
+                    accessMethods: '',
+                    activationMethods: ''
                 };
 
                 newCtxData.park = x;
 
-                if (newCtxData.qso != null) {
-                    newCtxData.qso.gridsquare = apiData.grid6;
-                    newCtxData.qso.sig = 'POTA';
-                    newCtxData.qso.sig_info = apiData.reference;
-                    newCtxData.qso.state = localGetState(apiData.locationDesc);
-                    setData(newCtxData);
-                }
-
-                let newQso = { ...qso };
-                newQso.gridsquare = apiData.grid6;
-                newQso.sig = 'POTA';
-                newQso.sig_info = apiData.reference;
-                newQso.state = localGetState(apiData.locationDesc);
-
-                setQso(newQso);
+                updateQsoData(
+                    apiData.grid6,
+                    'POTA',
+                    apiData.reference,
+                    getStateFromLocDesc(apiData.locationDesc)
+                );
             });
         }
 
         const newCtxData = { ...contextData };
+
         if (newCtxData.park === null) {
-            localFunc();
+            getRefInfo();
         }
         else if (newCtxData.park.reference != park) {
-            localFunc();
+            // user entered different park
+            getRefInfo();
         }
     };
 

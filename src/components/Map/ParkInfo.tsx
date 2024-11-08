@@ -10,15 +10,18 @@ import { checkApiResponse } from '../../util';
 export default function ParkInfo() {
     const { contextData, setData } = useAppContext();
     const [stats, setStats] = React.useState<ParkStats | null>(null);
-    const [hunts, setHunts]  = React.useState(0);
+    const [hunts, setHunts] = React.useState(0);
 
-    function fn() {
+    function onParkChange() {
         let park = contextData?.park?.reference || '';
         if (park === null || park === '')
             return;
-        getParkStats(park).then((x: ParkStats) => {
-            setStats(x);
-        });
+
+        if (contextData?.park?.parktypeId != 0) {
+            getParkStats(park).then((x: ParkStats) => {
+                setStats(x);
+            });
+        }
 
         window.pywebview.api.get_park_hunts(park).then((j: string) => {
             let o = checkApiResponse(j, contextData, setData);
@@ -28,24 +31,33 @@ export default function ParkInfo() {
     }
 
     React.useEffect(() => {
-        fn();
+        onParkChange();
     }, [contextData.park]);
 
     return (
         <div id="parkInfo">
             <div id="parkTitleContainer">
-                {contextData && contextData?.park && (
+                {contextData && contextData?.park && contextData?.park?.parktypeId != 0 && (
                     parkTitle()
                 )}
-                 <hr role='separator' className='sep' />
+                {contextData && contextData?.park?.parktypeDesc == 'SOTA SUMMIT' && (
+                    summitTitle()
+                )}
+                <hr role='separator' className='sep' />
             </div>
             <LeafMap />
             <div id="parkStatsContainer">
-                {stats && (
+                {stats && contextData?.park && contextData?.park?.parktypeId != 0 && (
                     <>
                         {parkStats()} <br />
-                        {firstActivator()} <br/>
-                        {locationDesc()} <br/>
+                        {firstActivator()} <br />
+                        {locationDesc()} <br />
+                        {parkHunts()}
+                    </>
+                )}
+                {contextData?.park?.parktypeDesc == 'SOTA SUMMIT' && (
+                    <>
+                        {summitInfo()} <br />
                         {parkHunts()}
                     </>
                 )}
@@ -70,14 +82,33 @@ export default function ParkInfo() {
         return <span>First activator: {contextData?.park?.firstActivator} on {contextData?.park?.firstActivationDate} </span>;
     }
     function locationDesc(): React.ReactNode {
-        return <span style={{overflow: "hidden"}}>LOC: {contextData?.park?.locationDesc}</span>;
+        return <span style={{ overflow: "hidden" }}>LOC: {contextData?.park?.locationDesc}</span>;
     }
     function parkHunts(): React.ReactNode {
         function getClassName(hunts: number) {
-            if (hunts == 0) 
+            if (hunts == 0)
                 return 'parkQsosNone';
             return 'parkQsos';
         }
         return <span className={getClassName(hunts)}>You have {hunts} QSOs for {contextData?.park?.reference} </span>;
+    }
+
+    function summitTitle(): any {
+        const url = `${contextData?.park?.website}`;
+        const text = `🗻 ${contextData?.park?.reference} - ${contextData?.park?.name}`;
+
+        return <span id="parkTitle" onClick={() => {
+            window.open(url);
+        }}>{text}</span>;
+    }
+
+    function summitInfo(): React.ReactNode {
+        // for random summit info we hijack some of the not-displayed pieces of park info
+        return <>
+            <span>region: {contextData?.park?.locationName}</span> <br />
+            <span>entity: {contextData?.park?.entityName}</span> <br />
+            <span>points: {contextData?.park?.accessMethods}</span> <br />
+            <span>alt: {contextData?.park?.activationMethods}</span> <br />
+        </>;
     }
 }

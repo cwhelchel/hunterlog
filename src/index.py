@@ -1,18 +1,39 @@
 import os
+import sys
 import threading
 import webview
 import logging
+import logging.config
 import platform
 import argparse
+from pathlib import Path
 
 from api import JsApi
 
-# put filename='index.log' for deployment
-logging.basicConfig(filename='index.log',
-                    encoding='utf-8',
-                    format='%(asctime)s = %(levelname)-7.7s [%(name)s]: %(message)s',  # noqa E501
-                    level=logging.DEBUG)
-# logging.basicConfig(level=logging.DEBUG)
+
+def configure_logging():
+
+    def get_app_global_path():
+        '''stolen from alembic/versions/__init__.py'''
+        if getattr(sys, 'frozen', False):
+            return os.path.abspath(os.path.dirname(sys.executable))
+        elif __file__:
+            # were running from source (npm run start) and this file is in
+            # so we need to back up a little so the code works
+            return os.path.dirname(__file__) + "../../"
+
+    conf = Path(get_app_global_path(), 'logging.conf')
+    if conf.exists():
+        logging.config.fileConfig(fname=conf, disable_existing_loggers=False)
+    else:
+        logging.basicConfig(
+            filename='index.log',
+            encoding='utf-8',
+            format='%(asctime)s = %(levelname)-7.7s [%(name)s]: %(message)s',  # noqa E501
+            level=logging.DEBUG)
+
+
+configure_logging()
 
 the_api = JsApi()
 

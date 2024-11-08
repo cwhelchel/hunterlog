@@ -43,3 +43,8 @@ exe = EXE(pyz,
           target_arch=None,
           codesign_identity=None,
           entitlements_file=None )
+
+
+import shutil
+
+shutil.copyfile('logging.conf', '{0}/logging.conf'.format(DISTPATH))

@@ -14,13 +14,14 @@ from db.models.spot_comments import SpotCommentSchema
 from db.models.spots import SpotSchema
 from db.models.user_config import UserConfigSchema
 from pota import PotaApi, PotaStats
+from sota import SotaApi
 from utils.adif import AdifLog
 from version import __version__
 
 from cat import CAT
 from utils.distance import Distance
 
-logging = L.getLogger("api")
+logging = L.getLogger(__name__)
 # IDTOKENPAT = r"^.*CognitoIdentityServiceProvider\..+\.idToken=([\w\.-]*\;)"
 
 
@@ -29,6 +30,7 @@ class JsApi:
         self.lock = threading.Lock()
         self.db = DataBase()
         self.pota = PotaApi()
+        self.sota = SotaApi()
         self.adif_log = AdifLog()
         logging.debug("init CAT...")
         cfg = self.db.get_user_config()
@@ -65,27 +67,41 @@ class JsApi:
 
         :param int spot_id: spot id. pk in db
         '''
+        self.lock.acquire()
         spot = self.db.spots.get_spot(spot_id)
+
+        if spot is None:
+            self.lock.release()
+            return
+
+        if spot.spot_source == 'SOTA':
+            self.lock.release()
+            return
+
         comms = self.pota.get_spot_comments(spot.activator, spot.reference)
         try:
-            self.lock.acquire()
             self.db.insert_spot_comments(spot.activator, spot.reference, comms)
         finally:
             self.lock.release()
 
     def get_qso_from_spot(self, id: int):
-        logging.debug(f'py getting qso data from {id}')
+        self.lock.acquire()
+
         q = self.db.build_qso_from_spot(id)
         if q is None:
             return {"success": False}
 
         cfg = self.db.get_user_config()
-        dist = Distance.distance(cfg.my_grid6, q.gridsquare)
-        bearing = Distance.bearing(cfg.my_grid6, q.gridsquare)
-        q.distance = dist
-        q.bearing = bearing
+        if q.gridsquare:
+            dist = Distance.distance(cfg.my_grid6, q.gridsquare)
+            bearing = Distance.bearing(cfg.my_grid6, q.gridsquare)
+            q.distance = dist
+            q.bearing = bearing
         qs = QsoSchema()
-        return qs.dumps(q)
+        result = qs.dumps(q)
+
+        self.lock.release()
+        return result
 
     def get_activator_stats(self, callsign):
         logging.debug("getting activator stats...")
@@ -131,6 +147,40 @@ class JsApi:
 
         ps = ParkSchema()
         return ps.dumps(park)
+
+    def get_summit(self, ref: str, pull_from_sota: bool = True) -> str:
+        '''
+        Returns the JSON for the summit (same schema as park) if in the db
+
+        :param str ref: the SOTA summit reference string
+        :param bool pull_from_pota: True (default) to force API query for
+            summit
+
+        :returns JSON of park object in db or None if not found
+        '''
+        if ref is None:
+            logging.error("get_summit: ref param was None")
+            return
+
+        logging.debug(f"get_park: getting summit {ref}")
+
+        summit = self.db.parks.get_park(ref)
+
+        if summit is None and pull_from_sota:
+            api_res = self.sota.get_summit(ref)
+            logging.debug(f"get_summit: summit pulled from api {api_res}")
+            self.db.parks.update_summit_data(api_res)
+            summit = self.db.parks.get_park(ref)
+        # we dont import any SOTA qsos yet so not needed
+        # elif summit.name is None:
+        #     logging.debug(f"get_park: park Name was None {ref}")
+        #     api_res = self.pota.get_park(ref)
+        #     logging.debug(f"get_park: park from api {api_res}")
+        #     self.db.parks.update_park_data(api_res)
+        #     summit = self.db.parks.get_park(ref)
+
+        ps = ParkSchema()
+        return ps.dumps(summit)
 
     def get_park_hunts(self, ref: str) -> str:
         '''
@@ -243,9 +293,17 @@ class JsApi:
         cfg = self.db.get_user_config()
 
         try:
-            park_json = self.pota.get_park(qso_data['sig_info'])
-            logging.debug(f"updating park stat for: {park_json}")
-            self.db.parks.inc_park_hunt(park_json)
+            if qso_data['sig'] == 'POTA':
+                park_json = self.pota.get_park(qso_data['sig_info'])
+                logging.debug(f"updating park stat for: {park_json}")
+                self.db.parks.inc_park_hunt(park_json)
+            elif qso_data['sig'] == 'SOTA':
+                summit_code = qso_data['sig_info']
+                ok = self.db.parks.inc_summit_hunt(summit_code)
+                if not ok:
+                    summit = self.sota.get_summit(summit_code)
+                    self.db.parks.update_summit_data(summit)
+                    self.db.parks.inc_summit_hunt(summit_code)
 
             qso_data['tx_pwr'] = cfg.default_pwr
             logging.debug(f"logging qso: {qso_data}")
@@ -254,23 +312,47 @@ class JsApi:
             logging.error("Error logging QSO to db:")
             logging.exception(ex)
             self.lock.release()
-            return self._response(False, "Error logging QSO.", ext=str(ex))
+            return self._response(False, f"Error logging QSO: {ex}")
 
         # get the data to log to the adif file and remote adif host
         qso = self.db.qsos.get_qso(id)
         act = self.db.get_activator_name(qso_data['call'])
         qso.name = act if act is not None else 'ERROR NO NAME'
-        self.adif_log.log_qso_and_send(qso, cfg)
 
-        j = self.pota.get_spots()
-        self.db.update_all_spots(j)
+        try:
+            self.adif_log.log_qso_and_send(qso, cfg)
+        except Exception as log_ex:
+            logging.exception(
+                msg="Error logging QSO to as adif (local/remote):",
+                exc_info=log_ex)
+            self.lock.release()
+            return self._response(False, f"Error logging as ADIF: {log_ex}")
+
+        self.db.commit_session()
 
         self.lock.release()
 
-        webview.windows[0].evaluate_js(
-            'window.pywebview.state.getSpots()')
-
         return self._response(True, "QSO logged successfully")
+
+    def refresh_spot(self, spot_id: int, call: str, ref: str):
+        '''
+        Refreshes the data for a given spot. If the spot_id is out of date from
+        a refresh, this will lookup the new spot by call and ref.
+
+        :param int spot_id: valid id of spot in db (this id from endpoints)
+        :param str call: callsign of activator
+        :param str ref:  sig_info ie. park reference
+
+        :return: see API._response(). `False` if a bad id was given
+        '''
+        logging.debug(f"spot id = {spot_id}")
+
+        if spot_id <= 0:
+            logging.warning('bad spot id passed to refresh_spot')
+            return self._response(False, "")
+
+        self.db.update_spot(spot_id, call, ref)
+        return self._response(True, "")
 
     def export_qsos(self):
         '''
@@ -284,8 +366,12 @@ class JsApi:
             log = AdifLog(filename=f"{dt}_export.adi")
             for q in qs:
                 log.log_qso(q, cfg)
-        except Exception:
+
+            return self._response(True, "QSOs exported successfully")
+        except Exception as ex:
             logging.exception("Error exporting the DB")
+            return self._response(
+                False, "Error exporting QSOs from DB", ext=str(ex))
 
     def set_user_config(self, config_json: any):
         logging.debug(f"setting config {config_json}")
@@ -314,6 +400,15 @@ class JsApi:
     def set_only_new_filter(self, filter_only_new: bool):
         logging.debug(f"api setting ATNO filter to: {filter_only_new}")
         self.db.set_only_new_filter(filter_only_new)
+
+    def set_sig_filter(self, sig_filter: str):
+        '''
+        Set the Special Interest Group (sig) filter.
+
+        :param string sig_filter: only POTA or SOTA
+        '''
+        logging.debug(f"api setting SIG filter to: {sig_filter}")
+        self.db.set_sig_filter(sig_filter)
 
     def update_activator_stats(self, callsign: str) -> int:
         j = self.pota.get_activator_stats(callsign)
@@ -345,11 +440,11 @@ class JsApi:
             return self._response(False, "CAT control failure.")
 
         cfg = self.db.get_user_config()
-        x = float(freq) * 1000.0
-        logging.debug(f"adjusted freq {x}")
-        if mode == "SSB" and x >= 10000000:
+        hrz = float(freq) * 1000.0
+        logging.debug(f"adjusted freq {hrz}")
+        if mode == "SSB" and hrz >= 10000000:
             mode = "USB"
-        elif mode == "SSB" and x < 10000000:
+        elif mode == "SSB" and hrz < 10000000:
             mode = "LSB"
         elif mode == "CW":
             mode = cfg.cw_mode
@@ -357,7 +452,7 @@ class JsApi:
             mode = cfg.ftx_mode
         logging.debug(f"adjusted mode {mode}")
         self.cat.set_mode(mode)
-        self.cat.set_vfo(x)
+        self.cat.set_vfo(hrz)
 
         return self._response(True, "")
 
@@ -404,10 +499,8 @@ class JsApi:
         with open("park_export.json", "w") as out:
             out.write(data)
 
-        return json.dumps({
-            'success': True,
-            'message': "park data exported successfully",
-        })
+        return self._response(
+            True, "Park data exported successfully")
 
     def import_park_data(self) -> str:
         '''
@@ -422,18 +515,20 @@ class JsApi:
             .create_file_dialog(
                 webview.OPEN_DIALOG,
             file_types=ft)
+
         if not filename:
-            return json.dumps({'success': True, 'message': "user cancel"})
+            # user cancelled
+            return self._response(True, "")
 
         with open(filename[0], "r") as input:
             text = input.read()
             obj = json.loads(text)
             self.db.parks.import_park_data(obj)
 
-        return json.dumps({
-            'success': True,
-            'message': "park data import successfully",
-        })
+        logging.debug("import_park_data: import finished")
+
+        return self._response(
+            True, "Park data imported successfully", persist=True)
 
     def _do_update(self):
         '''
@@ -444,7 +539,10 @@ class JsApi:
 
         try:
             json = self.pota.get_spots()
-            self.db.update_all_spots(json)
+            sota = self.sota.get_spots()
+            self.db.update_all_spots(json, sota)
+            self.curr_pota_spots = json
+            self.curr_sota_spots = sota
         except ConnectionError as con_ex:
             logging.warning("Connection error in do_update: ")
             logging.exception(con_ex)

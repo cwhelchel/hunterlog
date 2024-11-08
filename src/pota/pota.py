@@ -1,10 +1,11 @@
 import requests
 import logging as L
 import urllib.parse
+from cachetools.func import ttl_cache
 from utils.callsigns import get_basecall
 from version import __version__
 
-logging = L.getLogger("potaApi")
+logging = L.getLogger(__name__)
 
 
 SPOT_URL = "https://api.pota.app/spot/activator"
@@ -40,8 +41,15 @@ class Api():
             json = response.json()
             return json
 
+    @ttl_cache(ttl=6*60*60)  # 6 hours of cache
     def get_activator_stats(self, activator: str):
-        '''Return all spot + comments from a given activation'''
+        '''
+        Return the pota stats for an activator's callsign. Func results are
+        cached for 6 hours.
+
+        :param str activator: callsign of activator
+        :returns: json activator stats.
+        '''
         s = get_basecall(activator)
 
         url = ACTIVATOR_URL.format(call=s)
@@ -52,7 +60,15 @@ class Api():
         else:
             return None
 
+    @ttl_cache(ttl=24*60*60)  # 24 hours of cache
     def get_park(self, park_ref: str):
+        '''
+        Return the pota stats for an activator's callsign. Func results are
+        cached for 24 hours.
+
+        :param str activator: callsign of activator
+        :returns: json activator stats.
+        '''
         url = PARK_URL.format(park=park_ref)
         response = requests.get(url)
         if response.status_code == 200:

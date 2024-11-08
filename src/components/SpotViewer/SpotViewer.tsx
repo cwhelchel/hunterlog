@@ -3,6 +3,8 @@ import Button from '@mui/material/Button';
 import { Backdrop, Badge, CircularProgress, styled } from '@mui/material';
 import { DataGrid, GridColDef, GridValueGetterParams, GridValueFormatterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams, GridRowClassNameParams, GridToolbar, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarColumnsButton, GridToolbarQuickFilter } from '@mui/x-data-grid';
 import { GridEventListener } from '@mui/x-data-grid';
+import LandscapeIcon from '@mui/icons-material/Landscape';
+import ParkIcon from '@mui/icons-material/Park';
 
 import { useAppContext } from '../AppContext';
 
@@ -17,6 +19,8 @@ import SpotCommentsButton from './SpotComments';
 import { Park } from '../../@types/Parks';
 import SpotTimeCell from './SpotTime';
 import { SpotComments } from '../../@types/SpotComments';
+import { getSummitInfo } from '../../pota';
+import { Summit } from '../../@types/Summit';
 
 // https://mui.com/material-ui/react-table/
 
@@ -81,7 +85,7 @@ const columns: GridColDef[] = [
         }
     },
     {
-        field: 'reference', headerName: 'Park', width: 400,
+        field: 'reference', headerName: 'Reference', width: 400,
         renderCell: (x) => {
             return (
                 <Badge
@@ -115,6 +119,20 @@ const columns: GridColDef[] = [
             return (
                 <HuntedCheckbox hunted={x.row.hunted} hunted_bands={x.row.hunted_bands} />
             )
+        }
+    },
+    {
+        field: 'sig', headerName: 'SIG', width: 100,
+        renderCell: (x) => {
+            return <>
+                {x.row.spot_source == 'SOTA' && (
+                    <LandscapeIcon color='secondary'/>
+                )}
+                {x.row.spot_source == 'POTA' && (
+                    <ParkIcon color='primary' />
+                )}
+                <span id="sig">{x.row.spot_source}</span>
+            </>
         }
     }
 ];
@@ -193,23 +211,51 @@ export default function SpotViewer() {
     function getQsoData(id: number) {
         // use the spot to generate qso data (unsaved)
         const q = window.pywebview.api.get_qso_from_spot(id);
-        //console.log(q);
+
         q.then((r: any) => {
             if (r['success'] == false)
                 return;
             var x = JSON.parse(r) as Qso;
-            window.pywebview.api.get_park(x.sig_info)
-                .then((r: string) => {
-                    let p = JSON.parse(r) as Park;
-                    const newCtxData = { ...contextData };
-                    newCtxData.spotId = id;
-                    newCtxData.qso = x;
-                    newCtxData.park = p;
-                    getOtherOps(id).then((oo) => {
-                        newCtxData.otherOperators = oo;
+            //console.log("got qso:" + r);
+
+            if (x.sig == 'POTA') {
+                window.pywebview.api.get_park(x.sig_info)
+                    .then((r: string) => {
+                        let p = JSON.parse(r) as Park;
+                        const newCtxData = { ...contextData };
+                        newCtxData.spotId = id;
+                        newCtxData.qso = x;
+                        newCtxData.park = p;
+                        newCtxData.summit = null;
+                        getOtherOps(id).then((oo) => {
+                            newCtxData.otherOperators = oo;
+                            setData(newCtxData);
+                        });
+                    });
+            } else if (x.sig == 'SOTA') {
+
+                window.pywebview.api.get_summit(x.sig_info)
+                    .then((r: string) => {
+                        let summit = JSON.parse(r) as Park;
+                        const newCtxData = { ...contextData };
+                        newCtxData.spotId = id;
+                        newCtxData.qso = x;
+                        //newCtxData.summit = summit;
+                        newCtxData.park = summit;
                         setData(newCtxData);
                     });
-                });
+
+                // getSummitInfo(x.sig_info).then((summit: Summit) => {
+                //     console.log("got summit: " + summit.summitCode);
+                //     const newCtxData = { ...contextData };
+                //     newCtxData.spotId = id;
+                //     newCtxData.qso = x;
+                //     newCtxData.summit = summit;
+                //     newCtxData.park = null;
+                //     setData(newCtxData);
+                // });
+            }
+
         });
     }
 

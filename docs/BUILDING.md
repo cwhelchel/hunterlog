@@ -30,6 +30,30 @@ Flake8 and autopep8 are used in vscode for python linting.
 
 pyinstaller is used to package the source into an executable file.
 
+## Modifying the database
+
+Hunterlog uses alembic to track the schema of the `spots.db` sqlite database. If 
+you want to modify a table to add a column or some other schema modification, follow 
+these steps
+
+- Create a revision (with a message) ```alembic revision -m 'add spot source'```
+- this will create a Python file under /src/alembic_src/versions/
+- open this file to modify `upgrade` and `downgrade`
+- copy the value of `revision` string (it'll be like `fd67dfff009a`)
+- paste this value into `db.py` as the value for `VER_FROM_ALEMBIC`
+- run Hunterlog as normal (npm run start)
+
+You can see where it upgraded the db in index.log
+
+```
+2024-09-23 17:05:39,097 = INFO    [upgrades]: upgrading to head
+2024-09-23 17:05:39,100 = INFO    [alembic.runtime.migration]: Context impl SQLiteImpl.
+2024-09-23 17:05:39,101 = INFO    [alembic.runtime.migration]: Will assume non-transactional DDL.
+2024-09-23 17:05:39,201 = INFO    [alembic.runtime.migration]: Running upgrade f01009b22b92 -> fd67dfff009a, add spot source
+2024-09-23 17:05:39,213 = DEBUG   [alembic.runtime.migration]: update f01009b22b92 to fd67dfff009a
+2024-09-23 17:05:39,236 = DEBUG   [api]: init CAT...
+```
+
 ## Requirements
 - Python 3
 - Node

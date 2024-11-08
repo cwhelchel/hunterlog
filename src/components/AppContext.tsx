@@ -23,7 +23,9 @@ const defData: ContextData = {
     errorSeverity: '',
     themeMode: 'dark',
     onlyNewFilter: false,
-    otherOperators: ''
+    otherOperators: '',
+    summit: null,
+    sigFilter: ''
 };
 
 export const AppContext = React.createContext<AppContextType | null>(null);
@@ -49,6 +51,8 @@ export const AppContextProvider = ( {children}: any ) => {
             themeMode: ctx.themeMode,
             onlyNewFilter: ctx.onlyNewFilter,
             otherOperators: ctx.otherOperators,
+            summit: ctx.summit,
+            sigFilter: ctx.sigFilter
         }
         setContextData(newContext);
     };

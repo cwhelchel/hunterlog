@@ -20,12 +20,13 @@ export function checkApiResponse(x: string, contextData: ContextData, setData: (
     }
 
     if (j['success']) {
-        // if a success response's message is empty string, dont toast
+        // extended flag from API. persist means show this as alert (not toast)
         if (j['persist']) {
             setInfoMsg(j['message'], contextData, setData);
             return j;
         }
-
+        
+        // if a success response's message is empty string, dont toast
         if (j['message'] !== "")
             setToastMsg(j['message'], contextData, setData);
 
@@ -56,4 +57,9 @@ export function setInfoMsg(msg: string, contextData: ContextData, setData: (d: C
     newCtxData.errorMsg = msg;
     newCtxData.errorSeverity = 'info';
     setData(newCtxData);
+}
+
+export function checkReferenceForSota(ref: string) {
+    var regex = new RegExp('[a-zA-Z0-9]{2,3}\/[a-zA-Z0-9]{2}-[0-9]{3}');
+    return regex.test(ref);
 }

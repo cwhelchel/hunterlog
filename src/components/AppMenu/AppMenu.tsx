@@ -11,7 +11,7 @@ import { useAppContext } from '../AppContext';
 import ConfigModal from '../Config/ConfigModal';
 import { UserConfig } from '../../@types/Config';
 import { ActivatorData } from '../../@types/ActivatorTypes';
-import { Alert, Avatar, Tooltip, AlertColor, Snackbar, Button } from '@mui/material';
+import { Alert, Avatar, Tooltip, AlertColor, Snackbar } from '@mui/material';
 import StatsMenu from './StatsMenu';
 
 export default function AppMenu() {
@@ -23,6 +23,8 @@ export default function AppMenu() {
     const [errorMsg, setErrorMsg] = React.useState('');
     const [errorSeverity, seterrorSeverity] = React.useState<AlertColor>('info');
     const [alertHidden, setAlertHidden] = React.useState(true);
+    const [refreshBtnColor, setRefreshBtnColor] = React.useState("primary");
+
 
     function getCfg() {
          // pywebview is ready so api can be called here:
@@ -76,6 +78,15 @@ export default function AppMenu() {
     React.useEffect(() => {
         fn();
     }, [contextData.errorMsg]);
+
+
+    React.useEffect( () => {
+        if (contextData.themeMode == 'dark')
+            setRefreshBtnColor('primary')
+        else if (contextData.themeMode == 'light')
+            // using primary on light makes it green on green
+            setRefreshBtnColor('secondary')
+    }, [contextData.themeMode]);
 
     function getGravatarUrl(md5: string) {
         //console.log(md5);
@@ -140,7 +151,7 @@ export default function AppMenu() {
                         <IconButton onClick={() => {
                             location.reload();
                         }}>
-                            <RefreshIcon color='secondary' />
+                            <RefreshIcon color={refreshBtnColor} />
                         </IconButton>
                     </Tooltip>
                 </Toolbar>

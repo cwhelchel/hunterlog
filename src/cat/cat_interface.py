@@ -11,7 +11,7 @@ import xmlrpc.client
 if __name__ == "__main__":
     print("I'm not the program you are looking for.")
 
-logger = logging.getLogger("cat")
+logger = logging.getLogger(__name__)
 
 
 class CAT:
@@ -68,6 +68,8 @@ class CAT:
                 self.online = False
         if self.interface == "rigctld":
             self.__initialize_rigctrld()
+        if self.interface == "aclog":
+            self.__initialize_aclog()
 
     def __initialize_rigctrld(self):
         try:
@@ -85,6 +87,18 @@ class CAT:
             self.online = False
             logger.debug("%s", exception)
 
+    def __initialize_aclog(self):
+        try:
+            self.aclog_sock = socket.socket()
+            self.aclog_sock.settimeout(0.5)
+            self.aclog_sock.connect((self.host, self.port))
+            logger.debug("Connected to aclog socket")
+            self.online = True
+        except (ConnectionRefusedError, TimeoutError) as exception:
+            self.aclog_sock = None
+            self.online = False
+            logger.error("initializing aclog socket: %s", exception)
+
     def get_vfo(self) -> str:
         """Poll the radio for current vfo using the interface"""
         vfo = ""
@@ -94,6 +108,8 @@ class CAT:
             vfo = self.__getvfo_rigctld()
             if "RPRT -" in vfo:
                 vfo = ""
+        if self.interface == "aclog":
+            vfo = self.__getvfo_aclog()
         return vfo
 
     def __getvfo_flrig(self) -> str:
@@ -121,6 +137,19 @@ class CAT:
 
         self.__initialize_rigctrld()
         return ""
+
+    def __getvfo_aclog(self) -> str:
+        '''Returns the VFO freq by querying ACLog API'''
+        cmd = b'<CMD><READBMF></CMD>'
+        try:
+            if self.aclog_sock:
+                self.aclog_sock.send(cmd)
+                resp = self.aclog_sock.recv(1024).decode().strip()
+                logger.debug(resp)
+                return resp
+        except socket.error as ex:
+            logger.error("getvfo_aclog", exc_info=ex)
+        return ''
 
     def get_mode(self) -> str:
         """Returns the current mode filter width of the radio"""
@@ -268,6 +297,8 @@ class CAT:
             return self.__setvfo_flrig(freq)
         if self.interface == "rigctld":
             return self.__setvfo_rigctld(freq)
+        if self.interface == "aclog":
+            return self.__setvfo_aclog(freq)
         return False
 
     def __setvfo_flrig(self, freq: str) -> bool:
@@ -296,12 +327,42 @@ class CAT:
         self.__initialize_rigctrld()
         return False
 
+    def __setvfo_aclog(self, freq: str) -> bool:
+        """sets the radios vfo"""
+
+        # convert the hz to MHz
+        mode = self.aclog_new_mode if self.aclog_new_mode else "CW"
+        fMHz = float(freq) / 1_000_000
+        # logger.debug("__setvfo_aclog freq MHz: %s", fMHz)
+        cmd = f'<CMD><CHANGEMODE><VALUE>{mode}</VALUE></CMD>'
+        cmd += f'<CMD><CHANGEFREQ><VALUE>{fMHz}</VALUE><SUPPRESSMODEDEFAULT>TRUE</SUPPRESSMODEDEFAULT></CMD>\r\n'
+        self.aclog_new_mode = None
+
+        if self.aclog_sock:
+            try:
+                self.online = True
+                self.aclog_sock.send(bytes(cmd, "utf-8"))
+                _ = self.aclog_sock.recv(1024).decode().strip()
+                # logger.debug("__setvfo_aclog: %s", _)
+                return True
+            except socket.error as exception:
+                self.online = False
+                logger.error("__setvfo_aclog: %s", exception)
+                self.aclog_sock = None
+                return False
+        # self.__initialize_rigctrld()
+        return False
+
+
     def set_mode(self, mode: str) -> bool:
         """Sets the radios mode"""
         if self.interface == "flrig":
             return self.__setmode_flrig(mode)
         if self.interface == "rigctld":
             return self.__setmode_rigctld(mode)
+        if self.interface == "aclog":
+            return self.__setmode_aclog(mode)
+
         return False
 
     def __setmode_flrig(self, mode: str) -> bool:
@@ -329,6 +390,14 @@ class CAT:
                 return False
         self.__initialize_rigctrld()
         return False
+
+    def __setmode_aclog(self, mode: str) -> bool:
+        """sets the radios mode using AClog API"""
+
+        # logger.debug("__setmode_aclog storing new mode: %s", mode)
+        self.aclog_new_mode = mode
+
+        return True
 
     def set_power(self, power):
         """Sets the radios power"""

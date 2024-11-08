@@ -12,7 +12,7 @@ from db.models.qsos import Qso
 from db.models.user_config import UserConfig
 from version import __version__
 
-logging = L.getLogger("adif_log")
+logging = L.getLogger(__name__)
 BACKUP_LOG_FN = "hunter.adi"
 
 

@@ -8,7 +8,7 @@ import logging as L
 from db.models.spot_comments import SpotComment
 from db.models.spots import Spot
 
-logging = L.getLogger("spot_query")
+logging = L.getLogger(__name__)
 
 
 class SpotQuery:

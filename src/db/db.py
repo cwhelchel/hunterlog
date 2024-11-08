@@ -16,17 +16,18 @@ from db.park_query import ParkQuery
 from db.qso_query import QsoQuery
 from db.loc_query import LocationQuery
 from db.spot_query import SpotQuery
+from sota import SotaApi
 from utils.callsigns import get_basecall
 import upgrades
 
 Base = declarative_base()
 
-logging = L.getLogger("db")
+logging = L.getLogger(__name__)
 # show sql
 # L.getLogger('sqlalchemy.engine').setLevel(L.INFO)
 
 
-VER_FROM_ALEMBIC = 'f01009b22b92'
+VER_FROM_ALEMBIC = 'fd67dfff009a'
 '''
 This value indicates the version of the DB scheme the app is made for.
 
@@ -139,7 +140,25 @@ class DataBase:
     def locations(self) -> LocationQuery:
         return self._lq
 
-    def update_all_spots(self, spots_json):
+    def get_spot_metadata(self, to_add: Spot):
+        park = self.parks.get_park(to_add.reference)
+        if park is not None and park.hunts > 0:
+            to_add.park_hunts = park.hunts
+        else:
+            to_add.park_hunts = 0
+
+        count = self.qsos.get_op_qso_count(to_add.activator)
+        to_add.op_hunts = count
+
+        hunted = self.qsos.get_spot_hunted_flag(
+            to_add.activator, to_add.frequency, to_add.reference)
+        bands = self.qsos.get_spot_hunted_bands(
+            to_add.activator, to_add.reference)
+
+        to_add.hunted = hunted
+        to_add.hunted_bands = bands
+
+    def update_all_spots(self, spots_json, sota_spots):
         '''
         Updates all the spots in the database.
 
@@ -147,7 +166,9 @@ class DataBase:
         and perform the logic to update meta info about the spots
 
         :param dict spots_json: the dict from the pota api
+        :param dict sota_spots: the dict from the sota api
         '''
+
         schema = SpotSchema()
         self.session.execute(sa.text('DELETE FROM spots;'))
         self.session.execute(sa.text('DELETE FROM comments;'))
@@ -156,30 +177,16 @@ class DataBase:
 
         for s in spots_json:
             to_add: Spot = schema.load(s, session=self.session)
+            to_add.spot_source = 'POTA'
             self.session.add(to_add)
 
             # get meta data for this spot
-            park = self.parks.get_park(to_add.reference)
-            if park is not None and park.hunts > 0:
-                to_add.park_hunts = park.hunts
-            else:
-                to_add.park_hunts = 0
+            self.get_spot_metadata(to_add)
 
-            count = self.qsos.get_op_qso_count(to_add.activator)
-            to_add.op_hunts = count
-
-            hunted = self.qsos.get_spot_hunted_flag(
-                to_add.activator, to_add.frequency, to_add.reference)
-            bands = self.qsos.get_spot_hunted_bands(
-                to_add.activator, to_add.reference)
-
-            to_add.hunted = hunted
-            to_add.hunted_bands = bands
-
-            # if park is not None:
-            if ',' not in to_add.locationDesc:
+            # sometimes locationDesc can be None. see GR-0071
+            if to_add.locationDesc is not None \
+                    and ',' not in to_add.locationDesc:
                 x, y = self._lq.get_location_hunts(to_add.locationDesc)
-                # logging.debug(f"got location hunts {x} / {y}")
                 to_add.loc_hunts = x
                 to_add.loc_total = y
 
@@ -189,6 +196,50 @@ class DataBase:
                 if re.match(r'.*qrt.*', to_add.comments.lower()):
                     to_add.is_qrt = True
 
+        if sota_spots is None:
+            logging.warning('sota spots object is Null')
+            self.session.commit()
+            return
+
+        for sota in sota_spots:
+            # the sota spots are returned in a descending spot time order.
+            # where the first spot is the newest.
+            sota_to_add = Spot()
+            sota_to_add.init_from_sota(sota)
+
+            statement = sa.select(Spot) \
+                .filter_by(activator=sota['activatorCallsign']) \
+                .filter_by(spot_source='SOTA') \
+                .order_by(Spot.spotTime.desc())
+            row = self.session.execute(statement).first()
+
+            # if query returns something, dont add the old spot
+            if row:
+                if row[0].spotTime < sota_to_add.spotTime:
+                    # this check is probably not needed. so this'll prob die
+                    logging.debug("removing and replacing old sota spot")
+                    self.session.expunge(row[0])
+                    self.session.add(sota_to_add)
+            else:
+                self.session.add(sota_to_add)
+
+            self.get_spot_metadata(sota_to_add)
+
+        self.session.commit()
+
+    def update_spot(self, spot_id: int, call: str, ref: str):
+        logging.info(f"doing single spot update {spot_id}")
+        to_mod: Spot = self.spots.get_spot(spot_id)
+
+        if to_mod is None:
+            logging.warning("update_spot: didn't find a spot for this id")
+            spot_id = self.spots.get_spot_by_actx(call, ref).spotId
+            to_mod = self.spots.get_spot(spot_id)
+            if to_mod is None:
+                self.session.commit()
+                return
+
+        self.get_spot_metadata(to_mod)
         self.session.commit()
 
     def update_activator_stat(self, activator_stat_json) -> int:
@@ -281,12 +332,24 @@ class DataBase:
         :returns an untracked `Qso` object with initialized data.
         '''
         s = self.spots.get_spot(spot_id)
+
         if (s is None):
             q = Qso()
             return q
-        a = self.get_activator(s.activator)
 
-        name = a.name if a is not None else ""
+        if (s.spot_source == 'POTA'):
+            a = self.get_activator(s.activator)
+            name = a.name if a is not None else ""
+        elif s.spot_source == 'SOTA':
+            name = s.name
+            if s.grid4 == '':
+                sota_api = SotaApi()
+                summit = sota_api.get_summit(s.reference)
+                s.grid4 = summit['locator'][:4]
+                s.grid6 = summit['locator']
+                s.latitude = summit['latitude']
+                s.longitude = summit['longitude']
+                self.session.commit()
 
         q = Qso()
         q.init_from_spot(s, name)
@@ -316,13 +379,17 @@ class DataBase:
         logging.debug(f"db setting ATNO filter to {is_on}")
         self.only_new_on = is_on
 
+    def set_sig_filter(self, sig: str):
+        self.sig_filter = sig
+
     def _get_all_filters(self) -> list[sa.ColumnElement[bool]]:
         return self._get_band_filters() + \
             self._get_region_filters() + \
             self._get_location_filters() + \
             self._get_qrt_filter() + \
             self._get_hunted_filter() + \
-            self._get_only_new_filter()
+            self._get_only_new_filter() + \
+            self._get_sig_filter()
 
     def _get_band_filters(self) -> list[sa.ColumnElement[bool]]:
         band = Bands(self.band_filter)  # not sure why cast is needed
@@ -365,4 +432,11 @@ class DataBase:
         if new_filter:
             return [Spot.park_hunts == 0]  # noqa E712
         terms = []
+        return terms
+
+    def _get_sig_filter(self) -> list[sa.ColumnElement[bool]]:
+        sig = self.sig_filter
+        if (sig is None or sig == ''):
+            return []
+        terms = [Spot.spot_source == sig]
         return terms

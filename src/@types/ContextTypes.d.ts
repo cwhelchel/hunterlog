@@ -2,11 +2,13 @@ import { GridFilterModel } from "@mui/x-data-grid/models";
 import { Qso } from "./QsoTypes";
 import { ParkInfo } from "./PotaTypes";
 import { Park } from "./Parks";
+import { Summit } from "./Summit";
 
 export interface ContextData {
     qso: Qso | null;
     spotId: number;
     park: Park | null;
+    summit: Summit | null;
     filter: GridFilterModel;
     bandFilter: number;
     regions: string[];
@@ -19,6 +21,7 @@ export interface ContextData {
     errorSeverity: string;
     themeMode: string;
     onlyNewFilter: boolean;
+    sigFilter: string;
     otherOperators: string;
 }
 

@@ -184,6 +184,7 @@ export default function ConfigModal() {
                             }}>
                             <MenuItem value={"flrig"}>FLRIG</MenuItem>
                             <MenuItem value={"rigctld"}>RIGCTLD</MenuItem>
+                            <MenuItem value={"aclog"}>ACLOG</MenuItem>
                         </Select>
 
                         <Stack direction={'row'} spacing={1}>
