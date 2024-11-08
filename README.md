@@ -4,7 +4,7 @@
 [![GitHub Release](https://img.shields.io/badge/download-mac-green)](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.6/hunterlog-macos_0.0.6.zip)
 [![GitHub Release](https://img.shields.io/github/v/release/cwhelchel/hunterlog?style=flat-square)](https://github.com/cwhelchel/hunterlog/releases)
 
-<div style="display:flex;align-items: center; justify-content: center;">
+<div align=center style="display:flex;align-items: center; justify-content: center;">
     <img src="src/assets/logo.png" width="100" title="logo" />
     <h3 style="font-family: 'Segoe UI';margin-left:10px">A <span style="color:#305c3e"> POTA🌳 & SOTA🗻</span> hunter's best friend!</h3>
     

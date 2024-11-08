@@ -238,8 +238,6 @@ The lower section of the screen has a table of current POTA spots from the POTA
 application page. If you use table mode on the POTA website, then this should be
 familiar.
 
-![Spot viewer screenshot](img/spot_viewer_2.png)
-
 ### Quick Filter bar
 
 ![Quick Filter](img/quick_filter.PNG)
@@ -252,6 +250,8 @@ callsign, but other data is search as well.
 you to show or hide individual columns.
 
 ### Spots table
+
+![Spot table](img/spot_viewer_2.png)
 
 This is the meat of the application. It shows the normal POTA activation spot 
 info, a green QSY button that shows the frequency, a clickable spot comment 
