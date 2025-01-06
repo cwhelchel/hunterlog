@@ -57,6 +57,11 @@ xl, extra-large: 1536px
     filter: grayscale(100%);
 }
 
+.spotviewer-row-new {
+    background-color: rgba(125, 200, 125, 0.35);
+    //filter: saturate(4);
+}
+
 .spotviewer-row-qrt:hover {
     opacity: 1.0;
 }

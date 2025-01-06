@@ -326,8 +326,13 @@ export default function SpotViewer() {
     }
 
     function getClassName(params: GridRowClassNameParams<SpotRow>) {
+        let highlightNewStr = window.localStorage.getItem("HIGHLIGHT_NEW_REF") || '1';
+        let highlightNew = parseInt(highlightNewStr);
+
         if (params.row.is_qrt)
             return 'spotviewer-row-qrt';
+        else if (params.row.park_hunts === 0 && highlightNew)
+            return 'spotviewer-row-new';
         else
             return 'spotviewer-row';
     };

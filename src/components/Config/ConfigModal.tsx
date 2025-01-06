@@ -37,6 +37,7 @@ export default function ConfigModal() {
     const [imperialChecked, setImperialChecked] = React.useState(true);
     const [useDarkMode, setUseDarkMode] = React.useState(true);
     const [showSpotAge, setShowSpotAge] = React.useState(true);
+    const [highlightNewRef, sethighlightNewRef] = React.useState(true);
 
     const { contextData, setData } = useAppContext();
 
@@ -72,6 +73,12 @@ export default function ConfigModal() {
         window.localStorage.setItem("SHOW_SPOT_AGE", newMode ? '1' : '0');
     };
 
+    const toggleHighlightNewRef = () => {
+        const newMode = !highlightNewRef;
+        sethighlightNewRef(newMode);
+        window.localStorage.setItem("HIGHLIGHT_NEW_REF", newMode ? '1' : '0');
+    };
+
     React.useEffect(() => {
         if (window.pywebview !== undefined && window.pywebview.api !== null) 
             initConfig();
@@ -98,6 +105,10 @@ export default function ConfigModal() {
             let spotAgeStr = window.localStorage.getItem("SHOW_SPOT_AGE") || '1';
             let showSage = parseInt(spotAgeStr);
             setShowSpotAge(showSage == 1 ? true : false);
+
+            let highlightNewStr = window.localStorage.getItem("HIGHLIGHT_NEW_REF") || '1';
+            let highlightNew = parseInt(highlightNewStr);
+            sethighlightNewRef(highlightNew == 1 ? true : false);
         }
     }, []);
 
@@ -170,6 +181,13 @@ export default function ConfigModal() {
                                 <Switch checked={showSpotAge}
                                     onChange={toggleShowSpotAge} />
                             } label="Show Spot Age" />
+                        </Tooltip>
+                        
+                        <Tooltip title="Add extra highlighting to new park rows" >
+                            <FormControlLabel control={
+                                <Switch checked={highlightNewRef}
+                                    onChange={toggleHighlightNewRef} />
+                            } label="Highlight New" />
                         </Tooltip>
                     </Stack>
 
