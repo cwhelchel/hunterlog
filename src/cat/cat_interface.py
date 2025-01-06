@@ -70,6 +70,8 @@ class CAT:
             self.__initialize_rigctrld()
         if self.interface == "aclog":
             self.__initialize_aclog()
+        if self.interface == "dxlabs":
+            self.__initialize_dxlabs()
 
     def __initialize_rigctrld(self):
         try:
@@ -99,6 +101,18 @@ class CAT:
             self.online = False
             logger.error("initializing aclog socket: %s", exception)
 
+    def __initialize_dxlabs(self):
+        try:
+            self.dxlabs_sock = socket.socket()
+            self.dxlabs_sock.settimeout(0.5)
+            self.dxlabs_sock.connect((self.host, self.port))
+            logger.debug("Connected to dxlabs socket")
+            self.online = True
+        except (ConnectionRefusedError, TimeoutError) as exception:
+            self.dxlabs_sock = None
+            self.online = False
+            logger.error("initializing dxlabs socket: %s", exception)            
+
     def get_vfo(self) -> str:
         """Poll the radio for current vfo using the interface"""
         vfo = ""
@@ -110,6 +124,8 @@ class CAT:
                 vfo = ""
         if self.interface == "aclog":
             vfo = self.__getvfo_aclog()
+        if self.interface == "dxlabs":
+            vfo = self.__getvfo_dxlabs()
         return vfo
 
     def __getvfo_flrig(self) -> str:
@@ -150,6 +166,19 @@ class CAT:
         except socket.error as ex:
             logger.error("getvfo_aclog", exc_info=ex)
         return ''
+    
+    def __getvfo_dxlabs(self) -> str:
+        '''Returns the VFO freq by querying DXLabs API'''
+        cmd = b'<command:10>CmdGetFreq<parameters:0>'
+        try:
+            if self.dxlabs_sock:
+                self.dxlabs_sock.send(cmd)
+                resp = self.dxlabs_sock.recv(1024).decode().strip()
+                logger.debug(resp)
+                return resp
+        except socket.error as ex:
+            logger.error("getvfo_dxlabs", exc_info=ex)
+        return ''
 
     def get_mode(self) -> str:
         """Returns the current mode filter width of the radio"""
@@ -158,6 +187,7 @@ class CAT:
             mode = self.__getmode_flrig()
         if self.interface == "rigctld":
             mode = self.__getmode_rigctld()
+        # TODO: add this for aclog and dxlabs
         return mode
 
     def __getmode_flrig(self) -> str:
@@ -299,6 +329,8 @@ class CAT:
             return self.__setvfo_rigctld(freq)
         if self.interface == "aclog":
             return self.__setvfo_aclog(freq)
+        if self.interface == "dxlabs":
+            return self.__setvfo_dxlabs(freq)
         return False
 
     def __setvfo_flrig(self, freq: str) -> bool:
@@ -353,6 +385,35 @@ class CAT:
         # self.__initialize_rigctrld()
         return False
 
+    def __setvfo_dxlabs(self, freq: str) -> bool:
+        """sets the radios vfo"""
+
+        # mode = self.aclog_new_mode if self.aclog_new_mode else "CW"
+
+        # convert the hz to MHz
+        fMHz = float(freq) / 1_000_000
+        # <command:10>CmdSetFreq<parameters:17><xcvrfreq:5>21230
+        fMHz_size = len(fMHz)
+        t = f'<xcvrfreq:{fMHz_size}>{fMHz}'
+        cmd = f'<command:10>CmdSetFreq<parameters:{len(t)}>{t}'
+        
+        # self.aclog_new_mode = None
+
+        if self.dxlabs_sock:
+            try:
+                self.online = True
+                self.dxlabs_sock.send(bytes(cmd, "utf-8"))
+                _ = self.dxlabs_sock.recv(1024).decode().strip()
+                # logger.debug("__setvfo_aclog: %s", _)
+                return True
+            except socket.error as exception:
+                self.online = False
+                logger.error("__setvfo_dxlabs: %s", exception)
+                self.dxlabs_sock = None
+                return False
+        # self.__initialize_rigctrld()
+        return False
+
 
     def set_mode(self, mode: str) -> bool:
         """Sets the radios mode"""
@@ -362,6 +423,8 @@ class CAT:
             return self.__setmode_rigctld(mode)
         if self.interface == "aclog":
             return self.__setmode_aclog(mode)
+        if self.interface == "dxlabs":
+            return self.__setmode_dxlabs(mode)
 
         return False
 
@@ -398,6 +461,31 @@ class CAT:
         self.aclog_new_mode = mode
 
         return True
+    
+    def __setmode_dxlabs(self, mode: str) -> bool:
+        """sets the radios mode using DxLabs API"""
+
+        #<command:10>CmdSetMode<parameters:7><1:2>CW
+        #Valid modes are (AM, CW, CW-R, DATA-L, DATA-U, FM, LSB, USB, RTTY, RTTY-R, WBFM)
+        
+        # mode = self.aclog_new_mode if self.aclog_new_mode else "CW"
+        t = f'<1:2>{mode}'
+        cmd = f'<command:10>CmdSetMode<parameters:{len(t)}>{t}'
+
+        if self.dxlabs_sock:
+            try:
+                self.online = True
+                self.dxlabs_sock.send(bytes(cmd, "utf-8"))
+                _ = self.dxlabs_sock.recv(1024).decode().strip()
+                # logger.debug("__setvfo_aclog: %s", _)
+                return True
+            except socket.error as exception:
+                self.online = False
+                logger.error("__setvfo_dxlabs: %s", exception)
+                self.dxlabs_sock = None
+                return False
+
+        return False
 
     def set_power(self, power):
         """Sets the radios power"""
