@@ -58,8 +58,21 @@ xl, extra-large: 1536px
 }
 
 .spotviewer-row-new {
-    background-color: rgba(125, 200, 125, 0.35);
-    //filter: saturate(4);
+    //background-color: rgba(200, 159, 125, 0.35);
+    background-color: rgba(37, 6, 113, 0.5);
+    animation: pulse 5s 0s 2;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        background-color: rgba(37, 6, 113, 0.5);
+    }
+
+    50% {
+        background-color: #9e42b0;
+    }
 }
 
 .spotviewer-row-qrt:hover {

@@ -358,6 +358,11 @@ export default function SpotViewer() {
 
             <DataGrid
                 rows={spots}
+                sx={{
+                    "& .Mui-selected.spotviewer-row-new": {
+                      backgroundColor: "rgba(75, 30, 110, 0.75) !important"
+                    }
+                }}
                 slots={{ toolbar: CustomToolbar }}
                 columns={columns}
                 getRowId={getRowId}
