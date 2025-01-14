@@ -11,11 +11,15 @@ export default function ParkInfo() {
     const { contextData, setData } = useAppContext();
     const [stats, setStats] = React.useState<ParkStats | null>(null);
     const [hunts, setHunts] = React.useState(0);
+    const [newBand, setNewBand] = React.useState(false);
+    const [bandsText, setBandsText] = React.useState("");
 
     function onParkChange() {
         let park = contextData?.park?.reference || '';
         if (park === null || park === '')
             return;
+
+        let freq = contextData?.qso?.freq;
 
         if (contextData?.park?.parktypeId != 0) {
             getParkStats(park).then((x: ParkStats) => {
@@ -28,6 +32,16 @@ export default function ParkInfo() {
             let hunts = parseInt(o.count);
             setHunts(hunts);
         });
+
+        if (freq !== null || freq !== '') {
+            window.pywebview.api.get_park_hunted_bands(freq, park).then((j: string) => {
+                let o = checkApiResponse(j, contextData, setData);
+                let bandTxt = o.bands;
+                let nb = o.new_band;
+                setNewBand(nb);
+                setBandsText("Hunted on: " + bandTxt);
+            });
+        }
     }
 
     React.useEffect(() => {
@@ -90,7 +104,15 @@ export default function ParkInfo() {
                 return 'parkQsosNone';
             return 'parkQsos';
         }
-        return <span className={getClassName(hunts)}>You have {hunts} QSOs for {contextData?.park?.reference} </span>;
+        return <>
+            <span className={getClassName(hunts)}>You have {hunts} QSOs for {contextData?.park?.reference} </span>
+            {hunts == 0 && (
+                <span className="label label-danger">NEW PARK</span>
+            )}
+            {newBand && (
+                <span className="label label-warning" title={bandsText}>NEW BAND</span>
+            )}
+        </>;
     }
 
     function summitTitle(): any {

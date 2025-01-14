@@ -6,6 +6,7 @@ import datetime
 import threading
 from datetime import timedelta
 
+from bands import get_band, get_band_name, get_name_of_band
 from db.db import DataBase
 from db.models.activators import Activator, ActivatorSchema
 from db.models.parks import ParkSchema
@@ -201,6 +202,37 @@ class JsApi:
             return self._response(True, "", count=0)
         else:
             return self._response(True, "", count=park.hunts)
+
+    def get_park_hunted_bands(self, freq: str, ref: str) -> str:
+        '''
+
+        :param str ref: the POTA park reference designator string
+
+        :returns JSON
+        '''
+        if ref is None:
+            logging.error("get_park: ref param was None")
+            return self._response(False, "park references invalid")
+
+        hunted_bands = self.db.qsos.get_ref_hunted_bands(ref)
+
+        current_band = get_band(freq)
+        logging.debug(f"current freq = {freq}")
+        logging.debug(f"current band = {current_band}")
+        new_band = True
+        if current_band.value in hunted_bands:
+            new_band = False
+        logging.debug(f"hunted bands = {hunted_bands}")
+        logging.debug(new_band)
+
+        if hunted_bands is None:
+            return self._response(True, "", bands='unknown qso data',
+                                  new_band=True)
+        else:
+            txt = ",".join(map(get_name_of_band, hunted_bands))
+            logging.debug(txt)
+            return self._response(True, "", bands=txt,
+                                  new_band=new_band)
 
     def get_user_config(self):
         '''

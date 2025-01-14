@@ -154,6 +154,29 @@ class QsoQuery:
 
         return result
 
+    def get_ref_hunted_bands(self, ref: str) -> list[Bands]:
+        '''
+        Queries the stored QSO data for all hunted bands for a reference
+
+        :param str ref: park reference
+        :returns list of hunted bands
+        '''
+        hunted_bands = []
+
+        qsos = self.session.query(Qso) \
+            .filter(Qso.sig_info == ref) \
+            .all()
+
+        for q in qsos:
+            band = get_band(q.freq)
+            if band is None:
+                logging.warning(f"unknown band for freq {q.freq}")
+            else:
+                logging.debug(f"appending band {band.value}")
+                hunted_bands.append(band.value)
+
+        return hunted_bands
+
     @staticmethod
     def get_band_lmt_terms(band: Bands, col: sa.Column) \
             -> list[sa.ColumnElement[bool]]:

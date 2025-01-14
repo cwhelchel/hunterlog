@@ -87,3 +87,16 @@ def get_band_name(freq: str) -> str:
     except ValueError:
         logging.error("invalid str to float conv in get_band_name(freq)")
         return bandNames[Bands.NOBAND]
+
+
+def get_name_of_band(band: Bands) -> str:
+    return bandNames[band]
+
+
+def is_freq_in_band(freq: str, band: Bands) -> bool:
+    '''
+    Checks to see if given freq string is in the given band
+    '''
+    b = get_band(freq)
+
+    return b == band
