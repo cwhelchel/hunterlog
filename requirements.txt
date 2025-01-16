@@ -4,11 +4,11 @@ altgraph==0.17.4
 bottle==0.12.25
 cachetools==5.5.0
 certifi>=2024.07.04
-cffi==1.16.0
+cffi>=1.17.1
 charset-normalizer==3.3.2
 clr-loader==0.2.6
 future==1.0.0; platform_system == "Darwin"
-greenlet==3.0.3
+greenlet>= 3.1.0
 idna>=3.7
 importlib-metadata==7.0.1
 macholib==1.16.3; platform_system == "Darwin"
