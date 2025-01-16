@@ -6,7 +6,7 @@ import datetime
 import threading
 from datetime import timedelta
 
-from bands import get_band, get_band_name, get_name_of_band
+from bands import get_band, get_name_of_band
 from db.db import DataBase
 from db.models.activators import Activator, ActivatorSchema
 from db.models.parks import ParkSchema
@@ -205,32 +205,30 @@ class JsApi:
 
     def get_park_hunted_bands(self, freq: str, ref: str) -> str:
         '''
+        Gets data about a references hunted bands.
 
-        :param str ref: the POTA park reference designator string
+        :param str freq: current freq in MHz. used to test for previously
+                         hunted bands
+        :param str ref: the park/summit reference designator string
 
-        :returns JSON
+        :returns JSON with two fields, bands (string) and new_band (bool)
         '''
         if ref is None:
-            logging.error("get_park: ref param was None")
+            logging.error("get_park_hunted_bands: ref param was None")
             return self._response(False, "park references invalid")
 
         hunted_bands = self.db.qsos.get_ref_hunted_bands(ref)
 
         current_band = get_band(freq)
-        logging.debug(f"current freq = {freq}")
-        logging.debug(f"current band = {current_band}")
         new_band = True
         if current_band.value in hunted_bands:
             new_band = False
-        logging.debug(f"hunted bands = {hunted_bands}")
-        logging.debug(new_band)
 
         if hunted_bands is None:
             return self._response(True, "", bands='unknown qso data',
                                   new_band=True)
         else:
             txt = ",".join(map(get_name_of_band, hunted_bands))
-            logging.debug(txt)
             return self._response(True, "", bands=txt,
                                   new_band=new_band)
 

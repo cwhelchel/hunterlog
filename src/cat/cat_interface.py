@@ -388,23 +388,23 @@ class CAT:
     def __setvfo_dxlabs(self, freq: str) -> bool:
         """sets the radios vfo"""
 
-        # mode = self.aclog_new_mode if self.aclog_new_mode else "CW"
-
-        # convert the hz to MHz
-        fMHz = float(freq) / 1_000_000
+        # convert the hz to kHz
+        fMHz = float(freq) / 1_000
         # <command:10>CmdSetFreq<parameters:17><xcvrfreq:5>21230
-        fMHz_size = len(fMHz)
+        fMHz_size = len(str(fMHz))
         t = f'<xcvrfreq:{fMHz_size}>{fMHz}'
         cmd = f'<command:10>CmdSetFreq<parameters:{len(t)}>{t}'
         
-        # self.aclog_new_mode = None
+        logger.debug(f"dxlabs vfocmd: {cmd}")
 
         if self.dxlabs_sock:
             try:
                 self.online = True
-                self.dxlabs_sock.send(bytes(cmd, "utf-8"))
-                _ = self.dxlabs_sock.recv(1024).decode().strip()
-                # logger.debug("__setvfo_aclog: %s", _)
+                logger.debug("dxlabs sending to sock")
+                sent = self.dxlabs_sock.send(bytes(cmd, "utf-8"))
+                logger.debug(f"dxlabs sent # bytes: {sent}")
+                _ = self.dxlabs_sock.recv(0).decode().strip()
+                logger.debug("dxlabs recv: %s", _)
                 return True
             except socket.error as exception:
                 self.online = False
@@ -472,16 +472,20 @@ class CAT:
         t = f'<1:2>{mode}'
         cmd = f'<command:10>CmdSetMode<parameters:{len(t)}>{t}'
 
+        logger.debug(f"dxlabs mode cmd: {cmd}")
+
         if self.dxlabs_sock:
             try:
                 self.online = True
-                self.dxlabs_sock.send(bytes(cmd, "utf-8"))
-                _ = self.dxlabs_sock.recv(1024).decode().strip()
-                # logger.debug("__setvfo_aclog: %s", _)
+                logger.debug(f"mode cmd sending...")
+                sent = self.dxlabs_sock.send(bytes(cmd, "utf-8"))
+                logger.debug(f"mode cmd sent {sent}")
+                # _ = self.dxlabs_sock.recv(0).decode().strip()
+                # logger.debug("__setmode_dxlabs recv return: %s", _)
                 return True
             except socket.error as exception:
                 self.online = False
-                logger.error("__setvfo_dxlabs: %s", exception)
+                logger.error("__setmode_dxlabs: %s", exception)
                 self.dxlabs_sock = None
                 return False
 
