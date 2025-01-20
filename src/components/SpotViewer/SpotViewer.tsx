@@ -21,6 +21,7 @@ import SpotTimeCell from './SpotTime';
 import { SpotComments } from '../../@types/SpotComments';
 import { getSummitInfo } from '../../pota';
 import { Summit } from '../../@types/Summit';
+import { checkApiResponse } from '../../util';
 
 // https://mui.com/material-ui/react-table/
 
@@ -165,23 +166,35 @@ export default function SpotViewer() {
 
     // when [spots] are set, update regions
     React.useEffect(() => {
-        // parse the current spots and pull out the region specifier from each
-        // location
+        // the backend will parse out the regions for pota and sota (US, CA, W7)
+        // and we will just set the available regions directly in the context.
+        // however, we still parse the current spots and pull out the
+        // location specifier (US-GA, CA-ON) for POTA spots only
+
         if (contextData.locationFilter === "")
             contextData.locations = [];
 
-        spots.map((spot) => {
-            let region = spot.locationDesc.substring(0, 2);
-            if (!contextData.regions.includes(region))
-                contextData.regions.push(region);
+        if (window.pywebview === undefined) {
+            return;
+        }
 
-            let location = spot.locationDesc.substring(0, 5);
-            if (!contextData.locations.includes(location))
-                contextData.locations.push(location);
+        const p = window.pywebview.api.get_seen_regions();
+        p.then((x: string) => {
+            let json = checkApiResponse(x, contextData, setData);
+            if (json.success) {
+                contextData.regions = json.seen_regions;
+                setData(contextData);
+            }
         });
 
+        spots.map((spot) => {
+            if (spot.spot_source == 'POTA') {
+                let location = spot.locationDesc.substring(0, 5);
+                if (!contextData.locations.includes(location))
+                    contextData.locations.push(location);
+            }
+        });
         contextData.locations.sort();
-        setData(contextData);
     }, [spots]);
 
     async function getOtherOps(spotId: number): Promise<string> {

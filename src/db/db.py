@@ -103,6 +103,7 @@ class DataBase:
         self._sq.delete_all_spots()
         self._iq.init_config()
 
+        self.seen_regions = []
         self.band_filter = Bands.NOBAND
         self.region_filter = None
         self.location_filter = None
@@ -175,6 +176,8 @@ class DataBase:
 
         # self._sq.insert_test_spot()  # testing code
 
+        regions = list[str]()
+
         for s in spots_json:
             to_add: Spot = schema.load(s, session=self.session)
             to_add.spot_source = 'POTA'
@@ -189,6 +192,7 @@ class DataBase:
                 x, y = self._lq.get_location_hunts(to_add.locationDesc)
                 to_add.loc_hunts = x
                 to_add.loc_total = y
+                regions.append(to_add.locationDesc[0:2])
 
             to_add.is_qrt = False
 
@@ -206,6 +210,9 @@ class DataBase:
             # where the first spot is the newest.
             sota_to_add = Spot()
             sota_to_add.init_from_sota(sota)
+
+            # this is sota association code
+            regions.append(sota_to_add.locationDesc)
 
             statement = sa.select(Spot) \
                 .filter_by(activator=sota['activatorCallsign']) \
@@ -226,6 +233,11 @@ class DataBase:
             self.get_spot_metadata(sota_to_add)
 
         self.session.commit()
+
+        # set regions list to be used by filter front end
+        regions = list(set(regions))
+        regions.sort()
+        self.seen_regions = regions
 
     def update_spot(self, spot_id: int, call: str, ref: str):
         logging.info(f"doing single spot update {spot_id}")

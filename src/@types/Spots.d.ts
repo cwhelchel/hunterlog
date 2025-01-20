@@ -26,5 +26,6 @@ export interface SpotRow {
     loc_total: number,
     is_qrt: boolean,
     act_cmts: string,
-    cw_wpm: number
+    cw_wpm: number,
+    spot_source: string
 };

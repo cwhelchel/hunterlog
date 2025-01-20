@@ -22,7 +22,7 @@ export const FilterBar = (props: IFilterBarPros) => {
     const [mode, setMode] = React.useState('');
     const [band, setBand] = React.useState('');
     const [region, setRegion] = React.useState('');
-    const [location, setLocation] = React.useState('');
+    const [loc, setLocation] = React.useState('');
     const [sig, setSig] = React.useState('');
     const [qrt, setQrt] = React.useState(true);
     const [hunted, setHunted] = React.useState(false);
@@ -129,6 +129,8 @@ export const FilterBar = (props: IFilterBarPros) => {
             onlyNew: false
         };
         setData(next);
+
+        location.reload();
     };
 
     function handleQrtSwitch(event: any, checked: boolean): void {
@@ -327,7 +329,7 @@ export const FilterBar = (props: IFilterBarPros) => {
                     <Select
                         labelId="location-lbl"
                         id="location"
-                        value={location}
+                        value={loc}
                         variant='standard'
                         sx={{ minWidth: 100 }}
                         onChange={handleLocationChange}

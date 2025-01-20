@@ -559,6 +559,15 @@ class JsApi:
 
         return self._response(
             True, "Park data imported successfully", persist=True)
+    
+    def get_seen_regions(self) -> str:
+        '''
+        Gets a sorted list of distinct regions (POTA) and associations (SOTA)
+        that are in the current set of spots.
+        '''
+        x = self.db.seen_regions
+        # logging.debug(f"return seen regions: {x}")
+        return self._response(True, '', seen_regions=x)
 
     def _do_update(self):
         '''
