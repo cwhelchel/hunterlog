@@ -409,27 +409,27 @@ class JsApi:
 
     def set_band_filter(self, band: int):
         logging.debug(f"api setting band filter to: {band}")
-        self.db.set_band_filter(band)
+        self.db.filters.set_band_filter(band)
 
-    def set_region_filter(self, region: str):
+    def set_region_filter(self, region: list[str]):
         logging.debug(f"api setting region filter to: {region}")
-        self.db.set_region_filter(region)
+        self.db.filters.set_region_filter(region)
 
     def set_location_filter(self, location: str):
         logging.debug(f"setting region filter to {location}")
-        self.db.set_location_filter(location)
+        self.db.filters.set_location_filter(location)
 
     def set_qrt_filter(self, is_qrt: bool):
         logging.debug(f"api setting qrt filter to: {is_qrt}")
-        self.db.set_qrt_filter(is_qrt)
+        self.db.filters.set_qrt_filter(is_qrt)
 
     def set_hunted_filter(self, filter_hunted: bool):
         logging.debug(f"api setting qrt filter to: {filter_hunted}")
-        self.db.set_hunted_filter(filter_hunted)
+        self.db.filters.set_hunted_filter(filter_hunted)
 
     def set_only_new_filter(self, filter_only_new: bool):
         logging.debug(f"api setting ATNO filter to: {filter_only_new}")
-        self.db.set_only_new_filter(filter_only_new)
+        self.db.filters.set_only_new_filter(filter_only_new)
 
     def set_sig_filter(self, sig_filter: str):
         '''
@@ -438,7 +438,7 @@ class JsApi:
         :param string sig_filter: only POTA or SOTA
         '''
         logging.debug(f"api setting SIG filter to: {sig_filter}")
-        self.db.set_sig_filter(sig_filter)
+        self.db.filters.set_sig_filter(sig_filter)
 
     def update_activator_stats(self, callsign: str) -> int:
         j = self.pota.get_activator_stats(callsign)
@@ -559,7 +559,7 @@ class JsApi:
 
         return self._response(
             True, "Park data imported successfully", persist=True)
-    
+
     def get_seen_regions(self) -> str:
         '''
         Gets a sorted list of distinct regions (POTA) and associations (SOTA)

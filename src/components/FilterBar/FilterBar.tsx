@@ -21,7 +21,7 @@ interface IFilterBarPros {
 export const FilterBar = (props: IFilterBarPros) => {
     const [mode, setMode] = React.useState('');
     const [band, setBand] = React.useState('');
-    const [region, setRegion] = React.useState('');
+    const [region, setRegion] = React.useState<string[]>([]);
     const [loc, setLocation] = React.useState('');
     const [sig, setSig] = React.useState('');
     const [qrt, setQrt] = React.useState(true);
@@ -42,7 +42,7 @@ export const FilterBar = (props: IFilterBarPros) => {
             let bf = window.localStorage.getItem("BAND_FILTER") || '0';
             setBandFilter(bf);
             let rf = window.localStorage.getItem("REGION_FILTER") || '';
-            setRegionFilter(rf);
+            setRegionFilter(rf.split(","));
             let mf = window.localStorage.getItem("MODE_FILTER") || '';
             setModeFilter(mf);
             let lf = window.localStorage.getItem("LOCATION_FILTER") || '';
@@ -73,10 +73,13 @@ export const FilterBar = (props: IFilterBarPros) => {
     }
 
     const handleRegionChange = (event: SelectChangeEvent) => {
-        let r = event.target.value as string;
-        setRegionFilter(r);
+        let r = typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value;
 
-        window.localStorage.setItem("REGION_FILTER", r);
+        if (r.includes("NONE")) {
+            r = [];
+        }
+        setRegionFilter(r);
+        window.localStorage.setItem("REGION_FILTER", r.join(","));
     }
 
     const handleLocationChange = (event: SelectChangeEvent) => {
@@ -99,12 +102,12 @@ export const FilterBar = (props: IFilterBarPros) => {
             createEqualityFilter('mode', '')
         );
         window.pywebview.api.set_band_filter(0);
-        window.pywebview.api.set_region_filter("");
+        window.pywebview.api.set_region_filter([]);
         window.pywebview.api.set_qrt_filter(true);
         window.pywebview.api.set_hunted_filter(false);
         window.pywebview.api.set_only_new_filter(false);
         window.pywebview.api.set_sig_filter("");
-        setRegion("");
+        setRegion([]);
         setLocation("");
         setQrt(true);
         setHunted(false);
@@ -196,11 +199,11 @@ export const FilterBar = (props: IFilterBarPros) => {
         setBand(m);
     }
 
-    function setRegionFilter(r: string) {
+    function setRegionFilter(r: string[]) {
         console.log("changing region to: " + r);
         window.pywebview.api.set_region_filter(r);
 
-        let next = { ...contextData, regionFilter: r };
+        let next = { ...contextData, regionFilter: r.join(",") };
         setData(next);
         setRegion(r);
     }
@@ -307,16 +310,17 @@ export const FilterBar = (props: IFilterBarPros) => {
                     </Select>
                 </FormControl>
                 <FormControl size='small'>
-                    <StyledInputLabel id="region-lbl">Region</StyledInputLabel>
+                    <StyledInputLabel id="region-lbl">Region (m)</StyledInputLabel>
                     <Select
                         labelId="region-lbl"
                         id="region"
+                        multiple
                         value={region}
                         variant='standard'
                         sx={{ minWidth: 100 }}
                         onChange={handleRegionChange}
                     >
-                        <MenuItem value=""><em>None</em></MenuItem>
+                        <MenuItem value="NONE"><em>None</em></MenuItem>
                         {contextData.regions.map((region) => (
                             <MenuItem key={region} value={region}>
                                 {region}

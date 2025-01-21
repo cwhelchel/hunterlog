@@ -1,10 +1,10 @@
 import datetime
-from typing import Callable
 import sqlalchemy as sa
 from sqlalchemy.orm import scoped_session
 import re
 import logging as L
 
+from db.filters import Filters
 from db.models.spot_comments import SpotComment
 from db.models.spots import Spot
 
@@ -14,14 +14,15 @@ logging = L.getLogger(__name__)
 class SpotQuery:
     def __init__(self,
                  session: scoped_session,
-                 func: Callable[[], list[sa.ColumnElement[bool]]]):
+                 filters: Filters):
         '''
         Ctor for SpotQuery
         :param scoped_session session: the db session object
-        :param func: callback function returning terms list for filter
+        :param filters: the Filters object. provides db filtering terms for
+                        returning the list of spots
         '''
         self.session = session
-        self._get_filters_cb = func
+        self._flts = filters
 
     def delete_all_spots(self):
         self.session.execute(sa.text('DELETE FROM spots;'))
@@ -32,12 +33,16 @@ class SpotQuery:
         Get all the spots after applying the current filters: band, region, and
         QRT filters
         '''
-        if self._get_filters_cb is None:
-            return None
+        and_flts = []
+        or_flts = []
+        and_flts = self._flts.get_and_filters()
+        or_flts = self._flts.get_or_filters()
 
-        terms = self._get_filters_cb()
+        # logging.debug(f"get_spots filter {and_flts} {or_flts}")
+
         x = self.session.query(Spot) \
-            .filter(sa.and_(*terms)) \
+            .filter(sa.and_(*and_flts)) \
+            .filter(sa.or_(*or_flts)) \
             .all()
         return x
 

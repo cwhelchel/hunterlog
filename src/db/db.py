@@ -6,7 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 
-from bands import Bands
+from db.filters import Filters
 from db.models.qsos import Qso
 from db.models.activators import Activator, ActivatorSchema
 from db.models.spot_comments import SpotComment, SpotCommentSchema
@@ -91,11 +91,12 @@ class DataBase:
         self.session = scoped_session(sessionmaker(bind=engine))
         Base.metadata.create_all(engine)
 
+        self._filters = Filters()
         self._iq = InitQuery(self.session)
         self._lq = LocationQuery(self.session)
         self._qq = QsoQuery(self.session)
         self._pq = ParkQuery(self.session)
-        self._sq = SpotQuery(self.session, func=self._get_all_filters)
+        self._sq = SpotQuery(self.session, self.filters)
 
         # do this FIRST. will upgrade the db to latest schema
         self._iq.init_alembic_ver()
@@ -104,12 +105,6 @@ class DataBase:
         self._iq.init_config()
 
         self.seen_regions = []
-        self.band_filter = Bands.NOBAND
-        self.region_filter = None
-        self.location_filter = None
-        self.qrt_filter_on = True  # filter out QRT spots by default
-        self.hunted_filter_on = False  # filter out spots you hunted
-        self.only_new_on = False  # filter out parks you have never worked
 
     def commit_session(self):
         '''
@@ -140,6 +135,10 @@ class DataBase:
     @property
     def locations(self) -> LocationQuery:
         return self._lq
+
+    @property
+    def filters(self) -> Filters:
+        return self._filters
 
     def get_spot_metadata(self, to_add: Spot):
         park = self.parks.get_park(to_add.reference)
@@ -366,89 +365,3 @@ class DataBase:
         q = Qso()
         q.init_from_spot(s, name)
         return q
-
-    def set_band_filter(self, band: Bands):
-        logging.debug(f"db setting band filter to {band}")
-        self.band_filter = band
-
-    def set_region_filter(self, region: str):
-        logging.debug(f"db setting region filter to {region}")
-        self.region_filter = region
-
-    def set_location_filter(self, location: str):
-        logging.debug(f"db setting location filter to {location}")
-        self.location_filter = location
-
-    def set_qrt_filter(self, is_on: bool):
-        logging.debug(f"db setting QRT filter to {is_on}")
-        self.qrt_filter_on = is_on
-
-    def set_hunted_filter(self, is_on: bool):
-        logging.debug(f"db setting hunted filter to {is_on}")
-        self.hunted_filter_on = is_on
-
-    def set_only_new_filter(self, is_on: bool):
-        logging.debug(f"db setting ATNO filter to {is_on}")
-        self.only_new_on = is_on
-
-    def set_sig_filter(self, sig: str):
-        self.sig_filter = sig
-
-    def _get_all_filters(self) -> list[sa.ColumnElement[bool]]:
-        return self._get_band_filters() + \
-            self._get_region_filters() + \
-            self._get_location_filters() + \
-            self._get_qrt_filter() + \
-            self._get_hunted_filter() + \
-            self._get_only_new_filter() + \
-            self._get_sig_filter()
-
-    def _get_band_filters(self) -> list[sa.ColumnElement[bool]]:
-        band = Bands(self.band_filter)  # not sure why cast is needed
-        if band == Bands.NOBAND:
-            return []
-        terms = QsoQuery.get_band_lmt_terms(band, Spot.frequency)
-        return terms
-
-    def _get_region_filters(self) -> list[sa.ColumnElement[bool]]:
-        region = self.region_filter
-        if (region is None):
-            return []
-        terms = [Spot.locationDesc.startswith(region)]
-        return terms
-
-    def _get_location_filters(self) -> list[sa.ColumnElement[bool]]:
-        loc = self.location_filter
-        if (loc is None or loc == ''):
-            return []
-        terms = [Spot.locationDesc.contains(loc)]
-        return terms
-
-    def _get_qrt_filter(self) -> list[sa.ColumnElement[bool]]:
-        qrt = self.qrt_filter_on
-        if qrt:
-            return [Spot.is_qrt == False]  # noqa E712
-        terms = []
-        return terms
-
-    def _get_hunted_filter(self) -> list[sa.ColumnElement[bool]]:
-        hunt_filter = self.hunted_filter_on
-        if hunt_filter:
-            return [Spot.hunted == False]  # noqa E712
-        terms = []
-        return terms
-
-    def _get_only_new_filter(self) -> list[sa.ColumnElement[bool]]:
-        new_filter = self.only_new_on
-        logging.debug(f'newfilter is {new_filter}')
-        if new_filter:
-            return [Spot.park_hunts == 0]  # noqa E712
-        terms = []
-        return terms
-
-    def _get_sig_filter(self) -> list[sa.ColumnElement[bool]]:
-        sig = self.sig_filter
-        if (sig is None or sig == ''):
-            return []
-        terms = [Spot.spot_source == sig]
-        return terms
