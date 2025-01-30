@@ -8,6 +8,12 @@ import logging
 import socket
 import xmlrpc.client
 
+from cat.icat import ICat
+from cat.aclog_interface import aclog
+from cat.dxlabs import dxlabs
+from cat.flrig import flrig
+from cat.rigctld import rigctld
+
 if __name__ == "__main__":
     print("I'm not the program you are looking for.")
 
@@ -16,6 +22,36 @@ logger = logging.getLogger(__name__)
 
 class CAT:
     """CAT control rigctld or flrig"""
+
+    @staticmethod
+    def get_interface(interface_type: str) -> ICat:
+        '''
+        The main factory method for returning the proper ICat object to be used
+        by hunterlog to do CAT control.
+
+        The ICat object should be initialized after this method is called by 
+        calling ICat.init_cat() with `**kwargs** host = 'someipstr' and port = 
+        someportinteger. For other keyword arguments see the respective cat
+        objects init_cat method.
+
+        :param str interface_type: arbitrary string name for the CAT type
+
+        :returns ICat: a usable CAT control obj
+        '''
+        interface = interface_type.lower()
+
+        if interface == "flrig":
+            return flrig()
+        elif interface == "rigctld":
+            return rigctld()
+        elif interface == "aclog":
+            return aclog()
+        elif interface == "dxlabs":
+            return dxlabs()
+
+        return None
+    
+    ## everything below is now just for historical purposes.
 
     def __init__(self, interface: str, host: str, port: int) -> None:
         """

@@ -36,7 +36,9 @@ class JsApi:
         logging.debug("init CAT...")
         cfg = self.db.get_user_config()
         try:
-            self.cat = CAT(cfg.rig_if_type, cfg.flr_host, cfg.flr_port)
+            # self.cat = CAT(cfg.rig_if_type, cfg.flr_host, cfg.flr_port)
+            self.cat = CAT.get_interface(cfg.rig_if_type)
+            self.cat.init_cat(host=cfg.flr_host, port=cfg.flr_port)
         except Exception:
             logging.error("Error creating CAT object: ", exc_info=True)
             self.cat = None
