@@ -104,7 +104,7 @@ class AdifLog():
         """
         Send a UDP adif message to a remote endpoint
         """
-        logging.error(f"logging to {host}:{port} with data {msg}")
+        logging.debug(f"logging to {host}:{port} with data {msg}")
 
         try:
             with socket.socket(socket.AF_INET, type) as sock:
