@@ -6,6 +6,7 @@ import logging
 import logging.config
 import platform
 import argparse
+import mimetypes
 from pathlib import Path
 
 from api import JsApi
@@ -103,8 +104,13 @@ entry = get_entrypoint()
 def refresh_frontend():
     try:
         if len(webview.windows) > 0:
-            js = 'window.pywebview.state.getSpots()'
-            logging.debug('refreshing spots in frontend: ' + js)
+            js = r"""
+            if (window.pywebview.state !== undefined &&
+                window.pywebview.state.getSpots !== undefined) {
+                window.pywebview.state.getSpots();
+            }
+            """
+            logging.debug('refreshing spots in frontend')
             webview.windows[0].evaluate_js(js)
     except Exception as ex:
         logging.error("error in refresh_frontend")
@@ -158,6 +164,13 @@ if __name__ == '__main__':
         # Automatically open devtools when `start(debug=True)`.
         'OPEN_DEVTOOLS_IN_DEBUG': False,
     }
+
+    # fix for random users with white screen
+    # error seen is this:
+    # Failed to load module script: Expected a JavaScript module script but the
+    # server responded with a MIME type of "text/plain". Strict MIME type
+    # checking is enforced for module scripts per HTML spec.
+    mimetypes.add_type("application/javascript", ".js")
 
     window = webview.create_window(
         'HUNTER LOG',
