@@ -6,6 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 
+from db.alerts_query import AlertsQuery
 from db.filters import Filters
 from db.models.qsos import Qso
 from db.models.activators import Activator, ActivatorSchema
@@ -27,7 +28,7 @@ logging = L.getLogger(__name__)
 # L.getLogger('sqlalchemy.engine').setLevel(L.INFO)
 
 
-VER_FROM_ALEMBIC = 'fd67dfff009a'
+VER_FROM_ALEMBIC = 'af395801ad41'
 '''
 This value indicates the version of the DB scheme the app is made for.
 
@@ -97,6 +98,7 @@ class DataBase:
         self._qq = QsoQuery(self.session)
         self._pq = ParkQuery(self.session)
         self._sq = SpotQuery(self.session, self.filters)
+        self._aq = AlertsQuery(self.session)
 
         # do this FIRST. will upgrade the db to latest schema
         self._iq.init_alembic_ver()
@@ -140,6 +142,10 @@ class DataBase:
     def filters(self) -> Filters:
         return self._filters
 
+    @property
+    def alerts(self) -> AlertsQuery:
+        return self._aq
+
     def get_spot_metadata(self, to_add: Spot):
         park = self.parks.get_park(to_add.reference)
         if park is not None and park.hunts > 0:
@@ -174,6 +180,7 @@ class DataBase:
         self.session.execute(sa.text('DELETE FROM comments;'))
 
         # self._sq.insert_test_spot()  # testing code
+        # self._aq.insert_test_alert()  # testing alerts
 
         regions = list[str]()
 
@@ -365,3 +372,9 @@ class DataBase:
         q = Qso()
         q.init_from_spot(s, name)
         return q
+
+    def check_alerts(self) -> dict[str, Spot]:
+        logging.debug("checking alerts...")
+        to_alert = self.alerts.check_spots()
+        return to_alert
+

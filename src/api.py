@@ -584,6 +584,7 @@ class JsApi:
             json = self.pota.get_spots()
             sota = self.sota.get_spots()
             self.db.update_all_spots(json, sota)
+            self._handle_alerts()
             self.curr_pota_spots = json
             self.curr_sota_spots = sota
         except ConnectionError as con_ex:
@@ -693,3 +694,12 @@ class JsApi:
         cfg = self.db.get_user_config()
         cfg.is_max = 1 if is_max else 0
         self.db.commit_session()
+
+    def _handle_alerts(self):
+        to_alert = self.db.check_alerts()
+
+        for key in to_alert:
+            spot = to_alert[key]
+            if len(webview.windows) > 0:
+                js = f"console.log('{key} - {spot.activator}');"
+                webview.windows[0].evaluate_js(js)
