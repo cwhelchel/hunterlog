@@ -130,8 +130,9 @@ class AdifLog():
         q_time_on = qso.time_on.strftime('%H%M%S')
         state = qso.state if qso.state else ''
 
-        adif = self._get_adif_field("band", band_name) + \
+        adif = \
             self._get_adif_field("call", qso.call) + \
+            self._get_adif_field("band", band_name) + \
             self._get_adif_field("name", qso.name if qso.name else '') + \
             self._get_adif_field("comment", qso.comment) + \
             self._get_adif_field("sig", qso.sig) + \
