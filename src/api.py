@@ -478,6 +478,8 @@ class JsApi:
             mode = "USB"
         elif mode == "SSB" and hrz < 10000000:
             mode = "LSB"
+            if hrz > 5330000 and hrz < 5404000:  # 60m SSB is USB
+                mode = "USB"
         elif mode == "CW":
             mode = cfg.cw_mode
         elif mode.startswith("FT"):

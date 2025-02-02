@@ -171,7 +171,7 @@ class QsoQuery:
             band = get_band(q.freq)
             if band is None:
                 logging.warning(f"unknown band for freq {q.freq}")
-            else:
+            elif band.value not in hunted_bands:
                 logging.debug(f"appending band {band.value}")
                 hunted_bands.append(band.value)
 
