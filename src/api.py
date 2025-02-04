@@ -700,6 +700,12 @@ class JsApi:
 
         for key in to_alert:
             spot = to_alert[key]
-            if len(webview.windows) > 0:
-                js = f"console.log('{key} - {spot.activator}');"
+            if len(webview.windows) > 0 and spot is not None:
+                js = """if (window.pywebview.state !== undefined && 
+                            window.pywebview.state.showSpotAlert !== undefined)  {{  // # noqa
+                                window.pywebview.state.showSpotAlert('{key}', {id}); // # noqa
+                        }}
+                    """.format(key=key, id=spot.spotId)
+
+                #  logging.debug(f"alerting w this {js}")
                 webview.windows[0].evaluate_js(js)

@@ -1,9 +1,9 @@
-import sqlalchemy as sa
+from datetime import datetime
+from datetime import timezone
 from sqlalchemy.orm import scoped_session
 
-from db.models.alerts import Alerts, AlertsSchema
+from db.models.alerts import Alerts
 from db.models.spots import Spot
-from db.models.qsos import Qso
 
 import logging as L
 
@@ -36,7 +36,10 @@ class AlertsQuery:
             s = self.session.query(Spot) \
                 .filter(Spot.locationDesc.startswith(a.loc_search)) \
                 .first()
-            found[a.name] = s
+            found[f"{a.name}+{a.id}"] = s
+            if (s is not None):
+                a.last_triggered = datetime.now(timezone.utc)
 
+        self.session.commit()
         logging.debug(found)
         return found

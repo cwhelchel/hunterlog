@@ -13,6 +13,7 @@ import { UserConfig } from '../../@types/Config';
 import { ActivatorData } from '../../@types/ActivatorTypes';
 import { Alert, Avatar, Tooltip, AlertColor, Snackbar } from '@mui/material';
 import StatsMenu from './StatsMenu';
+import AlertsArea from './AlertsArea';
 
 export default function AppMenu() {
 
@@ -27,28 +28,28 @@ export default function AppMenu() {
 
 
     function getCfg() {
-         // pywebview is ready so api can be called here:
-         let x = window.pywebview.api.get_user_config();
-         console.log('getting user config');
-         x.then((cfgStr: string) => {
-             console.log('got user confg: ' + cfgStr);
-             
-             let obj: UserConfig = JSON.parse(cfgStr) as UserConfig;
-             setCallsign(obj.my_call);
-             let y = window.pywebview.api.get_activator_stats(obj.my_call);
-             y.then((actStr: string) => {
-                 let actObj: ActivatorData = JSON.parse(actStr) as ActivatorData;
-                 let url = getGravatarUrl(actObj.gravatar);
-                 setGravatar(url);
-             });
-         })
+        // pywebview is ready so api can be called here:
+        let x = window.pywebview.api.get_user_config();
+        console.log('getting user config');
+        x.then((cfgStr: string) => {
+            console.log('got user confg: ' + cfgStr);
+
+            let obj: UserConfig = JSON.parse(cfgStr) as UserConfig;
+            setCallsign(obj.my_call);
+            let y = window.pywebview.api.get_activator_stats(obj.my_call);
+            y.then((actStr: string) => {
+                let actObj: ActivatorData = JSON.parse(actStr) as ActivatorData;
+                let url = getGravatarUrl(actObj.gravatar);
+                setGravatar(url);
+            });
+        })
     };
 
     React.useEffect(() => {
         console.log('hooking for user config');
 
         if (window.pywebview !== undefined && window.pywebview.api !== null) {
-           getCfg();
+            getCfg();
         }
         else {
             window.addEventListener('pywebviewready', getCfg);
@@ -80,7 +81,7 @@ export default function AppMenu() {
     }, [contextData.errorMsg]);
 
 
-    React.useEffect( () => {
+    React.useEffect(() => {
         if (contextData.themeMode == 'dark')
             setRefreshBtnColor('primary')
         else if (contextData.themeMode == 'light')
@@ -139,11 +140,13 @@ export default function AppMenu() {
                     <ConfigModal />
                     <StatsMenu />
 
+                    <AlertsArea />
 
                     {/* this Typography contains nothing but it fills space to push our alert to right */}
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                         &nbsp;
                     </Typography>
+
                     {!alertHidden &&
                         <Alert variant="filled" severity={errorSeverity} onClose={() => { handleAlertClose() }} >{errorMsg}</Alert>
                     }
@@ -156,6 +159,8 @@ export default function AppMenu() {
                     </Tooltip>
                 </Toolbar>
             </AppBar>
+
+
 
             <Snackbar
                 open={snackOpen}

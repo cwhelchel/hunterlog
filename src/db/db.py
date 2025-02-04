@@ -377,4 +377,3 @@ class DataBase:
         logging.debug("checking alerts...")
         to_alert = self.alerts.check_spots()
         return to_alert
-
