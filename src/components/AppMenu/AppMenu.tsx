@@ -14,6 +14,7 @@ import { ActivatorData } from '../../@types/ActivatorTypes';
 import { Alert, Avatar, Tooltip, AlertColor, Snackbar } from '@mui/material';
 import StatsMenu from './StatsMenu';
 import AlertsArea from './AlertsArea';
+import AlertsMenu from './AlertsMenu';
 
 export default function AppMenu() {
 
@@ -139,6 +140,7 @@ export default function AppMenu() {
                     </Typography>
                     <ConfigModal />
                     <StatsMenu />
+                    <AlertsMenu />
 
                     <AlertsArea />
 

@@ -1,5 +1,37 @@
-.MuiAlertTitle-root {
-    // color: #01579b;
+.MuiMobileStepper-root {
+    background-color: rgb(7, 19, 24) !important;
+    height: 20px;
+}
+
+.MuiMobileStepper-dotActive {
+    background-color: rgb(184, 231, 251) !important;
+}
+
+.alert-box {
+    max-width: 600px;
+    width: 100%;
+    margin-top: 3px;
+    font-size: smaller;
+    display: flex;
+    background-color: rgb(7, 19, 24);
+}
+
+.alert-title {
     color: #0288d1;
-  }
-  
+    font-family: Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    letter-spacing: 0.00938em;
+    font-weight: 500;
+    font-size: 0.75rem;
+}
+
+.alert-body {
+    color: rgb(184, 231, 251);
+    font-family: Roboto, Helvetica, Arial, sans-serif;
+    letter-spacing: 0.00938em;
+    font-weight: 400;
+    font-size: 0.80rem;
+    display: block;
+    padding: 2px;
+    margin-right: 10px;
+}

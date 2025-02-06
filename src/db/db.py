@@ -373,7 +373,7 @@ class DataBase:
         q.init_from_spot(s, name)
         return q
 
-    def check_alerts(self) -> dict[str, Spot]:
+    def check_alerts(self) -> dict[str, list[Spot]]:
         logging.debug("checking alerts...")
         to_alert = self.alerts.check_spots()
         return to_alert

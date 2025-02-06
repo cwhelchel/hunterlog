@@ -1,90 +1,97 @@
 import * as React from 'react';
 
 import { useAppContext } from '../AppContext';
-import { Alert, AlertTitle, Button, CircularProgress, Menu, MenuItem } from '@mui/material';
+import { Alert, AlertTitle, Box, Button, CircularProgress, Icon, IconButton, Menu, MenuItem, MobileStepper, Tooltip, Typography } from '@mui/material';
 import { SpotRow } from '../../@types/Spots';
 import './AlertsArea.scss';
+import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import CloseIcon from '@mui/icons-material/Close';
+import SnoozeIcon from '@mui/icons-material/Snooze';
 
 interface AlertData {
     title: string,
     msg: string,
-    callsign: string
+    alertId: number
 }
 
 export default function AlertsArea() {
     const { contextData, setData } = useAppContext();
     const [alertHidden, setAlertHidden] = React.useState(true);
+    const [alertMultiHidden, setAlertMultiHidden] = React.useState(true);
     const [alertMsg, setAlertMsg] = React.useState('');
     const [alertTitle, setAlertTitle] = React.useState('');
     const [alerts, setAlerts] = React.useState<AlertData[]>([]);
     const [currentAlertId, setCurrentAlertId] = React.useState(-1);
+    const [multiParkTitle, setMultiParkTitle] = React.useState('');
+
 
     function handleAlertClose() {
         const x = { ...contextData };
         x.errorMsg = '';
         setData(x);
 
+        const step = activeStep;
         let y = [...alerts];
-        let d = y.pop();
-        console.log('popped from dismissal: ' + d?.msg);
-        setAlerts(y);
+        console.log(`before splice ${y.length}`);
+        y.splice(step, 1);
+        console.log(`after splice ${y.length}`);
 
-        let lastAlert = currentAlertId;
-
-        if (d !== undefined) {
-            // this is more alerts to display...
-            // let alertName = d?.title.split('+')[0];
-            // let t = `Alert from ${alertName || ''}`;
-            // setAlertTitle(t);
-            // setAlertMsg(d?.msg || '');
-            // setAlertHidden(false);
-            displayAlert(d);
-        } else {
-            // this indicates user has cleared the message
-            setAlertMsg('');
+        if (y.length == 0)
             setAlertHidden(true);
-            setAlertTitle('');
-        }
 
-        // TODO: code to dismiss alert in backend
+        setActiveStep(0);
+        // if ((step + 1) <= (y.length - 1)) {
+        //     setActiveStep(step + 1);
+        // } else {
+        //     setActiveStep(step - 1);
+        // }
+        setAlerts(y);
+    }
+
+    function handleSnoozeClick(): void {
+        // do nothing for now
     }
 
     // This function gets called from python
     //
-    // title: contains the name of the alert and the alert db id separated by
-    // a plus sign: 'NAME+1'
-    // spotId: the db id of the spot
-    function showSpotAlert(title: string, spotId: number) {
+    // json: a JSON object of all alert msgs keyed to the alert title+id
+    // keys have this format: 'ALERTNAME+ALERTDBID' ex Texas+3
+    function showSpotAlert(json: string) {
+        let data = JSON.parse(json);
+        console.log(data);
+        let currAlerts = [...alerts];
 
-        // cache this for next alert
-        let x = [...alerts];
+        let k = Object.keys(data);
 
-        let p = window.pywebview.api.get_spot(spotId);
-        p.then((r: string) => {
-            let spot = JSON.parse(r) as SpotRow;
-            if (spot) {
-                let msg = `📢 New one in ${spot.locationDesc}: ${spot.activator} at  ${spot.reference} 🔸 ${spot.mode} on ${spot.frequency}`
-                //setAlertMsg(msg);
-                x.push({ title: title, msg: msg, callsign: spot.activator });
-                setAlerts(x);
-                console.log('pushed an alert: ' + msg);
-            }
+        k.forEach((key) => {
+            const spots = data[key];
+            console.log(key);
+            console.log(spots);
+
+            let alertName = key.split('+')[0];
+            let alertId = key.split('+')[1];
+            let alertInt = parseInt(alertId || '-1');
+
+            spots.forEach((alertMsg: string) => {
+                currAlerts.push({ title: alertName, msg: alertMsg, alertId: alertInt });
+            });
         });
+
+        setAlerts(currAlerts);
     }
 
     React.useEffect(() => {
         let x = [...alerts];
 
-        // no data or the alert is already shown (leave it in queue)
-        if (x.length == 0 || !alertHidden)
+        // there's no data in alerts, we need to hide it
+        if (x.length == 0) {
+            console.log('hiding alerts');
+            setAlertHidden(true);
             return;
+        }
 
-        let data = x.pop();
-        console.log('popped for display: ' + data?.msg);
-
-        displayAlert(data);
-
-        setAlerts(x);
+        setAlertHidden(false);
     }, [alerts]);
 
     React.useEffect(() => {
@@ -102,18 +109,74 @@ export default function AlertsArea() {
         }
     }, []);
 
+    const [activeStep, setActiveStep] = React.useState(0);
+
+    const handleNext = () => {
+        setActiveStep((prevActiveStep) => prevActiveStep + 1);
+    };
+
+    const handleBack = () => {
+        setActiveStep((prevActiveStep) => prevActiveStep - 1);
+    };
+
     return (
         <div>
-            {!alertHidden &&
+            {/* {!alertHidden &&
                 <Alert
                     severity="info"
                     sx={{ fontSize: '0.80rem' }}
                     onClose={() => { handleAlertClose() }} >
-                    <AlertTitle sx={{ fontSize: '0.75rem' }}>{alertTitle}</AlertTitle>
-                    {alertMsg}
+                    <AlertTitle sx={{ fontSize: '0.75rem' }}>Example</AlertTitle>
+                    Example msg
                 </Alert>
+            } */}
+            {(!alertHidden) &&
+                <>
+                    <div className='alert-box'>
+                        <InfoOutlinedIcon sx={{
+                            marginLeft: '0.5em',
+                            padding: '2px',
+                            color: 'rgb(184, 231, 251)'
+                        }} />
+                        <div className='alert-body'>
+                            <div className='alert-title'>{alerts[activeStep].title}</div>
+                            <div>{alerts[activeStep].msg}</div>
+                        </div>
+                        <IconButton size='small' color='info' onClick={handleSnoozeClick}>
+                            <SnoozeIcon sx={{ fontSize: '0.80rem' }} />
+                        </IconButton>
+                        <IconButton size='small' color='info' onClick={handleAlertClose}>
+                            <CloseIcon sx={{ fontSize: '0.80rem' }} />
+                        </IconButton>
+                    </div>
+                    <MobileStepper
+                        variant="dots"
+                        color='info'
+                        steps={alerts.length}
+                        position="static"
+                        activeStep={activeStep}
+                        sx={{ maxWidth: 600, flexGrow: 1 }}
+                        nextButton={
+                            <Button size="small"
+                                color='info'
+                                onClick={handleNext}
+                                disabled={activeStep === alerts.length - 1}>
+                                <KeyboardArrowRight sx={{ fontSize: '0.80rem' }} />
+                            </Button>
+                        }
+                        backButton={
+                            <Button
+                                color='info'
+                                size="small"
+                                onClick={handleBack}
+                                disabled={activeStep === 0}>
+                                <KeyboardArrowLeft sx={{ fontSize: '0.80rem' }} />
+                            </Button>
+                        } />
+                </>
             }
-        </div>
+        </div >
+
     );
 
     function displayAlert(data: AlertData | undefined) {
@@ -125,5 +188,16 @@ export default function AlertsArea() {
         setAlertTitle(t);
         setAlertMsg(data?.msg || '');
         setAlertHidden(false);
+    }
+
+    function displayMultiAlert(title: string) {
+        let alertName = title.split('+')[0];
+        let alertId = title.split('+')[1];
+        let alertInt = parseInt(alertId || '-1');
+        //setCurrentAlertId(alertInt);
+        let t = `Multiple Parks from ${alertName || ''}`;
+        //setAlertTitle(t);
+        //setAlertMsg(data?.msg || '');
+        setAlertMultiHidden(false);
     }
 }

@@ -9,10 +9,11 @@ from datetime import timedelta
 from bands import get_band, get_name_of_band
 from db.db import DataBase
 from db.models.activators import Activator, ActivatorSchema
+from db.models.alerts import AlertsSchema
 from db.models.parks import ParkSchema
 from db.models.qsos import QsoSchema
 from db.models.spot_comments import SpotCommentSchema
-from db.models.spots import SpotSchema
+from db.models.spots import Spot, SpotSchema
 from db.models.user_config import UserConfigSchema
 from pota import PotaApi, PotaStats
 from sota import SotaApi
@@ -573,6 +574,36 @@ class JsApi:
         # logging.debug(f"return seen regions: {x}")
         return self._response(True, '', seen_regions=x)
 
+    def get_alerts(self):
+        '''
+        Gets the list of user configured alert filters.
+        '''
+        logging.debug('py get_alerts')
+        alerts = self.db.alerts.get_alerts()
+        schema = AlertsSchema(many=True)
+        return schema.dumps(alerts)
+
+    def set_alerts(self, alerts: str):
+        '''
+        Sets the list of user configured alert filters.
+        '''
+        logging.debug('py set_alerts ' + alerts)
+        new_alerts = json.loads(alerts)
+        logging.debug(new_alerts)
+        schema = AlertsSchema(many=True)
+        to_load = schema.load(new_alerts, session=self.db.session,
+                              many=True, partial=True)
+        self.db.session.add_all(to_load)
+        self.db.commit_session()
+
+    def delete_alert(self, alert_id: int):
+        '''
+        Delete the given alert.
+        '''
+        logging.debug(f'py delete_alerts {alert_id}')
+        self.db.alerts.delete_alert(alert_id)
+        self.db.commit_session()
+
     def _do_update(self):
         '''
         The main update method. Called on a timer
@@ -696,16 +727,25 @@ class JsApi:
         self.db.commit_session()
 
     def _handle_alerts(self):
+        def get_str(spot: Spot) -> str:
+            return f"📢 New one in {spot.locationDesc}: {spot.activator} at  {spot.reference} 🔸 {spot.mode} on {spot.frequency}"  # noqa
+
         to_alert = self.db.check_alerts()
 
-        for key in to_alert:
-            spot = to_alert[key]
-            if len(webview.windows) > 0 and spot is not None:
-                js = """if (window.pywebview.state !== undefined && 
-                            window.pywebview.state.showSpotAlert !== undefined)  {{  // # noqa
-                                window.pywebview.state.showSpotAlert('{key}', {id}); // # noqa
-                        }}
-                    """.format(key=key, id=spot.spotId)
+        # this is obj to get send to JS side via showSpotAlert()
+        res: dict[str, list[str]] = {}
 
-                #  logging.debug(f"alerting w this {js}")
-                webview.windows[0].evaluate_js(js)
+        for key in to_alert:
+            spots = to_alert[key]
+            res[key] = list(map(get_str, spots))
+
+        logging.debug(f"dict to send {res}")
+
+        if len(webview.windows) > 0 and len(res) > 0:
+            js = """if (window.pywebview.state !== undefined && 
+                        window.pywebview.state.showSpotAlert !== undefined)  {{  // # noqa
+                            window.pywebview.state.showSpotAlert('{obj}'); // # noqa
+                    }}
+                """.format(obj=json.dumps(res))
+            logging.debug(f"alerting w this {js}")
+            webview.windows[0].evaluate_js(js)

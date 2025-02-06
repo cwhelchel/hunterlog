@@ -1,6 +1,7 @@
 from datetime import datetime
 from datetime import timezone
 from sqlalchemy.orm import scoped_session
+import sqlalchemy as sa
 
 from db.models.alerts import Alerts
 from db.models.spots import Spot
@@ -23,23 +24,43 @@ class AlertsQuery:
         self.session.add(alert)
         self.session.commit()
 
+    def get_alerts(self) -> list[Alerts]:
+        return self.session.query(Alerts) \
+            .all()
+
     def get_current_alerts(self) -> list[Alerts]:
         return self.session.query(Alerts) \
             .filter(Alerts.enabled.is_(True)) \
             .all()
 
-    def check_spots(self) -> dict[str, Spot]:
+    def check_spots(self) -> dict[str, list[Spot]]:
         alerts = self.get_current_alerts()
         found = dict[str, Spot]()
 
         for a in alerts:
+            terms: list[sa.ColumnElement[bool]] = []
+            terms.append(Spot.locationDesc.startswith(a.loc_search))
+
+            if a.new_only:
+                terms.append(Spot.park_hunts == 0)
+            if a.exclude_modes:
+                modes: str = a.exclude_modes
+                list_to_exclude = map(str.strip, modes.split(','))
+                terms.append(Spot.mode.not_in(list_to_exclude))
+
+            logging.debug(f"terms {terms}")
             s = self.session.query(Spot) \
-                .filter(Spot.locationDesc.startswith(a.loc_search)) \
-                .first()
+                .filter(sa.and_(*terms)) \
+                .all()
             found[f"{a.name}+{a.id}"] = s
+
             if (s is not None):
                 a.last_triggered = datetime.now(timezone.utc)
 
         self.session.commit()
         logging.debug(found)
         return found
+
+    def delete_alert(self, id: int):
+        self.session.query(Alerts) \
+            .filter(Alerts.id == id).delete()
