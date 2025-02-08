@@ -224,7 +224,7 @@ class JsApi:
 
         current_band = get_band(freq)
         new_band = True
-        if current_band.value in hunted_bands:
+        if current_band is not None and current_band.value in hunted_bands:
             new_band = False
 
         if hunted_bands is None:
@@ -604,6 +604,16 @@ class JsApi:
         self.db.alerts.delete_alert(alert_id)
         self.db.commit_session()
 
+    def snooze_alert(self, alert_id: int) -> str:
+        '''
+        Snooze the given alert for a period of time.
+        '''
+        logging.debug(f'py snooze_alert {alert_id}')
+        self.db.alerts.snooze_alert(alert_id)
+        self.db.commit_session()
+
+        return self._response(True, "Alert snoozed!")
+
     def _do_update(self):
         '''
         The main update method. Called on a timer
@@ -747,5 +757,5 @@ class JsApi:
                             window.pywebview.state.showSpotAlert('{obj}'); // # noqa
                     }}
                 """.format(obj=json.dumps(res))
-            logging.debug(f"alerting w this {js}")
+            #  logging.debug(f"alerting w this {js}")
             webview.windows[0].evaluate_js(js)

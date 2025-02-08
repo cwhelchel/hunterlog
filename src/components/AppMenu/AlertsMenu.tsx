@@ -1,6 +1,6 @@
 import * as React from 'react';
 import clsx from 'clsx';
-import { styled, css } from '@mui/system';
+import { styled, css, maxWidth } from '@mui/system';
 import { Modal as BaseModal } from '@mui/base/Modal';
 import Button from '@mui/material/Button';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
@@ -38,7 +38,7 @@ export default function AlertsMenu() {
             field: 'name',
             headerName: 'Alert Name',
             type: 'string',
-            width: 110,
+            width: 150,
             editable: true,
         },
         {
@@ -52,13 +52,13 @@ export default function AlertsMenu() {
             field: 'exclude_modes',
             headerName: 'Excluded Modes (comma separated)',
             type: 'string',
-            width: 175,
+            width: 225,
             editable: true,
         },
         {
             field: 'actions',
             type: 'actions',
-            headerName: 'Actions',
+            headerName: 'Delete',
             width: 100,
             cellClassName: 'actions',
             getActions: ({ id }) => [
@@ -102,7 +102,7 @@ export default function AlertsMenu() {
 
     function handleAdd(): void {
         let x = [...alerts];
-        let max_id = -1; 
+        let max_id = -1;
         if (x.length > 0) {
             const a = x.map(y => y.id);
             max_id = Math.max.apply(null, a);
@@ -142,7 +142,8 @@ export default function AlertsMenu() {
     return (
         <>
             <Button onClick={handleOpen} style={{
-                color: "#bdbdbd"
+                color: "#bdbdbd",
+                marginRight:'15px'
             }}>
                 Alerts
             </Button>
@@ -153,11 +154,18 @@ export default function AlertsMenu() {
                 onClose={handleClose}
                 slots={{ backdrop: StyledBackdrop }}
             >
-                <ModalContent sx={{ width: '80%' }}>
+                <ModalContent sx={{ width: '70%' }}>
                     <h2 id="unstyled-modal-title" className="modal-title">
-                        Alerts
+                        Alert Configuration
                     </h2>
-                    <Button onClick={handleAdd}>Add Filter</Button>
+                    <div style={{ maxWidth: '75%', fontSize: '0.8rem' }}>
+                        <ul style={{margin: '1px', paddingInlineStart: '20px'}}>
+                            <li>The <b>Name</b> specified is used only when displaying the alert.</li>
+                            <li>The <b>Location</b> field is a string like 'US-TX', it will match the beginning of a spots location ('US-'' would match all locations in the US).</li>
+                            <li>If <b>New Only</b> is checked, only ATNO are alerted for a given location.</li>
+                        </ul>
+                    </div>
+                    <Button sx={{ maxWidth: '15%' }} onClick={handleAdd}>Add Alert Filter</Button>
                     <DataGrid
                         rows={alerts}
                         columns={columns}

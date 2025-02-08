@@ -1,31 +1,35 @@
 .MuiMobileStepper-root {
-    background-color: rgb(7, 19, 24) !important;
+    background-color: #0b262e !important;
     height: 20px;
+}
+
+.MuiMobileStepper-dot {
+    height: 5px !important;
+    width: 5px !important;
 }
 
 .MuiMobileStepper-dotActive {
     background-color: rgb(184, 231, 251) !important;
 }
 
+.alert-area {
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    box-shadow: 1px 3px 4px 0px #06161B;
+}
+
 .alert-box {
     max-width: 600px;
     width: 100%;
-    margin-top: 3px;
     font-size: smaller;
     display: flex;
-    background-color: rgb(7, 19, 24);
+    padding: 2px;
+    background-color: #133f52;
 }
 
-.alert-title {
-    color: #0288d1;
-    font-family: Roboto, Helvetica, Arial, sans-serif;
-    line-height: 1.5;
-    letter-spacing: 0.00938em;
-    font-weight: 500;
-    font-size: 0.75rem;
-}
-
-.alert-body {
+.alert-content {
     color: rgb(184, 231, 251);
     font-family: Roboto, Helvetica, Arial, sans-serif;
     letter-spacing: 0.00938em;
@@ -35,3 +39,13 @@
     padding: 2px;
     margin-right: 10px;
 }
+
+.alert-title {
+    color: #0288d1;
+    font-family: Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    letter-spacing: 0.00938em;
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+

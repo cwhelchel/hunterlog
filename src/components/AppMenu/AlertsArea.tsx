@@ -8,6 +8,7 @@ import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import SnoozeIcon from '@mui/icons-material/Snooze';
+import { checkApiResponse } from '../../util';
 
 interface AlertData {
     title: string,
@@ -18,27 +19,23 @@ interface AlertData {
 export default function AlertsArea() {
     const { contextData, setData } = useAppContext();
     const [alertHidden, setAlertHidden] = React.useState(true);
-    const [alertMultiHidden, setAlertMultiHidden] = React.useState(true);
-    const [alertMsg, setAlertMsg] = React.useState('');
-    const [alertTitle, setAlertTitle] = React.useState('');
     const [alerts, setAlerts] = React.useState<AlertData[]>([]);
-    const [currentAlertId, setCurrentAlertId] = React.useState(-1);
-    const [multiParkTitle, setMultiParkTitle] = React.useState('');
 
-
-    function handleAlertClose() {
-        const x = { ...contextData };
-        x.errorMsg = '';
-        setData(x);
-
+    function handleAlertClose(event: any) {
         const step = activeStep;
+
         let y = [...alerts];
-        console.log(`before splice ${y.length}`);
         y.splice(step, 1);
-        console.log(`after splice ${y.length}`);
 
         if (y.length == 0)
             setAlertHidden(true);
+
+        if (event.shiftKey) {
+            y = [];
+            setAlerts(y);
+            setAlertHidden(true);
+            return;
+        }
 
         setActiveStep(0);
         // if ((step + 1) <= (y.length - 1)) {
@@ -49,8 +46,18 @@ export default function AlertsArea() {
         setAlerts(y);
     }
 
-    function handleSnoozeClick(): void {
+    function handleSnoozeClick(event: any): void {
         // do nothing for now
+        if (window.pywebview.api !== null) {
+            let curr = [...alerts];
+            const id = curr[activeStep].alertId;
+            console.log(`Snoozing ${id}`);
+            let p = window.pywebview.api.snooze_alert(id);
+            p.then((r: string) => {
+                checkApiResponse(r, contextData, setData);
+            });
+            handleAlertClose(event);
+        }
     }
 
     // This function gets called from python
@@ -59,15 +66,12 @@ export default function AlertsArea() {
     // keys have this format: 'ALERTNAME+ALERTDBID' ex Texas+3
     function showSpotAlert(json: string) {
         let data = JSON.parse(json);
-        console.log(data);
         let currAlerts = [...alerts];
 
         let k = Object.keys(data);
 
         k.forEach((key) => {
             const spots = data[key];
-            console.log(key);
-            console.log(spots);
 
             let alertName = key.split('+')[0];
             let alertId = key.split('+')[1];
@@ -86,7 +90,7 @@ export default function AlertsArea() {
 
         // there's no data in alerts, we need to hide it
         if (x.length == 0) {
-            console.log('hiding alerts');
+            // console.log('hiding alerts');
             setAlertHidden(true);
             return;
         }
@@ -121,31 +125,34 @@ export default function AlertsArea() {
 
     return (
         <div>
-            {/* {!alertHidden &&
-                <Alert
-                    severity="info"
-                    sx={{ fontSize: '0.80rem' }}
-                    onClose={() => { handleAlertClose() }} >
-                    <AlertTitle sx={{ fontSize: '0.75rem' }}>Example</AlertTitle>
-                    Example msg
-                </Alert>
-            } */}
             {(!alertHidden) &&
-                <>
+                <div className='alert-area'>
                     <div className='alert-box'>
                         <InfoOutlinedIcon sx={{
-                            marginLeft: '0.5em',
+                            marginLeft: '7px',
+                            marginRight: '3px',
+                            height: 'auto',
                             padding: '2px',
                             color: 'rgb(184, 231, 251)'
                         }} />
-                        <div className='alert-body'>
-                            <div className='alert-title'>{alerts[activeStep].title}</div>
-                            <div>{alerts[activeStep].msg}</div>
+                        <div className='alert-content'>
+                            <div className='alert-title'>Alert from: {alerts[activeStep]?.title}</div>
+                            <div>{alerts[activeStep]?.msg}</div>
                         </div>
-                        <IconButton size='small' color='info' onClick={handleSnoozeClick}>
+                        <IconButton
+                            sx={{ height: 'fit-content' }}
+                            size='small'
+                            color='info'
+                            onClick={handleSnoozeClick}
+                            title='Snooze this alert for 10 minutes'>
                             <SnoozeIcon sx={{ fontSize: '0.80rem' }} />
                         </IconButton>
-                        <IconButton size='small' color='info' onClick={handleAlertClose}>
+                        <IconButton
+                            sx={{ height: 'fit-content' }}
+                            size='small'
+                            color='info'
+                            onClick={handleAlertClose}
+                            title='Dismiss (Shift+click to dismiss all)'>
                             <CloseIcon sx={{ fontSize: '0.80rem' }} />
                         </IconButton>
                     </div>
@@ -173,31 +180,9 @@ export default function AlertsArea() {
                                 <KeyboardArrowLeft sx={{ fontSize: '0.80rem' }} />
                             </Button>
                         } />
-                </>
+                </div>
             }
         </div >
 
     );
-
-    function displayAlert(data: AlertData | undefined) {
-        let alertName = data?.title.split('+')[0];
-        let alertId = data?.title.split('+')[1];
-        let alertInt = parseInt(alertId || '-1');
-        setCurrentAlertId(alertInt);
-        let t = `Alert from ${alertName || ''}`;
-        setAlertTitle(t);
-        setAlertMsg(data?.msg || '');
-        setAlertHidden(false);
-    }
-
-    function displayMultiAlert(title: string) {
-        let alertName = title.split('+')[0];
-        let alertId = title.split('+')[1];
-        let alertInt = parseInt(alertId || '-1');
-        //setCurrentAlertId(alertInt);
-        let t = `Multiple Parks from ${alertName || ''}`;
-        //setAlertTitle(t);
-        //setAlertMsg(data?.msg || '');
-        setAlertMultiHidden(false);
-    }
 }
