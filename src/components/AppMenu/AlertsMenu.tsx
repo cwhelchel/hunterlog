@@ -117,6 +117,15 @@ export default function AlertsMenu() {
         setAlerts(x);
     }
 
+
+    function handleShowTest(): void {
+        const json = {
+            'TestAlert+-1': ['📢 Close alert with X. 🔸 Close all with Shift+Click', '📢 Snooze button disables whole filter for a little while.'],
+            'AnotherAlert+-1': ['📢 New one in US-FL: N7AWX at  US-6293 🔸 SSB on 14284', '📢 New one in US-FL: KA4PJZ at  US-3622 🔸 SSB on 14265']
+        }
+        window.pywebview.state.showSpotAlert(JSON.stringify(json));
+    }
+
     const handleDeleteClick = (id: GridRowId) => () => {
         function getValue(value: string | number): string {
             if (typeof value === "string") {
@@ -143,7 +152,7 @@ export default function AlertsMenu() {
         <>
             <Button onClick={handleOpen} style={{
                 color: "#bdbdbd",
-                marginRight:'15px'
+                marginRight: '15px'
             }}>
                 Alerts
             </Button>
@@ -159,13 +168,16 @@ export default function AlertsMenu() {
                         Alert Configuration
                     </h2>
                     <div style={{ maxWidth: '75%', fontSize: '0.8rem' }}>
-                        <ul style={{margin: '1px', paddingInlineStart: '20px'}}>
+                        <ul style={{ margin: '1px', paddingInlineStart: '20px' }}>
                             <li>The <b>Name</b> specified is used only when displaying the alert.</li>
                             <li>The <b>Location</b> field is a string like 'US-TX', it will match the beginning of a spots location ('US-'' would match all locations in the US).</li>
                             <li>If <b>New Only</b> is checked, only ATNO are alerted for a given location.</li>
                         </ul>
                     </div>
-                    <Button sx={{ maxWidth: '15%' }} onClick={handleAdd}>Add Alert Filter</Button>
+                    <Stack direction={'row'} spacing={1}>
+                        <Button sx={{ maxWidth: '15%' }} onClick={handleAdd}>Add Alert Filter</Button>
+                        <Button sx={{ maxWidth: '15%' }} onClick={handleShowTest}>Show Test Alert</Button>
+                    </Stack>
                     <DataGrid
                         rows={alerts}
                         columns={columns}

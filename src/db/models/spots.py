@@ -60,7 +60,9 @@ class Spot(Base):
         self.activator = json['activatorCallsign']
         try:
             f = str(json['frequency']).replace(',', '.')  # locale fix
-            self.frequency = float(f) * 1000  # MHz to kHz
+
+            # convert MHz to kHz if freq string is good
+            self.frequency = 0.0 if f == '' else float(f) * 1000
         except Exception as ex:
             log.warning('error reading sota freq', exc_info=ex)
             self.frequency = 0.0
