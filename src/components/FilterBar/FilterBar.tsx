@@ -75,6 +75,27 @@ export const FilterBar = (props: IFilterBarPros) => {
     const handleRegionChange = (event: SelectChangeEvent) => {
         let r = typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value;
 
+        // the compiler complains that shiftKey isn't there. but it is.
+        // if no regions are selected and the user holds shift while clicking
+        // their selection, we invert the selection. helpful for those who dont
+        // want to see US spots.
+        if (event.shiftKey) {
+            let curr = { ...contextData };
+            let current = curr.regions;
+            let filterBy = "";
+            if (r.length > 1 && r[0] === "") {
+                // the very first time it's clicked there's an empty string in
+                // index 0
+                filterBy = r[1];
+            } else {
+                filterBy = r[0];
+            }
+            let inv = current.filter((x) => x != filterBy);
+            setRegionFilter(inv);
+            window.localStorage.setItem("REGION_FILTER", inv.join(","));
+            return;
+        }
+
         if (r.includes("NONE")) {
             r = [];
         }

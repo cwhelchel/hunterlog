@@ -384,7 +384,7 @@ export default function SpotViewer() {
                         paginationModel: { page: 0, pageSize: 25 },
                     },
                 }}
-                pageSizeOptions={[5, 10, 25]}
+                pageSizeOptions={[5, 10, 25, 100]}
                 filterModel={contextData.filter}
                 onFilterModelChange={(v) => setFilterModel(v)}
                 onRowClick={handleRowClick}
