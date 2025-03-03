@@ -73,3 +73,9 @@ class LocationQuery:
     def clear_locations(self):
         self.session.execute(sa.text("DELETE FROM LOCATIONS;"))
         self.session.commit()
+
+    def get_all_locations(self) -> list[str]:
+        sql = sa.select(Location.descriptor).distinct()
+        return self.session.execute(sql) \
+            .scalars() \
+            .all()

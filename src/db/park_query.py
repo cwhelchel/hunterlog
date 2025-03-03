@@ -201,3 +201,14 @@ class ParkQuery:
 
         if not delay_commit:
             self.session.commit()
+
+    def get_hunted_parks(self, location: str) -> list[str]:
+        '''
+        Returns a list of the references of all hunted parks for a given
+        location.
+        '''
+        sql = sa.select(Park.reference) \
+            .where(Park.hunts > 0) \
+            .where(Park.locationDesc.contains(location))
+        result = self.session.execute(sql)
+        return result.scalars().all()

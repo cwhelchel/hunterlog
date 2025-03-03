@@ -1,0 +1,8 @@
+Best to use flrig 2.0.01. The older installers can be found here:
+
+https://www.w1hkj.org/files/archives/
+
+The newer versions really liked to crash a lot with my ic7300. YMMV with other
+versions.
+
+-Cainan N9FZ

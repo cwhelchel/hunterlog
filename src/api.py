@@ -614,6 +614,28 @@ class JsApi:
 
         return self._response(True, "Alert snoozed!")
 
+    def get_pota_locations(self) -> str:
+        locs = self.db.locations.get_all_locations()
+        return self._response(True, '', locations=locs)
+
+    def get_hamalert_text(self, location: str) -> str:
+        hunted = self.db.parks.get_hunted_parks(location)
+        self.pota.check_and_download_parks(location)
+        with open(f"data\\parks-{location}.json", 'r', encoding='utf-8') as r:
+            text = r.read()
+            obj = json.loads(text)
+            all_parks: list[str] = list(map(lambda x: x['reference'], obj))
+            # logging.debug(all_parks)
+
+            hunted_set = set(hunted)
+            all_set = set(all_parks)
+            unhunted = list(all_set - hunted_set)
+            return self._response(True, '',
+                                  hunted_refs=hunted,
+                                  unhunted_refs=unhunted)
+
+        return self._response(False, 'Error getting hamalert text')
+
     def _do_update(self):
         '''
         The main update method. Called on a timer

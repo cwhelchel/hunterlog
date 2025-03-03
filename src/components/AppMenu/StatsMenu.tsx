@@ -3,8 +3,9 @@ import * as React from 'react';
 import { useAppContext } from '../AppContext';
 import { UpdateStats } from '../Stats/UpdateStats';
 import { ImportAdif } from '../Stats/ImportAdif';
-import { Button, CircularProgress, Menu, MenuItem } from '@mui/material';
+import { Button, CircularProgress, Divider, Menu, MenuItem } from '@mui/material';
 import { LocationStatsButton } from '../Stats/LocationStats';
+import { HamAlertButton } from '../Stats/HamAlert';
 
 export default function StatusMenu() {
 
@@ -57,6 +58,10 @@ export default function StatusMenu() {
                 </MenuItem>
                 <MenuItem >
                     <LocationStatsButton setIsWorking={setIsWorking} />
+                </MenuItem>
+                <Divider/>
+                <MenuItem>
+                    <HamAlertButton />
                 </MenuItem>
             </Menu>
         </div>

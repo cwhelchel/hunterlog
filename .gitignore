@@ -1,5 +1,10 @@
 *.pyc
 *.sh
+*.db
+*.db-back
+*.adi
+*.log
+data
 setup.cfg
 pywebview.egg-info
 MANIFEST
