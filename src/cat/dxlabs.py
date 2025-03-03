@@ -38,7 +38,7 @@ class dxlabs(ICat):
         # <command:10>CmdSetMode<parameters:7><1:2>CW
         # Valid modes are (AM, CW, CW-R, DATA-L, DATA-U, FM, LSB, USB, RTTY, RTTY-R, WBFM)
 
-        t = f'<1:2>{mode}'
+        t = f'<1:{len(mode)}>{mode}'
         cmd = f'<command:10>CmdSetMode<parameters:{len(t)}>{t}'
 
         logger.debug(f"dxlabs mode cmd: {cmd}")
