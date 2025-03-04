@@ -107,3 +107,24 @@ locally. No hunter data is in this file but the meta-data about locations and
 prefixes is used to tabulate the parks hunted within a location.
 
 This is the easiest data to import and should take very little time.
+
+
+## HamAlert Helper
+
+The HamAlert Helper allows you to generate a list of unhunted POTA parks within
+a given POTA location. This is useful for creating triggers for [HamAlert](https://hamalert.org).
+
+> [!IMPORTANT]  
+> To use the HamAlert Helper, you *must* click the `LOC STATS` menu item first. If
+> you don't there will be no Locations in the drop down list.
+
+The main dropdown allows you to type in the location you care about. I'm trying
+to get all the US-GA parks hunted, so I will type in US-GA and select it from 
+the menu. It will look like this:
+
+![Exporting hunter stats](img/hamalert.png)
+
+I can then copy and paste those values into a trigger in HamAlert website.
+*The list is automatically copied to your clipboard when you select a location.*
+This will send notifications directly to my phone when any of these parks are on 
+the air.

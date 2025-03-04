@@ -3,8 +3,10 @@
 ## Main Menu
 
 At the very top of the application is the main menu. Your callsign and Gravatar
-are displayed here. There are three buttons, CONFIGURATION, STATS, and a Refresh
-button. Configuration is described below. The Refresh button is like hitting F5
+are displayed here. There are three buttons, CONFIGURATION, STATS, ALERTS, and 
+a Refresh button. 
+
+Configuration is described below. The Refresh button is like hitting F5
 on your browser. It doesn't necessarily refresh the spots from POTA.
 
 ![Main Menu](img/app_bar.png)
@@ -14,8 +16,12 @@ The STATS menu has a few sub-menu items for loading data from various sources.
 - PARK Stats: downloaded from pota website. hunter_parks.csv
 - OP Stats: import of a adif log containing hunts of activator callsigns
 - LOC Stats: download from pota website. program/location data
+- HAMALERT: gives a list of unhunted parks in a location (state)
 
 These are described in detail in the [Stats Guide](STATS.md). But they will have a progress indicator that will disappear when they are done processing as some of these operations take a long time.
+
+The ALERTS menu allows you to configure alerts that will popup on the main menu
+bar to notify you of parks you may want to hunt. It's described in [Alerts Guide](ALERTS.md)
 
 ## QSO Entry
 
@@ -141,9 +147,7 @@ When a row is clicked in the spot viewer, the top-right side section displays a 
 The reference string and title are displayed first. The title is also a link to
 the website for either the Park or Summit. The displayed reference data is a
 different between parks and summits but either are self explanatory. The
-text at the bottom shows the number of QSOs you've had with that reference. It
-will be red if you have 0 QSOs with activators at that reference, indicating 
-its a new-to-you park or summit.
+text at the bottom shows the number of QSOs you've had with that reference.
 
 ## Configuration
 
@@ -160,6 +164,7 @@ the options described here. When clicked this modal dialog will be displayed:
 - Display Imperial Units: feet or meters
 - Dark mode: toggle between light and dark mode
 - Show Spot Age: if selected shows spot time as an age: '2 MIN' vs the '12:34'
+- Highlight New: if a park is new, pulse the color of the spot row
 
 ### CAT settings 
 First is a drop down selection of CAT interface types. Currently those
