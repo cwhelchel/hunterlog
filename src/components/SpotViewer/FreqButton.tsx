@@ -3,9 +3,26 @@ import { Button, Tooltip } from '@mui/material';
 import { checkApiResponse } from '../../util';
 import { useAppContext } from '../AppContext';
 
+// Update the Button's color options to include an alert option
+declare module '@mui/material/Button' {
+    interface ButtonPropsColorOverrides {
+      alert: true;
+    }
+  }
+  
+
+type ButtonVariants = "text" | "outlined" | "contained"
+type ButtonSize = "small" | "medium" | "large"
+type ColorVariants = 'inherit' | 'primary' | 'secondary' | 'success' | 'error' | 'info' | 'warning' | 'alert'
+
 interface IFreqButtonProps {
     frequency: string,
-    mode: string
+    mode: string,
+    buttonVariant?: ButtonVariants,
+    buttonSize?: ButtonSize,
+    displayText?: string,
+    widthSx?: string,
+    color?: ColorVariants
 };
 
 
@@ -22,12 +39,16 @@ export default function FreqButton(props: IFreqButtonProps) {
     };
 
     return (
-        <Button sx={{ width: '100px' }} variant='contained'
+        <Button 
+            sx={{ width: props.widthSx ?? '100px', height: 'fit-content' }}
+            variant={props.buttonVariant ?? 'contained'}
+            size={props.buttonSize ?? 'medium'}
+            color={props.color ?? 'primary'}
             onClick={(event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
                 onClick(props.frequency, props.mode);
             }
             }>
-            {props.frequency}
+            {props.displayText === undefined ? props.frequency : props.displayText}
         </Button>
     );
 }

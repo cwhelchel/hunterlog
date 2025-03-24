@@ -22,6 +22,7 @@ import { SpotComments } from '../../@types/SpotComments';
 import { getSummitInfo } from '../../pota';
 import { Summit } from '../../@types/Summit';
 import { checkApiResponse } from '../../util';
+import HandleSpotRowClick from './HandleSpotRowClick';
 
 // https://mui.com/material-ui/react-table/
 
@@ -52,7 +53,7 @@ const columns: GridColDef[] = [
         field: 'frequency', headerName: 'Freq', width: 100, type: 'number',
         renderCell: (x) => {
             return (
-                <FreqButton frequency={x.row.frequency} mode={x.row.mode} />
+                <FreqButton frequency={x.row.frequency} mode={x.row.mode} buttonVariant={'contained'} />
             );
         }
     },
@@ -127,7 +128,7 @@ const columns: GridColDef[] = [
         renderCell: (x) => {
             return <>
                 {x.row.spot_source == 'SOTA' && (
-                    <LandscapeIcon color='secondary'/>
+                    <LandscapeIcon color='secondary' />
                 )}
                 {x.row.spot_source == 'POTA' && (
                     <ParkIcon color='primary' />
@@ -187,7 +188,12 @@ export default function SpotViewer() {
             }
         });
 
+        // console.log(spots);
         spots.map((spot) => {
+            // random white screen. one time there was a null dereference here
+            // turning the hunterlog screen white
+            if (spot === null)
+                return;
             if (spot.spot_source == 'POTA') {
                 let location = spot.locationDesc.substring(0, 5);
                 if (!contextData.locations.includes(location))
@@ -196,81 +202,6 @@ export default function SpotViewer() {
         });
         contextData.locations.sort();
     }, [spots]);
-
-    async function getOtherOps(spotId: number): Promise<string> {
-        const r = await window.pywebview.api.get_spot_comments(spotId);
-
-        let t = JSON.parse(r) as SpotComments[];
-        let filtered = t.filter(function (el) {
-            return el.comments.includes('{With:');
-        });
-
-        if (filtered.length > 0) {
-            const str = filtered[0].comments;
-            const re = new RegExp("{With:([^}]*)}");
-            const m = str.match(re);
-
-            if (m) {
-                return m[1];
-            }
-        } else {
-            return '';
-        }
-
-        return '';
-
-    }
-
-    function getQsoData(id: number) {
-        // use the spot to generate qso data (unsaved)
-        const q = window.pywebview.api.get_qso_from_spot(id);
-
-        q.then((r: any) => {
-            if (r['success'] == false)
-                return;
-            var x = JSON.parse(r) as Qso;
-            //console.log("got qso:" + r);
-
-            if (x.sig == 'POTA') {
-                window.pywebview.api.get_park(x.sig_info)
-                    .then((r: string) => {
-                        let p = JSON.parse(r) as Park;
-                        const newCtxData = { ...contextData };
-                        newCtxData.spotId = id;
-                        newCtxData.qso = x;
-                        newCtxData.park = p;
-                        newCtxData.summit = null;
-                        getOtherOps(id).then((oo) => {
-                            newCtxData.otherOperators = oo;
-                            setData(newCtxData);
-                        });
-                    });
-            } else if (x.sig == 'SOTA') {
-
-                window.pywebview.api.get_summit(x.sig_info)
-                    .then((r: string) => {
-                        let summit = JSON.parse(r) as Park;
-                        const newCtxData = { ...contextData };
-                        newCtxData.spotId = id;
-                        newCtxData.qso = x;
-                        //newCtxData.summit = summit;
-                        newCtxData.park = summit;
-                        setData(newCtxData);
-                    });
-
-                // getSummitInfo(x.sig_info).then((summit: Summit) => {
-                //     console.log("got summit: " + summit.summitCode);
-                //     const newCtxData = { ...contextData };
-                //     newCtxData.spotId = id;
-                //     newCtxData.qso = x;
-                //     newCtxData.summit = summit;
-                //     newCtxData.park = null;
-                //     setData(newCtxData);
-                // });
-            }
-
-        });
-    }
 
     React.useEffect(() => {
         if (window.pywebview !== undefined && window.pywebview.api !== null)
@@ -318,14 +249,11 @@ export default function SpotViewer() {
         event,   // MuiEvent<React.MouseEvent<HTMLElement>>
         details, // GridCallbackDetails
     ) => {
-        // load the spot's comments into the db
-        let x = window.pywebview.api.insert_spot_comments(params.row.spotId);
-
-        x.then(() => {
-            // wait to get the rest of the data until after the spot comments 
-            // are inserted
-            getQsoData(params.row.spotId);
-        });
+        // setting spotId in ctx is connected to HandleSpotRowClick
+        const newCtxData = { ...contextData };
+        // console.log('setting spot to ' + params.row.spotId);
+        newCtxData.spotId = params.row.spotId;
+        setData(newCtxData);
     };
 
     function setFilterModel(e: GridFilterModel) {
@@ -373,7 +301,7 @@ export default function SpotViewer() {
                 rows={spots}
                 sx={{
                     "& .Mui-selected.spotviewer-row-new": {
-                      backgroundColor: "rgba(75, 30, 110, 0.75) !important"
+                        backgroundColor: "rgba(75, 30, 110, 0.75) !important"
                     }
                 }}
                 slots={{ toolbar: CustomToolbar }}
@@ -392,6 +320,7 @@ export default function SpotViewer() {
                 onSortModelChange={(e) => setSortModelAndSave(e)}
                 getRowClassName={getClassName}
             />
+            <HandleSpotRowClick />
         </div>
     );
 }

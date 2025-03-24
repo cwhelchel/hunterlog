@@ -18,6 +18,7 @@
     margin-top: 4px;
     margin-bottom: 4px;
     box-shadow: 1px 3px 4px 0px #06161B;
+    width: 500px;
 }
 
 .alert-box {
@@ -38,14 +39,13 @@
     display: block;
     padding: 2px;
     margin-right: 10px;
+    width: 100%;
 }
 
 .alert-title {
-    color: #0288d1;
+    color: #b8e7fb;
     font-family: Roboto, Helvetica, Arial, sans-serif;
-    line-height: 1.5;
-    letter-spacing: 0.00938em;
-    font-weight: 500;
-    font-size: 0.85rem;
+    font-weight: 600;
+    font-size: 0.89rem;
 }
 
