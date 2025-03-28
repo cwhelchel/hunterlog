@@ -77,8 +77,8 @@ export default function AlertsArea() {
     // keys have this format: 'ALERTNAME+ALERTDBID' ex Texas+3
     function showSpotAlert(json: any) {
         //let data = json;
-        console.log(json);
-        console.log(typeof json);
+        //console.log(json);
+        //console.log(typeof json);
         let data = JSON.parse(json);
         let currAlerts = [...alerts];
 
@@ -93,9 +93,9 @@ export default function AlertsArea() {
             let alertInt = parseInt(alertId || '-1');
 
             spots.forEach((alertMsg: any) => {
-                console.log('alertMsg: ' + alertMsg);
+                //console.log('alertMsg: ' + alertMsg);
                 let alertData = alertMsg;//JSON.parse(alertMsg);
-                const text = `📢 New one in ${alertData.location}: ${alertData.activator} at ${alertData.reference} 🔸 ${alertData.mode} on `; //${alertData.freq}
+                const text = `📢 New ref ${alertData.location}: ${alertData.activator} @ ${alertData.reference} 🔸 ${alertData.mode}(${alertData.freq})`;
                 currAlerts.push({ title: alertName, msg: text, alertId: alertInt, freq: alertData.freq, mode: alertData.mode, spotId: alertData.spotId });
             });
         });
@@ -173,6 +173,7 @@ export default function AlertsArea() {
                         <div className='alert-content'>
                             <div className='alert-title'>Alert from: {alerts[activeStep]?.title}</div>
                             <FreqButton 
+                                activator={'none'}
                                 frequency={alerts[activeStep]?.freq}
                                 mode={alerts[activeStep]?.mode} 
                                 buttonVariant={'text'} 

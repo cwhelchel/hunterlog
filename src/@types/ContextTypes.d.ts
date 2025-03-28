@@ -27,5 +27,7 @@ export interface ContextData {
 
 export  interface AppContextType {
     contextData: ContextData;
+    qsyButtonId: string;
     setData: (d: ContextData) => void;
+    setLastQsyBtnId: (newId: string) => void;
 }

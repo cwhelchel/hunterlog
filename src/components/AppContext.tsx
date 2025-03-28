@@ -25,13 +25,14 @@ const defData: ContextData = {
     onlyNewFilter: false,
     otherOperators: '',
     summit: null,
-    sigFilter: ''
+    sigFilter: '',
 };
 
 export const AppContext = React.createContext<AppContextType | null>(null);
 
 export const AppContextProvider = ( {children}: any ) => {
     const [contextData, setContextData] = React.useState<ContextData>(defData);
+    const [qsyButtonId, setQsyButtonId] = React.useState<string>('');
 
     const setData = (ctx: ContextData) => {
         const newContext: ContextData = {
@@ -52,14 +53,22 @@ export const AppContextProvider = ( {children}: any ) => {
             onlyNewFilter: ctx.onlyNewFilter,
             otherOperators: ctx.otherOperators,
             summit: ctx.summit,
-            sigFilter: ctx.sigFilter
+            sigFilter: ctx.sigFilter,
         }
         setContextData(newContext);
     };
 
+    const setLastQsyBtnId = (newId: string) => {
+        // setting this via existing context sucks as the event propagates
+        // to the button first then the row
+        setQsyButtonId(newId);
+    }
+
     const contextValue: AppContextType = {
         contextData,
-        setData
+        setData,
+        qsyButtonId,
+        setLastQsyBtnId
     };
 
     return (

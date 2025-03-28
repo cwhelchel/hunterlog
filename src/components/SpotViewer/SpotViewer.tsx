@@ -53,7 +53,7 @@ const columns: GridColDef[] = [
         field: 'frequency', headerName: 'Freq', width: 100, type: 'number',
         renderCell: (x) => {
             return (
-                <FreqButton frequency={x.row.frequency} mode={x.row.mode} buttonVariant={'contained'} />
+                <FreqButton activator={x.row.activator} frequency={x.row.frequency} mode={x.row.mode} />
             );
         }
     },
@@ -150,7 +150,7 @@ export default function SpotViewer() {
     const [spots, setSpots] = React.useState(rows)
     const [sortModel, setSortModel] = React.useState<GridSortModel>([currentSortFilter]);
     const [backdropOpen, setBackdropOpen] = React.useState(false);
-    const { contextData, setData } = useAppContext();
+    const { contextData, setData, qsyButtonId, setLastQsyBtnId } = useAppContext();
 
     function getSpots() {
         // get the spots from the db
@@ -302,7 +302,10 @@ export default function SpotViewer() {
                 sx={{
                     "& .Mui-selected.spotviewer-row-new": {
                         backgroundColor: "rgba(75, 30, 110, 0.75) !important"
-                    }
+                    },
+                    '& .Mui-selected': {
+                        color: 'alert.main',
+                    },
                 }}
                 slots={{ toolbar: CustomToolbar }}
                 columns={columns}
