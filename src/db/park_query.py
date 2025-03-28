@@ -128,6 +128,56 @@ class ParkQuery:
         if not delay_commit:
             self.session.commit()
 
+
+    def update_wwff_data(self, wwffLocation: any, delay_commit: bool = False):
+        '''
+        Update or insert a "park" with info from WWFF api for a wwff location
+
+        :param any summit: the json for a SOTA summit returned from SOTA api
+        :param bool delay_commit: true to not commit the session
+        '''
+        if wwffLocation is None:
+            return
+
+        p = self.get_park(wwffLocation['summitCode'])
+
+        if p is None:
+            logging.debug(f"inserting new {wwffLocation['summitCode']}")
+            to_add = Park()
+            to_add.reference = wwffLocation['ref']
+            to_add.name = wwffLocation['name']
+            to_add.grid4 = wwffLocation['locator'][:4]
+            to_add.grid6 = wwffLocation['locator']
+            #TODO to_add.active = 1 if bool(wwffLocation['valid']) else 0
+            to_add.active = 1
+            to_add.latitude = wwffLocation['latitude']
+            to_add.longitude = wwffLocation['longitude']
+            to_add.parkComments = wwffLocation['comment']
+            to_add.accessibility = ''
+            to_add.sensitivity = ''
+            to_add.accessMethods = ''
+            to_add.activationMethods = ''
+            to_add.agencies = ''
+            to_add.agencyURLs = ''
+            to_add.parkURLs = ''
+            to_add.parktypeId = 0
+            to_add.parktypeDesc = 'WWFF LOCATION'
+            to_add.locationDesc = wwffLocation['dxcc']
+            #TODO
+            to_add.locationName = wwffLocation['regionName']
+            to_add.entityId = 0
+            to_add.entityName = wwffLocation['associationName']
+            to_add.referencePrefix = wwffLocation['regionCode']
+            to_add.entityDeleted = 0
+            to_add.firstActivator = ''
+            to_add.firstActivationDate = ''
+            to_add.website = f"https://www.sotadata.org.uk/en/summit/{summit['summitCode']}"  # noqa E501
+
+            self.session.add(to_add)
+
+        if not delay_commit:
+            self.session.commit()
+
     def inc_park_hunt(self, park: any):
         '''
         Increment the hunt count of a park by one. If park is not in db add it.
@@ -162,6 +212,22 @@ class ParkQuery:
         :returns true if a summit "park" was found and updated.
         '''
         p = self.get_park(summit_ref)
+
+        if p is None:
+            return False
+
+        p.hunts += 1
+        self.session.commit()
+        return True
+
+    def inc_wwff_hunt(self, wwff_ref: str) -> bool:
+        '''
+        Increment the hunt count of a summit "park" by one.
+
+        :param string summit_ref: the summit code of the "park"
+        :returns true if a summit "park" was found and updated.
+        '''
+        p = self.get_park(wwff_ref)
 
         if p is None:
             return False

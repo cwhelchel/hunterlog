@@ -17,6 +17,7 @@ from db.models.spots import Spot, SpotSchema
 from db.models.user_config import UserConfigSchema
 from pota import PotaApi, PotaStats
 from sota import SotaApi
+from wwff import WwffApi
 from utils.adif import AdifLog
 from version import __version__
 
@@ -33,6 +34,7 @@ class JsApi:
         self.db = DataBase()
         self.pota = PotaApi()
         self.sota = SotaApi()
+        self.wwff = WwffApi()
         self.adif_log = AdifLog()
         logging.debug("init CAT...")
         cfg = self.db.get_user_config()
@@ -79,6 +81,10 @@ class JsApi:
             return
 
         if spot.spot_source == 'SOTA':
+            self.lock.release()
+            return
+        
+        if spot.spot_source == 'WWFF':
             self.lock.release()
             return
 
@@ -185,6 +191,40 @@ class JsApi:
 
         ps = ParkSchema()
         return ps.dumps(summit)
+
+    def get_wwff_info(self, ref: str, pull_from_wwff: bool = True) -> str:
+        '''
+        Returns the JSON for the summit (same schema as park) if in the db
+
+        :param str ref: the WWFF reference string
+        :param bool pull_from_wwff: True (default) to force API query for
+            summit
+
+        :returns JSON of park object in db or None if not found
+        '''
+        if ref is None:
+            logging.error("get_wwff_info: ref param was None")
+            return
+
+        logging.debug(f"get_wwff_info: getting wwff {ref}")
+
+        wwffInfo = self.db.parks.get_park(ref)
+
+        if wwffInfo is None and pull_from_wwff:
+            api_res = self.wwff.get_wwff_info(ref)
+            logging.debug(f"get_wwff_info: wwff pulled from api {api_res}")
+            self.db.parks.update_wwff_data(api_res)
+            wwffInfo = self.db.parks.get_park(ref)
+        # we dont import any SOTA qsos yet so not needed
+        # elif summit.name is None:
+        #     logging.debug(f"get_park: park Name was None {ref}")
+        #     api_res = self.pota.get_park(ref)
+        #     logging.debug(f"get_park: park from api {api_res}")
+        #     self.db.parks.update_park_data(api_res)
+        #     summit = self.db.parks.get_park(ref)
+
+        ps = ParkSchema()
+        return ps.dumps(wwffInfo)
 
     def get_park_hunts(self, ref: str) -> str:
         '''
@@ -337,6 +377,13 @@ class JsApi:
                     summit = self.sota.get_summit(summit_code)
                     self.db.parks.update_summit_data(summit)
                     self.db.parks.inc_summit_hunt(summit_code)
+            elif qso_data['sig'] == 'WWFF':
+                wwff_code = qso_data['sig_info']
+                ok = self.db.parks.inc_wwff_hunt(wwff_code)
+                if not ok:
+                    wwwffInfo = self.wwff.get_wwff_info(wwff_code)
+                    self.db.parks.update_wwff_data(wwwffInfo)
+                    self.db.parks.inc_wwff_hunt(wwff_code)
 
             qso_data['tx_pwr'] = cfg.default_pwr
             logging.debug(f"logging qso: {qso_data}")
@@ -438,7 +485,7 @@ class JsApi:
         '''
         Set the Special Interest Group (sig) filter.
 
-        :param string sig_filter: only POTA or SOTA
+        :param string sig_filter: only POTA or SOTA or WWFF
         '''
         logging.debug(f"api setting SIG filter to: {sig_filter}")
         self.db.filters.set_sig_filter(sig_filter)
@@ -646,10 +693,12 @@ class JsApi:
         try:
             json = self.pota.get_spots()
             sota = self.sota.get_spots()
-            self.db.update_all_spots(json, sota)
+            wwff = self.wwff.get_spots()
+            self.db.update_all_spots(json, sota, wwff)
             self._handle_alerts()
             self.curr_pota_spots = json
             self.curr_sota_spots = sota
+            self.curr_wwff_spots = wwff
         except ConnectionError as con_ex:
             logging.warning("Connection error in do_update: ")
             logging.exception(con_ex)

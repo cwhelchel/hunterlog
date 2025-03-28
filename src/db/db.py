@@ -164,7 +164,7 @@ class DataBase:
         to_add.hunted = hunted
         to_add.hunted_bands = bands
 
-    def update_all_spots(self, spots_json, sota_spots):
+    def update_all_spots(self, spots_json, sota_spots, wwff_spots):
         '''
         Updates all the spots in the database.
 
@@ -206,6 +206,7 @@ class DataBase:
                 if re.match(r'.*qrt.*', to_add.comments.lower()):
                     to_add.is_qrt = True
 
+        #TODO CHANGE LOGIC HERE
         if sota_spots is None:
             logging.warning('sota spots object is Null')
             self.session.commit()
@@ -238,7 +239,41 @@ class DataBase:
 
             self.get_spot_metadata(sota_to_add)
 
-        self.session.commit()
+        #TODO CHANGE LOGIC HERE
+        if wwff_spots is None:
+            logging.warning('wwff spots object is Null')
+            self.session.commit()
+            return
+
+        for wwff in wwff_spots:
+            # the sota spots are returned in a descending spot time order.
+            # where the first spot is the newest.
+            wwff_to_add = Spot()
+            wwff_to_add.init_from_wwff(wwff)
+
+            #TODO
+            # this is sota association code
+            regions.append(wwff_to_add.locationDesc)
+
+            statement = sa.select(Spot) \
+                .filter_by(activator=sota['activatorCallsign']) \
+                .filter_by(spot_source='WWFF') \
+                .order_by(Spot.spotTime.desc())
+            row = self.session.execute(statement).first()
+
+            # if query returns something, dont add the old spot
+            if row:
+                if row[0].spotTime < wwff_to_add.spotTime:
+                    # this check is probably not needed. so this'll prob die
+                    logging.debug("removing and replacing old sota spot")
+                    self.session.expunge(row[0])
+                    self.session.add(wwff_to_add)
+            else:
+                self.session.add(wwff_to_add)
+
+            self.get_spot_metadata(wwff_to_add)
+
+       self.session.commit()
 
         # set regions list to be used by filter front end
         regions = list(set(regions))
@@ -363,6 +398,17 @@ class DataBase:
             if s.grid4 == '':
                 sota_api = SotaApi()
                 summit = sota_api.get_summit(s.reference)
+                s.grid4 = summit['locator'][:4]
+                s.grid6 = summit['locator']
+                s.latitude = summit['latitude']
+                s.longitude = summit['longitude']
+                self.session.commit()
+        elif s.spot_source == 'WWFF':
+            #TODO
+            name = s.name
+            if s.grid4 == '':
+                wwff_api = WwffApi()
+                summit = wwff_api.get_wwff_info(s.reference)
                 s.grid4 = summit['locator'][:4]
                 s.grid6 = summit['locator']
                 s.latitude = summit['latitude']
