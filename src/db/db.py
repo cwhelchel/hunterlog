@@ -255,7 +255,7 @@ class DataBase:
                 regions.append(wwff_to_add.locationDesc)
 
                 statement = sa.select(Spot) \
-                    .filter_by(activator=sota['activatorCallsign']) \
+                    .filter_by(activator=wwff_to_add.activator) \
                     .filter_by(spot_source='WWFF') \
                     .order_by(Spot.spotTime.desc())
                 row = self.session.execute(statement).first()
