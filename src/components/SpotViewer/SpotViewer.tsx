@@ -267,6 +267,27 @@ export default function SpotViewer() {
                 //     newCtxData.park = null;
                 //     setData(newCtxData);
                 // });
+            } else if (x.sig == 'WWFF') {
+                window.pywebview.api.get_wwff_info(x.sig_info)
+                    .then((r: string) => {
+                        let summit = JSON.parse(r) as Park;
+                        const newCtxData = { ...contextData };
+                        newCtxData.spotId = id;
+                        newCtxData.qso = x;
+                        //newCtxData.summit = summit;
+                        newCtxData.park = summit;
+                        setData(newCtxData);
+                    });
+
+                // getSummitInfo(x.sig_info).then((summit: Summit) => {
+                //     console.log("got summit: " + summit.summitCode);
+                //     const newCtxData = { ...contextData };
+                //     newCtxData.spotId = id;
+                //     newCtxData.qso = x;
+                //     newCtxData.summit = summit;
+                //     newCtxData.park = null;
+                //     setData(newCtxData);
+                // });
             }
 
         });

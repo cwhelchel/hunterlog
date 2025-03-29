@@ -139,10 +139,10 @@ class ParkQuery:
         if wwffLocation is None:
             return
 
-        p = self.get_park(wwffLocation['summitCode'])
+        p = self.get_park(wwffLocation['ref'])
 
         if p is None:
-            logging.debug(f"inserting new {wwffLocation['summitCode']}")
+            logging.debug(f"inserting new {wwffLocation['ref']}")
             to_add = Park()
             to_add.reference = wwffLocation['ref']
             to_add.name = wwffLocation['name']
@@ -164,14 +164,15 @@ class ParkQuery:
             to_add.parktypeDesc = 'WWFF LOCATION'
             to_add.locationDesc = wwffLocation['dxcc']
             #TODO
-            to_add.locationName = wwffLocation['regionName']
+            to_add.locationName = wwffLocation['name']
             to_add.entityId = 0
-            to_add.entityName = wwffLocation['associationName']
-            to_add.referencePrefix = wwffLocation['regionCode']
+            to_add.entityName = ''
+            to_add.referencePrefix = wwffLocation['ref'].split('-')[0]
             to_add.entityDeleted = 0
             to_add.firstActivator = ''
             to_add.firstActivationDate = ''
-            to_add.website = f"https://www.sotadata.org.uk/en/summit/{summit['summitCode']}"  # noqa E501
+            #todo
+            to_add.website = ""
 
             self.session.add(to_add)
 

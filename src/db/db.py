@@ -18,6 +18,7 @@ from db.qso_query import QsoQuery
 from db.loc_query import LocationQuery
 from db.spot_query import SpotQuery
 from sota import SotaApi
+from wwff import WwffApi
 from utils.callsigns import get_basecall
 import upgrades
 
@@ -206,74 +207,72 @@ class DataBase:
                 if re.match(r'.*qrt.*', to_add.comments.lower()):
                     to_add.is_qrt = True
 
-        #TODO CHANGE LOGIC HERE
+        #TODO Double check this
         if sota_spots is None:
             logging.warning('sota spots object is Null')
-            self.session.commit()
-            return
+        else:
+            for sota in sota_spots:
+                # the sota spots are returned in a descending spot time order.
+                # where the first spot is the newest.
+                sota_to_add = Spot()
+                sota_to_add.init_from_sota(sota)
 
-        for sota in sota_spots:
-            # the sota spots are returned in a descending spot time order.
-            # where the first spot is the newest.
-            sota_to_add = Spot()
-            sota_to_add.init_from_sota(sota)
+                # this is sota association code
+                regions.append(sota_to_add.locationDesc)
 
-            # this is sota association code
-            regions.append(sota_to_add.locationDesc)
+                statement = sa.select(Spot) \
+                    .filter_by(activator=sota['activatorCallsign']) \
+                    .filter_by(spot_source='SOTA') \
+                    .order_by(Spot.spotTime.desc())
+                row = self.session.execute(statement).first()
 
-            statement = sa.select(Spot) \
-                .filter_by(activator=sota['activatorCallsign']) \
-                .filter_by(spot_source='SOTA') \
-                .order_by(Spot.spotTime.desc())
-            row = self.session.execute(statement).first()
-
-            # if query returns something, dont add the old spot
-            if row:
-                if row[0].spotTime < sota_to_add.spotTime:
-                    # this check is probably not needed. so this'll prob die
-                    logging.debug("removing and replacing old sota spot")
-                    self.session.expunge(row[0])
+                # if query returns something, dont add the old spot
+                if row:
+                    if row[0].spotTime < sota_to_add.spotTime:
+                        # this check is probably not needed. so this'll prob die
+                        logging.debug("removing and replacing old sota spot")
+                        self.session.expunge(row[0])
+                        self.session.add(sota_to_add)
+                else:
                     self.session.add(sota_to_add)
-            else:
-                self.session.add(sota_to_add)
 
-            self.get_spot_metadata(sota_to_add)
+                self.get_spot_metadata(sota_to_add)
 
-        #TODO CHANGE LOGIC HERE
         if wwff_spots is None:
             logging.warning('wwff spots object is Null')
-            self.session.commit()
-            return
+        else:
+            #TODO sort out id logic
+            id = 0
+            for wwff in wwff_spots:
+                id = id + 1
+                # the sota spots are returned in a descending spot time order.
+                # where the first spot is the newest.
+                wwff_to_add = Spot()
+                wwff_to_add.init_from_wwff(wwff, id)
 
-        for wwff in wwff_spots:
-            # the sota spots are returned in a descending spot time order.
-            # where the first spot is the newest.
-            wwff_to_add = Spot()
-            wwff_to_add.init_from_wwff(wwff)
+                #TODO
+                # this is wwff association code
+                regions.append(wwff_to_add.locationDesc)
 
-            #TODO
-            # this is sota association code
-            regions.append(wwff_to_add.locationDesc)
+                statement = sa.select(Spot) \
+                    .filter_by(activator=sota['activatorCallsign']) \
+                    .filter_by(spot_source='WWFF') \
+                    .order_by(Spot.spotTime.desc())
+                row = self.session.execute(statement).first()
 
-            statement = sa.select(Spot) \
-                .filter_by(activator=sota['activatorCallsign']) \
-                .filter_by(spot_source='WWFF') \
-                .order_by(Spot.spotTime.desc())
-            row = self.session.execute(statement).first()
-
-            # if query returns something, dont add the old spot
-            if row:
-                if row[0].spotTime < wwff_to_add.spotTime:
-                    # this check is probably not needed. so this'll prob die
-                    logging.debug("removing and replacing old sota spot")
-                    self.session.expunge(row[0])
+                # if query returns something, dont add the old spot
+                if row:
+                    if row[0].spotTime < wwff_to_add.spotTime:
+                        # this check is probably not needed. so this'll prob die
+                        logging.debug("removing and replacing old sota spot")
+                        self.session.expunge(row[0])
+                        self.session.add(wwff_to_add)
+                else:
                     self.session.add(wwff_to_add)
-            else:
-                self.session.add(wwff_to_add)
 
-            self.get_spot_metadata(wwff_to_add)
+                self.get_spot_metadata(wwff_to_add)
 
-       self.session.commit()
+        self.session.commit()
 
         # set regions list to be used by filter front end
         regions = list(set(regions))

@@ -172,7 +172,7 @@ class JsApi:
             logging.error("get_summit: ref param was None")
             return
 
-        logging.debug(f"get_park: getting summit {ref}")
+        logging.debug(f"get_summit: getting summit {ref}")
 
         summit = self.db.parks.get_park(ref)
 
@@ -694,7 +694,13 @@ class JsApi:
             json = self.pota.get_spots()
             sota = self.sota.get_spots()
             wwff = self.wwff.get_spots()
-            self.db.update_all_spots(json, sota, wwff)
+
+            #TODO REMOVE
+            logging.debug('JXM')
+            logging.debug(sota)
+            logging.debug(wwff)
+
+            self.db.update_all_spots(json, sota, wwff['RCD'])
             self._handle_alerts()
             self.curr_pota_spots = json
             self.curr_sota_spots = sota
@@ -830,3 +836,6 @@ class JsApi:
                 """.format(obj=json.dumps(res))
             #  logging.debug(f"alerting w this {js}")
             webview.windows[0].evaluate_js(js)
+
+    def log(self, message: str):
+        logging.debug(message)
