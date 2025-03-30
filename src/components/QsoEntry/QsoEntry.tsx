@@ -10,7 +10,7 @@ import utc from 'dayjs/plugin/utc';
 import './QsoEntry.scss'
 import QsoTimeEntry from './QsoTimeEntry';
 import { Qso } from '../../@types/QsoTypes';
-import { checkApiResponse, checkReferenceForSota } from '../../util';
+import { checkApiResponse, checkReferenceForSota, checkReferenceForWwff } from '../../util';
 import { getParkInfo, getStateFromLocDesc, getSummitInfo } from '../../pota';
 import { Park } from '../../@types/Parks';
 import { ParkInfo } from '../../@types/PotaTypes';
@@ -261,6 +261,25 @@ export default function QsoEntry() {
                 return;
             }
 
+            //TODO check this
+            let isWwff = checkReferenceForWwff(park);
+            if (isWwff) {
+                console.log('doing a WWFF');
+
+                window.pywebview.api.get_wwff_info(park)
+                    .then((r: string) => {
+                        let summit = JSON.parse(r) as Park;
+                        newCtxData.park = summit;
+
+                        updateQsoData(
+                            summit.grid6,
+                            'WWFF',
+                            summit.reference,
+                            ''
+                        );
+                    });
+                return;
+            }
             // TODO: why not use api func to pull from db / from api?
             let p = getParkInfo(park);
             p.then((apiData: ParkInfo) => {

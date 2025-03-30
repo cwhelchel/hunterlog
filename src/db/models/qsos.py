@@ -56,6 +56,10 @@ class Qso(Base):
             self.sig = 'SOTA'
             self.state = ''
             self.name = spot.name
+        elif spot.spot_source == 'WWFF':
+            self.sig = 'WWFF'
+            self.state = ''
+            self.name = spot.name
 
     def get_default_rst(self, mode: str) -> str:
         if (mode in ["SSB", "PHONE", "AM", "FM"]):
