@@ -14,15 +14,32 @@ import { FilterBar } from './FilterBar/FilterBar'
 import AppMenu from './AppMenu/AppMenu'
 import Footer from './Footer/Footer'
 
-function buildTheme(isDark: boolean) : Theme {
+// Augment the palette to include an alert color
+declare module '@mui/material/styles' {
+    interface Palette {
+        alert: Palette['primary'];
+    }
+
+    interface PaletteOptions {
+        alert?: PaletteOptions['primary'];
+    }
+}
+
+function buildTheme(isDark: boolean): Theme {
     return createTheme({
         palette: {
             mode: isDark ? 'dark' : 'light',
             primary: {
-                main: isDark ? '#008C2C' : '#305c3e' 
+                main: isDark ? '#008C2C' : '#305c3e'
             },
             secondary: {
                 main: isDark ? '#7e0e5b' : '#650b49' //og purp 8c0060 
+            },
+            alert: {
+                main: '#E3D026',
+                light: '#E9DB5D',
+                dark: '#A29415',
+                contrastText: '#242105',
             }
         }
     });

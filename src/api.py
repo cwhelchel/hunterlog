@@ -815,7 +815,16 @@ class JsApi:
 
     def _handle_alerts(self):
         def get_str(spot: Spot) -> str:
-            return f"📢 New one in {spot.locationDesc}: {spot.activator} at  {spot.reference} 🔸 {spot.mode} on {spot.frequency}"  # noqa
+            obj = {
+                'location': spot.locationDesc,
+                'activator': spot.activator,
+                'reference': spot.reference,
+                'freq': spot.frequency,
+                'mode': spot.mode,
+                'spotId': spot.spotId
+            }
+            return obj
+            # return f"📢 New one in {spot.locationDesc}: {spot.activator} at  {spot.reference} 🔸 {spot.mode} on {spot.frequency}"  # noqa
 
         to_alert = self.db.check_alerts()
 
@@ -826,7 +835,8 @@ class JsApi:
             spots = to_alert[key]
             res[key] = list(map(get_str, spots))
 
-        logging.debug(f"dict to send {res}")
+        # logging.debug(f"dict to send {res}")
+        logging.debug(f"dict to send {json.dumps(res)}")
 
         if len(webview.windows) > 0 and len(res) > 0:
             js = """if (window.pywebview.state !== undefined && 
@@ -834,7 +844,7 @@ class JsApi:
                             window.pywebview.state.showSpotAlert('{obj}'); // # noqa
                     }}
                 """.format(obj=json.dumps(res))
-            #  logging.debug(f"alerting w this {js}")
+            logging.debug(f"alerting w this {js}")
             webview.windows[0].evaluate_js(js)
 
     def log(self, message: str):
