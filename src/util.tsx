@@ -63,3 +63,8 @@ export function checkReferenceForSota(ref: string) {
     var regex = new RegExp('[a-zA-Z0-9]{2,3}\/[a-zA-Z0-9]{2}-[0-9]{3}');
     return regex.test(ref);
 }
+
+export function checkReferenceForWwff(ref: string) {
+    var regex = new RegExp('[a-zA-Z0-9]{1,2}FF-[0-9]{4}');
+    return regex.test(ref);
+}
