@@ -5,6 +5,7 @@ import { DataGrid, GridColDef, GridValueGetterParams, GridValueFormatterParams, 
 import { GridEventListener } from '@mui/x-data-grid';
 import LandscapeIcon from '@mui/icons-material/Landscape';
 import ParkIcon from '@mui/icons-material/Park';
+import Brightness3Icon from '@mui/icons-material/Brightness3';
 
 import { useAppContext } from '../AppContext';
 
@@ -133,6 +134,10 @@ const columns: GridColDef[] = [
                 {x.row.spot_source == 'POTA' && (
                     <ParkIcon color='primary' />
                 )}
+                {x.row.spot_source == 'WWFF' && (
+                    <Brightness3Icon color='success' />
+                )}
+                
                 <span id="sig">{x.row.spot_source}</span>
             </>
         }

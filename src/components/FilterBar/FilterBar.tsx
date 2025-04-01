@@ -142,6 +142,7 @@ export const FilterBar = (props: IFilterBarPros) => {
         window.localStorage.setItem("QRT_FILTER", 'true');
         window.localStorage.setItem("HUNTED_FILTER", 'false');
         window.localStorage.setItem("ATNO_FILTER", 'false');
+        window.localStorage.setItem("SIG_FILTER", '');
 
         const next = {
             ...contextData,
@@ -150,7 +151,8 @@ export const FilterBar = (props: IFilterBarPros) => {
             locationFilter: "",
             qrtFilter: true,
             huntedFilter: false,
-            onlyNew: false
+            onlyNew: false,
+            sigFilter: ''
         };
         setData(next);
 

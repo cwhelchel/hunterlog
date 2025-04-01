@@ -128,7 +128,6 @@ class ParkQuery:
         if not delay_commit:
             self.session.commit()
 
-
     def update_wwff_data(self, wwffLocation: any, delay_commit: bool = False):
         '''
         Update or insert a "park" with info from WWFF api for a wwff location
@@ -148,7 +147,7 @@ class ParkQuery:
             to_add.name = wwffLocation['name']
             to_add.grid4 = wwffLocation['locator'][:4]
             to_add.grid6 = wwffLocation['locator']
-            #TODO to_add.active = 1 if bool(wwffLocation['valid']) else 0
+            # TODO to_add.active = 1 if bool(wwffLocation['valid']) else 0
             to_add.active = 1
             to_add.latitude = wwffLocation['latitude']
             to_add.longitude = wwffLocation['longitude']
@@ -163,7 +162,6 @@ class ParkQuery:
             to_add.parktypeId = 0
             to_add.parktypeDesc = 'WWFF LOCATION'
             to_add.locationDesc = wwffLocation['dxcc']
-            #TODO
             to_add.locationName = wwffLocation['name']
             to_add.entityId = 0
             to_add.entityName = ''
@@ -171,8 +169,7 @@ class ParkQuery:
             to_add.entityDeleted = 0
             to_add.firstActivator = ''
             to_add.firstActivationDate = ''
-            #todo
-            to_add.website = ""
+            to_add.website = wwffLocation['wikipedia']
 
             self.session.add(to_add)
 

@@ -10,6 +10,7 @@ logging = L.getLogger(__name__)
 SPOT_URL = "https://www.cqgma.org/api/spots/wwff/"
 WWFF_INFO__URL = "https://www.cqgma.org/api/wwff/?"
 
+
 class WwffApi():
     '''Class that calls the GMA WWFF endpoints and returns their results'''
 
@@ -24,7 +25,7 @@ class WwffApi():
     @ttl_cache(ttl=24*60*60)  # 24 hours of cache
     def get_wwff_info(self, wwff_ref: str):
         '''Return all current spots from GMA WWFF API'''
-        response = requests.get(WWFF_INFO__URL + wwff_ref   )
+        response = requests.get(WWFF_INFO__URL + wwff_ref)
         if response.status_code == 200:
             json = response.json()
             return json

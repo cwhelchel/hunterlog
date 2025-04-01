@@ -114,7 +114,8 @@ class SpotQuery:
                     spot.cw_wpm = m.group(1)
             if c.spotter == activator:
                 # logging.debug(f"appending activator cmt {c.comments}")
-                act_comments.append(c.comments)
+                if c.comments is not None:
+                    act_comments.append(c.comments)
 
         spot.act_cmts = "|".join(act_comments)
         self.session.commit()

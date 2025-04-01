@@ -1,3 +1,4 @@
+from datetime import datetime, timezone, timedelta
 import re
 from typing import List
 import logging as L
@@ -207,7 +208,7 @@ class DataBase:
                 if re.match(r'.*qrt.*', to_add.comments.lower()):
                     to_add.is_qrt = True
 
-        #TODO Double check this
+        # TODO Double check this
         if sota_spots is None:
             logging.warning('sota spots object is Null')
         else:
@@ -229,10 +230,27 @@ class DataBase:
                 # if query returns something, dont add the old spot
                 if row:
                     if row[0].spotTime < sota_to_add.spotTime:
-                        # this check is probably not needed. so this'll prob die
+                        # this check is probably not needed, this'll prob die
                         logging.debug("removing and replacing old sota spot")
                         self.session.expunge(row[0])
                         self.session.add(sota_to_add)
+                    else:
+                        # treat old spots as comments
+                        act = sota_to_add.activator
+                        ref = sota_to_add.reference
+                        cmts = [
+                            {'spotId': sota_to_add.spotId,
+                             'spotTime': sota_to_add.spotTime.isoformat(),
+                             'spotter': sota['callsign'],
+                             'comments': sota['comments'],
+                             'frequency': str(sota_to_add.frequency),
+                             'source': 'RBN' if sota['callsign'] == 'RBNHOLE' else 'SOTA', # noqa
+                             'mode': sota_to_add.mode
+                             }
+                        ]
+                        logging.debug(f"adding wwff spot cmts {cmts}")
+
+                        self.insert_spot_comments(act, ref, cmts)
                 else:
                     self.session.add(sota_to_add)
 
@@ -241,16 +259,16 @@ class DataBase:
         if wwff_spots is None:
             logging.warning('wwff spots object is Null')
         else:
-            #TODO sort out id logic
+            # TODO sort out id logic
+            logging.debug(wwff_spots)
             id = 0
             for wwff in wwff_spots:
                 id = id + 1
-                # the sota spots are returned in a descending spot time order.
+                # the wwff spots are returned in a descending spot time order.
                 # where the first spot is the newest.
                 wwff_to_add = Spot()
                 wwff_to_add.init_from_wwff(wwff, id)
 
-                #TODO
                 # this is wwff association code
                 regions.append(wwff_to_add.locationDesc)
 
@@ -263,10 +281,26 @@ class DataBase:
                 # if query returns something, dont add the old spot
                 if row:
                     if row[0].spotTime < wwff_to_add.spotTime:
-                        # this check is probably not needed. so this'll prob die
-                        logging.debug("removing and replacing old sota spot")
-                        self.session.expunge(row[0])
+                        # this check is probably not needed, this'll prob die
+                        logging.debug("removing and replacing old wwff spot")
+                        self.session.delete(row[0])
                         self.session.add(wwff_to_add)
+                    else:
+                        # treat old spots as comments
+                        act = wwff_to_add.activator
+                        ref = wwff_to_add.reference
+                        cmts = [
+                            {'spotId': id,
+                             'spotTime': wwff_to_add.spotTime.isoformat(),
+                             'spotter': wwff['SPOTTER'],
+                             'comments': wwff['TEXT'],
+                             'frequency': str(wwff_to_add.frequency),
+                             'source': wwff_to_add.source,
+                             'mode': wwff_to_add.mode
+                             }
+                        ]
+                        # logging.debug(f"adding wwff spot cmts {cmts}")
+                        self.insert_spot_comments(act, ref, cmts)
                 else:
                     self.session.add(wwff_to_add)
 
@@ -403,15 +437,15 @@ class DataBase:
                 s.longitude = summit['longitude']
                 self.session.commit()
         elif s.spot_source == 'WWFF':
-            #TODO
+            # TODO
             name = s.name
             if s.grid4 == '':
                 wwff_api = WwffApi()
-                summit = wwff_api.get_wwff_info(s.reference)
-                s.grid4 = summit['locator'][:4]
-                s.grid6 = summit['locator']
-                s.latitude = summit['latitude']
-                s.longitude = summit['longitude']
+                wwff = wwff_api.get_wwff_info(s.reference)
+                s.grid4 = wwff['locator'][:4]
+                s.grid6 = wwff['locator']
+                s.latitude = wwff['latitude']
+                s.longitude = wwff['longitude']
                 self.session.commit()
 
         q = Qso()

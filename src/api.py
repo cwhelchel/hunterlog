@@ -194,13 +194,13 @@ class JsApi:
 
     def get_wwff_info(self, ref: str, pull_from_wwff: bool = True) -> str:
         '''
-        Returns the JSON for the summit (same schema as park) if in the db
+        Returns the JSON for the WWFF ref (same schema as park) if in the db
 
         :param str ref: the WWFF reference string
         :param bool pull_from_wwff: True (default) to force API query for
-            summit
+            ref
 
-        :returns JSON of park object in db or None if not found
+        :returns JSON of wwff object in db or None if not found
         '''
         if ref is None:
             logging.error("get_wwff_info: ref param was None")
@@ -694,11 +694,6 @@ class JsApi:
             json = self.pota.get_spots()
             sota = self.sota.get_spots()
             wwff = self.wwff.get_spots()
-
-            #TODO REMOVE
-            logging.debug('JXM')
-            logging.debug(sota)
-            logging.debug(wwff)
 
             self.db.update_all_spots(json, sota, wwff['RCD'])
             self._handle_alerts()
