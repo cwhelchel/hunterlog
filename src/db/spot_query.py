@@ -1,4 +1,5 @@
 import datetime
+import time
 import sqlalchemy as sa
 from sqlalchemy.orm import scoped_session
 import re
@@ -59,8 +60,11 @@ class SpotQuery:
     def insert_test_spot(self):
         # test data
         test = Spot()
+        test.spotId = int(time.time())
+        test.spot_source = 'POTA'
         test.activator = "N9FZ"
         test.reference = "K-TEST"
+        test.grid4 = "FL31"
         test.grid6 = "FL31vt"
         test.spotTime = datetime.datetime.utcnow()
         test.spotter = "HUNTER-LOG"

@@ -252,6 +252,7 @@ export default function ConfigModal() {
                             <FormControlLabel value="0" control={<Radio />} label="TCP (Logger32)" />
                             <FormControlLabel value="1" control={<Radio />} label="UDP (Log4om)" />
                             <FormControlLabel value="2" control={<Radio />} label="AcLog" />
+                            <FormControlLabel value="3" control={<Radio />} label="Log4om" />
                         </RadioGroup>
                         <Stack direction={'row'} spacing={1}>
                             <TextField id="adif_host" label="Remote ADIF Host (IPv4 string)"

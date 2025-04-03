@@ -15,6 +15,7 @@ from db.models.qsos import QsoSchema
 from db.models.spot_comments import SpotCommentSchema
 from db.models.spots import Spot, SpotSchema
 from db.models.user_config import UserConfigSchema
+from loggers import LoggerInterface
 from pota import PotaApi, PotaStats
 from sota import SotaApi
 from wwff import WwffApi
@@ -35,9 +36,11 @@ class JsApi:
         self.pota = PotaApi()
         self.sota = SotaApi()
         self.wwff = WwffApi()
-        self.adif_log = AdifLog()
+        # self.adif_log = AdifLog()
         logging.debug("init CAT...")
         cfg = self.db.get_user_config()
+        self.adif_log = LoggerInterface.get_logger(cfg, __version__)
+        logging.debug(f"got logger {self.adif_log}")
         try:
             # self.cat = CAT(cfg.rig_if_type, cfg.flr_host, cfg.flr_port)
             self.cat = CAT.get_interface(cfg.rig_if_type)
@@ -400,7 +403,8 @@ class JsApi:
         qso.name = act if act is not None else 'ERROR NO NAME'
 
         try:
-            self.adif_log.log_qso_and_send(qso, cfg)
+            # self.adif_log.log_qso_and_send(qso, cfg)
+            self.adif_log.log_qso(qso)
         except Exception as log_ex:
             logging.exception(
                 msg="Error logging QSO to as adif (local/remote):",
@@ -456,6 +460,10 @@ class JsApi:
     def set_user_config(self, config_json: any):
         logging.debug(f"setting config {config_json}")
         self.db.update_user_config(config_json)
+
+        cfg = self.db.get_user_config()
+        self.adif_log = LoggerInterface.get_logger(cfg, __version__)
+        logging.debug(f"updating logger {self.adif_log}")
 
     def set_band_filter(self, band: int):
         logging.debug(f"api setting band filter to: {band}")
