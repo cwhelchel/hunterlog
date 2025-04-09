@@ -5,6 +5,11 @@ import { Qso } from "../../@types/QsoTypes";
 import { SpotComments } from "../../@types/SpotComments";
 import { useAppContext } from "../AppContext";
 
+interface MultiData {
+    otherOps: string;
+    otherParks: string;
+}
+
 /**
  * This is the handler code for selecting a spot. It's triggered by 
  * setting contextData.spotId to a valid spot row id. Normally this is by 
@@ -18,7 +23,7 @@ export default function HandleSpotRowClick() {
 
     const { contextData, setData } = useAppContext();
 
-    async function getOtherOps(spotId: number): Promise<string> {
+    async function getOtherData(spotId: number): Promise<MultiData> {
         const r = await window.pywebview.api.get_spot_comments(spotId);
 
         let t = JSON.parse(r) as SpotComments[];
@@ -26,20 +31,45 @@ export default function HandleSpotRowClick() {
             return el.comments.includes('{With:');
         });
 
-        if (filtered.length > 0) {
-            const str = filtered[0].comments;
-            const re = new RegExp("{With:([^}]*)}");
-            const m = str.match(re);
+        let filtered2 = t.filter(function (el) {
+            return el.comments.includes('{Also:');
+        });
 
-            if (m) {
-                return m[1];
+        console.log(filtered2);
+
+        function getMultiOps(ops: SpotComments[]): string {
+            if (ops.length > 0) {
+                const str = ops[0].comments;
+                const re = new RegExp("{With:([^}]*)}");
+                const m = str.match(re);
+
+                if (m) {
+                    return m[1];
+                }
             }
-        } else {
             return '';
         }
 
-        return '';
+        function getMultiParks(p: SpotComments[]): string {
+            if (p.length > 0) {
+                const str = p[0].comments;
+                // get the raw list of other comma sep parks
+                const re = new RegExp("{Also:([^}]*)}");
+                const m = str.match(re);
 
+                if (m) {
+                    return m[1];
+                }
+            }
+            return '';
+        }
+
+        let result: MultiData = {
+            otherOps: getMultiOps(filtered),
+            otherParks: getMultiParks(filtered2)
+        };
+
+        return result;
     }
 
     function getQsoData(id: number) {
@@ -61,8 +91,9 @@ export default function HandleSpotRowClick() {
                         newCtxData.qso = x;
                         newCtxData.park = p;
                         newCtxData.summit = null;
-                        getOtherOps(id).then((oo) => {
-                            newCtxData.otherOperators = oo;
+                        getOtherData(id).then((oo) => {
+                            newCtxData.otherOperators = oo.otherOps;
+                            newCtxData.otherParks = oo.otherParks;
                             setData(newCtxData);
                         });
                     });

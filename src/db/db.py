@@ -180,7 +180,7 @@ class DataBase:
         self.session.execute(sa.text('DELETE FROM spots;'))
         self.session.execute(sa.text('DELETE FROM comments;'))
 
-        # self._sq.insert_test_spot()  # testing code
+        self._sq.insert_test_spot()  # testing code
         # self._aq.insert_test_alert()  # testing alerts
 
         regions = list[str]()

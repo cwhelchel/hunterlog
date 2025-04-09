@@ -86,7 +86,7 @@ class JsApi:
         if spot.spot_source == 'SOTA':
             self.lock.release()
             return
-        
+
         if spot.spot_source == 'WWFF':
             self.lock.release()
             return

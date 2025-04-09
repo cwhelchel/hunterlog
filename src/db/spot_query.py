@@ -89,7 +89,7 @@ class SpotQuery:
         test_cmt.frequency = '7200'
         test_cmt.mode = 'CW'
         test_cmt.park = 'K-TEST'
-        test_cmt.comments = "{this is a test} {With: N0CALL,W1AW}"
+        test_cmt.comments = "{this is a test} {With: N0CALL,W1AW} {Also: US-9798}"  # NOQA
         test_cmt.source = "test"
         test_cmt.band = "40m"
         test_cmt.spotTime = datetime.datetime.now()

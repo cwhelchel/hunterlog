@@ -45,6 +45,8 @@ export default function QsoEntry() {
     const [qso, setQso] = React.useState(defaultQso);
     const [otherOps, setOtherOps] = React.useState('');
     const [otherOpsHidden, setOtherOpsHidden] = React.useState(true);
+    const [otherParks, setOtherParks] = React.useState('');
+    const [otherParksHidden, setOtherParksHidden] = React.useState(true);
     const [qsoTime, setQsoTime] = React.useState<Dayjs>(dayjs('2022-04-17T15:30'));
     const { contextData, setData } = useAppContext();
 
@@ -88,10 +90,10 @@ export default function QsoEntry() {
             window.pywebview.api.log_qso(qso).then((x: string) => {
                 let json = checkApiResponse(x, contextData, setData);
 
-                window.pywebview.api.refresh_spot(contextData.spotId,  qso.call, qso.sig_info)
-                .then((x: string) => {
-                    window.pywebview.state.getSpots();
-                });
+                window.pywebview.api.refresh_spot(contextData.spotId, qso.call, qso.sig_info)
+                    .then((x: string) => {
+                        window.pywebview.state.getSpots();
+                    });
             });
         }
     }
@@ -162,6 +164,11 @@ export default function QsoEntry() {
         setOtherOpsHidden(!otherOpsHidden);
     }
 
+    function handleMultiParkClick(
+        event: React.MouseEvent<HTMLButtonElement, MouseEvent>
+    ) {
+        setOtherParksHidden(!otherOpsHidden);
+    }
 
     function updateQsoEntry() {
         let x = contextData?.qso;
@@ -210,8 +217,7 @@ export default function QsoEntry() {
             return;
 
         function updateQsoData(grid6: string, sig: string, sig_info: string, state: string) {
-            function setLocalQso() 
-            {
+            function setLocalQso() {
                 let newQso = { ...qso };
                 newQso.gridsquare = grid6;
                 newQso.sig = sig;
@@ -226,7 +232,7 @@ export default function QsoEntry() {
                 newCtxData.qso.gridsquare = grid6;
                 newCtxData.qso.sig = sig;
                 newCtxData.qso.sig_info = sig_info;
-                newCtxData.qso.state = state; 
+                newCtxData.qso.state = state;
                 setData(newCtxData);
 
                 setLocalQso();
@@ -350,6 +356,30 @@ export default function QsoEntry() {
         }
     }
 
+    function updateOtherParks(otherParks: string) {
+        if (otherParks == null || otherParks === undefined) {
+            setOtherParks('');
+            setOtherParksHidden(true);
+            return;
+        }
+
+        if (otherParks == '') {
+            setOtherParks('');
+            setOtherParksHidden(true);
+            return;
+        }
+
+        setOtherParksHidden(false);
+        const parks = otherParks.trim().split(',');
+
+        // remove current qso call if needed
+        let x = parks.filter(e => e !== contextData.qso?.sig_info);
+
+        if (x.length > 0) {
+            setOtherParks(x.join(','));
+        }
+    }
+
 
     // when the app context changes (ie a user clicks on a different spot)
     // we need to update our TextFields
@@ -360,6 +390,11 @@ export default function QsoEntry() {
     React.useEffect(() => {
         updateOtherOperators(contextData.otherOperators);
     }, [contextData.otherOperators]);
+
+    React.useEffect(() => {
+        updateOtherParks(contextData.otherParks);
+    }, [contextData.otherParks]);
+
 
 
     const textFieldStyle: React.CSSProperties = { fontSize: 14, textTransform: "uppercase" };
@@ -493,6 +528,12 @@ export default function QsoEntry() {
                         MultiOp
                     </StyledTypoGraphy>
                 </Button>
+                <Button variant={otherParksHidden ? 'outlined' : 'contained'} onClick={(e) => handleMultiParkClick(e)}
+                    color='secondary'>
+                    <StyledTypoGraphy>
+                        Multi-Park
+                    </StyledTypoGraphy>
+                </Button>
             </Stack>
             <>
                 {!otherOpsHidden && (
@@ -504,6 +545,18 @@ export default function QsoEntry() {
                         inputProps={{ style: otherOpsStyle }}
                         onChange={(e) => {
                             setOtherOps(e.target.value);
+                        }} />
+                )}
+
+                {!otherParksHidden && (
+                    <TextField id="otherParks" label="Other Parks (comma separated)"
+                        value={otherParks}
+                        fullWidth
+                        color='warning'
+                        margin='normal'
+                        inputProps={{ style: otherOpsStyle }}
+                        onChange={(e) => {
+                            setOtherParks(e.target.value);
                         }} />
                 )}
             </>

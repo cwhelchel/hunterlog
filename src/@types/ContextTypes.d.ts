@@ -23,6 +23,7 @@ export interface ContextData {
     onlyNewFilter: boolean;
     sigFilter: string;
     otherOperators: string;
+    otherParks: string;
 }
 
 export  interface AppContextType {
