@@ -10,7 +10,7 @@ import utc from 'dayjs/plugin/utc';
 import './QsoEntry.scss'
 import QsoTimeEntry from './QsoTimeEntry';
 import { Qso } from '../../@types/QsoTypes';
-import { checkApiResponse, checkReferenceForSota, checkReferenceForWwff } from '../../util';
+import { checkApiResponse, checkReferenceForPota, checkReferenceForSota, checkReferenceForWwff, setToastMsg } from '../../util';
 import { getParkInfo, getStateFromLocDesc, getSummitInfo } from '../../pota';
 import { Park } from '../../@types/Parks';
 import { ParkInfo } from '../../@types/PotaTypes';
@@ -66,6 +66,16 @@ export default function QsoEntry() {
         qso.time_on = (qsoTime) ? qsoTime.toISOString() : dayjs().toISOString();
         qso.qso_date = qso.time_on;
 
+        if (otherParks) {
+            const myPotaRef = getPotaRef();
+
+            if (!myPotaRef.ok)
+                setToastMsg("Bad POTA Ref in Other Parks", contextData, setData);
+
+            // set qso val
+            return;
+        }
+
         let multiOps = otherOps;
 
         if (multiOps !== null && multiOps != '') {
@@ -96,6 +106,28 @@ export default function QsoEntry() {
                     });
             });
         }
+    }
+
+    interface IGetPotaRef {
+        text: string | undefined;
+        ok: boolean;
+    }
+
+    function getPotaRef(): IGetPotaRef {
+        let res = otherParks;
+        let arr = res.split(',');
+        arr.forEach((x) => {
+            const isPota = checkReferenceForPota(x);
+            console.log(x);
+            if (!isPota) {
+                // setToastMsg("Bad POTA Ref in Other Parks", contextData, setData);
+                return { ok: false };
+            }
+        })
+        return {
+            ok: true,
+            text: res
+        };
     }
 
     function spotActivator() {
@@ -167,7 +199,7 @@ export default function QsoEntry() {
     function handleMultiParkClick(
         event: React.MouseEvent<HTMLButtonElement, MouseEvent>
     ) {
-        setOtherParksHidden(!otherOpsHidden);
+        setOtherParksHidden(!otherParksHidden);
     }
 
     function updateQsoEntry() {
@@ -394,8 +426,6 @@ export default function QsoEntry() {
     React.useEffect(() => {
         updateOtherParks(contextData.otherParks);
     }, [contextData.otherParks]);
-
-
 
     const textFieldStyle: React.CSSProperties = { fontSize: 14, textTransform: "uppercase" };
     const otherOpsStyle: React.CSSProperties = { fontSize: 14, textTransform: "uppercase", color: 'orange' };

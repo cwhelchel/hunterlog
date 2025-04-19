@@ -35,7 +35,7 @@ export default function HandleSpotRowClick() {
             return el.comments.includes('{Also:');
         });
 
-        console.log(filtered2);
+        //console.log(filtered2);
 
         function getMultiOps(ops: SpotComments[]): string {
             if (ops.length > 0) {
@@ -87,7 +87,7 @@ export default function HandleSpotRowClick() {
                     .then((r: string) => {
                         let p = JSON.parse(r) as Park;
                         const newCtxData = { ...contextData };
-                        newCtxData.spotId = id;
+                        //newCtxData.spotId = id;
                         newCtxData.qso = x;
                         newCtxData.park = p;
                         newCtxData.summit = null;
@@ -103,7 +103,7 @@ export default function HandleSpotRowClick() {
                     .then((r: string) => {
                         let summit = JSON.parse(r) as Park;
                         const newCtxData = { ...contextData };
-                        newCtxData.spotId = id;
+                        //newCtxData.spotId = id;
                         newCtxData.qso = x;
                         //newCtxData.summit = summit;
                         newCtxData.park = summit;
@@ -114,7 +114,7 @@ export default function HandleSpotRowClick() {
                     .then((r: string) => {
                         let summit = JSON.parse(r) as Park;
                         const newCtxData = { ...contextData };
-                        newCtxData.spotId = id;
+                        //newCtxData.spotId = id;
                         newCtxData.qso = x;
                         //newCtxData.summit = summit;
                         newCtxData.park = summit;
@@ -129,16 +129,17 @@ export default function HandleSpotRowClick() {
         if (window.pywebview === undefined || window.pywebview === null)
             return;
 
-        console.log('loadingSpotData ' + spotId);
+        //console.log('loadingSpotData ' + spotId);
 
         // load the spot's comments into the db
         let x = window.pywebview.api.insert_spot_comments(spotId);
+        getQsoData(spotId);
 
-        x.then(() => {
-            // wait to get the rest of the data until after the spot comments 
-            // are inserted
-            getQsoData(spotId);
-        });
+        // x.then(() => {
+        //     // wait to get the rest of the data until after the spot comments 
+        //     // are inserted
+        //     getQsoData(spotId);
+        // });
     }
 
     useEffect(() => {

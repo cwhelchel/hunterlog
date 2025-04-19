@@ -68,3 +68,8 @@ export function checkReferenceForWwff(ref: string) {
     var regex = new RegExp('[a-zA-Z0-9]{1,2}FF-[0-9]{4}');
     return regex.test(ref);
 }
+
+export function checkReferenceForPota(ref: string) {
+    var regex = new RegExp('[A-Z0-9]+-[0-9]*');
+    return regex.test(ref);
+}

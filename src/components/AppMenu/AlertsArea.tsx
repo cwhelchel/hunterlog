@@ -162,7 +162,7 @@ export default function AlertsArea() {
         <div>
             {(!alertHidden) &&
                 <div className='alert-area'>
-                    <div className='alert-box' onClick={handleSpotClick}>
+                    <div className='alert-box'>
                         <InfoOutlinedIcon sx={{
                             marginLeft: '7px',
                             marginRight: '4px',
@@ -170,7 +170,7 @@ export default function AlertsArea() {
                             padding: '2px',
                             color: 'rgb(184, 231, 251)'
                         }} />
-                        <div className='alert-content'>
+                        <div className='alert-content' onClick={handleSpotClick}>
                             <div className='alert-title'>Alert from: {alerts[activeStep]?.title}</div>
                             <FreqButton 
                                 activator={'none'}
