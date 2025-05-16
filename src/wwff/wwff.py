@@ -19,7 +19,13 @@ class WwffApi():
         response = requests.get(SPOT_URL)
         logging.debug(response)
         if response.status_code == 200:
-            json = response.json()
+            try:
+                # this threw on JSON decode before. even w/ 200 status
+                # the error indicated an empty response json
+                json = response.json()
+            except requests.JSONDecodeError as ex:
+                logging.warning("bad json in get_spots", exc_info=ex)
+                return None
             return json
 
     @ttl_cache(ttl=24*60*60)  # 24 hours of cache
