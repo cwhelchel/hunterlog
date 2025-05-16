@@ -1,8 +1,10 @@
-import logging
 import sqlalchemy as sa
 from sqlalchemy.orm import scoped_session
+import logging as L
 
 from db.models.parks import Park, ParkSchema
+
+logging = L.getLogger(__name__)
 
 
 class ParkQuery:
@@ -10,9 +12,15 @@ class ParkQuery:
         self.session = session
 
     def get_park(self, park: str) -> Park:
-        return self.session.query(Park) \
-            .filter(Park.reference == park) \
-            .first()
+        try:
+            return self.session.query(Park) \
+                .filter(Park.reference == park) \
+                .first()
+        except Exception as ex:
+            logging.warning(
+                "error in get_park. exception follows:",
+                exc_info=ex)
+            return None
 
     def get_parks(self) -> list[Park]:
         return self.session.query(Park).all()
