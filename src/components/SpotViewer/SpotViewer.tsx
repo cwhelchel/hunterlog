@@ -170,6 +170,14 @@ export default function SpotViewer() {
         });
     }
 
+    
+    function setWorking() {
+        // get the spots from the python backend
+        // show the spinner to keep user from interacting with spots that wont
+        // update.
+        setBackdropOpen(true);
+    }
+
     // when [spots] are set, update regions
     React.useEffect(() => {
         // the backend will parse out the regions for pota and sota (US, CA, W7)
@@ -223,6 +231,7 @@ export default function SpotViewer() {
             getSpots();
 
             window.pywebview.state.getSpots = getSpots;
+            window.pywebview.state.setWorking = setWorking;
         }
 
         try {

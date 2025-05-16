@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, TextField, Grid, Stack } from '@mui/material';
+import { Button, TextField, Grid, Stack, Tooltip } from '@mui/material';
 import { useAppContext } from '../AppContext';
 import { Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
@@ -530,7 +530,7 @@ export default function QsoEntry() {
 
             <Stack
                 direction={{ xs: 'row', sm: 'row', md: 'row' }}
-                spacing={{ xs: 0, sm: 1, md: 2 }}>
+                spacing={{ xs: 0, sm: 1, md: 1 }}>
                 <Button variant="outlined" onClick={(e) => handleLogQsoClick(e)}>
                     <StyledTypoGraphy>
                         Log
@@ -558,12 +558,14 @@ export default function QsoEntry() {
                         MultiOp
                     </StyledTypoGraphy>
                 </Button>
-                <Button variant={otherParksHidden ? 'outlined' : 'contained'} onClick={(e) => handleMultiParkClick(e)}
-                    color='secondary'>
-                    <StyledTypoGraphy>
-                        Multi-Park
-                    </StyledTypoGraphy>
-                </Button>
+                <Tooltip title="POTA only: multi-park logging">
+                    <Button variant={otherParksHidden ? 'outlined' : 'contained'} onClick={(e) => handleMultiParkClick(e)}
+                        color='secondary'>
+                        <StyledTypoGraphy>
+                            N-Fer
+                        </StyledTypoGraphy>
+                    </Button>
+                </Tooltip>
             </Stack>
             <>
                 {!otherOpsHidden && (

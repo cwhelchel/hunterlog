@@ -97,7 +97,7 @@ class SpotQuery:
         self.session.commit()
 
     def _update_comment_metadata(self, activator: str, park: str):
-        logging.debug(f"_update_comment_metadata: {activator} at {park}")
+        # logging.debug(f"_update_comment_metadata: {activator} at {park}")
         wpm = r'^RBN \d+ dB (\d+) WPM.*'
         spot = self.get_spot_by_actx(activator, park)
         if spot is None:

@@ -101,6 +101,23 @@ def set_interval(interval):
 entry = get_entrypoint()
 
 
+def show_frontend_work():
+    try:
+        if len(webview.windows) > 0:
+            js = r"""
+            if (window.pywebview.state !== undefined &&
+                window.pywebview.state.setWorking !== undefined) {
+                window.pywebview.state.setWorking();
+            }
+            """
+            logging.debug('setWorking called in frontend')
+            webview.windows[0].evaluate_js(js)
+    except Exception as ex:
+        logging.error("error in setWorking")
+        logging.exception(ex)
+        raise
+
+
 def refresh_frontend():
     try:
         if len(webview.windows) > 0:
@@ -121,6 +138,7 @@ def refresh_frontend():
 @set_interval(60)
 def update_ticker():
     logging.info("thread heartbeat")
+    show_frontend_work()
     do_update()
     refresh_frontend()
 

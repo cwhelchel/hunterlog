@@ -4,6 +4,7 @@ import { Park } from "../../@types/Parks";
 import { Qso } from "../../@types/QsoTypes";
 import { SpotComments } from "../../@types/SpotComments";
 import { useAppContext } from "../AppContext";
+import { checkApiResponse } from '../../util';
 
 interface MultiData {
     otherOps: string;
@@ -77,10 +78,14 @@ export default function HandleSpotRowClick() {
         const q = window.pywebview.api.get_qso_from_spot(id);
 
         q.then((r: any) => {
-            if (r['success'] == false)
+            let result = checkApiResponse(r, contextData, setData);
+
+            if (!result.success) {
+                console.log("get_qso_from_spot failed: " + result.message);
                 return;
-            var x = JSON.parse(r) as Qso;
-            //console.log("got qso:" + r);
+            }
+           
+            var x = JSON.parse(result.qso) as Qso;
 
             if (x.sig == 'POTA') {
                 window.pywebview.api.get_park(x.sig_info)

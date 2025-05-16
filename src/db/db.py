@@ -149,7 +149,8 @@ class DataBase:
 
     def get_spot_metadata(self, to_add: Spot):
         park = self.parks.get_park(to_add.reference)
-        if park is not None and park.hunts > 0:
+
+        if park is not None:
             to_add.park_hunts = park.hunts
         else:
             to_add.park_hunts = 0
@@ -174,19 +175,28 @@ class DataBase:
 
         :param dict spots_json: the dict from the pota api
         :param dict sota_spots: the dict from the sota api
+        :param dict wwff_spots: the dict from the wwff api. wwff['RCD']
         '''
+
+        logging.info("updating all spots...")
 
         schema = SpotSchema()
         self.session.execute(sa.text('DELETE FROM spots;'))
         self.session.execute(sa.text('DELETE FROM comments;'))
 
-        self._sq.insert_test_spot()  # testing code
+        # self._sq.insert_test_spot()  # testing code
         # self._aq.insert_test_alert()  # testing alerts
 
         regions = list[str]()
 
-        for s in spots_json:
-            to_add: Spot = schema.load(s, session=self.session)
+        test = schema.load(spots_json, session=self.session,
+                           transient=True, many=True)
+
+        logging.debug(f"loaded json spots: {test}")
+
+        # for s in spots_json:
+        for to_add in test:
+            # to_add: Spot = schema.load(s, session=self.session, many=True)
             to_add.spot_source = 'POTA'
             self.session.add(to_add)
 
@@ -212,6 +222,8 @@ class DataBase:
         self._update_wwff_spots(wwff_spots, regions)
 
         self.session.commit()
+
+        logging.info("spots updated!")
 
         # set regions list to be used by filter front end
         regions = list(set(regions))
@@ -404,8 +416,8 @@ class DataBase:
                             'mode': sota_to_add.mode
                         }
                     ]
-                    
-                    logging.debug(f"adding wwff spot cmts {cmts}")
+
+                    # logging.debug(f"adding wwff spot cmts {cmts}")
 
                     self.insert_spot_comments(act, ref, cmts)
             else:
@@ -419,7 +431,7 @@ class DataBase:
             return
 
         id = 0
-        for wwff in wwff_spots:
+        for wwff in wwff_spots['RCD']:
             id = id + 1
             # the wwff spots are returned in a descending spot time order.
             # where the first spot is the newest.

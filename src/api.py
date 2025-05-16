@@ -26,7 +26,6 @@ from cat import CAT
 from utils.distance import Distance
 
 logging = L.getLogger(__name__)
-# IDTOKENPAT = r"^.*CognitoIdentityServiceProvider\..+\.idToken=([\w\.-]*\;)"
 
 
 class JsApi:
@@ -76,7 +75,10 @@ class JsApi:
 
         :param int spot_id: spot id. pk in db
         '''
-        self.lock.acquire()
+        if not self.lock.acquire(False):
+            logging.warning("insert_spot_comments lock not acquired")
+            return
+
         spot = self.db.spots.get_spot(spot_id)
 
         if spot is None:
@@ -98,13 +100,17 @@ class JsApi:
             self.lock.release()
 
     def get_qso_from_spot(self, id: int):
-        self.lock.acquire()
+        cfg = self.db.get_user_config()
+
+        # if we cant get a lock return null
+        if not self.lock.acquire(timeout=4.00):
+            logging.warning("failed to get lock. timed out.")
+            return self._response(False, "failed to get db lock. timed out.")
 
         q = self.db.build_qso_from_spot(id)
         if q is None:
-            return {"success": False}
+            return self._response(False, "failed to build qso from spot.")
 
-        cfg = self.db.get_user_config()
         if q.gridsquare:
             dist = Distance.distance(cfg.my_grid6, q.gridsquare)
             bearing = Distance.bearing(cfg.my_grid6, q.gridsquare)
@@ -114,7 +120,7 @@ class JsApi:
         result = qs.dumps(q)
 
         self.lock.release()
-        return result
+        return self._response(True, "", qso=result)
 
     def get_activator_stats(self, callsign):
         logging.debug("getting activator stats...")
@@ -363,7 +369,7 @@ class JsApi:
 
         :param any qso_data: dict of qso data from the UI
         '''
-        logging.debug('acquiring lock to log qso')
+        logging.info('acquiring lock to log qso')
         self.lock.acquire()
 
         cfg = self.db.get_user_config()
@@ -397,6 +403,10 @@ class JsApi:
             self.lock.release()
             return self._response(False, f"Error logging QSO: {ex}")
 
+        # db written so commit & release lock
+        self.db.commit_session()
+        self.lock.release()
+
         # get the data to log to the adif file and remote adif host
         qso = self.db.qsos.get_qso(id)
         act = self.db.get_activator_name(qso_data['call'])
@@ -411,10 +421,6 @@ class JsApi:
                 exc_info=log_ex)
             self.lock.release()
             return self._response(False, f"Error logging as ADIF: {log_ex}")
-
-        self.db.commit_session()
-
-        self.lock.release()
 
         return self._response(True, "QSO logged successfully")
 
@@ -696,18 +702,18 @@ class JsApi:
         The main update method. Called on a timer
         '''
         logging.debug('updating db')
-        self.lock.acquire()
 
         try:
             json = self.pota.get_spots()
             sota = self.sota.get_spots()
             wwff = self.wwff.get_spots()
 
-            self.db.update_all_spots(json, sota, wwff['RCD'])
+            logging.info("acquiring lock for update")
+            self.lock.acquire()
+            self.db.update_all_spots(json, sota, wwff)
+            self.lock.release()
+            logging.info("update lock released")
             self._handle_alerts()
-            self.curr_pota_spots = json
-            self.curr_sota_spots = sota
-            self.curr_wwff_spots = wwff
         except ConnectionError as con_ex:
             logging.warning("Connection error in do_update: ")
             logging.exception(con_ex)
@@ -716,7 +722,8 @@ class JsApi:
             logging.error(type(ex).__name__)
             logging.exception(ex)
         finally:
-            self.lock.release()
+            if self.lock.locked():
+                self.lock.release()
 
     def _update_all_parks(self) -> str:
         logging.info("updating all parks in db")
@@ -827,7 +834,6 @@ class JsApi:
                 'spotId': spot.spotId
             }
             return obj
-            # return f"📢 New one in {spot.locationDesc}: {spot.activator} at  {spot.reference} 🔸 {spot.mode} on {spot.frequency}"  # noqa
 
         to_alert = self.db.check_alerts()
 
@@ -839,7 +845,7 @@ class JsApi:
             res[key] = list(map(get_str, spots))
 
         # logging.debug(f"dict to send {res}")
-        logging.debug(f"dict to send {json.dumps(res)}")
+        # logging.debug(f"dict to send {json.dumps(res)}")
 
         if len(webview.windows) > 0 and len(res) > 0:
             js = """if (window.pywebview.state !== undefined && 
@@ -847,8 +853,5 @@ class JsApi:
                             window.pywebview.state.showSpotAlert('{obj}'); // # noqa
                     }}
                 """.format(obj=json.dumps(res))
-            logging.debug(f"alerting w this {js}")
+            # logging.debug(f"alerting w this {js}")
             webview.windows[0].evaluate_js(js)
-
-    def log(self, message: str):
-        logging.debug(message)
