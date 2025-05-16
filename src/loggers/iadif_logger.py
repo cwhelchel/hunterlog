@@ -5,7 +5,7 @@ from db.models.qsos import Qso
 
 class IAdifLogger(ABC):
     '''
-    Interface class for the CAT control methods hunterlog will use.
+    Interface class for the ADIF logger hunterlog will use.
     '''
 
     @abstractmethod
@@ -21,10 +21,10 @@ class IAdifLogger(ABC):
     @abstractmethod
     def log_qso(self, qso: Qso) -> str:
         '''
-        Sets the radios mode using the supplied string.
+        Logs the QSO.
 
         qso: Qso: The QSO db model object to log
 
-        returns True on success
+        returns adif of logged qso
         '''
         raise NotImplementedError

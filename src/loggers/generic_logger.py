@@ -14,11 +14,11 @@ class GenericFileLogger(IAdifLogger, AdifProvider):
 
         if not os.path.exists(self.log_filename):
             with open(self.log_filename, "w", encoding='UTF-8') as f:
-                v = self._get_adif_field("programversion", self.app_ver)
-                pid = self._get_adif_field("programid", "hunterlog")
+                v = self.get_adif_field("programversion", self.app_ver)
+                pid = self.get_adif_field("programid", "hunterlog")
 
                 f.write("HUNTER LOG backup log\n")
-                f.write(f"Created {datetime.datetime.now()}\n")
+                f.write(f"Created {datetime.now()}\n")
                 f.write(pid)
                 f.write(v)
                 f.write("<EOH>\n")
