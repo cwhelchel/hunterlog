@@ -697,20 +697,20 @@ class JsApi:
 
         return self._response(False, 'Error getting hamalert text')
 
-    def _do_update(self):
+    def _do_update(self, pota: any, sota: any, wwff: any):
         '''
         The main update method. Called on a timer
         '''
         logging.debug('updating db')
 
         try:
-            json = self.pota.get_spots()
-            sota = self.sota.get_spots()
-            wwff = self.wwff.get_spots()
+            # json = self.pota.get_spots()
+            # sota = self.sota.get_spots()
+            # wwff = self.wwff.get_spots()
 
             logging.info("acquiring lock for update")
             self.lock.acquire()
-            self.db.update_all_spots(json, sota, wwff)
+            self.db.update_all_spots(pota, sota, wwff)
             self.lock.release()
             logging.info("update lock released")
             self._handle_alerts()

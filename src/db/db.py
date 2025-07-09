@@ -192,7 +192,7 @@ class DataBase:
         test = schema.load(spots_json, session=self.session,
                            transient=True, many=True)
 
-        logging.debug(f"loaded json spots: {test}")
+        # logging.debug(f"loaded json spots: {test}")
 
         # for s in spots_json:
         for to_add in test:
