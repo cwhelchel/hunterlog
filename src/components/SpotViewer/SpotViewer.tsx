@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Button from '@mui/material/Button';
 import { Backdrop, Badge, CircularProgress, styled } from '@mui/material';
-import { DataGrid, GridColDef, GridValueGetterParams, GridValueFormatterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams, GridRowClassNameParams, GridToolbar, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarColumnsButton, GridToolbarQuickFilter } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridValueGetterParams, GridValueFormatterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams, GridRowClassNameParams, GridToolbar, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarColumnsButton, GridToolbarQuickFilter, GridPaginationModel } from '@mui/x-data-grid';
 import { GridEventListener } from '@mui/x-data-grid';
 import LandscapeIcon from '@mui/icons-material/Landscape';
 import ParkIcon from '@mui/icons-material/Park';
@@ -149,11 +149,12 @@ const rows: SpotRow[] = [];
 
 
 var currentSortFilter = { field: 'spotTime', sort: 'desc' as GridSortDirection };
-
+var currentPageFilter = { pageSize: 25,  page: 0, };
 
 export default function SpotViewer() {
     const [spots, setSpots] = React.useState(rows)
     const [sortModel, setSortModel] = React.useState<GridSortModel>([currentSortFilter]);
+    const [pageModel, setPaginationModel] = React.useState<GridPaginationModel>(currentPageFilter);
     const [backdropOpen, setBackdropOpen] = React.useState(false);
     const { contextData, setData, qsyButtonId, setLastQsyBtnId } = useAppContext();
 
@@ -241,6 +242,15 @@ export default function SpotViewer() {
         } catch {
             console.log("ignored error loading sortmodel. using default");
         }
+
+        try {
+            let j = window.localStorage.getItem("PAGE_MODEL") || '';
+            let pm = JSON.parse(j) as GridPaginationModel;
+            console.log(`pagemodel ${j} ${pm}`)
+            setPaginationModel(pm);
+        } catch {
+            console.log("ignored error loading pagination model. using default");
+        }
     }, []);
 
     React.useEffect(() => {
@@ -278,6 +288,11 @@ export default function SpotViewer() {
     function setSortModelAndSave(newModel: GridSortModel) {
         setSortModel(newModel);
         window.localStorage.setItem("SORT_MODEL", JSON.stringify(newModel));
+    }
+
+    function setPaginationModelAndSave(newModel: GridPaginationModel) {
+        setPaginationModel(newModel);
+        window.localStorage.setItem("PAGE_MODEL", JSON.stringify(newModel));
     }
 
     function getClassName(params: GridRowClassNameParams<SpotRow>) {
@@ -326,7 +341,7 @@ export default function SpotViewer() {
                 getRowId={getRowId}
                 initialState={{
                     pagination: {
-                        paginationModel: { page: 0, pageSize: 25 },
+                        paginationModel: pageModel,
                     },
                 }}
                 pageSizeOptions={[5, 10, 25, 100]}
@@ -334,7 +349,9 @@ export default function SpotViewer() {
                 onFilterModelChange={(v) => setFilterModel(v)}
                 onRowClick={handleRowClick}
                 sortModel={sortModel}
+                paginationModel={pageModel}
                 onSortModelChange={(e) => setSortModelAndSave(e)}
+                onPaginationModelChange={(e) => setPaginationModelAndSave(e)}
                 getRowClassName={getClassName}
             />
             <HandleSpotRowClick />
