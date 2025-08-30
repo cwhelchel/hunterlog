@@ -6,7 +6,7 @@ import FormControl from '@mui/material/FormControl';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
-import { Stack, Typography, createStyles, useTheme } from '@mui/material';
+import { Box, Stack, Typography, createStyles, useTheme } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { createEqualityFilter, useAppContext } from '../AppContext';
 
@@ -273,7 +273,7 @@ export const FilterBar = (props: IFilterBarPros) => {
     );
 
     return (
-        <div className='filter-bar'>
+        <Box className='filter-bar' sx={{ borderTop: 1, borderColor: 'grey.800', paddingTop: 2, paddingBottom: 1}}>
             <Stack
                 direction='row'
                 spacing={{ md: 1, sm: 0, lg: 1.25 }}
@@ -390,7 +390,7 @@ export const FilterBar = (props: IFilterBarPros) => {
                     Clear
                 </Button>
             </Stack>
-        </div>
+        </Box>
 
     );
 }

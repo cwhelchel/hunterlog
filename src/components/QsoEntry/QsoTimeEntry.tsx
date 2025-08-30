@@ -53,6 +53,7 @@ export default function QsoTimeEntry({ qsoTime, setQsoTime }: QsoTimeEntryProps)
             label="Time On"
             ampm={false}
             disabled={isPlaying}
+            fullWidth={true}
             timezone="UTC"
             format='HH:mm:ss'
             value={qsoTime}
@@ -61,6 +62,7 @@ export default function QsoTimeEntry({ qsoTime, setQsoTime }: QsoTimeEntryProps)
             slotProps={{
                 openPickerButton: { isPlayValue: isPlaying, setter: setIsPlaying },
                 textField: {
+                    fullWidth: true,
                     sx: {
                         [`.${OutlinedInputClasses.root}`]: {
                             fontSize: 14,

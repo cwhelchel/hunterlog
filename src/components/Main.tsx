@@ -3,16 +3,14 @@ import { Theme, ThemeProvider, createTheme } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline';
 import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Grid';
-import Switch from '@mui/material/Switch';
 
 import { useAppContext } from './AppContext'
 import SpotViewer from './SpotViewer/SpotViewer'
 import QsoEntry from './QsoEntry/QsoEntry'
-import ParkInfo from './Map/ParkInfo'
-import { ActivatorInfo } from './ActivatorInfo/ActivatorInfo'
 import { FilterBar } from './FilterBar/FilterBar'
 import AppMenu from './AppMenu/AppMenu'
 import Footer from './Footer/Footer'
+import BasicTabs from './Tabs';
 
 // Augment the palette to include an alert color
 declare module '@mui/material/styles' {
@@ -96,21 +94,17 @@ export default function Main() {
                     className='sticky'
                     direction="row"
                     justifyContent="space-evenly"
-                    // divider={<Divider orientation="vertical" flexItem />}
                     spacing={{ xs: 1, md: 1 }}
-                    height="28%">
+                    height="28%"
+                >
                     <Grid item xs={12} >
                         <AppMenu />
                     </Grid>
-                    <Grid item xs={4}>
+                    <Grid item xs={7}>
                         <QsoEntry />
                     </Grid>
-                    <Grid item xs={4}>
-                        <ActivatorInfo />
-                    </Grid>
-                    <Grid item xs={4}>
-                        {/* <LeafMap /> */}
-                        <ParkInfo />
+                    <Grid item xs={5} >
+                        <BasicTabs />
                     </Grid>
                     <Grid item xs={12}>
                         <FilterBar />

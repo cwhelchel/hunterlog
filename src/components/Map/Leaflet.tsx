@@ -19,7 +19,7 @@ export default function Leaflet(props: ILeafletProps) {
 
     function handleOnSetView() {
         if (mapRef && mapRef.current) {
-            mapRef.current.setView([lat, lon], 5);
+            mapRef.current.setView([lat, lon], 4);
             setMarkerPosition([lat, lon]);
         }
     }
@@ -40,9 +40,9 @@ export default function Leaflet(props: ILeafletProps) {
     return (
         // Make sure you set the height and width of the map container otherwise the map won't show
         <MapContainer center={[lat, lon]}
-            zoom={5}
+            zoom={4}
             ref={mapRef}
-            style={{ height: "200px", width: "300px", float: "left" }}>
+            style={{ height: "150px", width: "300px", float: "left" }}>
             <TileLayer
                 attribution={attribution}
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

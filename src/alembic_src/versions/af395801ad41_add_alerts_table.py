@@ -12,9 +12,6 @@ import sqlalchemy as sa
 
 from sqlalchemy.engine.reflection import Inspector
 
-conn = op.get_bind()
-inspector = Inspector.from_engine(conn)
-tables = inspector.get_table_names()
 
 # revision identifiers, used by Alembic.
 revision: str = 'af395801ad41'
@@ -25,6 +22,12 @@ depends_on: Union[str, Sequence[str], None] = None
 
 # add alert table to hold the parks
 def upgrade() -> None:
+    
+    # had to move this here. the next alembic revision was squawking about it
+    conn = op.get_bind()
+    inspector = Inspector.from_engine(conn)
+    tables = inspector.get_table_names()
+
     # i think marshmallow is doing this for us.... wrap in a check
     if "alerts" not in tables:
         op.create_table("alerts",

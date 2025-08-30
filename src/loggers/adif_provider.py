@@ -29,6 +29,14 @@ class AdifProvider():
         else:
             extra = ''
 
+        # if these are logged with just SIG info but missing the xota_ref,
+        # we just set the xota_ref to the sig_info
+        if qso.sig == 'POTA' and qso.pota_ref is None:
+            qso.pota_ref = qso.sig_info
+
+        if qso.sig == 'SOTA' and qso.sota_ref is None:
+            qso.sota_ref = qso.sig_info
+
         adif = \
             self.get_adif_field("call", qso.call) + \
             self.get_adif_field("band", band_name) + \
@@ -49,6 +57,8 @@ class AdifProvider():
             self.get_adif_field("qso_date", q_date) + \
             self.get_adif_field("time_on", q_time_on) + \
             self.get_adif_field("my_gridsquare", self.my_grid6) + \
+            self.get_adif_field("pota_ref", qso.pota_ref or '') + \
+            self.get_adif_field("sota_ref", qso.sota_ref or '') + \
             extra +\
             "<EOR>\n"
 

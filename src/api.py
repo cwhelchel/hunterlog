@@ -369,6 +369,11 @@ class JsApi:
 
         :param any qso_data: dict of qso data from the UI
         '''
+        def inc_park_hunt(pota: PotaApi, db: DataBase, park: str):
+            park_json = pota.get_park(park)
+            logging.debug(f"inc park hunt for: {park_json}")
+            db.parks.inc_park_hunt(park_json)
+
         logging.info('acquiring lock to log qso')
         self.lock.acquire()
 
@@ -376,9 +381,13 @@ class JsApi:
 
         try:
             if qso_data['sig'] == 'POTA':
-                park_json = self.pota.get_park(qso_data['sig_info'])
-                logging.debug(f"updating park stat for: {park_json}")
-                self.db.parks.inc_park_hunt(park_json)
+                if qso_data['pota_ref'] is not None:
+                    x: str = qso_data['pota_ref']
+                    parks = x.split(',')
+                    for p in parks:
+                        inc_park_hunt(self.pota, self.db, p)
+                else:
+                    inc_park_hunt(self.pota, self.db, qso_data['sig_info'])
             elif qso_data['sig'] == 'SOTA':
                 summit_code = qso_data['sig_info']
                 ok = self.db.parks.inc_summit_hunt(summit_code)

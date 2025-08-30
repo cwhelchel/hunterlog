@@ -35,6 +35,8 @@ class Qso(Base):
     from_app = sa.Column(sa.Boolean, nullable=True)  # true if logged from app
     cnfm_hunt = sa.Column(sa.Boolean, nullable=True)
     # 👆 true confirmed from hunter.csv
+    pota_ref = sa.Column(sa.String)
+    sota_ref = sa.Column(sa.String)
 
     def init_from_spot(self, spot: Spot, name: str):
         rst = self.get_default_rst(spot.mode)
@@ -48,6 +50,8 @@ class Qso(Base):
         self.qso_date = spot.spotTime
         self.gridsquare = spot.grid6
         self.sig_info = spot.reference
+        self.pota_ref = None
+        self.sota_ref = None
 
         if spot.spot_source == 'POTA':
             self.sig = 'POTA'

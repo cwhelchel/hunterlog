@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, TextField, Grid, Stack, Tooltip } from '@mui/material';
+import { Button, TextField, Grid, Stack, Tooltip, Box } from '@mui/material';
 import { useAppContext } from '../AppContext';
 import { Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
@@ -11,10 +11,9 @@ import './QsoEntry.scss'
 import QsoTimeEntry from './QsoTimeEntry';
 import { Qso } from '../../@types/QsoTypes';
 import { checkApiResponse, checkReferenceForPota, checkReferenceForSota, checkReferenceForWwff, setToastMsg } from '../../util';
-import { getParkInfo, getStateFromLocDesc, getSummitInfo } from '../../pota';
+import { getParkInfo, getStateFromLocDesc } from '../../pota';
 import { Park } from '../../@types/Parks';
 import { ParkInfo } from '../../@types/PotaTypes';
-import { Summit } from '../../@types/Summit';
 
 dayjs.extend(utc);
 
@@ -37,7 +36,9 @@ let defaultQso: Qso = {
     distance: 0,
     bearing: 0,
     name: '',
-    state: ''
+    state: '',
+    pota_ref: undefined,
+    sota_ref: undefined
 }
 
 
@@ -65,6 +66,8 @@ export default function QsoEntry() {
 
         qso.time_on = (qsoTime) ? qsoTime.toISOString() : dayjs().toISOString();
         qso.qso_date = qso.time_on;
+        if (qso.sig == "SOTA")
+            qso.sota_ref = qso.sig_info;
 
         if (otherParks) {
             const myPotaRef = getPotaRef();
@@ -72,8 +75,8 @@ export default function QsoEntry() {
             if (!myPotaRef.ok)
                 setToastMsg("Bad POTA Ref in Other Parks", contextData, setData);
 
-            // set qso val
-            return;
+            qso.pota_ref = myPotaRef.pota_ref;
+            qso.comment += ` {Also: ${myPotaRef.otherParks}}`;
         }
 
         let multiOps = otherOps;
@@ -109,24 +112,30 @@ export default function QsoEntry() {
     }
 
     interface IGetPotaRef {
-        text: string | undefined;
+        pota_ref: string | undefined;
+        otherParks: string | undefined;
         ok: boolean;
     }
 
     function getPotaRef(): IGetPotaRef {
         let res = otherParks;
+        const currentPark = qso.sig_info;
         let arr = res.split(',');
+
         arr.forEach((x) => {
             const isPota = checkReferenceForPota(x);
-            console.log(x);
+            // console.log(x);
             if (!isPota) {
                 // setToastMsg("Bad POTA Ref in Other Parks", contextData, setData);
                 return { ok: false };
             }
         })
+
+        arr.push(currentPark);
         return {
             ok: true,
-            text: res
+            pota_ref: arr.join(','),
+            otherParks: res
         };
     }
 
@@ -184,10 +193,13 @@ export default function QsoEntry() {
         contextData.park = null;
         contextData.qso = null;
         contextData.otherOperators = '';
+        contextData.otherParks = '';
         setData(contextData);
 
         setOtherOpsHidden(true);
         setOtherOps('');
+        setOtherParksHidden(true);
+        setOtherParks('');
     }
 
     function handleMultiOpClick(
@@ -428,7 +440,7 @@ export default function QsoEntry() {
     }, [contextData.otherParks]);
 
     const textFieldStyle: React.CSSProperties = { fontSize: 14, textTransform: "uppercase" };
-    const otherOpsStyle: React.CSSProperties = { fontSize: 14, textTransform: "uppercase", color: 'orange' };
+    const otherOpsStyle: React.CSSProperties = { fontSize: 12, textTransform: "uppercase", color: 'orange', margin: '5px' };
     const commentStyle: React.CSSProperties = { fontSize: 14 };
 
     const StyledTypoGraphy = styled(Typography)(({ theme }) =>
@@ -445,11 +457,12 @@ export default function QsoEntry() {
     return (
         <div className="qso-container">
             <Grid container
-                spacing={{ xs: 1, md: 1, lg: 2 }}
+                spacing={{ xs: 1, md: 1, lg: 1 }}
             >
                 <Grid item xs={4} lg={3}>
                     <TextField id="callsign" label="Callsign"
                         value={qso.call}
+                        fullWidth={true}
                         inputProps={{ style: textFieldStyle }}
                         onBlur={(e) => { onCallsignEntry(e.target.value); }}
                         onChange={(e) => {
@@ -459,6 +472,7 @@ export default function QsoEntry() {
                 <Grid item xs={4} lg={3}>
                     <TextField id="freq" label="Frequency"
                         value={qso.freq}
+                        fullWidth={true}
                         inputProps={{ style: textFieldStyle }}
                         onChange={(e) => {
                             setQso({ ...qso, freq: e.target.value });
@@ -501,7 +515,7 @@ export default function QsoEntry() {
                             setQso({ ...qso, sig_info: e.target.value });
                         }} />
                 </Grid>
-                <Grid item xs={4} lg={2}>
+                <Grid item xs={6} lg={2}>
                     <TextField id="grid" label="Grid"
                         value={qso.gridsquare}
                         inputProps={{ style: textFieldStyle }}
@@ -515,6 +529,7 @@ export default function QsoEntry() {
                 <Grid item xs={12} lg={5}>
                     <TextField id="comments" label="Comments"
                         value={qso.comment}
+                        fullWidth={true}
                         inputProps={{ style: commentStyle }}
                         onChange={(e) => {
                             setQso({ ...qso, comment: e.target.value });
@@ -530,7 +545,9 @@ export default function QsoEntry() {
 
             <Stack
                 direction={{ xs: 'row', sm: 'row', md: 'row' }}
-                spacing={{ xs: 0, sm: 1, md: 1 }}>
+                spacing={{ xs: 0, sm: 1, md: 1 }}
+                sx={{ flexWrap: 'wrap' }}
+            >
                 <Button variant="outlined" onClick={(e) => handleLogQsoClick(e)}>
                     <StyledTypoGraphy>
                         Log
@@ -566,32 +583,46 @@ export default function QsoEntry() {
                         </StyledTypoGraphy>
                     </Button>
                 </Tooltip>
-            </Stack>
-            <>
-                {!otherOpsHidden && (
-                    <TextField id="otherOps" label="Other OPs (comma separated)"
-                        value={otherOps}
-                        fullWidth
-                        color='warning'
-                        margin='normal'
-                        inputProps={{ style: otherOpsStyle }}
-                        onChange={(e) => {
-                            setOtherOps(e.target.value);
-                        }} />
-                )}
+                <Box sx={{ flexGrow: 1}}>
+                    {!otherOpsHidden && (
+                        <TextField id="otherOps" label="Other OPs (comma separated)"
+                            value={otherOps}
+                            color='warning'
+                            margin='normal'
+                            fullWidth
+                            size='small'
+                            sx={{
+                                '& .MuiInputLabel-root': {
+                                    fontSize: 12
+                                },
+                                marginY: '4px'
+                            }}
+                            inputProps={{ style: otherOpsStyle }}
+                            onChange={(e) => {
+                                setOtherOps(e.target.value);
+                            }} />
+                    )}
 
-                {!otherParksHidden && (
-                    <TextField id="otherParks" label="Other Parks (comma separated)"
-                        value={otherParks}
-                        fullWidth
-                        color='warning'
-                        margin='normal'
-                        inputProps={{ style: otherOpsStyle }}
-                        onChange={(e) => {
-                            setOtherParks(e.target.value);
-                        }} />
-                )}
-            </>
+                    {!otherParksHidden && (
+                        <TextField id="otherParks" label="Other Parks (comma separated)"
+                            value={otherParks}
+                            color='warning'
+                            margin='normal'
+                            size='small'
+                            fullWidth
+                            sx={{
+                                '& .MuiInputLabel-root': {
+                                    fontSize: 12
+                                },
+                                marginY: '4px'
+                            }}
+                            inputProps={{ style: otherOpsStyle }}
+                            onChange={(e) => {
+                                setOtherParks(e.target.value);
+                            }} />
+                    )}
+                </Box>
+            </Stack>
         </div >
     );
 };

@@ -3,7 +3,6 @@ from sqlalchemy.orm import scoped_session
 
 from db.models.location import Location, LocationSchema
 from db.models.parks import Park
-from db.models.qsos import Qso
 
 import logging as L
 
@@ -64,10 +63,18 @@ class LocationQuery:
 
         total = loc.parks
         hunts = self.session.query(Park.reference).distinct() \
-            .join(Qso, Park.reference == Qso.sig_info) \
-            .join(Location, sa.and_(Location.descriptor.contains(descriptor),
-                                    Park.locationDesc.contains(descriptor))) \
+            .where(Park.hunts > 0) \
+            .where(Park.locationDesc == descriptor) \
             .count()
+
+        # this query here was causing a large bottle neck when called for each
+        # pota spot. use the above query which is quicker
+        # hunts = self.session.query(Park.reference).distinct() \
+        #     .join(Qso, Park.reference == Qso.sig_info) \
+        #     .join(Location, sa.and_(Location.descriptor.contains(descriptor),
+        #                             Park.locationDesc.contains(descriptor)))\
+        #     .count()
+
         return (hunts, total)
 
     def clear_locations(self):

@@ -22,6 +22,8 @@ from wwff import WwffApi
 from utils.callsigns import get_basecall
 import upgrades
 
+import time  # debugging
+
 Base = declarative_base()
 
 logging = L.getLogger(__name__)
@@ -29,7 +31,7 @@ logging = L.getLogger(__name__)
 # L.getLogger('sqlalchemy.engine').setLevel(L.INFO)
 
 
-VER_FROM_ALEMBIC = 'af395801ad41'
+VER_FROM_ALEMBIC = '6a57a9b8d650'
 '''
 This value indicates the version of the DB scheme the app is made for.
 
@@ -189,6 +191,8 @@ class DataBase:
 
         regions = list[str]()
 
+        start_time = time.perf_counter()
+
         test = schema.load(spots_json, session=self.session,
                            transient=True, many=True)
 
@@ -198,24 +202,32 @@ class DataBase:
         for to_add in test:
             # to_add: Spot = schema.load(s, session=self.session, many=True)
             to_add.spot_source = 'POTA'
+
             self.session.add(to_add)
 
             # get meta data for this spot
             self.get_spot_metadata(to_add)
 
             # sometimes locationDesc can be None. see GR-0071
+            # t1 = time.perf_counter()
             if to_add.locationDesc is not None \
                     and ',' not in to_add.locationDesc:
                 x, y = self._lq.get_location_hunts(to_add.locationDesc)
                 to_add.loc_hunts = x
                 to_add.loc_total = y
                 regions.append(to_add.locationDesc[0:2])
+            # t2 = time.perf_counter()
+            # logging.debug(f"x Elapsed time: {t2-t1:.6f} seconds")
 
             to_add.is_qrt = False
 
             if to_add.comments is not None:
                 if re.match(r'.*qrt.*', to_add.comments.lower()):
                     to_add.is_qrt = True
+
+        end_time = time.perf_counter()
+        elapsed_time = end_time - start_time
+        logging.debug(f"POTA Elapsed time: {elapsed_time:.6f} seconds")
 
         self._update_sota_spots(sota_spots, regions)
 
@@ -375,6 +387,8 @@ class DataBase:
         return to_alert
 
     def _update_sota_spots(self, sota_spots, regions: list[str]):
+        start_time = time.perf_counter()
+
         if sota_spots is None:
             logging.warning('sota spots object is Null')
             return
@@ -425,7 +439,13 @@ class DataBase:
 
             self.get_spot_metadata(sota_to_add)
 
+        end_time = time.perf_counter()
+        elapsed_time = end_time - start_time
+        logging.debug(f"SOTA Elapsed time: {elapsed_time:.6f} seconds")
+
     def _update_wwff_spots(self, wwff_spots, regions: list[str]):
+        start_time = time.perf_counter()
+
         if wwff_spots is None:
             logging.warning('wwff spots object is Null')
             return
@@ -475,3 +495,7 @@ class DataBase:
                 self.session.add(wwff_to_add)
 
             self.get_spot_metadata(wwff_to_add)
+
+        end_time = time.perf_counter()
+        elapsed_time = end_time - start_time
+        logging.debug(f"WWFF Elapsed time: {elapsed_time:.6f} seconds")
