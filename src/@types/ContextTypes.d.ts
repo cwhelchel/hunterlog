@@ -24,6 +24,7 @@ export interface ContextData {
     sigFilter: string;
     otherOperators: string;
     otherParks: string;
+    continentFilter: string;
 }
 
 export  interface AppContextType {

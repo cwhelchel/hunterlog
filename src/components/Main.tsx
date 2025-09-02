@@ -100,7 +100,7 @@ export default function Main() {
                     <Grid item xs={12} >
                         <AppMenu />
                     </Grid>
-                    <Grid item xs={7}>
+                    <Grid item xs={7} sx={{ minHeight:200 }}>
                         <QsoEntry />
                     </Grid>
                     <Grid item xs={5} >

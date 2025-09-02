@@ -137,7 +137,7 @@ const columns: GridColDef[] = [
                 {x.row.spot_source == 'WWFF' && (
                     <Brightness3Icon color='success' />
                 )}
-                
+
                 <span id="sig">{x.row.spot_source}</span>
             </>
         }
@@ -149,7 +149,7 @@ const rows: SpotRow[] = [];
 
 
 var currentSortFilter = { field: 'spotTime', sort: 'desc' as GridSortDirection };
-var currentPageFilter = { pageSize: 25,  page: 0, };
+var currentPageFilter = { pageSize: 25, page: 0, };
 
 export default function SpotViewer() {
     const [spots, setSpots] = React.useState(rows)
@@ -171,7 +171,7 @@ export default function SpotViewer() {
         });
     }
 
-    
+
     function setWorking() {
         // get the spots from the python backend
         // show the spinner to keep user from interacting with spots that wont
@@ -258,9 +258,11 @@ export default function SpotViewer() {
         if (window.pywebview !== undefined) {
             getSpots();
         }
-    }, [contextData.bandFilter, contextData.regionFilter,
-    contextData.qrtFilter, contextData.locationFilter,
-    contextData.huntedFilter, contextData.onlyNewFilter]
+    },
+        [contextData.bandFilter, contextData.regionFilter,
+        contextData.qrtFilter, contextData.locationFilter,
+        contextData.huntedFilter, contextData.onlyNewFilter,
+        contextData.continentFilter]
     );
 
     // return the correct PK id for our rows

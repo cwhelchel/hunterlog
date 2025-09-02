@@ -22,6 +22,7 @@ export const FilterBar = (props: IFilterBarPros) => {
     const [mode, setMode] = React.useState('');
     const [band, setBand] = React.useState('');
     const [region, setRegion] = React.useState<string[]>([]);
+    const [continent, setContinent] = React.useState<string[]>([]);
     const [loc, setLocation] = React.useState('');
     const [sig, setSig] = React.useState('');
     const [qrt, setQrt] = React.useState(true);
@@ -47,6 +48,8 @@ export const FilterBar = (props: IFilterBarPros) => {
             setModeFilter(mf);
             let lf = window.localStorage.getItem("LOCATION_FILTER") || '';
             setLocationFilter(lf);
+            let cf = window.localStorage.getItem("CONTINENT_FILTER") || '';
+            setContinentFilter(cf.split(","));
 
             let qrtF = window.localStorage.getItem("QRT_FILTER");
             setQrtFilter((qrtF === "true"));
@@ -71,6 +74,17 @@ export const FilterBar = (props: IFilterBarPros) => {
         setBandFilter(m);
         window.localStorage.setItem("BAND_FILTER", m);
     }
+
+    const handleContinentChange = (event: SelectChangeEvent) => {
+        let c = typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value;
+
+        console.log(c);
+        if (c.includes("NONE")) {
+            c = [];
+        }
+        setContinentFilter(c);
+        window.localStorage.setItem("CONTINENT_FILTER", c.join(","));
+    };
 
     const handleRegionChange = (event: SelectChangeEvent) => {
         let r = typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value;
@@ -124,11 +138,13 @@ export const FilterBar = (props: IFilterBarPros) => {
         );
         window.pywebview.api.set_band_filter(0);
         window.pywebview.api.set_region_filter([]);
+        window.pywebview.api.set_continent_filter([]);
         window.pywebview.api.set_qrt_filter(true);
         window.pywebview.api.set_hunted_filter(false);
         window.pywebview.api.set_only_new_filter(false);
         window.pywebview.api.set_sig_filter("");
         setRegion([]);
+        setContinent([]);
         setLocation("");
         setQrt(true);
         setHunted(false);
@@ -137,6 +153,7 @@ export const FilterBar = (props: IFilterBarPros) => {
 
         window.localStorage.setItem("BAND_FILTER", '0');
         window.localStorage.setItem("REGION_FILTER", '');
+        window.localStorage.setItem("CONTINENT_FILTER", '');
         window.localStorage.setItem("MODE_FILTER", '');
         window.localStorage.setItem("LOCATION_FILTER", '');
         window.localStorage.setItem("QRT_FILTER", 'true');
@@ -231,6 +248,13 @@ export const FilterBar = (props: IFilterBarPros) => {
         setRegion(r);
     }
 
+    function setContinentFilter(r: string[]) {
+        window.pywebview.api.set_continent_filter(r);
+        let next = { ...contextData, continentFilter: r.join(",") };
+        setData(next);
+        setContinent(r);
+    }
+
     function setLocationFilter(l: string) {
         console.log("changing location to: " + l);
         window.pywebview.api.set_location_filter(l);
@@ -273,7 +297,7 @@ export const FilterBar = (props: IFilterBarPros) => {
     );
 
     return (
-        <Box className='filter-bar' sx={{ borderTop: 1, borderColor: 'grey.800', paddingTop: 2, paddingBottom: 1}}>
+        <Box className='filter-bar' sx={{ borderTop: 1, borderColor: 'grey.800', paddingTop: 2, paddingBottom: 1 }}>
             <Stack
                 direction='row'
                 spacing={{ md: 1, sm: 0, lg: 1.25 }}
@@ -330,6 +354,27 @@ export const FilterBar = (props: IFilterBarPros) => {
                         <MenuItem value='FM'>FM</MenuItem>
                         <MenuItem value='FT8'>FT8</MenuItem>
                         <MenuItem value='FT4'>FT4</MenuItem>
+                    </Select>
+                </FormControl>
+                <FormControl size='small'>
+                    <StyledInputLabel id="demo-simple-select-label">Continent</StyledInputLabel>
+                    <Select
+                        labelId="demo-simple-select-label"
+                        id="demo-simple-select"
+                        value={continent}
+                        multiple
+                        variant='standard'
+                        sx={{ minWidth: 75 }}
+                        onChange={handleContinentChange}
+                    >
+                        <MenuItem value="NONE"><em>None</em></MenuItem>
+                        <MenuItem value='AF'>Africa</MenuItem>
+                        <MenuItem value='AN'>Antarctica</MenuItem>
+                        <MenuItem value='AS'>Asia</MenuItem>
+                        <MenuItem value='EU'>Europe</MenuItem>
+                        <MenuItem value='NA'>North America</MenuItem>
+                        <MenuItem value='OC'>Oceania</MenuItem>
+                        <MenuItem value='SA'>South America</MenuItem>
                     </Select>
                 </FormControl>
                 <FormControl size='small'>

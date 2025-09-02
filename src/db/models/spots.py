@@ -51,6 +51,7 @@ class Spot(Base):
     cw_wpm = sa.Column(sa.Integer, nullable=True)
 
     spot_source = sa.Column(sa.String)
+    continent = sa.Column(sa.String)
 
     def __repr__(self):
         return "<spot(id={self.spotId!r})>".format(self=self)

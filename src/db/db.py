@@ -20,6 +20,7 @@ from db.spot_query import SpotQuery
 from sota import SotaApi
 from wwff import WwffApi
 from utils.callsigns import get_basecall
+from utils.continent import Continents
 import upgrades
 
 import time  # debugging
@@ -31,7 +32,7 @@ logging = L.getLogger(__name__)
 # L.getLogger('sqlalchemy.engine').setLevel(L.INFO)
 
 
-VER_FROM_ALEMBIC = '6a57a9b8d650'
+VER_FROM_ALEMBIC = '5a64e92a7d0c'
 '''
 This value indicates the version of the DB scheme the app is made for.
 
@@ -109,6 +110,7 @@ class DataBase:
         self._sq.delete_all_spots()
         self._iq.init_config()
 
+        self.continents = Continents()
         self.seen_regions = []
 
     def commit_session(self):
@@ -202,6 +204,8 @@ class DataBase:
         for to_add in test:
             # to_add: Spot = schema.load(s, session=self.session, many=True)
             to_add.spot_source = 'POTA'
+            to_add.continent = self.continents.find_continent(
+                to_add.reference[:2])
 
             self.session.add(to_add)
 
@@ -398,6 +402,10 @@ class DataBase:
             # where the first spot is the newest.
             sota_to_add = Spot()
             sota_to_add.init_from_sota(sota)
+
+            sota_to_add.continent = self.continents.find_continent_sota(
+                sota_to_add.reference.split('/')[0]
+            )
 
             # this is sota association code
             regions.append(sota_to_add.locationDesc)

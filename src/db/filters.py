@@ -15,6 +15,7 @@ class Filters:
         self.qrt_filter_on = True  # filter out QRT spots by default
         self.hunted_filter_on = False  # filter out spots you hunted
         self.only_new_on = False  # filter out parks you have never worked
+        self.cont_filter = list[str]()
 
     def set_band_filter(self, band: Bands):
         logging.debug(f"setting band filter to {band}")
@@ -23,6 +24,10 @@ class Filters:
     def set_region_filter(self, region: list[str]):
         logging.debug(f"setting region filter to {region}")
         self.region_filter = region
+
+    def set_continent_filter(self, continents: list[str]):
+        logging.debug(f"setting continent filter to {continents}")
+        self.cont_filter = continents
 
     def set_location_filter(self, location: str):
         logging.debug(f"setting location filter to {location}")
@@ -60,7 +65,8 @@ class Filters:
         Gets all the search terms that should be boolean or-ed together when
         filtering the spots.
         '''
-        return self._get_region_filters()
+        return self._get_region_filters() + \
+            self._get_continent_filters()
 
     def _get_band_filters(self) -> list[sa.ColumnElement[bool]]:
         band = Bands(self.band_filter)  # not sure why cast is needed
@@ -78,6 +84,17 @@ class Filters:
         for r in region:
             if len(r) > 0:
                 terms.append(Spot.locationDesc.startswith(r))
+        return terms
+
+    def _get_continent_filters(self) -> list[sa.ColumnElement[bool]]:
+        conts = self.cont_filter
+        if (conts is None or len(conts) == 0):
+            return []
+
+        terms = []
+        for r in conts:
+            if len(r) > 0:
+                terms.append(Spot.continent == r)
         return terms
 
     def _get_location_filters(self) -> list[sa.ColumnElement[bool]]:

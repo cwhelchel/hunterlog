@@ -488,6 +488,10 @@ class JsApi:
         logging.debug(f"api setting region filter to: {region}")
         self.db.filters.set_region_filter(region)
 
+    def set_continent_filter(self, continents: list[str]):
+        logging.debug(f"api setting cont filter to: {continents}")
+        self.db.filters.set_continent_filter(continents)
+
     def set_location_filter(self, location: str):
         logging.debug(f"setting region filter to {location}")
         self.db.filters.set_location_filter(location)

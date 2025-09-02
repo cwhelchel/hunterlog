@@ -61,8 +61,10 @@ export default function BasicTabs() {
 
     function onParkChange() {
         let park = contextData?.park?.reference || '';
-        if (park === null || park === '')
+        if (park === null || park === '') {
+            setInvisible(true);
             return;
+        }
 
         window.pywebview.api.get_park_hunts(park).then((j: string) => {
             let o = checkApiResponse(j, contextData, setData);
