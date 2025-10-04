@@ -43,11 +43,11 @@ class AdifLog():
         self._send_msg(adif, config.adif_host, config.adif_port, type)
         self.write_adif_log(adif)
 
-    def log_qso(self, qso: Qso, config: UserConfig):
+    def log_qso(self, qso: Qso, my_call: str, my_grid6: str):
         '''
         Logs the QSO the the ADIF file.
         '''
-        adif = self._get_adif(qso, config.my_call, config.my_grid6)
+        adif = self._get_adif(qso, my_call, my_grid6)
         self.write_adif_log(adif)
 
     def write_adif_log(self, adif):

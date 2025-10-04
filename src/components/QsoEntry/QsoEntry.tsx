@@ -186,7 +186,7 @@ export default function QsoEntry() {
     };
 
     function handleClearClick(
-        event: React.MouseEvent<HTMLButtonElement, MouseEvent>
+        event: React.MouseEvent<HTMLButtonElement, MouseEvent> | null
     ) {
         console.log("clearing qso...");
         setQso(defaultQso);
@@ -439,6 +439,17 @@ export default function QsoEntry() {
         updateOtherParks(contextData.otherParks);
     }, [contextData.otherParks]);
 
+    React.useEffect(() => {
+        function handleEscapeKey(event: KeyboardEvent) {
+            if (event.code === 'Escape') {
+                handleClearClick(null);
+            }
+        }
+
+        document.addEventListener('keydown', handleEscapeKey)
+        return () => document.removeEventListener('keydown', handleEscapeKey)
+    }, []);
+
     const textFieldStyle: React.CSSProperties = { fontSize: 14, textTransform: "uppercase" };
     const otherOpsStyle: React.CSSProperties = { fontSize: 12, textTransform: "uppercase", color: 'orange', margin: '5px' };
     const commentStyle: React.CSSProperties = { fontSize: 14 };
@@ -583,7 +594,7 @@ export default function QsoEntry() {
                         </StyledTypoGraphy>
                     </Button>
                 </Tooltip>
-                <Box sx={{ flexGrow: 1}}>
+                <Box sx={{ flexGrow: 1 }}>
                     {!otherOpsHidden && (
                         <TextField id="otherOps" label="Other OPs (comma separated)"
                             value={otherOps}

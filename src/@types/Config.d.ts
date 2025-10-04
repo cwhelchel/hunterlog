@@ -15,3 +15,14 @@ export interface UserConfig {
     qth_string: string,
     rig_if_type: string,
 }
+
+export interface ConfigVer2 {
+    id: string,
+    key: string,
+    val: string,
+    type: string,
+    enabled: boolean,
+    editable: boolean,
+    description: string,
+    group: string,
+}

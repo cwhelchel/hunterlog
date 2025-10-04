@@ -9,12 +9,14 @@ import CloseIcon from '@mui/icons-material/Close';
 
 import { useAppContext } from '../AppContext';
 import ConfigModal from '../Config/ConfigModal';
-import { UserConfig } from '../../@types/Config';
+import { ConfigVer2, UserConfig } from '../../@types/Config';
 import { ActivatorData } from '../../@types/ActivatorTypes';
 import { Alert, Avatar, Tooltip, AlertColor, Snackbar } from '@mui/material';
 import StatsMenu from './StatsMenu';
 import AlertsArea from './AlertsArea';
 import AlertsMenu from './AlertsMenu';
+import { checkApiResponse } from '../../util';
+import { ConfigContextProvider } from '../Config/ConfigContextProvider';
 
 export default function AppMenu() {
 
@@ -30,20 +32,44 @@ export default function AppMenu() {
 
     function getCfg() {
         // pywebview is ready so api can be called here:
-        let x = window.pywebview.api.get_user_config();
         console.log('getting user config');
-        x.then((cfgStr: string) => {
-            console.log('got user confg: ' + cfgStr);
+        // let x = window.pywebview.api.get_user_config();
 
-            let obj: UserConfig = JSON.parse(cfgStr) as UserConfig;
-            setCallsign(obj.my_call);
-            let y = window.pywebview.api.get_activator_stats(obj.my_call);
+        // x.then((cfgStr: string) => {
+        //     console.log('got user confg: ' + cfgStr);
+
+        //     let obj: UserConfig = JSON.parse(cfgStr) as UserConfig;
+
+        //     setCallsign(obj.my_call);
+
+        //     let y = window.pywebview.api.get_activator_stats(obj.my_call);
+        //     y.then((actStr: string) => {
+        //         let actObj: ActivatorData = JSON.parse(actStr) as ActivatorData;
+        //         let url = getGravatarUrl(actObj.gravatar);
+        //         setGravatar(url);
+        //     });
+        // })
+
+        let y = window.pywebview.api.get_user_config_val('my_call');
+
+        y.then((cfgStr: string) => {
+            let obj = checkApiResponse(cfgStr, contextData, setData);
+            
+            if (!obj.success)
+                return;
+
+            const call = obj.val;
+            if (call === undefined)
+                return;
+            setCallsign(call);
+
+            let y = window.pywebview.api.get_activator_stats(call);
             y.then((actStr: string) => {
                 let actObj: ActivatorData = JSON.parse(actStr) as ActivatorData;
                 let url = getGravatarUrl(actObj.gravatar);
                 setGravatar(url);
             });
-        })
+        });
     };
 
     React.useEffect(() => {
@@ -138,7 +164,9 @@ export default function AppMenu() {
                         component="div" ml={1} mr={1}>
                         {callsign}
                     </Typography>
-                    <ConfigModal />
+                    <ConfigContextProvider>
+                        <ConfigModal />
+                    </ConfigContextProvider>
                     <StatsMenu />
                     <AlertsMenu />
 

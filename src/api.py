@@ -15,7 +15,9 @@ from db.models.qsos import QsoSchema
 from db.models.spot_comments import SpotCommentSchema
 from db.models.spots import Spot, SpotSchema
 from db.models.user_config import UserConfigSchema
+from db.models.config_ver2 import ConfigVer2Schema
 from loggers import LoggerInterface
+from loggers.logger_interface import LoggerParams
 from pota import PotaApi, PotaStats
 from sota import SotaApi
 from wwff import WwffApi
@@ -37,13 +39,22 @@ class JsApi:
         self.wwff = WwffApi()
         # self.adif_log = AdifLog()
         logging.debug("init CAT...")
-        cfg = self.db.get_user_config()
-        self.adif_log = LoggerInterface.get_logger(cfg, __version__)
+        # cfg = self.db.get_user_config()
+        lp = LoggerParams(
+            self.db.config.get_value('logger_type'),
+            self.db.config.get_value('my_call'),
+            self.db.config.get_value('my_grid6'),
+            self.db.config.get_value('adif_host'),
+            self.db.config.get_value('adif_port'),
+        )
+        self.adif_log = LoggerInterface.get_logger(lp, __version__)
         logging.debug(f"got logger {self.adif_log}")
         try:
-            # self.cat = CAT(cfg.rig_if_type, cfg.flr_host, cfg.flr_port)
-            self.cat = CAT.get_interface(cfg.rig_if_type)
-            self.cat.init_cat(host=cfg.flr_host, port=cfg.flr_port)
+            rig_if = self.db.config.get_value('rig_if_type')
+            ip = self.db.config.get_value('flr_host')
+            port = self.db.config.get_value('flr_port')
+            self.cat = CAT.get_interface(rig_if)
+            self.cat.init_cat(host=ip, port=port)
         except Exception:
             logging.error("Error creating CAT object: ", exc_info=True)
             self.cat = None
@@ -100,7 +111,8 @@ class JsApi:
             self.lock.release()
 
     def get_qso_from_spot(self, id: int):
-        cfg = self.db.get_user_config()
+        # cfg = self.db.get_user_config()
+        my_grid = self.db.config.get_value("my_grid6")
 
         # if we cant get a lock return null
         if not self.lock.acquire(timeout=4.00):
@@ -112,8 +124,8 @@ class JsApi:
             return self._response(False, "failed to build qso from spot.")
 
         if q.gridsquare:
-            dist = Distance.distance(cfg.my_grid6, q.gridsquare)
-            bearing = Distance.bearing(cfg.my_grid6, q.gridsquare)
+            dist = Distance.distance(my_grid, q.gridsquare)
+            bearing = Distance.bearing(my_grid, q.gridsquare)
             q.distance = dist
             q.bearing = bearing
         qs = QsoSchema()
@@ -284,12 +296,34 @@ class JsApi:
             return self._response(True, "", bands=txt,
                                   new_band=new_band)
 
-    def get_user_config(self):
+    # def get_user_config(self):
+    #     '''
+    #     Returns the JSON for the user configuration record in the db
+    #     '''
+    #     cfg = self.db.get_user_config()
+    #     return UserConfigSchema().dumps(cfg)
+
+    def get_user_config2(self):
         '''
         Returns the JSON for the user configuration record in the db
         '''
-        cfg = self.db.get_user_config()
-        return UserConfigSchema().dumps(cfg)
+        x = self.db.config.get_editable_json()
+        return x
+
+    def get_user_config_val(self, k: str):
+        '''
+        Returns API response with the value of a given config setting in the
+        `val` property.
+
+        If config key is not found, returns error API response.
+        '''
+        try:
+            x = self.db.config.get_value(k)
+        except KeyError as ke:
+            logging.error('get_user_config_val caught KeyError', exc_info=ke)
+            return self._response(False, f"Config Key {k} not found")
+
+        return self._response(True, "", val=x)
 
     def get_version_num(self):
         return self._response(
@@ -314,7 +348,7 @@ class JsApi:
 
         logging.debug(f"sending spot for {a} on {f}")
 
-        cfg = self.db.get_user_config()
+        # cfg = self.db.get_user_config()
 
         # if spot+log is used the comment is modified before coming here.
         # remove boilerplate fluff and get the users comments for spot
@@ -322,7 +356,8 @@ class JsApi:
             x = c.index("]") + 1
             c = c[x:]
 
-        qth = cfg.qth_string
+        qth = self.db.config.get_value("qth_string")
+        my_call = self.db.config.get_value("my_call")
 
         if qth is not None:
             spot_comment = f"[{r} {qth}] {c}"
@@ -334,7 +369,7 @@ class JsApi:
                               park_ref=park,
                               freq=f,
                               mode=m,
-                              spotter_call=cfg.my_call,
+                              spotter_call=my_call,
                               spotter_comments=spot_comment)
         except Exception as ex:
             msg = "Error posting spot to pota api!"
@@ -377,7 +412,7 @@ class JsApi:
         logging.info('acquiring lock to log qso')
         self.lock.acquire()
 
-        cfg = self.db.get_user_config()
+        def_pwr = self.db.config.get_value('default_pwr')
 
         try:
             if qso_data['sig'] == 'POTA':
@@ -403,7 +438,7 @@ class JsApi:
                     self.db.parks.update_wwff_data(wwwffInfo)
                     self.db.parks.inc_wwff_hunt(wwff_code)
 
-            qso_data['tx_pwr'] = cfg.default_pwr
+            qso_data['tx_pwr'] = def_pwr
             logging.debug(f"logging qso: {qso_data}")
             id = self.db.qsos.insert_new_qso(qso_data)
         except Exception as ex:
@@ -459,12 +494,13 @@ class JsApi:
         '''
         try:
             qs = self.db.qsos.get_qsos_from_app()
-            cfg = self.db.get_user_config()
+            my_call = self.db.config.get_value('my_call')
+            my_grid6 = self.db.config.get_value('my_grid6')
 
             dt = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
             log = AdifLog(filename=f"{dt}_export.adi")
             for q in qs:
-                log.log_qso(q, cfg)
+                log.log_qso(q, my_call, my_grid6)
 
             return self._response(True, "QSOs exported successfully")
         except Exception as ex:
@@ -472,12 +508,33 @@ class JsApi:
             return self._response(
                 False, "Error exporting QSOs from DB", ext=str(ex))
 
-    def set_user_config(self, config_json: any):
-        logging.debug(f"setting config {config_json}")
-        self.db.update_user_config(config_json)
+    # def set_user_config(self, config_json: any):
+    #     logging.debug(f"setting config {config_json}")
+    #     self.db.update_user_config(config_json)
 
-        cfg = self.db.get_user_config()
-        self.adif_log = LoggerInterface.get_logger(cfg, __version__)
+    #     lp = LoggerParams(
+    #         self.db.config.get_value('logger_type'),
+    #         self.db.config.get_value('my_call'),
+    #         self.db.config.get_value('my_grid6'),
+    #         self.db.config.get_value('adif_host'),
+    #         self.db.config.get_value('adif_port'),
+    #     )
+    #     self.adif_log = LoggerInterface.get_logger(lp, __version__)
+    #     logging.debug(f"updating logger {self.adif_log}")
+
+    def set_user_config2(self, config2_json: any):
+        logging.debug(f"setting config2 {config2_json}")
+        # self.db.update_user_config(config2_json)
+        self.db.config.set_editable_json(config2_json)
+
+        lp = LoggerParams(
+            self.db.config.get_value('logger_type'),
+            self.db.config.get_value('my_call'),
+            self.db.config.get_value('my_grid6'),
+            self.db.config.get_value('adif_host'),
+            self.db.config.get_value('adif_port'),
+        )
+        self.adif_log = LoggerInterface.get_logger(lp, __version__)
         logging.debug(f"updating logger {self.adif_log}")
 
     def set_band_filter(self, band: int):
@@ -546,7 +603,6 @@ class JsApi:
             logging.warn("CAT is None. not qsy-ing")
             return self._response(False, "CAT control failure.")
 
-        cfg = self.db.get_user_config()
         hrz = float(freq) * 1000.0
         logging.debug(f"adjusted freq {hrz}")
         if mode == "SSB" and hrz >= 10000000:
@@ -556,9 +612,9 @@ class JsApi:
             if hrz > 5330000 and hrz < 5404000:  # 60m SSB is USB
                 mode = "USB"
         elif mode == "CW":
-            mode = cfg.cw_mode
+            mode = self.db.config.get_value('cw_mode')
         elif mode.startswith("FT"):
-            mode = cfg.ftx_mode
+            mode = self.db.config.get_value('ftx_mode')
         logging.debug(f"adjusted mode {mode}")
         self.cat.set_mode(mode)
         self.cat.set_vfo(hrz)
@@ -796,45 +852,40 @@ class JsApi:
         '''
         Get the stored windows size.
         '''
-        cfg = self.db.get_user_config()
-        return (cfg.size_x, cfg.size_y)
+        x = self.db.config.get_value('size_x')
+        y = self.db.config.get_value('size_y')
+        return (x, y)
 
     def _get_win_pos(self) -> tuple[int, int]:
         '''
         Get the stored windows position.
         '''
-        cfg = self.db.get_user_config()
-        return (cfg.pos_x, cfg.pos_y)
+        x = self.db.config.get_value('pos_x')
+        y = self.db.config.get_value('pos_y')
+        return (x, y)
 
     def _get_win_maximized(self) -> bool:
         '''
         Get the stored windows size.
         '''
-        cfg = self.db.get_user_config()
-        return cfg.is_max
+        return self.db.config.get_value('is_max')
 
     def _store_win_size(self, size: tuple[int, int]):
         '''
         Save the window size to the database
         '''
-        cfg = self.db.get_user_config()
-        cfg.size_x = size[0]
-        cfg.size_y = size[1]
-        self.db.commit_session()
+        self.db.config.set_value('size_x', size[0])
+        self.db.config.set_value('size_y', size[1], commit=True)
 
     def _store_win_pos(self, position: tuple[int, int]):
         '''
         Save the window position to the database
         '''
-        cfg = self.db.get_user_config()
-        cfg.pos_x = position[0]
-        cfg.pos_y = position[1]
-        self.db.commit_session()
+        self.db.config.set_value('pos_x', position[0])
+        self.db.config.set_value('pos_y', position[1], commit=True)
 
     def _store_win_maxi(self, is_max: bool):
-        cfg = self.db.get_user_config()
-        cfg.is_max = 1 if is_max else 0
-        self.db.commit_session()
+        self.db.config.set_value('is_max', 1 if is_max else 0, commit=True)
 
     def _handle_alerts(self):
         def get_str(spot: Spot) -> str:

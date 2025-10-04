@@ -18,3 +18,14 @@ legend {
     color: #777;
     // margin-bottom: 2px;
 }
+
+ul.modal-ul-horiz {
+  list-style: none;
+  padding-left: 20px;
+  margin: 0;
+}
+
+ ul.modal-ul-horiz li {
+  display: inline-block; /* Makes list items display horizontally */
+  margin-right: 15px; /* Adds spacing between items (adjust as needed) */
+}

@@ -4,6 +4,7 @@ Email: michael.bridak@gmail.com
 GPL V3
 """
 
+from dataclasses import dataclass
 import logging
 from db.models.user_config import UserConfig
 
@@ -17,11 +18,20 @@ from loggers.udp_logger import UdpLogger
 log = logging.getLogger(__name__)
 
 
+@dataclass
+class LoggerParams:
+    logger_if: int
+    my_call: str
+    my_grid6: str
+    adif_host: str
+    adif_port: int
+
+
 class LoggerInterface:
     """QSO Logger interface"""
 
     @staticmethod
-    def get_logger(config: UserConfig,
+    def get_logger(config: LoggerParams,
                    app_ver: str) -> IAdifLogger:
         '''
         The main factory method for returning the proper IAdifLogger object to
@@ -36,7 +46,7 @@ class LoggerInterface:
 
         :returns IAdifLogger: a usable logger obj
         '''
-        interface = config.logger_type
+        interface = config.logger_if
 
         logger = None
         if interface == UserConfig.LoggerType.Tcp.value:

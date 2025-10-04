@@ -6,7 +6,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 
-from db.alerts_query import AlertsQuery
 from db.filters import Filters
 from db.models.qsos import Qso
 from db.models.activators import Activator, ActivatorSchema
@@ -17,6 +16,8 @@ from db.park_query import ParkQuery
 from db.qso_query import QsoQuery
 from db.loc_query import LocationQuery
 from db.spot_query import SpotQuery
+from db.alerts_query import AlertsQuery
+from db.config_query import ConfigQuery
 from sota import SotaApi
 from wwff import WwffApi
 from utils.callsigns import get_basecall
@@ -32,7 +33,7 @@ logging = L.getLogger(__name__)
 # L.getLogger('sqlalchemy.engine').setLevel(L.INFO)
 
 
-VER_FROM_ALEMBIC = '5a64e92a7d0c'
+VER_FROM_ALEMBIC = '164284e1be4e'
 '''
 This value indicates the version of the DB scheme the app is made for.
 
@@ -47,22 +48,22 @@ class InitQuery:
     def __init__(self, session: scoped_session):
         self.session = session
 
-    def init_config(self):
-        current = self.session.query(UserConfig).first()
+    # def init_config(self):
+    #     current = self.session.query(UserConfig).first()
 
-        if current is None:
-            cs = UserConfigSchema()
-            logging.debug("creating default user config...")
-            s = {'my_call': "N0CALL",
-                 'my_grid6': 'FN31pr',
-                 'default_pwr': 1500,
-                 'flr_host': "127.0.0.1",
-                 'flr_port': 12345,
-                 'adif_host': "127.0.0.1",
-                 'adif_port': 12345}
-            default_config = cs.load(s, session=self.session)
-            self.session.add(default_config)
-            self.session.commit()
+    #     if current is None:
+    #         cs = UserConfigSchema()
+    #         logging.debug("creating default user config...")
+    #         s = {'my_call': "N0CALL",
+    #              'my_grid6': 'FN31pr',
+    #              'default_pwr': 1500,
+    #              'flr_host': "127.0.0.1",
+    #              'flr_port': 12345,
+    #              'adif_host': "127.0.0.1",
+    #              'adif_port': 12345}
+    #         default_config = cs.load(s, session=self.session)
+    #         self.session.add(default_config)
+    #         self.session.commit()
 
     def init_alembic_ver(self):
 
@@ -103,12 +104,15 @@ class DataBase:
         self._pq = ParkQuery(self.session)
         self._sq = SpotQuery(self.session, self.filters)
         self._aq = AlertsQuery(self.session)
+        self._cq1 = ConfigQuery(self.session)
 
         # do this FIRST. will upgrade the db to latest schema
         self._iq.init_alembic_ver()
 
         self._sq.delete_all_spots()
-        self._iq.init_config()
+        # self._iq.init_config()
+        self._cq1.init_config()
+        self._cq1.init_config_v2()
 
         self.continents = Continents()
         self.seen_regions = []
@@ -127,6 +131,10 @@ class DataBase:
     easily refactored.
     '''
 
+    @property
+    def config(self) -> ConfigQuery:
+        return self._cq1
+    
     @property
     def qsos(self) -> QsoQuery:
         return self._qq
@@ -300,8 +308,8 @@ class DataBase:
     def get_activator_by_id(self, id: int) -> Activator:
         return self.session.query(Activator).get(id)
 
-    def get_user_config(self) -> UserConfig:
-        return self.session.query(UserConfig).first()
+    # def get_user_config(self) -> UserConfig:
+    #     return self.session.query(UserConfig).first()
 
     def get_version(self) -> str:
         sql = 'SELECT version_num FROM alembic_version'
@@ -335,11 +343,11 @@ class DataBase:
         # grab more info from spot comments
         self._sq._update_comment_metadata(activator, park)
 
-    def update_user_config(self, json: any):
-        schema = UserConfigSchema()
-        config = self.get_user_config()
-        schema.load(json, session=self.session, instance=config)
-        self.session.commit()
+    # def update_user_config(self, json: any):
+    #     schema = UserConfigSchema()
+    #     config = self.get_user_config()
+    #     schema.load(json, session=self.session, instance=config)
+    #     self.session.commit()
 
     def build_qso_from_spot(self, spot_id: int) -> Qso:
         '''
