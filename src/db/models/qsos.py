@@ -98,6 +98,10 @@ class Qso(Base):
         There's a lot we don't import, namely any MY_ fields or Operator data.
         It's assumed to be the configured user is the my part of this.
         '''
+        if adif is None:
+            self.call = 'ERROR'
+            return
+
         f = float(adif['FREQ'] if 'FREQ' in adif.keys() else '-1.0')
         fs = str(f * 1000) if f >= 0 else ''
         qd = datetime.datetime(
@@ -114,6 +118,9 @@ class Qso(Base):
             int(adif['TIME_ON'][4:]))
 
         self.call = adif['CALL']
+        if self.call is None or self.call == '':
+            self.call = 'ERROR'
+            return
         self.name = adif['NAME'] if 'NAME' in adif.keys() else ''
         self.state = adif['STATE'] if 'STATE' in adif.keys() else ''
         self.rst_sent = adif['RST_SENT'] if 'RST_SENT' in adif.keys() else self.get_default_rst(adif['MODE'])  # noqa E501
@@ -125,7 +132,7 @@ class Qso(Base):
         self.qso_date = qd
         self.time_on = qt
         self.gridsquare = adif['GRIDSQUARE'] if 'GRIDSQUARE' in adif.keys() else ''  # noqa: E501
-        self.sig_info = adif['SIG_INFO'] if 'SIG_INFO' in adif.keys() else ''
+        self.sig_info = adif['SIG_INFO'].upper() if 'SIG_INFO' in adif.keys() else ''
         # if we're importing from adif we may have a SIG_INFO with no SIG if so
         # go ahead and fix it (the checks look for valid pota park format in)
         self.sig = adif['SIG'] if 'SIG' in adif.keys() else 'POTA'

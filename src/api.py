@@ -393,9 +393,14 @@ class JsApi:
             return self._response(True, "")
 
         logging.info("starting import of ADIF file...")
-        AdifLog.import_from_log(filename[0], self.db)
 
-        return self._response(True, "Completed ADIF import")
+        try:
+            AdifLog.import_from_log(filename[0], self.db)
+        except Exception as ex:
+            logging.error('error importing log', exc_info=ex)
+            return self._response(False, "Error with ADIF import.")
+
+        return self._response(True, "Completed ADIF import", persist=True)
 
     def log_qso(self, qso_data):
         '''
