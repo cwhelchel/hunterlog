@@ -52,18 +52,9 @@ class Qso(Base):
         self.sig_info = spot.reference
         self.pota_ref = None
         self.sota_ref = None
+        self.state = ''
 
-        if spot.spot_source == 'POTA':
-            self.sig = 'POTA'
-            self.state = self.get_state(spot.locationDesc)
-        elif spot.spot_source == 'SOTA':
-            self.sig = 'SOTA'
-            self.state = ''
-            self.name = spot.name
-        elif spot.spot_source == 'WWFF':
-            self.sig = 'WWFF'
-            self.state = ''
-            self.name = spot.name
+        # program specific logic done in /src/programs/
 
     def get_default_rst(self, mode: str) -> str:
         if (mode in ["SSB", "PHONE", "AM", "FM"]):
@@ -74,20 +65,6 @@ class Qso(Base):
             return "+00"
 
         return ""
-
-    def get_state(self, locationDesc: str) -> str:
-        if not locationDesc or locationDesc == 'None':  # None for k-test
-            return ''
-        x = locationDesc
-        if ',' in locationDesc:
-            # take the first one
-            x = locationDesc.split(',')[0]
-
-        pre, post = x.split('-')
-        if pre in ["US", "CA"]:
-            return post
-
-        return ''
 
     def init_from_adif(self, adif: dict):
         '''
@@ -132,7 +109,7 @@ class Qso(Base):
         self.qso_date = qd
         self.time_on = qt
         self.gridsquare = adif['GRIDSQUARE'] if 'GRIDSQUARE' in adif.keys() else ''  # noqa: E501
-        self.sig_info = adif['SIG_INFO'].upper() if 'SIG_INFO' in adif.keys() else ''
+        self.sig_info = adif['SIG_INFO'].upper() if 'SIG_INFO' in adif.keys() else ''  # noqa: E501
         # if we're importing from adif we may have a SIG_INFO with no SIG if so
         # go ahead and fix it (the checks look for valid pota park format in)
         self.sig = adif['SIG'] if 'SIG' in adif.keys() else 'POTA'

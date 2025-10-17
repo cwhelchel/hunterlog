@@ -291,78 +291,37 @@ export default function QsoEntry() {
         }
 
         function getRefInfo(): any {
+
             let isSota = checkReferenceForSota(park);
-
-            if (isSota) {
-                console.log('doing a SOTA');
-
-                window.pywebview.api.get_summit(park)
-                    .then((r: string) => {
-                        let summit = JSON.parse(r) as Park;
-                        newCtxData.park = summit;
-
-                        updateQsoData(
-                            summit.grid6,
-                            'SOTA',
-                            summit.reference,
-                            ''
-                        );
-                    });
-                return;
-            }
-
-            //TODO check this
             let isWwff = checkReferenceForWwff(park);
-            if (isWwff) {
-                console.log('doing a WWFF');
 
-                window.pywebview.api.get_wwff_info(park)
-                    .then((r: string) => {
-                        let summit = JSON.parse(r) as Park;
-                        newCtxData.park = summit;
+            let sig = 'POTA';
+            if (isSota)
+                sig = 'SOTA'
+            else if (isWwff)
+                sig = 'WWFF'
 
-                        updateQsoData(
-                            summit.grid6,
-                            'WWFF',
-                            summit.reference,
-                            ''
-                        );
-                    });
-                return;
-            }
-            // TODO: why not use api func to pull from db / from api?
-            let p = getParkInfo(park);
-            p.then((apiData: ParkInfo) => {
-                let x: Park = {
-                    id: apiData.parkId,
-                    reference: apiData.reference,
-                    name: apiData.name,
-                    grid6: apiData.grid6,
-                    active: apiData.active == 1,
-                    latitude: apiData.latitude,
-                    longitude: apiData.longitude,
-                    parkComments: '',
-                    parktypeId: apiData.parktypeId,
-                    parktypeDesc: apiData.parktypeDesc,
-                    locationDesc: apiData.locationDesc,
-                    firstActivator: apiData.firstActivator,
-                    firstActivationDate: apiData.firstActivationDate,
-                    website: '',
-                    locationName: '',
-                    entityName: '',
-                    accessMethods: '',
-                    activationMethods: ''
-                };
+            window.pywebview.api.get_reference(sig, park)
+                .then((r: string) => {
+                    let result = checkApiResponse(r, contextData, setData);
+                    if (!result.success) {
+                        console.log("get_qso_from_spot failed: " + result.message);
+                        return;
+                    }
+                    let p = JSON.parse(result.park_data) as Park;
+                    newCtxData.park = p;
 
-                newCtxData.park = x;
+                    let state = '';
+                    if (sig == 'POTA')
+                        state = getStateFromLocDesc(p.locationDesc)
 
-                updateQsoData(
-                    apiData.grid6,
-                    'POTA',
-                    apiData.reference,
-                    getStateFromLocDesc(apiData.locationDesc)
-                );
-            });
+                    updateQsoData(
+                        p.grid6,
+                        sig,
+                        p.reference,
+                        state
+                    );
+                });
         }
 
         const newCtxData = { ...contextData };

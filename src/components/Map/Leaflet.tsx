@@ -35,6 +35,7 @@ export default function Leaflet(props: ILeafletProps) {
 
     React.useEffect(() => {
         setLatLonFromSota();
+        console.log('contextData.summit shouldnt be changing???');
     }, [contextData.summit]);
 
     return (
@@ -54,7 +55,8 @@ export default function Leaflet(props: ILeafletProps) {
 
     function setLatLon() {
         const park = contextData.park;
-        console.log(`Leaflet: ${park?.name}`);
+        //console.log(`Leaflet park: ${park}`);
+        console.log(`Leaflet park name: ${park?.name}`);
         if (park === undefined)
             return;
 

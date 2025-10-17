@@ -84,49 +84,31 @@ export default function HandleSpotRowClick() {
                 console.log("get_qso_from_spot failed: " + result.message);
                 return;
             }
-           
+
             var x = JSON.parse(result.qso) as Qso;
 
-            if (x.sig == 'POTA') {
-                window.pywebview.api.get_park(x.sig_info)
-                    .then((r: string) => {
-                        let p = JSON.parse(r) as Park;
-                        const newCtxData = { ...contextData };
-                        //newCtxData.spotId = id;
-                        newCtxData.qso = x;
-                        newCtxData.park = p;
-                        newCtxData.summit = null;
+            window.pywebview.api.get_reference(x.sig, x.sig_info)
+                .then((r: string) => {
+                    let result = checkApiResponse(r, contextData, setData);
+                    if (!result.success) {
+                        console.log("get_qso_from_spot failed: " + result.message);
+                        return;
+                    }
+                    let p = JSON.parse(result.park_data) as Park;
+                    const newCtxData = { ...contextData };
+                    newCtxData.qso = x;
+                    newCtxData.park = p;
+                    newCtxData.summit = null;
+                    if (x.sig == 'POTA') {
                         getOtherData(id).then((oo) => {
                             newCtxData.otherOperators = oo.otherOps;
                             newCtxData.otherParks = oo.otherParks;
                             setData(newCtxData);
                         });
-                    });
-            } else if (x.sig == 'SOTA') {
-
-                window.pywebview.api.get_summit(x.sig_info)
-                    .then((r: string) => {
-                        let summit = JSON.parse(r) as Park;
-                        const newCtxData = { ...contextData };
-                        //newCtxData.spotId = id;
-                        newCtxData.qso = x;
-                        //newCtxData.summit = summit;
-                        newCtxData.park = summit;
+                    } else {
                         setData(newCtxData);
-                    });
-            } else if (x.sig == 'WWFF') {
-                window.pywebview.api.get_wwff_info(x.sig_info)
-                    .then((r: string) => {
-                        let summit = JSON.parse(r) as Park;
-                        const newCtxData = { ...contextData };
-                        //newCtxData.spotId = id;
-                        newCtxData.qso = x;
-                        //newCtxData.summit = summit;
-                        newCtxData.park = summit;
-                        setData(newCtxData);
-                    });
-            }
-
+                    }
+                });
         });
     }
 

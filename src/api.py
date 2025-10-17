@@ -14,18 +14,16 @@ from db.models.parks import ParkSchema
 from db.models.qsos import QsoSchema
 from db.models.spot_comments import SpotCommentSchema
 from db.models.spots import Spot, SpotSchema
-from db.models.user_config import UserConfigSchema
-from db.models.config_ver2 import ConfigVer2Schema
 from loggers import LoggerInterface
 from loggers.logger_interface import LoggerParams
 from pota import PotaApi, PotaStats
+from programs import Program, SotaProgram, WwffProgram, PotaProgram
 from sota import SotaApi
 from wwff import WwffApi
 from utils.adif import AdifLog
 from version import __version__
 
 from cat import CAT
-from utils.distance import Distance
 
 logging = L.getLogger(__name__)
 
@@ -37,9 +35,14 @@ class JsApi:
         self.pota = PotaApi()
         self.sota = SotaApi()
         self.wwff = WwffApi()
-        # self.adif_log = AdifLog()
+        self.programs: dict[str, Program] = {
+            "POTA": PotaProgram(self.db),
+            "SOTA": SotaProgram(self.db),
+            "WWFF": WwffProgram(self.db)
+        }
+        self.seen_regions = [""]
+
         logging.debug("init CAT...")
-        # cfg = self.db.get_user_config()
         lp = LoggerParams(
             self.db.config.get_value('logger_type'),
             self.db.config.get_value('my_call'),
@@ -96,11 +99,8 @@ class JsApi:
             self.lock.release()
             return
 
-        if spot.spot_source == 'SOTA':
-            self.lock.release()
-            return
-
-        if spot.spot_source == 'WWFF':
+        # other program dont have this (AFAIK) so unlock and return
+        if spot.spot_source != 'POTA':
             self.lock.release()
             return
 
@@ -112,22 +112,27 @@ class JsApi:
 
     def get_qso_from_spot(self, id: int):
         # cfg = self.db.get_user_config()
-        my_grid = self.db.config.get_value("my_grid6")
+        # my_grid = self.db.config.get_value("my_grid6")
 
         # if we cant get a lock return null
         if not self.lock.acquire(timeout=4.00):
             logging.warning("failed to get lock. timed out.")
             return self._response(False, "failed to get db lock. timed out.")
 
-        q = self.db.build_qso_from_spot(id)
+        # q = self.db.build_qso_from_spot(id)
+        spot = self.db.spots.get_spot(id)
+        prog = spot.spot_source
+        q = self.programs[prog].build_qso(spot)
+
         if q is None:
+            logging.error(f"failed to build qso from spot {spot}")
             return self._response(False, "failed to build qso from spot.")
 
-        if q.gridsquare:
-            dist = Distance.distance(my_grid, q.gridsquare)
-            bearing = Distance.bearing(my_grid, q.gridsquare)
-            q.distance = dist
-            q.bearing = bearing
+        # if q.gridsquare:
+        #     dist = Distance.distance(my_grid, q.gridsquare)
+        #     bearing = Distance.bearing(my_grid, q.gridsquare)
+        #     q.distance = dist
+        #     q.bearing = bearing
         qs = QsoSchema()
         result = qs.dumps(q)
 
@@ -145,107 +150,33 @@ class JsApi:
         logging.debug("getting hunt count stats...")
         return self.db.qsos.get_activator_hunts(callsign)
 
-    def get_park(self, ref: str, pull_from_pota: bool = True) -> str:
+    def get_reference(
+            self,
+            sig: str,
+            ref: str,
+            pull_from_api: bool = True) -> str:
         '''
-        Returns the JSON for the park if found in the db
+        Returns the JSON for the location reference if found in the db. If not
+        it can be downloaded from the program's API
 
-        :param str ref: the POTA park reference designator string
-        :param bool pull_from_pota: True (default) to try to update when a park
-            is not in the db.
+        :param str sig: the SIG id of the program
+        :param str ref: the programs reference designator string
+        :param bool pull_from_pota: True (default) to try to download data when
+            a reference is not in the db.
 
-        :returns JSON of park object in db or None if not found
+        :returns API response containing the JSON of park object. Or None if
+            not found and not downloaded. the park JSON is in
+            result.park_data field
         '''
-        if ref is None:
-            logging.error("get_park: ref param was None")
-            return
-
-        logging.debug(f"get_park: getting park {ref}")
-
-        park = self.db.parks.get_park(ref)
-
-        if park is None and pull_from_pota:
-            logging.debug(f"get_park: park was None {ref}")
-            api_res = self.pota.get_park(ref)
-            logging.debug(f"get_park: park from api {api_res}")
-            self.db.parks.update_park_data(api_res)
-            park = self.db.parks.get_park(ref)
-        elif park.name is None:
-            logging.debug(f"get_park: park Name was None {ref}")
-            api_res = self.pota.get_park(ref)
-            logging.debug(f"get_park: park from api {api_res}")
-            self.db.parks.update_park_data(api_res)
-            park = self.db.parks.get_park(ref)
-
-        ps = ParkSchema()
-        return ps.dumps(park)
-
-    def get_summit(self, ref: str, pull_from_sota: bool = True) -> str:
-        '''
-        Returns the JSON for the summit (same schema as park) if in the db
-
-        :param str ref: the SOTA summit reference string
-        :param bool pull_from_pota: True (default) to force API query for
-            summit
-
-        :returns JSON of park object in db or None if not found
-        '''
-        if ref is None:
-            logging.error("get_summit: ref param was None")
-            return
-
-        logging.debug(f"get_summit: getting summit {ref}")
-
-        summit = self.db.parks.get_park(ref)
-
-        if summit is None and pull_from_sota:
-            api_res = self.sota.get_summit(ref)
-            logging.debug(f"get_summit: summit pulled from api {api_res}")
-            self.db.parks.update_summit_data(api_res)
-            summit = self.db.parks.get_park(ref)
-        # we dont import any SOTA qsos yet so not needed
-        # elif summit.name is None:
-        #     logging.debug(f"get_park: park Name was None {ref}")
-        #     api_res = self.pota.get_park(ref)
-        #     logging.debug(f"get_park: park from api {api_res}")
-        #     self.db.parks.update_park_data(api_res)
-        #     summit = self.db.parks.get_park(ref)
-
-        ps = ParkSchema()
-        return ps.dumps(summit)
-
-    def get_wwff_info(self, ref: str, pull_from_wwff: bool = True) -> str:
-        '''
-        Returns the JSON for the WWFF ref (same schema as park) if in the db
-
-        :param str ref: the WWFF reference string
-        :param bool pull_from_wwff: True (default) to force API query for
-            ref
-
-        :returns JSON of wwff object in db or None if not found
-        '''
-        if ref is None:
-            logging.error("get_wwff_info: ref param was None")
-            return
-
-        logging.debug(f"get_wwff_info: getting wwff {ref}")
-
-        wwffInfo = self.db.parks.get_park(ref)
-
-        if wwffInfo is None and pull_from_wwff:
-            api_res = self.wwff.get_wwff_info(ref)
-            logging.debug(f"get_wwff_info: wwff pulled from api {api_res}")
-            self.db.parks.update_wwff_data(api_res)
-            wwffInfo = self.db.parks.get_park(ref)
-        # we dont import any SOTA qsos yet so not needed
-        # elif summit.name is None:
-        #     logging.debug(f"get_park: park Name was None {ref}")
-        #     api_res = self.pota.get_park(ref)
-        #     logging.debug(f"get_park: park from api {api_res}")
-        #     self.db.parks.update_park_data(api_res)
-        #     summit = self.db.parks.get_park(ref)
-
-        ps = ParkSchema()
-        return ps.dumps(wwffInfo)
+        try:
+            prog = self.programs[sig]
+            ref = prog.get_reference(ref, pull_from_api)
+            ps = ParkSchema()
+            json = ps.dumps(ref)
+            return self._response(True, "", park_data=json)
+        except Exception as ex:
+            logging.error("error getting ref", exc_info=ex)
+            return self._response(False, f"Error getting reference: {ref}")
 
     def get_park_hunts(self, ref: str) -> str:
         '''
@@ -409,39 +340,17 @@ class JsApi:
 
         :param any qso_data: dict of qso data from the UI
         '''
-        def inc_park_hunt(pota: PotaApi, db: DataBase, park: str):
-            park_json = pota.get_park(park)
-            logging.debug(f"inc park hunt for: {park_json}")
-            db.parks.inc_park_hunt(park_json)
-
         logging.info('acquiring lock to log qso')
         self.lock.acquire()
 
         def_pwr = self.db.config.get_value('default_pwr')
 
         try:
-            if qso_data['sig'] == 'POTA':
-                if qso_data['pota_ref'] is not None:
-                    x: str = qso_data['pota_ref']
-                    parks = x.split(',')
-                    for p in parks:
-                        inc_park_hunt(self.pota, self.db, p)
-                else:
-                    inc_park_hunt(self.pota, self.db, qso_data['sig_info'])
-            elif qso_data['sig'] == 'SOTA':
-                summit_code = qso_data['sig_info']
-                ok = self.db.parks.inc_summit_hunt(summit_code)
-                if not ok:
-                    summit = self.sota.get_summit(summit_code)
-                    self.db.parks.update_summit_data(summit)
-                    self.db.parks.inc_summit_hunt(summit_code)
-            elif qso_data['sig'] == 'WWFF':
-                wwff_code = qso_data['sig_info']
-                ok = self.db.parks.inc_wwff_hunt(wwff_code)
-                if not ok:
-                    wwwffInfo = self.wwff.get_wwff_info(wwff_code)
-                    self.db.parks.update_wwff_data(wwwffInfo)
-                    self.db.parks.inc_wwff_hunt(wwff_code)
+            program = qso_data['sig']
+            ref = qso_data['sig_info']
+            pota_ref = qso_data['pota_ref']
+
+            self.programs[program].inc_ref_hunt(ref, pota_ref)
 
             qso_data['tx_pwr'] = def_pwr
             logging.debug(f"logging qso: {qso_data}")
@@ -490,7 +399,26 @@ class JsApi:
             logging.warning('bad spot id passed to refresh_spot')
             return self._response(False, "")
 
-        self.db.update_spot(spot_id, call, ref)
+        logging.info(f"doing single spot update {spot_id}")
+
+        to_mod: Spot = self.db.spots.get_spot(spot_id)
+
+        if to_mod is None:
+            logging.warning("refresh_spot: didn't find a spot for this id")
+            spot = self.db.spots.get_spot_by_actx(call, ref)
+            if spot is None:
+                logging.warning("refresh_spot: didn't find a spot for actx")
+                return self._response(False, "")
+
+            spot_id = spot.spotId
+            to_mod = self.db.spots.get_spot(spot_id)
+            if to_mod is None:
+                self.db.session.commit()
+                return self._response(False, "")
+
+        x = to_mod.spot_source
+        self.programs[x].update_spot_metadata(to_mod)
+        self.db.session.commit()
         return self._response(True, "")
 
     def export_qsos(self):
@@ -705,7 +633,7 @@ class JsApi:
         Gets a sorted list of distinct regions (POTA) and associations (SOTA)
         that are in the current set of spots.
         '''
-        x = self.db.seen_regions
+        x = self.seen_regions
         # logging.debug(f"return seen regions: {x}")
         return self._response(True, '', seen_regions=x)
 
@@ -774,6 +702,13 @@ class JsApi:
     def _do_update(self, pota: any, sota: any, wwff: any):
         '''
         The main update method. Called on a timer
+
+        First will delete all previous spots, then read the ones passed in
+        and perform the logic to update meta info about the spots
+
+        :param dict pota: the dict from the pota api
+        :param dict sota: the dict from the sota api
+        :param dict wwff: the dict from the wwff api. wwff['RCD']
         '''
         logging.debug('updating db')
 
@@ -784,9 +719,21 @@ class JsApi:
 
             logging.info("acquiring lock for update")
             self.lock.acquire()
-            self.db.update_all_spots(pota, sota, wwff)
+            self.db.delete_spots()
+            self.programs["POTA"].update_spots(pota)
+            self.programs["SOTA"].update_spots(sota)
+            self.programs["WWFF"].update_spots(wwff)
+            self.db.session.commit()
+            logging.info("spots updated for programs")
             self.lock.release()
             logging.info("update lock released")
+
+            self.seen_regions.clear()
+
+            for p in self.programs.values():
+                unique_reg = list(set(p.seen_regions))
+                self.seen_regions += unique_reg
+
             self._handle_alerts()
         except ConnectionError as con_ex:
             logging.warning("Connection error in do_update: ")
