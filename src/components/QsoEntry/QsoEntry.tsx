@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, TextField, Grid, Stack, Tooltip, Box } from '@mui/material';
+import { Button, TextField, Grid, Stack, Tooltip, Box, Backdrop, CircularProgress } from '@mui/material';
 import { useAppContext } from '../AppContext';
 import { Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
@@ -50,6 +50,7 @@ export default function QsoEntry() {
     const [otherParksHidden, setOtherParksHidden] = React.useState(true);
     const [qsoTime, setQsoTime] = React.useState<Dayjs>(dayjs('2022-04-17T15:30'));
     const { contextData, setData } = useAppContext();
+    const [spinnerOpen, setSpinnerOpen] = React.useState(false);
 
     function logQso() {
         const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -399,6 +400,14 @@ export default function QsoEntry() {
     }, [contextData.otherParks]);
 
     React.useEffect(() => {
+        if (contextData.loadingQsoData)
+            setSpinnerOpen(true);
+        else
+            setSpinnerOpen(false);
+    }, [contextData.loadingQsoData]);
+    
+
+    React.useEffect(() => {
         function handleEscapeKey(event: KeyboardEvent) {
             if (event.code === 'Escape') {
                 handleClearClick(null);
@@ -426,6 +435,12 @@ export default function QsoEntry() {
 
     return (
         <div className="qso-container">
+            {/* <Backdrop
+                sx={{ position: 'absolute', color: '#ff00aa', zIndex: 1500 }}
+                open={spinnerOpen}
+            >
+                <CircularProgress color="inherit" />
+            </Backdrop> */}
             <Grid container
                 spacing={{ xs: 1, md: 1, lg: 1 }}
             >

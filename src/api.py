@@ -17,7 +17,7 @@ from db.models.spots import Spot, SpotSchema
 from loggers import LoggerInterface
 from loggers.logger_interface import LoggerParams
 from pota import PotaApi, PotaStats
-from programs import Program, SotaProgram, WwffProgram, PotaProgram
+from programs import Program, SotaProgram, WwffProgram, PotaProgram, NoProgram
 from sota import SotaApi
 from wwff import WwffApi
 from utils.adif import AdifLog
@@ -38,7 +38,8 @@ class JsApi:
         self.programs: dict[str, Program] = {
             "POTA": PotaProgram(self.db),
             "SOTA": SotaProgram(self.db),
-            "WWFF": WwffProgram(self.db)
+            "WWFF": WwffProgram(self.db),
+            '': NoProgram(self.db)
         }
         self.seen_regions = [""]
 
@@ -89,26 +90,24 @@ class JsApi:
 
         :param int spot_id: spot id. pk in db
         '''
-        if not self.lock.acquire(False):
-            logging.warning("insert_spot_comments lock not acquired")
-            return
-
         spot = self.db.spots.get_spot(spot_id)
-
         if spot is None:
-            self.lock.release()
             return
 
         # other program dont have this (AFAIK) so unlock and return
         if spot.spot_source != 'POTA':
-            self.lock.release()
             return
 
         comms = self.pota.get_spot_comments(spot.activator, spot.reference)
         try:
+            if not self.lock.acquire(timeout=4.00):
+                # self.db.session.rollback()
+                logging.warning("insert_spot_comments: lock not acquired")
+                return
             self.db.insert_spot_comments(spot.activator, spot.reference, comms)
         finally:
-            self.lock.release()
+            if self.lock.locked():
+                self.lock.release()
 
     def get_qso_from_spot(self, id: int):
         # cfg = self.db.get_user_config()
@@ -116,11 +115,15 @@ class JsApi:
 
         # if we cant get a lock return null
         if not self.lock.acquire(timeout=4.00):
-            logging.warning("failed to get lock. timed out.")
+            self.db.session.rollback()
+            logging.warning("timed out lock acquisition. session rollback")
             return self._response(False, "failed to get db lock. timed out.")
 
-        # q = self.db.build_qso_from_spot(id)
         spot = self.db.spots.get_spot(id)
+        if spot is None:
+            logging.warning(f"spot not found {id}")
+            return self._response(False, "failed to get spot.")
+
         prog = spot.spot_source
         q = self.programs[prog].build_qso(spot)
 
@@ -136,7 +139,8 @@ class JsApi:
         qs = QsoSchema()
         result = qs.dumps(q)
 
-        self.lock.release()
+        if self.lock.locked():
+            self.lock.release()
         return self._response(True, "", qso=result)
 
     def get_activator_stats(self, callsign):
@@ -348,7 +352,7 @@ class JsApi:
         try:
             program = qso_data['sig']
             ref = qso_data['sig_info']
-            pota_ref = qso_data['pota_ref']
+            pota_ref = qso_data['pota_ref'] if 'pota_ref' in qso_data else ''
 
             self.programs[program].inc_ref_hunt(ref, pota_ref)
 

@@ -25,6 +25,7 @@ export interface ContextData {
     otherOperators: string;
     otherParks: string;
     continentFilter: string;
+    loadingQsoData: boolean;
 }
 
 export  interface AppContextType {

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Park } from "../../@types/Parks";
 import { Qso } from "../../@types/QsoTypes";
 import { SpotComments } from "../../@types/SpotComments";
@@ -23,6 +23,7 @@ interface MultiData {
 export default function HandleSpotRowClick() {
 
     const { contextData, setData } = useAppContext();
+    const [isWorking, setIsWorking] = useState(false);
 
     async function getOtherData(spotId: number): Promise<MultiData> {
         const r = await window.pywebview.api.get_spot_comments(spotId);
@@ -92,6 +93,7 @@ export default function HandleSpotRowClick() {
                     let result = checkApiResponse(r, contextData, setData);
                     if (!result.success) {
                         console.log("get_qso_from_spot failed: " + result.message);
+                        setIsWorking(false);
                         return;
                     }
                     let p = JSON.parse(result.park_data) as Park;
@@ -108,6 +110,8 @@ export default function HandleSpotRowClick() {
                     } else {
                         setData(newCtxData);
                     }
+
+                    setIsWorking(false);
                 });
         });
     }
@@ -118,20 +122,43 @@ export default function HandleSpotRowClick() {
 
         //console.log('loadingSpotData ' + spotId);
 
+
+        const newCtxData = { ...contextData };
+        contextData.loadingQsoData = true;
+        setData(newCtxData);
+
         // load the spot's comments into the db
         let x = window.pywebview.api.insert_spot_comments(spotId);
-        getQsoData(spotId);
 
-        // x.then(() => {
-        //     // wait to get the rest of the data until after the spot comments 
-        //     // are inserted
-        //     getQsoData(spotId);
-        // });
+        //getQsoData(spotId);
+
+        x.then(() => {
+            // wait to get the rest of the data until after the spot comments 
+            // are inserted
+            getQsoData(spotId);
+            const newCtxData = { ...contextData };
+            contextData.loadingQsoData = false;
+            setData(newCtxData);
+        });
     }
 
+
+
     useEffect(() => {
-        loadSpotData(contextData.spotId);
+        if (!isWorking) {
+            setIsWorking(true);
+            loadSpotData(contextData.spotId);
+        } else {
+            console.log('re-entry prevented on spot row click');
+        }
+        return () => {
+            setIsWorking(false);
+        }
     }, [contextData.spotId]);
+
+    useEffect(() => {
+        setIsWorking(false);
+    }, []);
 
     return (
         <>

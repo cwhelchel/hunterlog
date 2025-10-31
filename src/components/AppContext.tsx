@@ -27,7 +27,8 @@ const defData: ContextData = {
     summit: null,
     sigFilter: '',
     otherParks: '',
-    continentFilter: ''
+    continentFilter: '',
+    loadingQsoData: false
 };
 
 export const AppContext = React.createContext<AppContextType | null>(null);
@@ -57,7 +58,8 @@ export const AppContextProvider = ( {children}: any ) => {
             summit: ctx.summit,
             sigFilter: ctx.sigFilter,
             otherParks: ctx.otherParks,
-            continentFilter: ctx.continentFilter
+            continentFilter: ctx.continentFilter,
+            loadingQsoData: ctx.loadingQsoData
         }
         setContextData(newContext);
     };

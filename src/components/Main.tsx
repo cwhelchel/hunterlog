@@ -11,6 +11,7 @@ import { FilterBar } from './FilterBar/FilterBar'
 import AppMenu from './AppMenu/AppMenu'
 import Footer from './Footer/Footer'
 import BasicTabs from './Tabs';
+import { Backdrop, CircularProgress } from '@mui/material';
 
 // Augment the palette to include an alert color
 declare module '@mui/material/styles' {
@@ -47,12 +48,20 @@ export default function Main() {
     const { contextData, setData } = useAppContext();
     const potaTheme = buildTheme(true);
     const [theme, setTheme] = React.useState(potaTheme);
+    const [spinnerOpen, setSpinnerOpen] = React.useState(false);
 
     React.useEffect(() => {
         const isDark = contextData.themeMode == 'dark';
         const temp = buildTheme(isDark);
         setTheme(temp);
     }, [contextData.themeMode]);
+
+    React.useEffect(() => {
+        if (contextData.loadingQsoData)
+            setSpinnerOpen(true);
+        else
+            setSpinnerOpen(false);
+    }, [contextData.loadingQsoData]);
 
     React.useEffect(() => {
         if (window.pywebview !== undefined && window.pywebview.api !== null)
@@ -100,11 +109,19 @@ export default function Main() {
                     <Grid item xs={12} >
                         <AppMenu />
                     </Grid>
-                    <Grid item xs={7} sx={{ minHeight:200 }}>
-                        <QsoEntry />
-                    </Grid>
-                    <Grid item xs={5} >
-                        <BasicTabs />
+                    <Grid container item xs={12} sx={{ position: 'relative' }}>
+                        <Backdrop
+                            sx={{ position: 'absolute', color: '#ff00aa', zIndex: 1500 }}
+                            open={spinnerOpen}
+                        >
+                            <CircularProgress color="inherit" />
+                        </Backdrop>
+                        <Grid item xs={7} sx={{ minHeight: 200 }}>
+                            <QsoEntry />
+                        </Grid>
+                        <Grid item xs={5} >
+                            <BasicTabs />
+                        </Grid>
                     </Grid>
                     <Grid item xs={12}>
                         <FilterBar />
