@@ -1,130 +1,143 @@
 import * as React from 'react';
 import clsx from 'clsx';
 import { styled, css } from '@mui/system';
-import { useTheme } from '@mui/material/styles';
 import { Modal as BaseModal } from '@mui/base/Modal';
 import Button from '@mui/material/Button';
-import { UserConfig } from '../../@types/Config';
-import TextField from '@mui/material/TextField';
+import { ConfigVer2 } from '../../@types/Config';
 import Stack from '@mui/material/Stack';
-import { Box, FormControlLabel, MenuItem, Radio, RadioGroup, Select, Switch, Tooltip, createTheme } from '@mui/material';
-import Checkbox from '@mui/material/Checkbox';
+import { Box, Divider, Tab, Tabs } from '@mui/material';
 
 import './ConfigModal.scss'
+import { useConfigContext } from './ConfigContextProvider'
+import GeneralSettingsTab from './GeneralSettingsTab';
+import LoggerSettingsTab from './LoggerSettingsTab';
+import RadioSettingsTab from './RadioSettingsTab';
+import { setErrorMsg } from '../../util';
 import { useAppContext } from '../AppContext';
 
-const def: UserConfig = {
-    my_call: 'N0CALL',
-    my_grid6: 'FN31pr',
-    default_pwr: 0,
-    flr_host: '127.0.0.1',
-    flr_port: 12345,
-    adif_host: '127.0.0.1',
-    adif_port: 12345,
-    logger_type: 0,
-    size_x: 0, // not displayed in frontend
-    size_y: 0, // not displayed in frontend
-    is_max: false, // not displayed in frontend
-    cw_mode: 'CW',
-    ftx_mode: 'USB',
-    qth_string: '',
-    rig_if_type: ''
-};
+
+const def2: ConfigVer2[] = [];
+interface TabPanelProps {
+    children?: React.ReactNode;
+    index: number;
+    value: number;
+}
+
+function CustomTabPanel(props: TabPanelProps) {
+    const { children, value, index, ...other } = props;
+    return (
+        <div
+            role="tabpanel"
+            style={{ width: '100%', padding: 5 }}
+            hidden={value !== index}
+            id={`cfg-tabpanel-${index}`}
+            aria-labelledby={`cfg-tab-${index}`}
+            {...other}
+        >
+            {value === index && <Box sx={{ p: 1 }}>{children}</Box>}
+        </div>
+    );
+}
+
+function getVar(cfg2: ConfigVer2[], key: string): string {
+    const cfg = cfg2.find(x => x.key == key);
+    return cfg?.val ?? '';
+}
+
+
+function a11yProps(index: number) {
+    return {
+        id: `simple-tab-${index}`,
+        'aria-controls': `simple-tabpanel-${index}`,
+    };
+}
 
 export default function ConfigModal() {
     const [open, setOpen] = React.useState(false);
-    const [config, setConfig] = React.useState<UserConfig>(def);
-    const [imperialChecked, setImperialChecked] = React.useState(true);
-    const [useDarkMode, setUseDarkMode] = React.useState(true);
-    const [showSpotAge, setShowSpotAge] = React.useState(true);
-    const [highlightNewRef, sethighlightNewRef] = React.useState(true);
-
+    const [config2, setConfig2] = React.useState<ConfigVer2[]>(def2);
+    const [value, setValue] = React.useState(0);
+    const { config, setConfig } = useConfigContext();
     const { contextData, setData } = useAppContext();
 
 
     const handleOpen = () => setOpen(true);
-    const handleClose = () => setOpen(false);
-    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        let x = (event.target as HTMLInputElement).value;
-        let y = parseInt(x);
 
-        let newCfg: UserConfig = { ...config, logger_type: y };
-        setConfig(newCfg);
-    };
+    const handleCancel = () => {
+        // config2 is already loaded. just overwrite what was changed
+        loadLocalCfg(config2);
+        setOpen(false);
+    }
 
-    // function to toggle the dark mode as true or false
-    const toggleDarkTheme = () => {
-        const newMode = !useDarkMode;
-        setUseDarkMode(newMode);
-
-        const newCtx = { ...contextData };
-        if (newMode)
-            newCtx.themeMode = 'dark';
-        else
-            newCtx.themeMode = 'light';
-
-        setData(newCtx);
-        window.localStorage.setItem("USE_DARK_MODE", newMode ? '1' : '0');
-    };
-
-    const toggleShowSpotAge = () => {
-        const newMode = !showSpotAge;
-        setShowSpotAge(newMode);
-        window.localStorage.setItem("SHOW_SPOT_AGE", newMode ? '1' : '0');
-    };
-
-    const toggleHighlightNewRef = () => {
-        const newMode = !highlightNewRef;
-        sethighlightNewRef(newMode);
-        window.localStorage.setItem("HIGHLIGHT_NEW_REF", newMode ? '1' : '0');
+    const handleSave = () => {
+        if (window.pywebview !== undefined) {
+            loadDbCfg();
+            window.pywebview.api.set_user_config2(JSON.stringify(config2));
+            setOpen(false);
+        }
     };
 
     React.useEffect(() => {
-        if (window.pywebview !== undefined && window.pywebview.api !== null) 
+        if (window.pywebview !== undefined && window.pywebview.api !== null)
             initConfig();
         else
             window.addEventListener('pywebviewready', initConfig);
 
         function initConfig() {
-            let x = window.pywebview.api.get_user_config();
+            let x = window.pywebview.api.get_user_config2();
             x.then((r: string) => {
                 if (r == null) return;
-                //console.log(`got config ${r}`);
-                var cfg = JSON.parse(r) as UserConfig;
-                setConfig(cfg);
+                var cfg2 = JSON.parse(r) as ConfigVer2[];
+                setConfig2(cfg2);
+                loadLocalCfg(cfg2);
             });
 
-            let units = window.localStorage.getItem("USE_FREEDOM_UNITS") || '1';
-            let use_imperial = parseInt(units);
-            setImperialChecked(use_imperial != 0 ? true : false);
-
-            let darkMode = window.localStorage.getItem("USE_DARK_MODE") || '1';
-            let darkModeInt = parseInt(darkMode);
-            setUseDarkMode(darkModeInt == 1 ? true : false);
-
-            let spotAgeStr = window.localStorage.getItem("SHOW_SPOT_AGE") || '1';
-            let showSage = parseInt(spotAgeStr);
-            setShowSpotAge(showSage == 1 ? true : false);
-
-            let highlightNewStr = window.localStorage.getItem("HIGHLIGHT_NEW_REF") || '1';
-            let highlightNew = parseInt(highlightNewStr);
-            sethighlightNewRef(highlightNew == 1 ? true : false);
         }
     }, []);
 
-    const handleSave = () => {
-        if (window.pywebview !== undefined) {
-            window.pywebview.api.set_user_config(config);
-            handleClose();
-        }
-    };
+    function loadLocalCfg(cfg2: ConfigVer2[]) {
+        config.my_call = getVar(cfg2, 'my_call');
+        config.my_grid6 = getVar(cfg2, 'my_grid6');
+        config.default_pwr = Number(getVar(cfg2, 'default_pwr'));
+        config.flr_host = getVar(cfg2, 'flr_host');
+        config.flr_port = Number(getVar(cfg2, 'flr_port'));
+        config.adif_host = getVar(cfg2, 'adif_host');
+        config.adif_port = Number(getVar(cfg2, 'adif_port'));
+        config.cw_mode = getVar(cfg2, 'cw_mode');
+        config.ftx_mode = getVar(cfg2, 'ftx_mode');
+        config.qth_string = getVar(cfg2, 'qth_string');
+        config.rig_if_type = getVar(cfg2, 'rig_if_type');
+        config.logger_type = Number(getVar(cfg2, "logger_type"));
+        setConfig(config);
+    }
 
-    const handleCheckedChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setImperialChecked(event.target.checked);
-        let x = event.target.checked ? '1' : '0';
-        // this is a display only config so we dont put this in the db
-        // we put this into localstorage
-        window.localStorage.setItem("USE_FREEDOM_UNITS", x);
+    function loadDbCfg() {
+        setVar(config2, "my_call", config.my_call);
+        setVar(config2, "my_grid6", config.my_grid6);
+        setVar(config2, "default_pwr", config.default_pwr.toString());
+        setVar(config2, "flr_host", config.flr_host);
+        setVar(config2, "flr_port", config.flr_port.toString());
+        setVar(config2, "adif_host", config.adif_host);
+        setVar(config2, "adif_port", config.adif_port.toString());
+        setVar(config2, "logger_type", config.logger_type.toString());
+        setVar(config2, "cw_mode", config.cw_mode);
+        setVar(config2, "ftx_mode", config.ftx_mode);
+        setVar(config2, "qth_string", config.qth_string);
+        setVar(config2, "rig_if_type", config.rig_if_type);
+        setConfig2(config2);
+    }
+
+    function setVar(cfg2: ConfigVer2[], key: string, val: string) {
+        const cfg = cfg2.find(x => x.key == key);
+        if (cfg === undefined) {
+            console.log(`error: config key ${key} not found`);
+            setErrorMsg(`error: config key ${key} not found`, contextData, setData);
+            return;
+        }
+        cfg.val = val;
+    }
+
+    const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+        setValue(newValue);
     };
 
     return (
@@ -138,150 +151,42 @@ export default function ConfigModal() {
                 aria-labelledby="unstyled-modal-title"
                 aria-describedby="unstyled-modal-description"
                 open={open}
-                onClose={handleClose}
+                onClose={handleCancel}
                 slots={{ backdrop: StyledBackdrop }}
             >
-                <ModalContent sx={{ width: 600 }}>
+                <ModalContent sx={{ width: 800, minHeight: 500 }}>
                     <h2 id="unstyled-modal-title" className="modal-title">
                         Configuration
                     </h2>
 
-                    <Stack direction={'row'} spacing={1}>
-                        <TextField id="my_call" label="My Callsign"
-                            value={config?.my_call}
-                            onChange={(e) => {
-                                setConfig({ ...config, my_call: e.target.value });
-                            }} />
-                        <TextField id="my_grid6" label="My Gridsquare (6 digit)"
-                            value={config?.my_grid6}
-                            onChange={(e) => {
-                                setConfig({ ...config, my_grid6: e.target.value });
-                            }} />
-                        <Tooltip title="The number is used only in logging" >
-                            <TextField id="default_pwr" label="Default TX Power"
-                                value={config?.default_pwr}
-                                onChange={(e) => {
-                                    setConfig({ ...config, default_pwr: Number.parseInt(e.target.value) });
-                                }} />
-                        </Tooltip>
-                    </Stack>
-                    <Stack direction={'row'} spacing={1}>
-                        <FormControlLabel control={
-                            <Checkbox defaultChecked checked={imperialChecked}
-                                onChange={handleCheckedChange} />
-                        } label="Display Imperial Units" />
+                    <Tabs value={value}
+                        onChange={handleTabChange}
+                        aria-label="cfg-tags"
+                    >
+                        <Tab label={'General'} {...a11yProps(0)} />
+                        <Tab label={'CAT'} {...a11yProps(1)} />
+                        <Tab label={'Logging'} {...a11yProps(1)} />
+                    </Tabs>
 
-                        <FormControlLabel control={
-                            <Switch checked={useDarkMode}
-                                onChange={toggleDarkTheme} />
-                        } label="Dark Mode" />
+                    <CustomTabPanel value={value} index={0}>
+                        <GeneralSettingsTab />
+                    </CustomTabPanel>
+                    <CustomTabPanel value={value} index={1}>
+                        <RadioSettingsTab />
+                    </CustomTabPanel>
+                    <CustomTabPanel value={value} index={2}>
+                        <LoggerSettingsTab />
+                    </CustomTabPanel>
 
-                        <Tooltip title="Show spot time as age: '5 min' vs 'hh:mm'" >
-                            <FormControlLabel control={
-                                <Switch checked={showSpotAge}
-                                    onChange={toggleShowSpotAge} />
-                            } label="Show Spot Age" />
-                        </Tooltip>
-                        
-                        <Tooltip title="Add extra highlighting to new park rows" >
-                            <FormControlLabel control={
-                                <Switch checked={highlightNewRef}
-                                    onChange={toggleHighlightNewRef} />
-                            } label="Highlight New" />
-                        </Tooltip>
-                    </Stack>
+                    <Divider aria-hidden="true" />
 
-                    <fieldset>
-                        <legend>CAT Settings</legend>
-
-                        <Select
-                            value={config.rig_if_type}
-                            label="CAT interface"
-                            onChange={(e) => {
-                                setConfig({ ...config, rig_if_type: e.target.value });
-                            }}>
-                            <MenuItem value={"flrig"}>FLRIG</MenuItem>
-                            <MenuItem value={"rigctld"}>RIGCTLD</MenuItem>
-                            <MenuItem value={"aclog"}>ACLOG</MenuItem>
-                            <MenuItem value={"dxlabs"}>DXLABS</MenuItem>
-                        </Select>
-
-                        <Stack direction={'row'} spacing={1}>
-                            <TextField id="flr_host" label="Host (IPv4 string)"
-                                fullWidth
-                                value={config?.flr_host}
-                                onChange={(e) => {
-                                    setConfig({ ...config, flr_host: e.target.value });
-                                }} />
-                            <TextField id="flr_port" label="Port (number)"
-                                fullWidth
-                                value={config?.flr_port}
-                                onChange={(e) => {
-                                    setConfig({ ...config, flr_port: Number.parseInt(e.target.value) });
-                                }} />
-                        </Stack>
-                        <p className="modal-config-text">
-                            Mode strings used to specify a custom mode for RIG control
-                            (CW may need to be CW-R or CW-L if that is what your rig expects)
-                        </p>
-                        <Stack direction={'row'} spacing={1}>
-                            <TextField id="cw_mode" label="CW Mode"
-                                value={config?.cw_mode}
-                                fullWidth
-                                onChange={(e) => {
-                                    setConfig({ ...config, cw_mode: e.target.value });
-                                }} />
-                            <TextField id="ftx_mode" label="FT-x modes"
-                                value={config?.ftx_mode}
-                                fullWidth
-                                onChange={(e) => {
-                                    setConfig({ ...config, ftx_mode: e.target.value });
-                                }} />
-                        </Stack>
-                    </fieldset>
-
-                    <fieldset>
-                        <legend>Logger Settings</legend>
-                        <RadioGroup
-                            defaultValue="0"
-                            row
-                            name="radio-buttons-group"
-                            value={config?.logger_type}
-                            onChange={handleChange}
-                        >
-                            <FormControlLabel value="0" control={<Radio />} label="TCP (Logger32)" />
-                            <FormControlLabel value="1" control={<Radio />} label="UDP (Log4om)" />
-                            <FormControlLabel value="2" control={<Radio />} label="AcLog" />
-                        </RadioGroup>
-                        <Stack direction={'row'} spacing={1}>
-                            <TextField id="adif_host" label="Remote ADIF Host (IPv4 string)"
-                                value={config?.adif_host}
-                                fullWidth
-                                onChange={(e) => {
-                                    setConfig({ ...config, adif_host: e.target.value });
-                                }} />
-                            <TextField id="adif_port" label="Remote ADIF Port (number)"
-                                value={config?.adif_port}
-                                fullWidth
-                                onChange={(e) => {
-                                    setConfig({ ...config, adif_port: Number.parseInt(e.target.value) });
-                                }} />
-                        </Stack>
-                    </fieldset>
-
-                    <p className="modal-config-text">
-                        QTH string is inserted when posting spots to POTA.app ex: 'mid GA'
-                        is inserted into comment like '[599 mid GA] thx fb qso'
-                    </p>
-                    <TextField id="qth_string" label="QTH String"
-                        value={config?.qth_string}
-                        onChange={(e) => {
-                            setConfig({ ...config, qth_string: e.target.value });
-                        }} />
-
-                    <Stack direction={'row'} spacing={1} sx={{ 'align-items': 'stretch', 'justify-content': 'space-evenly' }} useFlexGap>
+                    <Stack
+                        direction={'row'}
+                        spacing={1}
+                        sx={{ 'align-items': 'stretch', 'justify-content': 'space-evenly', 'margin-top': 'auto' }}
+                        useFlexGap>
                         <Button fullWidth variant='contained' onClick={handleSave}>Save</Button>
-                        <Button fullWidth variant='contained' onClick={handleClose}>Cancel</Button>
+                        <Button fullWidth variant='contained' onClick={handleCancel}>Cancel</Button>
                     </Stack>
                 </ModalContent>
             </Modal>
@@ -381,7 +286,7 @@ const ModalContent = styled('div')(
         font-weight: 300;
         font-size: smaller;
         color: ${theme.palette.mode === 'dark' ? grey[400] : grey[800]};
-        margin-bottom: 2px;
+        margin-bottom: 6px;
       }
   `,
 );

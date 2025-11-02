@@ -18,4 +18,6 @@ export interface Qso {
     bearing: number;
     sig: string;
     sig_info: string;
+    pota_ref: string | undefined;
+    sota_ref: string | undefined;
 }

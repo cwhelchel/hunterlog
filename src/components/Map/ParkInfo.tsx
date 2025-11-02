@@ -57,6 +57,9 @@ export default function ParkInfo() {
                 {contextData && contextData?.park?.parktypeDesc == 'SOTA SUMMIT' && (
                     summitTitle()
                 )}
+                {contextData && contextData?.park?.parktypeDesc == 'WWFF LOCATION' && (
+                    wwffTitle()
+                )}
                 <hr role='separator' className='sep' />
             </div>
             <LeafMap />
@@ -72,6 +75,12 @@ export default function ParkInfo() {
                 {contextData?.park?.parktypeDesc == 'SOTA SUMMIT' && (
                     <>
                         {summitInfo()} <br />
+                        {parkHunts()}
+                    </>
+                )}
+                {contextData?.park?.parktypeDesc == 'WWFF LOCATION' && (
+                    <>
+                        {wwffInfo()} <br />
                         {parkHunts()}
                     </>
                 )}
@@ -136,4 +145,22 @@ export default function ParkInfo() {
             <span>alt: {contextData?.park?.activationMethods}</span> <br />
         </>;
     }
+
+    function wwffTitle(): any {
+        const url = `${contextData?.park?.website}`;
+        const text = `🌙 ${contextData?.park?.reference} - ${contextData?.park?.name}`;
+
+        return <span id="parkTitle" onClick={() => {
+            console.log(url);
+            window.open(url);
+        }}>{text}</span>;
+    }
+
+    function wwffInfo(): React.ReactNode {
+        // for random summit info we hijack some of the not-displayed pieces of park info
+        return <>
+            <span>dxcc: {contextData?.park?.locationDesc}</span> <br />
+        </>;
+    }
+
 }

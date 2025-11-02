@@ -1,4 +1,5 @@
 import datetime
+import time
 import sqlalchemy as sa
 from sqlalchemy.orm import scoped_session
 import re
@@ -59,8 +60,11 @@ class SpotQuery:
     def insert_test_spot(self):
         # test data
         test = Spot()
+        test.spotId = int(time.time())
+        test.spot_source = 'POTA'
         test.activator = "N9FZ"
         test.reference = "K-TEST"
+        test.grid4 = "FL31"
         test.grid6 = "FL31vt"
         test.spotTime = datetime.datetime.utcnow()
         test.spotter = "HUNTER-LOG"
@@ -85,7 +89,7 @@ class SpotQuery:
         test_cmt.frequency = '7200'
         test_cmt.mode = 'CW'
         test_cmt.park = 'K-TEST'
-        test_cmt.comments = "{this is a test} {With: N0CALL,W1AW}"
+        test_cmt.comments = "{this is a test} {With: N0CALL,W1AW} {Also: US-9798}"  # NOQA
         test_cmt.source = "test"
         test_cmt.band = "40m"
         test_cmt.spotTime = datetime.datetime.now()
@@ -93,7 +97,7 @@ class SpotQuery:
         self.session.commit()
 
     def _update_comment_metadata(self, activator: str, park: str):
-        logging.debug(f"_update_comment_metadata: {activator} at {park}")
+        # logging.debug(f"_update_comment_metadata: {activator} at {park}")
         wpm = r'^RBN \d+ dB (\d+) WPM.*'
         spot = self.get_spot_by_actx(activator, park)
         if spot is None:
@@ -114,7 +118,8 @@ class SpotQuery:
                     spot.cw_wpm = m.group(1)
             if c.spotter == activator:
                 # logging.debug(f"appending activator cmt {c.comments}")
-                act_comments.append(c.comments)
+                if c.comments is not None:
+                    act_comments.append(c.comments)
 
         spot.act_cmts = "|".join(act_comments)
         self.session.commit()

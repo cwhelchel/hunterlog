@@ -32,6 +32,7 @@ class UserConfig(Base):
         Tcp = 0
         UdpLog4om = 1
         Aclog = 2
+        Log4om = 3
 
     def __repr__(self):
         return "<config({self.my_call!r}:{self.my_grid6!r})>" \

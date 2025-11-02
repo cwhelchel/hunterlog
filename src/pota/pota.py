@@ -33,6 +33,7 @@ class Api():
             json = response.json()
             return json
 
+    @ttl_cache(ttl=1*60)  # 1 minute of cache
     def get_spot_comments(self, activator, park):
         '''
         Return all spot + comments from a given activation

@@ -53,7 +53,7 @@ class AlertsQuery:
             if (a.dismissed_until is not None):
                 terms.append(Spot.spotTime > a.dismissed_until)
 
-            logging.debug(f"terms {terms}")
+            # logging.debug(f"terms {terms}")
             s = self.session.query(Spot) \
                 .filter(sa.and_(*terms)) \
                 .all()
@@ -63,7 +63,7 @@ class AlertsQuery:
                 a.last_triggered = datetime.now(timezone.utc)
 
         self.session.commit()
-        logging.debug(found)
+        # logging.debug(found)
         return found
 
     def delete_alert(self, id: int):

@@ -14,7 +14,7 @@
 }
 
 .activatorTitle span {
-    font-size: larger;
+    font-size: large;
     font-family: 'Roboto Condensed', 'Helvetica Neue', sans-serif;
 }
 
@@ -23,6 +23,7 @@ hr.titleSeparator {
     height: 0;
     max-height: 0;
     border: 1px solid #333;
+    margin: 4px;
 }
 
 .activatorData {
@@ -70,11 +71,11 @@ hr.separator {
 }
 
 .activatorSpeed {
-    width: 100%;
-    font-size: small;
+    font-size: 12px;
     font-weight: 400;
     font-style: bold; 
     color: lightgreen;
+    margin-left: auto;
 }
 
 // svg {

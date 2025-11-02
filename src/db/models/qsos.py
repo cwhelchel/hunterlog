@@ -35,6 +35,8 @@ class Qso(Base):
     from_app = sa.Column(sa.Boolean, nullable=True)  # true if logged from app
     cnfm_hunt = sa.Column(sa.Boolean, nullable=True)
     # 👆 true confirmed from hunter.csv
+    pota_ref = sa.Column(sa.String)
+    sota_ref = sa.Column(sa.String)
 
     def init_from_spot(self, spot: Spot, name: str):
         rst = self.get_default_rst(spot.mode)
@@ -48,14 +50,11 @@ class Qso(Base):
         self.qso_date = spot.spotTime
         self.gridsquare = spot.grid6
         self.sig_info = spot.reference
+        self.pota_ref = None
+        self.sota_ref = None
+        self.state = ''
 
-        if spot.spot_source == 'POTA':
-            self.sig = 'POTA'
-            self.state = self.get_state(spot.locationDesc)
-        elif spot.spot_source == 'SOTA':
-            self.sig = 'SOTA'
-            self.state = ''
-            self.name = spot.name
+        # program specific logic done in /src/programs/
 
     def get_default_rst(self, mode: str) -> str:
         if (mode in ["SSB", "PHONE", "AM", "FM"]):
@@ -67,20 +66,6 @@ class Qso(Base):
 
         return ""
 
-    def get_state(self, locationDesc: str) -> str:
-        if not locationDesc or locationDesc == 'None':  # None for k-test
-            return ''
-        x = locationDesc
-        if ',' in locationDesc:
-            # take the first one
-            x = locationDesc.split(',')[0]
-
-        pre, post = x.split('-')
-        if pre in ["US", "CA"]:
-            return post
-
-        return ''
-
     def init_from_adif(self, adif: dict):
         '''
         Init the fields from dictionary of ADIF files. see adif-io in utils.
@@ -90,6 +75,10 @@ class Qso(Base):
         There's a lot we don't import, namely any MY_ fields or Operator data.
         It's assumed to be the configured user is the my part of this.
         '''
+        if adif is None:
+            self.call = 'ERROR'
+            return
+
         f = float(adif['FREQ'] if 'FREQ' in adif.keys() else '-1.0')
         fs = str(f * 1000) if f >= 0 else ''
         qd = datetime.datetime(
@@ -106,6 +95,9 @@ class Qso(Base):
             int(adif['TIME_ON'][4:]))
 
         self.call = adif['CALL']
+        if self.call is None or self.call == '':
+            self.call = 'ERROR'
+            return
         self.name = adif['NAME'] if 'NAME' in adif.keys() else ''
         self.state = adif['STATE'] if 'STATE' in adif.keys() else ''
         self.rst_sent = adif['RST_SENT'] if 'RST_SENT' in adif.keys() else self.get_default_rst(adif['MODE'])  # noqa E501
@@ -117,7 +109,7 @@ class Qso(Base):
         self.qso_date = qd
         self.time_on = qt
         self.gridsquare = adif['GRIDSQUARE'] if 'GRIDSQUARE' in adif.keys() else ''  # noqa: E501
-        self.sig_info = adif['SIG_INFO'] if 'SIG_INFO' in adif.keys() else ''
+        self.sig_info = adif['SIG_INFO'].upper() if 'SIG_INFO' in adif.keys() else ''  # noqa: E501
         # if we're importing from adif we may have a SIG_INFO with no SIG if so
         # go ahead and fix it (the checks look for valid pota park format in)
         self.sig = adif['SIG'] if 'SIG' in adif.keys() else 'POTA'

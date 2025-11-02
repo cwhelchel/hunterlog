@@ -42,6 +42,7 @@ these steps
 - copy the value of `revision` string (it'll be like `fd67dfff009a`)
 - paste this value into `db.py` as the value for `VER_FROM_ALEMBIC`
 - run Hunterlog as normal (npm run start)
+- add changes to the correct model file in /src/db/models
 
 You can see where it upgraded the db in index.log
 

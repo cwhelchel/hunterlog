@@ -14,17 +14,18 @@ from db.models.parks import ParkSchema
 from db.models.qsos import QsoSchema
 from db.models.spot_comments import SpotCommentSchema
 from db.models.spots import Spot, SpotSchema
-from db.models.user_config import UserConfigSchema
+from loggers import LoggerInterface
+from loggers.logger_interface import LoggerParams
 from pota import PotaApi, PotaStats
+from programs import Program, SotaProgram, WwffProgram, PotaProgram, NoProgram
 from sota import SotaApi
+from wwff import WwffApi
 from utils.adif import AdifLog
 from version import __version__
 
 from cat import CAT
-from utils.distance import Distance
 
 logging = L.getLogger(__name__)
-# IDTOKENPAT = r"^.*CognitoIdentityServiceProvider\..+\.idToken=([\w\.-]*\;)"
 
 
 class JsApi:
@@ -33,13 +34,31 @@ class JsApi:
         self.db = DataBase()
         self.pota = PotaApi()
         self.sota = SotaApi()
-        self.adif_log = AdifLog()
+        self.wwff = WwffApi()
+        self.programs: dict[str, Program] = {
+            "POTA": PotaProgram(self.db),
+            "SOTA": SotaProgram(self.db),
+            "WWFF": WwffProgram(self.db),
+            '': NoProgram(self.db)
+        }
+        self.seen_regions = [""]
+
         logging.debug("init CAT...")
-        cfg = self.db.get_user_config()
+        lp = LoggerParams(
+            self.db.config.get_value('logger_type'),
+            self.db.config.get_value('my_call'),
+            self.db.config.get_value('my_grid6'),
+            self.db.config.get_value('adif_host'),
+            self.db.config.get_value('adif_port'),
+        )
+        self.adif_log = LoggerInterface.get_logger(lp, __version__)
+        logging.debug(f"got logger {self.adif_log}")
         try:
-            # self.cat = CAT(cfg.rig_if_type, cfg.flr_host, cfg.flr_port)
-            self.cat = CAT.get_interface(cfg.rig_if_type)
-            self.cat.init_cat(host=cfg.flr_host, port=cfg.flr_port)
+            rig_if = self.db.config.get_value('rig_if_type')
+            ip = self.db.config.get_value('flr_host')
+            port = self.db.config.get_value('flr_port')
+            self.cat = CAT.get_interface(rig_if)
+            self.cat.init_cat(host=ip, port=port)
         except Exception:
             logging.error("Error creating CAT object: ", exc_info=True)
             self.cat = None
@@ -71,41 +90,58 @@ class JsApi:
 
         :param int spot_id: spot id. pk in db
         '''
-        self.lock.acquire()
         spot = self.db.spots.get_spot(spot_id)
-
         if spot is None:
-            self.lock.release()
             return
 
-        if spot.spot_source == 'SOTA':
-            self.lock.release()
+        # other program dont have this (AFAIK) so unlock and return
+        if spot.spot_source != 'POTA':
             return
 
         comms = self.pota.get_spot_comments(spot.activator, spot.reference)
         try:
+            if not self.lock.acquire(timeout=4.00):
+                # self.db.session.rollback()
+                logging.warning("insert_spot_comments: lock not acquired")
+                return
             self.db.insert_spot_comments(spot.activator, spot.reference, comms)
         finally:
-            self.lock.release()
+            if self.lock.locked():
+                self.lock.release()
 
     def get_qso_from_spot(self, id: int):
-        self.lock.acquire()
+        # cfg = self.db.get_user_config()
+        # my_grid = self.db.config.get_value("my_grid6")
 
-        q = self.db.build_qso_from_spot(id)
+        # if we cant get a lock return null
+        if not self.lock.acquire(timeout=4.00):
+            self.db.session.rollback()
+            logging.warning("timed out lock acquisition. session rollback")
+            return self._response(False, "failed to get db lock. timed out.")
+
+        spot = self.db.spots.get_spot(id)
+        if spot is None:
+            logging.warning(f"spot not found {id}")
+            return self._response(False, "failed to get spot.")
+
+        prog = spot.spot_source
+        q = self.programs[prog].build_qso(spot)
+
         if q is None:
-            return {"success": False}
+            logging.error(f"failed to build qso from spot {spot}")
+            return self._response(False, "failed to build qso from spot.")
 
-        cfg = self.db.get_user_config()
-        if q.gridsquare:
-            dist = Distance.distance(cfg.my_grid6, q.gridsquare)
-            bearing = Distance.bearing(cfg.my_grid6, q.gridsquare)
-            q.distance = dist
-            q.bearing = bearing
+        # if q.gridsquare:
+        #     dist = Distance.distance(my_grid, q.gridsquare)
+        #     bearing = Distance.bearing(my_grid, q.gridsquare)
+        #     q.distance = dist
+        #     q.bearing = bearing
         qs = QsoSchema()
         result = qs.dumps(q)
 
-        self.lock.release()
-        return result
+        if self.lock.locked():
+            self.lock.release()
+        return self._response(True, "", qso=result)
 
     def get_activator_stats(self, callsign):
         logging.debug("getting activator stats...")
@@ -118,73 +154,33 @@ class JsApi:
         logging.debug("getting hunt count stats...")
         return self.db.qsos.get_activator_hunts(callsign)
 
-    def get_park(self, ref: str, pull_from_pota: bool = True) -> str:
+    def get_reference(
+            self,
+            sig: str,
+            ref: str,
+            pull_from_api: bool = True) -> str:
         '''
-        Returns the JSON for the park if found in the db
+        Returns the JSON for the location reference if found in the db. If not
+        it can be downloaded from the program's API
 
-        :param str ref: the POTA park reference designator string
-        :param bool pull_from_pota: True (default) to try to update when a park
-            is not in the db.
+        :param str sig: the SIG id of the program
+        :param str ref: the programs reference designator string
+        :param bool pull_from_pota: True (default) to try to download data when
+            a reference is not in the db.
 
-        :returns JSON of park object in db or None if not found
+        :returns API response containing the JSON of park object. Or None if
+            not found and not downloaded. the park JSON is in
+            result.park_data field
         '''
-        if ref is None:
-            logging.error("get_park: ref param was None")
-            return
-
-        logging.debug(f"get_park: getting park {ref}")
-
-        park = self.db.parks.get_park(ref)
-
-        if park is None and pull_from_pota:
-            logging.debug(f"get_park: park was None {ref}")
-            api_res = self.pota.get_park(ref)
-            logging.debug(f"get_park: park from api {api_res}")
-            self.db.parks.update_park_data(api_res)
-            park = self.db.parks.get_park(ref)
-        elif park.name is None:
-            logging.debug(f"get_park: park Name was None {ref}")
-            api_res = self.pota.get_park(ref)
-            logging.debug(f"get_park: park from api {api_res}")
-            self.db.parks.update_park_data(api_res)
-            park = self.db.parks.get_park(ref)
-
-        ps = ParkSchema()
-        return ps.dumps(park)
-
-    def get_summit(self, ref: str, pull_from_sota: bool = True) -> str:
-        '''
-        Returns the JSON for the summit (same schema as park) if in the db
-
-        :param str ref: the SOTA summit reference string
-        :param bool pull_from_pota: True (default) to force API query for
-            summit
-
-        :returns JSON of park object in db or None if not found
-        '''
-        if ref is None:
-            logging.error("get_summit: ref param was None")
-            return
-
-        logging.debug(f"get_park: getting summit {ref}")
-
-        summit = self.db.parks.get_park(ref)
-
-        if summit is None and pull_from_sota:
-            api_res = self.sota.get_summit(ref)
-            logging.debug(f"get_summit: summit pulled from api {api_res}")
-            self.db.parks.update_summit_data(api_res)
-            summit = self.db.parks.get_park(ref)
-        # we dont import any SOTA qsos yet so not needed
-        # elif summit.name is None:
-        #     logging.debug(f"get_park: park Name was None {ref}")
-        #     api_res = self.pota.get_park(ref)
-        #     logging.debug(f"get_park: park from api {api_res}")
-        #     self.db.parks.update_park_data(api_res)
-        #     summit = self.db.parks.get_park(ref)
-
-        ps = ParkSchema()
-        return ps.dumps(summit)
+        try:
+            prog = self.programs[sig]
+            ref = prog.get_reference(ref, pull_from_api)
+            ps = ParkSchema()
+            json = ps.dumps(ref)
+            return self._response(True, "", park_data=json)
+        except Exception as ex:
+            logging.error("error getting ref", exc_info=ex)
+            return self._response(False, f"Error getting reference: {ref}")
 
     def get_park_hunts(self, ref: str) -> str:
         '''
@@ -235,12 +231,34 @@ class JsApi:
             return self._response(True, "", bands=txt,
                                   new_band=new_band)
 
-    def get_user_config(self):
+    # def get_user_config(self):
+    #     '''
+    #     Returns the JSON for the user configuration record in the db
+    #     '''
+    #     cfg = self.db.get_user_config()
+    #     return UserConfigSchema().dumps(cfg)
+
+    def get_user_config2(self):
         '''
         Returns the JSON for the user configuration record in the db
         '''
-        cfg = self.db.get_user_config()
-        return UserConfigSchema().dumps(cfg)
+        x = self.db.config.get_editable_json()
+        return x
+
+    def get_user_config_val(self, k: str):
+        '''
+        Returns API response with the value of a given config setting in the
+        `val` property.
+
+        If config key is not found, returns error API response.
+        '''
+        try:
+            x = self.db.config.get_value(k)
+        except KeyError as ke:
+            logging.error('get_user_config_val caught KeyError', exc_info=ke)
+            return self._response(False, f"Config Key {k} not found")
+
+        return self._response(True, "", val=x)
 
     def get_version_num(self):
         return self._response(
@@ -265,7 +283,7 @@ class JsApi:
 
         logging.debug(f"sending spot for {a} on {f}")
 
-        cfg = self.db.get_user_config()
+        # cfg = self.db.get_user_config()
 
         # if spot+log is used the comment is modified before coming here.
         # remove boilerplate fluff and get the users comments for spot
@@ -273,7 +291,8 @@ class JsApi:
             x = c.index("]") + 1
             c = c[x:]
 
-        qth = cfg.qth_string
+        qth = self.db.config.get_value("qth_string")
+        my_call = self.db.config.get_value("my_call")
 
         if qth is not None:
             spot_comment = f"[{r} {qth}] {c}"
@@ -285,7 +304,7 @@ class JsApi:
                               park_ref=park,
                               freq=f,
                               mode=m,
-                              spotter_call=cfg.my_call,
+                              spotter_call=my_call,
                               spotter_comments=spot_comment)
         except Exception as ex:
             msg = "Error posting spot to pota api!"
@@ -309,9 +328,14 @@ class JsApi:
             return self._response(True, "")
 
         logging.info("starting import of ADIF file...")
-        AdifLog.import_from_log(filename[0], self.db)
 
-        return self._response(True, "Completed ADIF import")
+        try:
+            AdifLog.import_from_log(filename[0], self.db)
+        except Exception as ex:
+            logging.error('error importing log', exc_info=ex)
+            return self._response(False, "Error with ADIF import.")
+
+        return self._response(True, "Completed ADIF import", persist=True)
 
     def log_qso(self, qso_data):
         '''
@@ -320,25 +344,19 @@ class JsApi:
 
         :param any qso_data: dict of qso data from the UI
         '''
-        logging.debug('acquiring lock to log qso')
+        logging.info('acquiring lock to log qso')
         self.lock.acquire()
 
-        cfg = self.db.get_user_config()
+        def_pwr = self.db.config.get_value('default_pwr')
 
         try:
-            if qso_data['sig'] == 'POTA':
-                park_json = self.pota.get_park(qso_data['sig_info'])
-                logging.debug(f"updating park stat for: {park_json}")
-                self.db.parks.inc_park_hunt(park_json)
-            elif qso_data['sig'] == 'SOTA':
-                summit_code = qso_data['sig_info']
-                ok = self.db.parks.inc_summit_hunt(summit_code)
-                if not ok:
-                    summit = self.sota.get_summit(summit_code)
-                    self.db.parks.update_summit_data(summit)
-                    self.db.parks.inc_summit_hunt(summit_code)
+            program = qso_data['sig']
+            ref = qso_data['sig_info']
+            pota_ref = qso_data['pota_ref'] if 'pota_ref' in qso_data else ''
 
-            qso_data['tx_pwr'] = cfg.default_pwr
+            self.programs[program].inc_ref_hunt(ref, pota_ref)
+
+            qso_data['tx_pwr'] = def_pwr
             logging.debug(f"logging qso: {qso_data}")
             id = self.db.qsos.insert_new_qso(qso_data)
         except Exception as ex:
@@ -347,23 +365,24 @@ class JsApi:
             self.lock.release()
             return self._response(False, f"Error logging QSO: {ex}")
 
+        # db written so commit & release lock
+        self.db.commit_session()
+        self.lock.release()
+
         # get the data to log to the adif file and remote adif host
         qso = self.db.qsos.get_qso(id)
         act = self.db.get_activator_name(qso_data['call'])
         qso.name = act if act is not None else 'ERROR NO NAME'
 
         try:
-            self.adif_log.log_qso_and_send(qso, cfg)
+            # self.adif_log.log_qso_and_send(qso, cfg)
+            self.adif_log.log_qso(qso)
         except Exception as log_ex:
             logging.exception(
                 msg="Error logging QSO to as adif (local/remote):",
                 exc_info=log_ex)
             self.lock.release()
             return self._response(False, f"Error logging as ADIF: {log_ex}")
-
-        self.db.commit_session()
-
-        self.lock.release()
 
         return self._response(True, "QSO logged successfully")
 
@@ -384,7 +403,26 @@ class JsApi:
             logging.warning('bad spot id passed to refresh_spot')
             return self._response(False, "")
 
-        self.db.update_spot(spot_id, call, ref)
+        logging.info(f"doing single spot update {spot_id}")
+
+        to_mod: Spot = self.db.spots.get_spot(spot_id)
+
+        if to_mod is None:
+            logging.warning("refresh_spot: didn't find a spot for this id")
+            spot = self.db.spots.get_spot_by_actx(call, ref)
+            if spot is None:
+                logging.warning("refresh_spot: didn't find a spot for actx")
+                return self._response(False, "")
+
+            spot_id = spot.spotId
+            to_mod = self.db.spots.get_spot(spot_id)
+            if to_mod is None:
+                self.db.session.commit()
+                return self._response(False, "")
+
+        x = to_mod.spot_source
+        self.programs[x].update_spot_metadata(to_mod)
+        self.db.session.commit()
         return self._response(True, "")
 
     def export_qsos(self):
@@ -393,12 +431,13 @@ class JsApi:
         '''
         try:
             qs = self.db.qsos.get_qsos_from_app()
-            cfg = self.db.get_user_config()
+            my_call = self.db.config.get_value('my_call')
+            my_grid6 = self.db.config.get_value('my_grid6')
 
             dt = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
             log = AdifLog(filename=f"{dt}_export.adi")
             for q in qs:
-                log.log_qso(q, cfg)
+                log.log_qso(q, my_call, my_grid6)
 
             return self._response(True, "QSOs exported successfully")
         except Exception as ex:
@@ -406,9 +445,34 @@ class JsApi:
             return self._response(
                 False, "Error exporting QSOs from DB", ext=str(ex))
 
-    def set_user_config(self, config_json: any):
-        logging.debug(f"setting config {config_json}")
-        self.db.update_user_config(config_json)
+    # def set_user_config(self, config_json: any):
+    #     logging.debug(f"setting config {config_json}")
+    #     self.db.update_user_config(config_json)
+
+    #     lp = LoggerParams(
+    #         self.db.config.get_value('logger_type'),
+    #         self.db.config.get_value('my_call'),
+    #         self.db.config.get_value('my_grid6'),
+    #         self.db.config.get_value('adif_host'),
+    #         self.db.config.get_value('adif_port'),
+    #     )
+    #     self.adif_log = LoggerInterface.get_logger(lp, __version__)
+    #     logging.debug(f"updating logger {self.adif_log}")
+
+    def set_user_config2(self, config2_json: any):
+        logging.debug(f"setting config2 {config2_json}")
+        # self.db.update_user_config(config2_json)
+        self.db.config.set_editable_json(config2_json)
+
+        lp = LoggerParams(
+            self.db.config.get_value('logger_type'),
+            self.db.config.get_value('my_call'),
+            self.db.config.get_value('my_grid6'),
+            self.db.config.get_value('adif_host'),
+            self.db.config.get_value('adif_port'),
+        )
+        self.adif_log = LoggerInterface.get_logger(lp, __version__)
+        logging.debug(f"updating logger {self.adif_log}")
 
     def set_band_filter(self, band: int):
         logging.debug(f"api setting band filter to: {band}")
@@ -417,6 +481,10 @@ class JsApi:
     def set_region_filter(self, region: list[str]):
         logging.debug(f"api setting region filter to: {region}")
         self.db.filters.set_region_filter(region)
+
+    def set_continent_filter(self, continents: list[str]):
+        logging.debug(f"api setting cont filter to: {continents}")
+        self.db.filters.set_continent_filter(continents)
 
     def set_location_filter(self, location: str):
         logging.debug(f"setting region filter to {location}")
@@ -438,7 +506,7 @@ class JsApi:
         '''
         Set the Special Interest Group (sig) filter.
 
-        :param string sig_filter: only POTA or SOTA
+        :param string sig_filter: only POTA or SOTA or WWFF
         '''
         logging.debug(f"api setting SIG filter to: {sig_filter}")
         self.db.filters.set_sig_filter(sig_filter)
@@ -472,7 +540,6 @@ class JsApi:
             logging.warn("CAT is None. not qsy-ing")
             return self._response(False, "CAT control failure.")
 
-        cfg = self.db.get_user_config()
         hrz = float(freq) * 1000.0
         logging.debug(f"adjusted freq {hrz}")
         if mode == "SSB" and hrz >= 10000000:
@@ -482,9 +549,9 @@ class JsApi:
             if hrz > 5330000 and hrz < 5404000:  # 60m SSB is USB
                 mode = "USB"
         elif mode == "CW":
-            mode = cfg.cw_mode
+            mode = self.db.config.get_value('cw_mode')
         elif mode.startswith("FT"):
-            mode = cfg.ftx_mode
+            mode = self.db.config.get_value('ftx_mode')
         logging.debug(f"adjusted mode {mode}")
         self.cat.set_mode(mode)
         self.cat.set_vfo(hrz)
@@ -570,7 +637,7 @@ class JsApi:
         Gets a sorted list of distinct regions (POTA) and associations (SOTA)
         that are in the current set of spots.
         '''
-        x = self.db.seen_regions
+        x = self.seen_regions
         # logging.debug(f"return seen regions: {x}")
         return self._response(True, '', seen_regions=x)
 
@@ -636,20 +703,42 @@ class JsApi:
 
         return self._response(False, 'Error getting hamalert text')
 
-    def _do_update(self):
+    def _do_update(self, pota: any, sota: any, wwff: any):
         '''
         The main update method. Called on a timer
+
+        First will delete all previous spots, then read the ones passed in
+        and perform the logic to update meta info about the spots
+
+        :param dict pota: the dict from the pota api
+        :param dict sota: the dict from the sota api
+        :param dict wwff: the dict from the wwff api. wwff['RCD']
         '''
         logging.debug('updating db')
-        self.lock.acquire()
 
         try:
-            json = self.pota.get_spots()
-            sota = self.sota.get_spots()
-            self.db.update_all_spots(json, sota)
+            # json = self.pota.get_spots()
+            # sota = self.sota.get_spots()
+            # wwff = self.wwff.get_spots()
+
+            logging.info("acquiring lock for update")
+            self.lock.acquire()
+            self.db.delete_spots()
+            self.programs["POTA"].update_spots(pota)
+            self.programs["SOTA"].update_spots(sota)
+            self.programs["WWFF"].update_spots(wwff)
+            self.db.session.commit()
+            logging.info("spots updated for programs")
+            self.lock.release()
+            logging.info("update lock released")
+
+            self.seen_regions.clear()
+
+            for p in self.programs.values():
+                unique_reg = list(set(p.seen_regions))
+                self.seen_regions += unique_reg
+
             self._handle_alerts()
-            self.curr_pota_spots = json
-            self.curr_sota_spots = sota
         except ConnectionError as con_ex:
             logging.warning("Connection error in do_update: ")
             logging.exception(con_ex)
@@ -658,7 +747,8 @@ class JsApi:
             logging.error(type(ex).__name__)
             logging.exception(ex)
         finally:
-            self.lock.release()
+            if self.lock.locked():
+                self.lock.release()
 
     def _update_all_parks(self) -> str:
         logging.info("updating all parks in db")
@@ -718,49 +808,52 @@ class JsApi:
         '''
         Get the stored windows size.
         '''
-        cfg = self.db.get_user_config()
-        return (cfg.size_x, cfg.size_y)
+        x = self.db.config.get_value('size_x')
+        y = self.db.config.get_value('size_y')
+        return (x, y)
 
     def _get_win_pos(self) -> tuple[int, int]:
         '''
         Get the stored windows position.
         '''
-        cfg = self.db.get_user_config()
-        return (cfg.pos_x, cfg.pos_y)
+        x = self.db.config.get_value('pos_x')
+        y = self.db.config.get_value('pos_y')
+        return (x, y)
 
     def _get_win_maximized(self) -> bool:
         '''
         Get the stored windows size.
         '''
-        cfg = self.db.get_user_config()
-        return cfg.is_max
+        return self.db.config.get_value('is_max')
 
     def _store_win_size(self, size: tuple[int, int]):
         '''
         Save the window size to the database
         '''
-        cfg = self.db.get_user_config()
-        cfg.size_x = size[0]
-        cfg.size_y = size[1]
-        self.db.commit_session()
+        self.db.config.set_value('size_x', size[0])
+        self.db.config.set_value('size_y', size[1], commit=True)
 
     def _store_win_pos(self, position: tuple[int, int]):
         '''
         Save the window position to the database
         '''
-        cfg = self.db.get_user_config()
-        cfg.pos_x = position[0]
-        cfg.pos_y = position[1]
-        self.db.commit_session()
+        self.db.config.set_value('pos_x', position[0])
+        self.db.config.set_value('pos_y', position[1], commit=True)
 
     def _store_win_maxi(self, is_max: bool):
-        cfg = self.db.get_user_config()
-        cfg.is_max = 1 if is_max else 0
-        self.db.commit_session()
+        self.db.config.set_value('is_max', 1 if is_max else 0, commit=True)
 
     def _handle_alerts(self):
         def get_str(spot: Spot) -> str:
-            return f"📢 New one in {spot.locationDesc}: {spot.activator} at  {spot.reference} 🔸 {spot.mode} on {spot.frequency}"  # noqa
+            obj = {
+                'location': spot.locationDesc,
+                'activator': spot.activator,
+                'reference': spot.reference,
+                'freq': spot.frequency,
+                'mode': spot.mode,
+                'spotId': spot.spotId
+            }
+            return obj
 
         to_alert = self.db.check_alerts()
 
@@ -771,7 +864,8 @@ class JsApi:
             spots = to_alert[key]
             res[key] = list(map(get_str, spots))
 
-        logging.debug(f"dict to send {res}")
+        # logging.debug(f"dict to send {res}")
+        # logging.debug(f"dict to send {json.dumps(res)}")
 
         if len(webview.windows) > 0 and len(res) > 0:
             js = """if (window.pywebview.state !== undefined && 
@@ -779,5 +873,5 @@ class JsApi:
                             window.pywebview.state.showSpotAlert('{obj}'); // # noqa
                     }}
                 """.format(obj=json.dumps(res))
-            #  logging.debug(f"alerting w this {js}")
+            # logging.debug(f"alerting w this {js}")
             webview.windows[0].evaluate_js(js)

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, TextField, Grid, Stack } from '@mui/material';
+import { Button, TextField, Grid, Stack, Tooltip, Box, Backdrop, CircularProgress } from '@mui/material';
 import { useAppContext } from '../AppContext';
 import { Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
@@ -10,11 +10,10 @@ import utc from 'dayjs/plugin/utc';
 import './QsoEntry.scss'
 import QsoTimeEntry from './QsoTimeEntry';
 import { Qso } from '../../@types/QsoTypes';
-import { checkApiResponse, checkReferenceForSota } from '../../util';
-import { getParkInfo, getStateFromLocDesc, getSummitInfo } from '../../pota';
+import { checkApiResponse, checkReferenceForPota, checkReferenceForSota, checkReferenceForWwff, setToastMsg } from '../../util';
+import { getParkInfo, getStateFromLocDesc } from '../../pota';
 import { Park } from '../../@types/Parks';
 import { ParkInfo } from '../../@types/PotaTypes';
-import { Summit } from '../../@types/Summit';
 
 dayjs.extend(utc);
 
@@ -37,7 +36,9 @@ let defaultQso: Qso = {
     distance: 0,
     bearing: 0,
     name: '',
-    state: ''
+    state: '',
+    pota_ref: undefined,
+    sota_ref: undefined
 }
 
 
@@ -45,8 +46,11 @@ export default function QsoEntry() {
     const [qso, setQso] = React.useState(defaultQso);
     const [otherOps, setOtherOps] = React.useState('');
     const [otherOpsHidden, setOtherOpsHidden] = React.useState(true);
+    const [otherParks, setOtherParks] = React.useState('');
+    const [otherParksHidden, setOtherParksHidden] = React.useState(true);
     const [qsoTime, setQsoTime] = React.useState<Dayjs>(dayjs('2022-04-17T15:30'));
     const { contextData, setData } = useAppContext();
+    const [spinnerOpen, setSpinnerOpen] = React.useState(false);
 
     function logQso() {
         const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -63,6 +67,18 @@ export default function QsoEntry() {
 
         qso.time_on = (qsoTime) ? qsoTime.toISOString() : dayjs().toISOString();
         qso.qso_date = qso.time_on;
+        if (qso.sig == "SOTA")
+            qso.sota_ref = qso.sig_info;
+
+        if (otherParks) {
+            const myPotaRef = getPotaRef();
+
+            if (!myPotaRef.ok)
+                setToastMsg("Bad POTA Ref in Other Parks", contextData, setData);
+
+            qso.pota_ref = myPotaRef.pota_ref;
+            qso.comment += ` {Also: ${myPotaRef.otherParks}}`;
+        }
 
         let multiOps = otherOps;
 
@@ -88,12 +104,40 @@ export default function QsoEntry() {
             window.pywebview.api.log_qso(qso).then((x: string) => {
                 let json = checkApiResponse(x, contextData, setData);
 
-                window.pywebview.api.refresh_spot(contextData.spotId,  qso.call, qso.sig_info)
-                .then((x: string) => {
-                    window.pywebview.state.getSpots();
-                });
+                window.pywebview.api.refresh_spot(contextData.spotId, qso.call, qso.sig_info)
+                    .then((x: string) => {
+                        window.pywebview.state.getSpots();
+                    });
             });
         }
+    }
+
+    interface IGetPotaRef {
+        pota_ref: string | undefined;
+        otherParks: string | undefined;
+        ok: boolean;
+    }
+
+    function getPotaRef(): IGetPotaRef {
+        let res = otherParks;
+        const currentPark = qso.sig_info;
+        let arr = res.split(',');
+
+        arr.forEach((x) => {
+            const isPota = checkReferenceForPota(x);
+            // console.log(x);
+            if (!isPota) {
+                // setToastMsg("Bad POTA Ref in Other Parks", contextData, setData);
+                return { ok: false };
+            }
+        })
+
+        arr.push(currentPark);
+        return {
+            ok: true,
+            pota_ref: arr.join(','),
+            otherParks: res
+        };
     }
 
     function spotActivator() {
@@ -143,17 +187,20 @@ export default function QsoEntry() {
     };
 
     function handleClearClick(
-        event: React.MouseEvent<HTMLButtonElement, MouseEvent>
+        event: React.MouseEvent<HTMLButtonElement, MouseEvent> | null
     ) {
         console.log("clearing qso...");
         setQso(defaultQso);
         contextData.park = null;
         contextData.qso = null;
         contextData.otherOperators = '';
+        contextData.otherParks = '';
         setData(contextData);
 
         setOtherOpsHidden(true);
         setOtherOps('');
+        setOtherParksHidden(true);
+        setOtherParks('');
     }
 
     function handleMultiOpClick(
@@ -162,6 +209,11 @@ export default function QsoEntry() {
         setOtherOpsHidden(!otherOpsHidden);
     }
 
+    function handleMultiParkClick(
+        event: React.MouseEvent<HTMLButtonElement, MouseEvent>
+    ) {
+        setOtherParksHidden(!otherParksHidden);
+    }
 
     function updateQsoEntry() {
         let x = contextData?.qso;
@@ -210,8 +262,7 @@ export default function QsoEntry() {
             return;
 
         function updateQsoData(grid6: string, sig: string, sig_info: string, state: string) {
-            function setLocalQso() 
-            {
+            function setLocalQso() {
                 let newQso = { ...qso };
                 newQso.gridsquare = grid6;
                 newQso.sig = sig;
@@ -226,7 +277,7 @@ export default function QsoEntry() {
                 newCtxData.qso.gridsquare = grid6;
                 newCtxData.qso.sig = sig;
                 newCtxData.qso.sig_info = sig_info;
-                newCtxData.qso.state = state; 
+                newCtxData.qso.state = state;
                 setData(newCtxData);
 
                 setLocalQso();
@@ -241,59 +292,37 @@ export default function QsoEntry() {
         }
 
         function getRefInfo(): any {
+
             let isSota = checkReferenceForSota(park);
+            let isWwff = checkReferenceForWwff(park);
 
-            if (isSota) {
-                console.log('doing a SOTA');
+            let sig = 'POTA';
+            if (isSota)
+                sig = 'SOTA'
+            else if (isWwff)
+                sig = 'WWFF'
 
-                window.pywebview.api.get_summit(park)
-                    .then((r: string) => {
-                        let summit = JSON.parse(r) as Park;
-                        newCtxData.park = summit;
+            window.pywebview.api.get_reference(sig, park)
+                .then((r: string) => {
+                    let result = checkApiResponse(r, contextData, setData);
+                    if (!result.success) {
+                        console.log("get_qso_from_spot failed: " + result.message);
+                        return;
+                    }
+                    let p = JSON.parse(result.park_data) as Park;
+                    newCtxData.park = p;
 
-                        updateQsoData(
-                            summit.grid6,
-                            'SOTA',
-                            summit.reference,
-                            ''
-                        );
-                    });
-                return;
-            }
+                    let state = '';
+                    if (sig == 'POTA')
+                        state = getStateFromLocDesc(p.locationDesc)
 
-            // TODO: why not use api func to pull from db / from api?
-            let p = getParkInfo(park);
-            p.then((apiData: ParkInfo) => {
-                let x: Park = {
-                    id: apiData.parkId,
-                    reference: apiData.reference,
-                    name: apiData.name,
-                    grid6: apiData.grid6,
-                    active: apiData.active == 1,
-                    latitude: apiData.latitude,
-                    longitude: apiData.longitude,
-                    parkComments: '',
-                    parktypeId: apiData.parktypeId,
-                    parktypeDesc: apiData.parktypeDesc,
-                    locationDesc: apiData.locationDesc,
-                    firstActivator: apiData.firstActivator,
-                    firstActivationDate: apiData.firstActivationDate,
-                    website: '',
-                    locationName: '',
-                    entityName: '',
-                    accessMethods: '',
-                    activationMethods: ''
-                };
-
-                newCtxData.park = x;
-
-                updateQsoData(
-                    apiData.grid6,
-                    'POTA',
-                    apiData.reference,
-                    getStateFromLocDesc(apiData.locationDesc)
-                );
-            });
+                    updateQsoData(
+                        p.grid6,
+                        sig,
+                        p.reference,
+                        state
+                    );
+                });
         }
 
         const newCtxData = { ...contextData };
@@ -331,6 +360,30 @@ export default function QsoEntry() {
         }
     }
 
+    function updateOtherParks(otherParks: string) {
+        if (otherParks == null || otherParks === undefined) {
+            setOtherParks('');
+            setOtherParksHidden(true);
+            return;
+        }
+
+        if (otherParks == '') {
+            setOtherParks('');
+            setOtherParksHidden(true);
+            return;
+        }
+
+        setOtherParksHidden(false);
+        const parks = otherParks.trim().split(',');
+
+        // remove current qso call if needed
+        let x = parks.filter(e => e !== contextData.qso?.sig_info);
+
+        if (x.length > 0) {
+            setOtherParks(x.join(','));
+        }
+    }
+
 
     // when the app context changes (ie a user clicks on a different spot)
     // we need to update our TextFields
@@ -342,9 +395,31 @@ export default function QsoEntry() {
         updateOtherOperators(contextData.otherOperators);
     }, [contextData.otherOperators]);
 
+    React.useEffect(() => {
+        updateOtherParks(contextData.otherParks);
+    }, [contextData.otherParks]);
+
+    React.useEffect(() => {
+        if (contextData.loadingQsoData)
+            setSpinnerOpen(true);
+        else
+            setSpinnerOpen(false);
+    }, [contextData.loadingQsoData]);
+    
+
+    React.useEffect(() => {
+        function handleEscapeKey(event: KeyboardEvent) {
+            if (event.code === 'Escape') {
+                handleClearClick(null);
+            }
+        }
+
+        document.addEventListener('keydown', handleEscapeKey)
+        return () => document.removeEventListener('keydown', handleEscapeKey)
+    }, []);
 
     const textFieldStyle: React.CSSProperties = { fontSize: 14, textTransform: "uppercase" };
-    const otherOpsStyle: React.CSSProperties = { fontSize: 14, textTransform: "uppercase", color: 'orange' };
+    const otherOpsStyle: React.CSSProperties = { fontSize: 12, textTransform: "uppercase", color: 'orange', margin: '5px' };
     const commentStyle: React.CSSProperties = { fontSize: 14 };
 
     const StyledTypoGraphy = styled(Typography)(({ theme }) =>
@@ -360,12 +435,19 @@ export default function QsoEntry() {
 
     return (
         <div className="qso-container">
+            {/* <Backdrop
+                sx={{ position: 'absolute', color: '#ff00aa', zIndex: 1500 }}
+                open={spinnerOpen}
+            >
+                <CircularProgress color="inherit" />
+            </Backdrop> */}
             <Grid container
-                spacing={{ xs: 1, md: 1, lg: 2 }}
+                spacing={{ xs: 1, md: 1, lg: 1 }}
             >
                 <Grid item xs={4} lg={3}>
                     <TextField id="callsign" label="Callsign"
                         value={qso.call}
+                        fullWidth={true}
                         inputProps={{ style: textFieldStyle }}
                         onBlur={(e) => { onCallsignEntry(e.target.value); }}
                         onChange={(e) => {
@@ -375,6 +457,7 @@ export default function QsoEntry() {
                 <Grid item xs={4} lg={3}>
                     <TextField id="freq" label="Frequency"
                         value={qso.freq}
+                        fullWidth={true}
                         inputProps={{ style: textFieldStyle }}
                         onChange={(e) => {
                             setQso({ ...qso, freq: e.target.value });
@@ -417,7 +500,7 @@ export default function QsoEntry() {
                             setQso({ ...qso, sig_info: e.target.value });
                         }} />
                 </Grid>
-                <Grid item xs={4} lg={2}>
+                <Grid item xs={6} lg={2}>
                     <TextField id="grid" label="Grid"
                         value={qso.gridsquare}
                         inputProps={{ style: textFieldStyle }}
@@ -431,6 +514,7 @@ export default function QsoEntry() {
                 <Grid item xs={12} lg={5}>
                     <TextField id="comments" label="Comments"
                         value={qso.comment}
+                        fullWidth={true}
                         inputProps={{ style: commentStyle }}
                         onChange={(e) => {
                             setQso({ ...qso, comment: e.target.value });
@@ -446,7 +530,9 @@ export default function QsoEntry() {
 
             <Stack
                 direction={{ xs: 'row', sm: 'row', md: 'row' }}
-                spacing={{ xs: 0, sm: 1, md: 2 }}>
+                spacing={{ xs: 0, sm: 1, md: 1 }}
+                sx={{ flexWrap: 'wrap' }}
+            >
                 <Button variant="outlined" onClick={(e) => handleLogQsoClick(e)}>
                     <StyledTypoGraphy>
                         Log
@@ -474,20 +560,54 @@ export default function QsoEntry() {
                         MultiOp
                     </StyledTypoGraphy>
                 </Button>
+                <Tooltip title="POTA only: multi-park logging">
+                    <Button variant={otherParksHidden ? 'outlined' : 'contained'} onClick={(e) => handleMultiParkClick(e)}
+                        color='secondary'>
+                        <StyledTypoGraphy>
+                            N-Fer
+                        </StyledTypoGraphy>
+                    </Button>
+                </Tooltip>
+                <Box sx={{ flexGrow: 1 }}>
+                    {!otherOpsHidden && (
+                        <TextField id="otherOps" label="Other OPs (comma separated)"
+                            value={otherOps}
+                            color='warning'
+                            margin='normal'
+                            fullWidth
+                            size='small'
+                            sx={{
+                                '& .MuiInputLabel-root': {
+                                    fontSize: 12
+                                },
+                                marginY: '4px'
+                            }}
+                            inputProps={{ style: otherOpsStyle }}
+                            onChange={(e) => {
+                                setOtherOps(e.target.value);
+                            }} />
+                    )}
+
+                    {!otherParksHidden && (
+                        <TextField id="otherParks" label="Other Parks (comma separated)"
+                            value={otherParks}
+                            color='warning'
+                            margin='normal'
+                            size='small'
+                            fullWidth
+                            sx={{
+                                '& .MuiInputLabel-root': {
+                                    fontSize: 12
+                                },
+                                marginY: '4px'
+                            }}
+                            inputProps={{ style: otherOpsStyle }}
+                            onChange={(e) => {
+                                setOtherParks(e.target.value);
+                            }} />
+                    )}
+                </Box>
             </Stack>
-            <>
-                {!otherOpsHidden && (
-                    <TextField id="otherOps" label="Other OPs (comma separated)"
-                        value={otherOps}
-                        fullWidth
-                        color='warning'
-                        margin='normal'
-                        inputProps={{ style: otherOpsStyle }}
-                        onChange={(e) => {
-                            setOtherOps(e.target.value);
-                        }} />
-                )}
-            </>
         </div >
     );
 };

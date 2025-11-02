@@ -43,11 +43,11 @@ class AdifLog():
         self._send_msg(adif, config.adif_host, config.adif_port, type)
         self.write_adif_log(adif)
 
-    def log_qso(self, qso: Qso, config: UserConfig):
+    def log_qso(self, qso: Qso, my_call: str, my_grid6: str):
         '''
         Logs the QSO the the ADIF file.
         '''
-        adif = self._get_adif(qso, config.my_call, config.my_grid6)
+        adif = self._get_adif(qso, my_call, my_grid6)
         self.write_adif_log(adif)
 
     def write_adif_log(self, adif):
@@ -64,27 +64,45 @@ class AdifLog():
             qso records into.
         '''
         logging.info(f"importing adif from {file_name}")
-        pattern = r'([A-Z0-9]+-[0-9]*)'
-        if os.path.exists(file_name):
-            qsos, header = adif_io.read_from_file(file_name)
-            logging.debug(f"adif hdr {header}")
-            for qso in qsos:
-                q = Qso()
-                sig_check = ('SIG' in qso.keys() and qso['SIG'] == 'POTA')
-                sig_info_check = ('SIG_INFO' in qso.keys()
-                                  and re.match(pattern, qso["SIG_INFO"]))
-                if (sig_check or sig_info_check):
-                    if not sig_info_check:
-                        # we got pota sig but no sig_info
-                        # check the comments
-                        if 'COMMENT' in qso.keys():
-                            m = re.findall(pattern, qso['COMMENT'])
-                            sig_info = m[0]
-                            qso['SIG_INFO'] = sig_info
-                    q.init_from_adif(qso)
-                    the_db.qsos.insert_qso(q)
 
-            the_db.commit_session()
+        pota_pat = r'([a-zA-Z0-9]+-[0-9]*)'
+        sota_pat = r'([a-zA-Z0-9]{2,3}/[A-Z]{2}-[0-9]{3})'
+
+        if not os.path.exists(file_name):
+            raise FileNotFoundError
+
+        qsos, header = adif_io.read_from_file(file_name)
+
+        logging.debug(f"adif hdr {header}")
+
+        sigs = ['POTA', 'SOTA', 'WWFF']
+        filtered = [q for q in qsos if 'SIG' in q and q['SIG'] in sigs]
+
+        for qso in filtered:
+            q = Qso()
+            if 'SIG_INFO' not in qso:
+                logging.warning('no sig_info ' + str(qso))
+                continue
+
+            if qso["SIG"] == 'POTA' or qso["SIG"] == 'WWFF':
+                sig_info_check = re.match(pota_pat, qso["SIG_INFO"])
+                if sig_info_check:
+                    q.init_from_adif(qso)
+                else:
+                    logging.warning(
+                        'no match on SIG_INFO: ' + qso["SIG_INFO"])
+            elif qso['SIG'] == 'SOTA':
+                sota_c = re.match(sota_pat, qso["SIG_INFO"])
+                if sota_c:
+                    q.init_from_adif(qso)
+                else:
+                    logging.warning(
+                        'no match on SIG_INFO (SOTA): ' + qso["SIG_INFO"])
+
+            if (q.call is None or q.call == ''):
+                logging.warning('bad qso: ' + str(qso))
+            the_db.qsos.insert_qso(q)
+        the_db.commit_session()
 
     def _init_adif_log(self):
         filename = self.filename

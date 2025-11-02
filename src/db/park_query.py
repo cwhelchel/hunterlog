@@ -1,8 +1,10 @@
-import logging
 import sqlalchemy as sa
 from sqlalchemy.orm import scoped_session
+import logging as L
 
 from db.models.parks import Park, ParkSchema
+
+logging = L.getLogger(__name__)
 
 
 class ParkQuery:
@@ -10,9 +12,15 @@ class ParkQuery:
         self.session = session
 
     def get_park(self, park: str) -> Park:
-        return self.session.query(Park) \
-            .filter(Park.reference == park) \
-            .first()
+        try:
+            return self.session.query(Park) \
+                .filter(Park.reference == park) \
+                .first()
+        except Exception as ex:
+            logging.warning(
+                "error in get_park. exception follows:",
+                exc_info=ex)
+            return None
 
     def get_parks(self) -> list[Park]:
         return self.session.query(Park).all()
@@ -81,87 +89,14 @@ class ParkQuery:
         if not delay_commit:
             self.session.commit()
 
-    def update_summit_data(self, summit: any, delay_commit: bool = False):
+    def inc_ref_hunt(self, ref_id: str) -> bool:
         '''
-        Update or insert a "park" with info from SOTA api for a summit
+        Increment the hunt count of a reference by one
 
-        :param any summit: the json for a SOTA summit returned from SOTA api
-        :param bool delay_commit: true to not commit the session
+        :param string ref_id: the code of the park, summit, etc
+        :returns bool: true if a "park" was found and updated.
         '''
-        if summit is None:
-            return
-
-        p = self.get_park(summit['summitCode'])
-
-        if p is None:
-            logging.debug(f"inserting new {summit['summitCode']}")
-            to_add = Park()
-            to_add.reference = summit['summitCode']
-            to_add.name = summit['name']
-            to_add.grid4 = summit['locator'][:4]
-            to_add.grid6 = summit['locator']
-            to_add.active = 1 if bool(summit['valid']) else 0
-            to_add.latitude = summit['latitude']
-            to_add.longitude = summit['longitude']
-            to_add.parkComments = summit['notes']
-            to_add.accessibility = ''
-            to_add.sensitivity = ''
-            to_add.accessMethods = f"{summit['points']}"
-            to_add.activationMethods = f"{summit['altM']} m - {summit['altFt']} ft"  # noqa E501
-            to_add.agencies = ''
-            to_add.agencyURLs = ''
-            to_add.parkURLs = ''
-            to_add.parktypeId = 0
-            to_add.parktypeDesc = 'SOTA SUMMIT'
-            to_add.locationDesc = summit['regionCode']
-            to_add.locationName = summit['regionName']
-            to_add.entityId = 0
-            to_add.entityName = summit['associationName']
-            to_add.referencePrefix = summit['regionCode']
-            to_add.entityDeleted = 0
-            to_add.firstActivator = ''
-            to_add.firstActivationDate = ''
-            to_add.website = f"https://www.sotadata.org.uk/en/summit/{summit['summitCode']}"  # noqa E501
-
-            self.session.add(to_add)
-
-        if not delay_commit:
-            self.session.commit()
-
-    def inc_park_hunt(self, park: any):
-        '''
-        Increment the hunt count of a park by one. If park is not in db add it.
-
-        :param any park: the json for a POTA park returned from POTA api
-        '''
-        schema = ParkSchema()
-        if park is None:
-            # user logged something w/o a park
-            return
-        p = self.get_park(park['reference'])
-
-        if p is None:
-            logging.debug(f"adding new park row for {park['reference']}")
-            to_add: Park = schema.load(park, session=self.session)
-            to_add.hunts = 1
-            # logging.debug(to_add)
-            self.session.add(to_add)
-            p = to_add
-        else:
-            logging.debug(f"increment hunts for park {p.reference}")
-            p.hunts += 1
-            schema.load(park, session=self.session, instance=p)
-
-        self.session.commit()
-
-    def inc_summit_hunt(self, summit_ref: str) -> bool:
-        '''
-        Increment the hunt count of a summit "park" by one.
-
-        :param string summit_ref: the summit code of the "park"
-        :returns true if a summit "park" was found and updated.
-        '''
-        p = self.get_park(summit_ref)
+        p = self.get_park(ref_id)
 
         if p is None:
             return False

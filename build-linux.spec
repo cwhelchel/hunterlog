@@ -46,5 +46,9 @@ exe = EXE(pyz,
 
 
 import shutil
+import os
 
 shutil.copyfile('logging.conf', '{0}/logging.conf'.format(DISTPATH))
+os.makedirs(os.path.dirname('{0}/data/'.format(DISTPATH)), exist_ok=True)
+shutil.copyfile('./data/continents.json', '{0}/data/continents.json'.format(DISTPATH))
+shutil.copyfile('./data/sota_associations.json', '{0}/data/sota_associations.json'.format(DISTPATH))

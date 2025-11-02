@@ -23,9 +23,14 @@ export interface ContextData {
     onlyNewFilter: boolean;
     sigFilter: string;
     otherOperators: string;
+    otherParks: string;
+    continentFilter: string;
+    loadingQsoData: boolean;
 }
 
 export  interface AppContextType {
     contextData: ContextData;
+    qsyButtonId: string;
     setData: (d: ContextData) => void;
+    setLastQsyBtnId: (newId: string) => void;
 }

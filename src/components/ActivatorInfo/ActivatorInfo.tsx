@@ -165,18 +165,21 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
                                 {discordIcon()}
                             </Tooltip>
                         </span>
+
                         <span style={{ marginLeft: '3px', height: '16px', width: '16px' }}
                             onClick={() => copyText()}>
                             <Tooltip title="Copy Spot as Text">
                                 <ContentCopyIcon className="svg_icons" fontSize='small' />
                             </Tooltip>
                         </span>
+
                         <span style={{ marginLeft: '3px', height: '16px', width: '16px' }}
                             onClick={() => openQrzLink()}>
                             <Tooltip title="QRZ">
                                 <LanguageIcon className="svg_icons" fontSize='small' />
                             </Tooltip>
                         </span>
+
                         {contextData.qso?.mode == 'CW' && (
                             <span style={{ marginLeft: '3px', height: '16px', width: '16px' }}
                                 onClick={() => openRbnLink()}>
@@ -194,6 +197,12 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
                                 </Tooltip>
                             </span>
                         )}
+
+                        {cwSpeed > 0 && (
+                            <div className='activatorSpeed'>
+                                CW: {cwSpeed} wpm
+                            </div>
+                        )}
                     </div>
                     <hr className='titleSeparator' role='separator' />
                     <div className='activatorData'>
@@ -210,11 +219,6 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
                             <br />
                         </div>
                         <div className='activatorCommentMetaData'>
-                            <div className='activatorSpeed'>
-                                {cwSpeed > 0 && (
-                                    <span>CW speed is {cwSpeed}<br /></span>
-                                )}
-                            </div>
                             <span className='activatorCmtsHdg'>Activator comments:</span>
                             <div className='activatorComments'>
                                 {actComments.map((comment) => (

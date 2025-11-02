@@ -10,6 +10,8 @@ import mimetypes
 from pathlib import Path
 
 from api import JsApi
+from download_thread import DownloadThread
+from utils.entrypoint import get_entrypoint, set_interval
 
 
 def configure_logging():
@@ -43,62 +45,26 @@ parser.add_argument("-w", "--reset-win", action="store_true",
                     help="reset the window size and position to default")
 
 
-def do_update():
+def do_update(pota, sota, wwff):
     logging.debug('updating db')
-
-    the_api._do_update()
-
-    # try:
-    #     json = pota.get_spots()
-    #     the_db.update_all_spots(json)
-    # except ConnectionError as con_ex:
-    #     logging.warning("Connection error in do_update: ")
-    #     logging.exception(con_ex)
-    # except Exception as ex:
-    #     logging.error("Unhandled error caught in do_update: ")
-    #     logging.error(type(ex).__name__)
-    #     logging.exception(ex)
-    #     raise
+    the_api._do_update(pota, sota, wwff)
 
 
-# first lets update our spots w/ api data
-do_update()
-
-
-def get_entrypoint():
-    def exists(path):
-        return os.path.exists(os.path.join(os.path.dirname(__file__), path))
-
-    if exists('../gui/index.html'):  # unfrozen development
-        return '../gui/index.html'
-
-    if exists('../Resources/gui/index.html'):  # frozen py2app
-        return '../Resources/gui/index.html'
-
-    if exists('./gui/index.html'):
-        return './gui/index.html'
-
-    raise Exception('No index.html found')
-
-
-def set_interval(interval):
-    def decorator(function):
-        def wrapper(*args, **kwargs):
-            stopped = threading.Event()
-
-            def loop():  # executed in another thread
-                while not stopped.wait(interval):  # until stopped
-                    function(*args, **kwargs)
-
-            t = threading.Thread(target=loop)
-            t.daemon = True  # stop if the program exits
-            t.start()
-            return stopped
-        return wrapper
-    return decorator
-
-
-entry = get_entrypoint()
+def show_frontend_work():
+    try:
+        if len(webview.windows) > 0:
+            js = r"""
+            if (window.pywebview.state !== undefined &&
+                window.pywebview.state.setWorking !== undefined) {
+                window.pywebview.state.setWorking();
+            }
+            """
+            logging.debug('setWorking called in frontend')
+            webview.windows[0].evaluate_js(js)
+    except Exception as ex:
+        logging.error("error in setWorking")
+        logging.exception(ex)
+        raise
 
 
 def refresh_frontend():
@@ -119,9 +85,12 @@ def refresh_frontend():
 
 
 @set_interval(60)
-def update_ticker():
+def update_ticker(t: DownloadThread):
     logging.info("thread heartbeat")
-    do_update()
+
+    spot_arr = t.get_spots()
+    show_frontend_work()
+    do_update(spot_arr[0], spot_arr[1], spot_arr[2])
     refresh_frontend()
 
 
@@ -145,6 +114,8 @@ def on_restore():
 if __name__ == '__main__':
     args = parser.parse_args()
 
+    entry = get_entrypoint()
+
     (width, height) = the_api._get_win_size()
     (x, y) = the_api._get_win_pos()
     maxi = the_api._get_win_maximized()
@@ -154,7 +125,7 @@ if __name__ == '__main__':
         (width, height) = (800, 600)
         (x, y) = (0, 0)
 
-    logging.debug(f"load winow data: {width} x {height} - {maxi}")
+    logging.debug(f"load window data: {width} x {height} - {maxi}")
 
     webview.settings = {
         'ALLOW_DOWNLOADS': False,  # Allow file downloads
@@ -189,9 +160,16 @@ if __name__ == '__main__':
         window.events.maximized += on_maximized
         window.events.restored += on_restore
 
+    logging.debug('starting dl thread')
+    stopFlag = threading.Event()
+    dl = DownloadThread(event=stopFlag)
+    dl.start()
+
     if platform.system() == "Linux":
-        webview.start(update_ticker, private_mode=False, debug=True, gui="gtk")  # noqa E501
+        webview.start(update_ticker, args=dl, private_mode=False, debug=True, gui="gtk")  # noqa E501
     elif platform.system() == "Windows":
-        webview.start(update_ticker, private_mode=False, debug=True)
+        webview.start(update_ticker, args=dl, private_mode=False, debug=True)
     elif platform.system() == "Darwin":
-        webview.start(update_ticker, private_mode=False, debug=True)
+        webview.start(update_ticker, args=dl, private_mode=False, debug=True)
+
+    stopFlag.set()

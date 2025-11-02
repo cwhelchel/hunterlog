@@ -3,26 +3,42 @@ import { Theme, ThemeProvider, createTheme } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline';
 import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Grid';
-import Switch from '@mui/material/Switch';
 
 import { useAppContext } from './AppContext'
 import SpotViewer from './SpotViewer/SpotViewer'
 import QsoEntry from './QsoEntry/QsoEntry'
-import ParkInfo from './Map/ParkInfo'
-import { ActivatorInfo } from './ActivatorInfo/ActivatorInfo'
 import { FilterBar } from './FilterBar/FilterBar'
 import AppMenu from './AppMenu/AppMenu'
 import Footer from './Footer/Footer'
+import BasicTabs from './Tabs';
+import { Backdrop, CircularProgress } from '@mui/material';
 
-function buildTheme(isDark: boolean) : Theme {
+// Augment the palette to include an alert color
+declare module '@mui/material/styles' {
+    interface Palette {
+        alert: Palette['primary'];
+    }
+
+    interface PaletteOptions {
+        alert?: PaletteOptions['primary'];
+    }
+}
+
+function buildTheme(isDark: boolean): Theme {
     return createTheme({
         palette: {
             mode: isDark ? 'dark' : 'light',
             primary: {
-                main: isDark ? '#008C2C' : '#305c3e' 
+                main: isDark ? '#008C2C' : '#305c3e'
             },
             secondary: {
                 main: isDark ? '#7e0e5b' : '#650b49' //og purp 8c0060 
+            },
+            alert: {
+                main: '#E3D026',
+                light: '#E9DB5D',
+                dark: '#A29415',
+                contrastText: '#242105',
             }
         }
     });
@@ -32,12 +48,20 @@ export default function Main() {
     const { contextData, setData } = useAppContext();
     const potaTheme = buildTheme(true);
     const [theme, setTheme] = React.useState(potaTheme);
+    const [spinnerOpen, setSpinnerOpen] = React.useState(false);
 
     React.useEffect(() => {
         const isDark = contextData.themeMode == 'dark';
         const temp = buildTheme(isDark);
         setTheme(temp);
     }, [contextData.themeMode]);
+
+    React.useEffect(() => {
+        if (contextData.loadingQsoData)
+            setSpinnerOpen(true);
+        else
+            setSpinnerOpen(false);
+    }, [contextData.loadingQsoData]);
 
     React.useEffect(() => {
         if (window.pywebview !== undefined && window.pywebview.api !== null)
@@ -79,21 +103,25 @@ export default function Main() {
                     className='sticky'
                     direction="row"
                     justifyContent="space-evenly"
-                    // divider={<Divider orientation="vertical" flexItem />}
                     spacing={{ xs: 1, md: 1 }}
-                    height="28%">
+                    height="28%"
+                >
                     <Grid item xs={12} >
                         <AppMenu />
                     </Grid>
-                    <Grid item xs={4}>
-                        <QsoEntry />
-                    </Grid>
-                    <Grid item xs={4}>
-                        <ActivatorInfo />
-                    </Grid>
-                    <Grid item xs={4}>
-                        {/* <LeafMap /> */}
-                        <ParkInfo />
+                    <Grid container item xs={12} sx={{ position: 'relative' }}>
+                        <Backdrop
+                            sx={{ position: 'absolute', color: '#ff00aa', zIndex: 1500 }}
+                            open={spinnerOpen}
+                        >
+                            <CircularProgress color="inherit" />
+                        </Backdrop>
+                        <Grid item xs={7} sx={{ minHeight: 200 }}>
+                            <QsoEntry />
+                        </Grid>
+                        <Grid item xs={5} >
+                            <BasicTabs />
+                        </Grid>
                     </Grid>
                     <Grid item xs={12}>
                         <FilterBar />

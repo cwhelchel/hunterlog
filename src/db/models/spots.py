@@ -51,6 +51,7 @@ class Spot(Base):
     cw_wpm = sa.Column(sa.Integer, nullable=True)
 
     spot_source = sa.Column(sa.String)
+    continent = sa.Column(sa.String)
 
     def __repr__(self):
         return "<spot(id={self.spotId!r})>".format(self=self)
@@ -88,6 +89,46 @@ class Spot(Base):
         self.count = 0
         self.expire = 0
         self.spot_source = 'SOTA'
+        self.hunted_bands = ""
+        self.is_qrt = False
+        self.act_cmts = ''
+
+    def init_from_wwff(self, json: any, id):
+        self.spotId = id
+        self.activator = json['ACTIVATOR'].upper()
+        try:
+            f = str(json['QRG']).replace(',', '.')  # locale fix
+
+            # TODO SHOULD BE IN kHz convert MHz to kHz if freq string is good
+            self.frequency = 0.0 if f == '' else float(f)
+        except Exception as ex:
+            log.warning('error reading wwff freq', exc_info=ex)
+            self.frequency = 0.0
+        self.mode = str(json['MODE']).upper()
+        self.reference = json['REF']
+        # parkName isnt really used use it for activator from sota
+        self.parkName = json['ACTIVATOR']
+        # TODO
+        try:
+            temp = datetime.strptime(json['DATE']+json['TIME'], "%Y%m%d%H%M")
+        except ValueError as ex:
+            log.warning('error reading wwff time+date', exc_info=ex)
+            temp = datetime.strptime(json['DATE'], "%Y-%m-%dT%H:%M:%S")
+        self.spotTime = temp
+        self.spotter = json['SPOTTER'].upper()
+        self.comments = json['TEXT']
+        self.source = json['SOURCE'].upper()
+        self.invalid = False
+        self.name = json['NAME']
+        # TODO
+        self.locationDesc = json['REF'].split('-')[0]
+        self.grid4 = ''
+        self.grid6 = ''
+        self.latitude = 0.0
+        self.longitude = 0.0
+        self.count = 0
+        self.expire = 0
+        self.spot_source = 'WWFF'
         self.hunted_bands = ""
         self.is_qrt = False
         self.act_cmts = ''

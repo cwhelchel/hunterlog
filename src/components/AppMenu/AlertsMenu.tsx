@@ -119,9 +119,42 @@ export default function AlertsMenu() {
 
 
     function handleShowTest(): void {
+
+        const example = {
+            'location': '',
+            'activator': 'Close alert with X',
+            'reference': 'K-TEST',
+            'freq': '14000',
+            'mode': 'CW',
+            'spotId': 0
+        }
+        const example2 = {
+            'location': '',
+            'activator': 'Close all with Shift+Click X',
+            'reference': 'K-TEST',
+            'freq': '14000',
+            'mode': 'CW',
+            'spotId': 0
+        }
+        const example3 = {
+            'location': '',
+            'activator': 'Snooze button = 10 mute',
+            'reference': 'K-TEST',
+            'freq': '14000',
+            'mode': 'CW',
+            'spotId': 0
+        }
+        const example4 = {
+            'location': 'US-FL',
+            'activator': 'W1AW',
+            'reference': 'US-6293',
+            'freq': '14284',
+            'mode': 'SSB',
+            'spotId': 0
+        }
         const json = {
-            'TestAlert+-1': ['📢 Close alert with X. 🔸 Close all with Shift+Click', '📢 Snooze button disables whole filter for a little while.'],
-            'AnotherAlert+-1': ['📢 New one in US-FL: N7AWX at  US-6293 🔸 SSB on 14284', '📢 New one in US-FL: KA4PJZ at  US-3622 🔸 SSB on 14265']
+            'TestAlert+-1': [example, example2, example3],
+            'AnotherAlert+-1': [example4]
         }
         window.pywebview.state.showSpotAlert(JSON.stringify(json));
     }

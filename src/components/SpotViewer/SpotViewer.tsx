@@ -1,10 +1,11 @@
 import * as React from 'react';
 import Button from '@mui/material/Button';
 import { Backdrop, Badge, CircularProgress, styled } from '@mui/material';
-import { DataGrid, GridColDef, GridValueGetterParams, GridValueFormatterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams, GridRowClassNameParams, GridToolbar, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarColumnsButton, GridToolbarQuickFilter } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridValueGetterParams, GridValueFormatterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams, GridRowClassNameParams, GridToolbar, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarColumnsButton, GridToolbarQuickFilter, GridPaginationModel } from '@mui/x-data-grid';
 import { GridEventListener } from '@mui/x-data-grid';
 import LandscapeIcon from '@mui/icons-material/Landscape';
 import ParkIcon from '@mui/icons-material/Park';
+import Brightness3Icon from '@mui/icons-material/Brightness3';
 
 import { useAppContext } from '../AppContext';
 
@@ -22,6 +23,7 @@ import { SpotComments } from '../../@types/SpotComments';
 import { getSummitInfo } from '../../pota';
 import { Summit } from '../../@types/Summit';
 import { checkApiResponse } from '../../util';
+import HandleSpotRowClick from './HandleSpotRowClick';
 
 // https://mui.com/material-ui/react-table/
 
@@ -52,7 +54,7 @@ const columns: GridColDef[] = [
         field: 'frequency', headerName: 'Freq', width: 100, type: 'number',
         renderCell: (x) => {
             return (
-                <FreqButton frequency={x.row.frequency} mode={x.row.mode} />
+                <FreqButton activator={x.row.activator} frequency={x.row.frequency} mode={x.row.mode} />
             );
         }
     },
@@ -127,11 +129,15 @@ const columns: GridColDef[] = [
         renderCell: (x) => {
             return <>
                 {x.row.spot_source == 'SOTA' && (
-                    <LandscapeIcon color='secondary'/>
+                    <LandscapeIcon color='secondary' />
                 )}
                 {x.row.spot_source == 'POTA' && (
                     <ParkIcon color='primary' />
                 )}
+                {x.row.spot_source == 'WWFF' && (
+                    <Brightness3Icon color='success' />
+                )}
+
                 <span id="sig">{x.row.spot_source}</span>
             </>
         }
@@ -143,13 +149,14 @@ const rows: SpotRow[] = [];
 
 
 var currentSortFilter = { field: 'spotTime', sort: 'desc' as GridSortDirection };
-
+var currentPageFilter = { pageSize: 25, page: 0, };
 
 export default function SpotViewer() {
     const [spots, setSpots] = React.useState(rows)
     const [sortModel, setSortModel] = React.useState<GridSortModel>([currentSortFilter]);
+    const [pageModel, setPaginationModel] = React.useState<GridPaginationModel>(currentPageFilter);
     const [backdropOpen, setBackdropOpen] = React.useState(false);
-    const { contextData, setData } = useAppContext();
+    const { contextData, setData, qsyButtonId, setLastQsyBtnId } = useAppContext();
 
     function getSpots() {
         // get the spots from the db
@@ -162,6 +169,14 @@ export default function SpotViewer() {
             setSpots(x);
             setBackdropOpen(false);
         });
+    }
+
+
+    function setWorking() {
+        // get the spots from the python backend
+        // show the spinner to keep user from interacting with spots that wont
+        // update.
+        setBackdropOpen(true);
     }
 
     // when [spots] are set, update regions
@@ -187,7 +202,12 @@ export default function SpotViewer() {
             }
         });
 
+        // console.log(spots);
         spots.map((spot) => {
+            // random white screen. one time there was a null dereference here
+            // turning the hunterlog screen white
+            if (spot === null)
+                return;
             if (spot.spot_source == 'POTA') {
                 let location = spot.locationDesc.substring(0, 5);
                 if (!contextData.locations.includes(location))
@@ -196,81 +216,6 @@ export default function SpotViewer() {
         });
         contextData.locations.sort();
     }, [spots]);
-
-    async function getOtherOps(spotId: number): Promise<string> {
-        const r = await window.pywebview.api.get_spot_comments(spotId);
-
-        let t = JSON.parse(r) as SpotComments[];
-        let filtered = t.filter(function (el) {
-            return el.comments.includes('{With:');
-        });
-
-        if (filtered.length > 0) {
-            const str = filtered[0].comments;
-            const re = new RegExp("{With:([^}]*)}");
-            const m = str.match(re);
-
-            if (m) {
-                return m[1];
-            }
-        } else {
-            return '';
-        }
-
-        return '';
-
-    }
-
-    function getQsoData(id: number) {
-        // use the spot to generate qso data (unsaved)
-        const q = window.pywebview.api.get_qso_from_spot(id);
-
-        q.then((r: any) => {
-            if (r['success'] == false)
-                return;
-            var x = JSON.parse(r) as Qso;
-            //console.log("got qso:" + r);
-
-            if (x.sig == 'POTA') {
-                window.pywebview.api.get_park(x.sig_info)
-                    .then((r: string) => {
-                        let p = JSON.parse(r) as Park;
-                        const newCtxData = { ...contextData };
-                        newCtxData.spotId = id;
-                        newCtxData.qso = x;
-                        newCtxData.park = p;
-                        newCtxData.summit = null;
-                        getOtherOps(id).then((oo) => {
-                            newCtxData.otherOperators = oo;
-                            setData(newCtxData);
-                        });
-                    });
-            } else if (x.sig == 'SOTA') {
-
-                window.pywebview.api.get_summit(x.sig_info)
-                    .then((r: string) => {
-                        let summit = JSON.parse(r) as Park;
-                        const newCtxData = { ...contextData };
-                        newCtxData.spotId = id;
-                        newCtxData.qso = x;
-                        //newCtxData.summit = summit;
-                        newCtxData.park = summit;
-                        setData(newCtxData);
-                    });
-
-                // getSummitInfo(x.sig_info).then((summit: Summit) => {
-                //     console.log("got summit: " + summit.summitCode);
-                //     const newCtxData = { ...contextData };
-                //     newCtxData.spotId = id;
-                //     newCtxData.qso = x;
-                //     newCtxData.summit = summit;
-                //     newCtxData.park = null;
-                //     setData(newCtxData);
-                // });
-            }
-
-        });
-    }
 
     React.useEffect(() => {
         if (window.pywebview !== undefined && window.pywebview.api !== null)
@@ -287,6 +232,7 @@ export default function SpotViewer() {
             getSpots();
 
             window.pywebview.state.getSpots = getSpots;
+            window.pywebview.state.setWorking = setWorking;
         }
 
         try {
@@ -296,6 +242,15 @@ export default function SpotViewer() {
         } catch {
             console.log("ignored error loading sortmodel. using default");
         }
+
+        try {
+            let j = window.localStorage.getItem("PAGE_MODEL") || '';
+            let pm = JSON.parse(j) as GridPaginationModel;
+            console.log(`pagemodel ${j} ${pm}`)
+            setPaginationModel(pm);
+        } catch {
+            console.log("ignored error loading pagination model. using default");
+        }
     }, []);
 
     React.useEffect(() => {
@@ -303,9 +258,11 @@ export default function SpotViewer() {
         if (window.pywebview !== undefined) {
             getSpots();
         }
-    }, [contextData.bandFilter, contextData.regionFilter,
-    contextData.qrtFilter, contextData.locationFilter,
-    contextData.huntedFilter, contextData.onlyNewFilter]
+    },
+        [contextData.bandFilter, contextData.regionFilter,
+        contextData.qrtFilter, contextData.locationFilter,
+        contextData.huntedFilter, contextData.onlyNewFilter,
+        contextData.continentFilter]
     );
 
     // return the correct PK id for our rows
@@ -318,14 +275,11 @@ export default function SpotViewer() {
         event,   // MuiEvent<React.MouseEvent<HTMLElement>>
         details, // GridCallbackDetails
     ) => {
-        // load the spot's comments into the db
-        let x = window.pywebview.api.insert_spot_comments(params.row.spotId);
-
-        x.then(() => {
-            // wait to get the rest of the data until after the spot comments 
-            // are inserted
-            getQsoData(params.row.spotId);
-        });
+        // setting spotId in ctx is connected to HandleSpotRowClick
+        const newCtxData = { ...contextData };
+        // console.log('setting spot to ' + params.row.spotId);
+        newCtxData.spotId = params.row.spotId;
+        setData(newCtxData);
     };
 
     function setFilterModel(e: GridFilterModel) {
@@ -336,6 +290,11 @@ export default function SpotViewer() {
     function setSortModelAndSave(newModel: GridSortModel) {
         setSortModel(newModel);
         window.localStorage.setItem("SORT_MODEL", JSON.stringify(newModel));
+    }
+
+    function setPaginationModelAndSave(newModel: GridPaginationModel) {
+        setPaginationModel(newModel);
+        window.localStorage.setItem("PAGE_MODEL", JSON.stringify(newModel));
     }
 
     function getClassName(params: GridRowClassNameParams<SpotRow>) {
@@ -373,15 +332,18 @@ export default function SpotViewer() {
                 rows={spots}
                 sx={{
                     "& .Mui-selected.spotviewer-row-new": {
-                      backgroundColor: "rgba(75, 30, 110, 0.75) !important"
-                    }
+                        backgroundColor: "rgba(75, 30, 110, 0.75) !important"
+                    },
+                    '& .Mui-selected': {
+                        color: 'alert.main',
+                    },
                 }}
                 slots={{ toolbar: CustomToolbar }}
                 columns={columns}
                 getRowId={getRowId}
                 initialState={{
                     pagination: {
-                        paginationModel: { page: 0, pageSize: 25 },
+                        paginationModel: pageModel,
                     },
                 }}
                 pageSizeOptions={[5, 10, 25, 100]}
@@ -389,9 +351,12 @@ export default function SpotViewer() {
                 onFilterModelChange={(v) => setFilterModel(v)}
                 onRowClick={handleRowClick}
                 sortModel={sortModel}
+                paginationModel={pageModel}
                 onSortModelChange={(e) => setSortModelAndSave(e)}
+                onPaginationModelChange={(e) => setPaginationModelAndSave(e)}
                 getRowClassName={getClassName}
             />
+            <HandleSpotRowClick />
         </div>
     );
 }

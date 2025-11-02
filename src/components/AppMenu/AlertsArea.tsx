@@ -9,11 +9,22 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import SnoozeIcon from '@mui/icons-material/Snooze';
 import { checkApiResponse } from '../../util';
+import FreqButton from '../SpotViewer/FreqButton';
 
+// Update the Button's color options to include an alert option
+declare module '@mui/material/IconButton' {
+    interface IconButtonPropsColorOverrides {
+      alert: true;
+    }
+  }
+  
 interface AlertData {
     title: string,
     msg: string,
-    alertId: number
+    alertId: number,
+    spotId: number,
+    freq: string,
+    mode: string
 }
 
 export default function AlertsArea() {
@@ -64,11 +75,15 @@ export default function AlertsArea() {
     //
     // json: a JSON object of all alert msgs keyed to the alert title+id
     // keys have this format: 'ALERTNAME+ALERTDBID' ex Texas+3
-    function showSpotAlert(json: string) {
+    function showSpotAlert(json: any) {
+        //let data = json;
+        //console.log(json);
+        //console.log(typeof json);
         let data = JSON.parse(json);
         let currAlerts = [...alerts];
 
         let k = Object.keys(data);
+        console.log(k);
 
         k.forEach((key) => {
             const spots = data[key];
@@ -77,13 +92,24 @@ export default function AlertsArea() {
             let alertId = key.split('+')[1];
             let alertInt = parseInt(alertId || '-1');
 
-            spots.forEach((alertMsg: string) => {
-                currAlerts.push({ title: alertName, msg: alertMsg, alertId: alertInt });
+            spots.forEach((alertMsg: any) => {
+                //console.log('alertMsg: ' + alertMsg);
+                let alertData = alertMsg;//JSON.parse(alertMsg);
+                const text = `📢 New ref ${alertData.location}: ${alertData.activator} @ ${alertData.reference} 🔸 ${alertData.mode}(${alertData.freq})`;
+                currAlerts.push({ title: alertName, msg: text, alertId: alertInt, freq: alertData.freq, mode: alertData.mode, spotId: alertData.spotId });
             });
         });
 
         setAlerts(currAlerts);
     }
+
+    React.useEffect(() => {
+        // if (contextData.themeMode == 'dark')
+        //     setRefreshBtnColor('primary')
+        // else if (contextData.themeMode == 'light')
+        //     // using primary on light makes it green on green
+        //     setRefreshBtnColor('secondary')
+    }, [contextData.themeMode]);
 
     React.useEffect(() => {
         let x = [...alerts];
@@ -123,6 +149,15 @@ export default function AlertsArea() {
         setActiveStep((prevActiveStep) => prevActiveStep - 1);
     };
 
+    const handleSpotClick = () => {
+        const spotId = alerts[activeStep]?.spotId;
+        // setting spotId in ctx is connected to HandleSpotRowClick
+        const newCtxData = { ...contextData };
+        console.log('ALERT: setting spot to ' + spotId);
+        newCtxData.spotId = spotId;
+        setData(newCtxData);
+    }
+
     return (
         <div>
             {(!alertHidden) &&
@@ -130,19 +165,27 @@ export default function AlertsArea() {
                     <div className='alert-box'>
                         <InfoOutlinedIcon sx={{
                             marginLeft: '7px',
-                            marginRight: '3px',
+                            marginRight: '4px',
                             height: 'auto',
                             padding: '2px',
                             color: 'rgb(184, 231, 251)'
                         }} />
-                        <div className='alert-content'>
+                        <div className='alert-content' onClick={handleSpotClick}>
                             <div className='alert-title'>Alert from: {alerts[activeStep]?.title}</div>
-                            <div>{alerts[activeStep]?.msg}</div>
+                            <FreqButton 
+                                activator={'none'}
+                                frequency={alerts[activeStep]?.freq}
+                                mode={alerts[activeStep]?.mode} 
+                                buttonVariant={'text'} 
+                                displayText={alerts[activeStep]?.msg}
+                                widthSx='100%'
+                                buttonSize='small'
+                                color='alert' />
                         </div>
                         <IconButton
                             sx={{ height: 'fit-content' }}
                             size='small'
-                            color='info'
+                            color='alert'
                             onClick={handleSnoozeClick}
                             title='Snooze this alert for 10 minutes'>
                             <SnoozeIcon sx={{ fontSize: '0.80rem' }} />
@@ -150,7 +193,7 @@ export default function AlertsArea() {
                         <IconButton
                             sx={{ height: 'fit-content' }}
                             size='small'
-                            color='info'
+                            color='alert'
                             onClick={handleAlertClose}
                             title='Dismiss (Shift+click to dismiss all)'>
                             <CloseIcon sx={{ fontSize: '0.80rem' }} />
