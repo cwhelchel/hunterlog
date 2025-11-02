@@ -23,6 +23,8 @@ jobs:
     - name: Update APT
       run: |
         sudo apt-get update
+    - name: Install girepository-2.0
+      run: sudo apt-get install -y libgirepository-2.0-dev
     - name: Use Node.js
       uses: actions/setup-node@v3
       with:
