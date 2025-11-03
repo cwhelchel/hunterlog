@@ -82,4 +82,4 @@ class Continents():
         elif __file__:
             # were running from source (npm run start) and this file is in
             # so we need to back up a little so the code works
-            return os.path.dirname(__file__) + "../../../"
+            return os.path.dirname(__file__) + "/../../"

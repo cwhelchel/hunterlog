@@ -100,6 +100,7 @@ class JsApi:
 
         comms = self.pota.get_spot_comments(spot.activator, spot.reference)
         try:
+            logging.debug('getting lock insert spot comments')
             if not self.lock.acquire(timeout=4.00):
                 # self.db.session.rollback()
                 logging.warning("insert_spot_comments: lock not acquired")
@@ -114,6 +115,7 @@ class JsApi:
         # my_grid = self.db.config.get_value("my_grid6")
 
         # if we cant get a lock return null
+        logging.debug('getting lock for qso from spot')
         if not self.lock.acquire(timeout=4.00):
             self.db.session.rollback()
             logging.warning("timed out lock acquisition. session rollback")
@@ -122,6 +124,8 @@ class JsApi:
         spot = self.db.spots.get_spot(id)
         if spot is None:
             logging.warning(f"spot not found {id}")
+            if self.lock.locked():
+                self.lock.release()
             return self._response(False, "failed to get spot.")
 
         prog = spot.spot_source
@@ -129,6 +133,8 @@ class JsApi:
 
         if q is None:
             logging.error(f"failed to build qso from spot {spot}")
+            if self.lock.locked():
+                self.lock.release()
             return self._response(False, "failed to build qso from spot.")
 
         # if q.gridsquare:
@@ -722,7 +728,9 @@ class JsApi:
             # wwff = self.wwff.get_spots()
 
             logging.info("acquiring lock for update")
-            self.lock.acquire()
+            if not self.lock.acquire(timeout=4.0):
+                logging.error('no lock aquired')
+                return
             self.db.delete_spots()
             self.programs["POTA"].update_spots(pota)
             self.programs["SOTA"].update_spots(sota)
