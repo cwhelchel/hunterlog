@@ -3,7 +3,7 @@
 
 # testing [cmw]
 
-name: Node.js Build Ubuntu
+name: Node.js Build Ubuntu-24.04
 
 on:
   workflow_dispatch:

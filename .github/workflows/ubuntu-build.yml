@@ -3,7 +3,7 @@
 
 # testing [cmw]
 
-name: Node.js Build Ubuntu
+name: Node.js Build Ubuntu-22.04
 
 on:
   workflow_dispatch:
@@ -16,7 +16,7 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v3
