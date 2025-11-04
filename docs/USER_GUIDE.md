@@ -54,6 +54,8 @@ filled out as normal.
 - CLEAR: reset the QSO entry text boxes (and the other data sections)
 - MULTIOP: allows logging of activations with multiple operators
   - see [Multiop Logging](#multiop-logging).
+- N-FER: For POTA only, enter in the other park references
+  - see [N-fer Logging](#nfer-logging).
 
 Just below the buttons, the distance and bearing to the reference are shown.
 
@@ -62,7 +64,7 @@ Just below the buttons, the distance and bearing to the reference are shown.
 The SPOT+LOG and 'SPOT' button allows you to post spots and re-spots of activators directly to the POTA website. Most of the data for the spot/re-spot is taken from the values entered into the QSO entry data.
 
 > [!NOTE]
-> Sorry, SOTA spotting and re-spotting is not yet supported
+> Sorry, only POTA spotting and re-spotting is supported
 
 When spotting on the POTA network, the data entered into `RST Sent` is added to your spot comment. The `QTH String` the you setup in the configuration screen is also used in
 this spot comment (directly after the RST sent).
@@ -105,6 +107,21 @@ QSO entry text box).
 > when logging a single operator. It will send however many QSOs to your 
 > logger, but there will be a little delay as to not overload your logger's 
 > connection.
+
+### NFER Logging
+
+For POTA spots, Hunterlog can now handle logging activators that are activating
+multiple parks at one time know as "N-Fer's". When an N-fer is logged the park
+count is increased for all parks hunted, but only one QSO is sent to your main 
+logger with the POTA_REF filled with all parks (also in the QSO comment). 
+
+If a N-FER is spotted, it will add a special note telling all other POTA hunters 
+and Hunterlog users that it is an N-FER. This allows other Hunterlog users 
+to automatically have the other park info filled out.
+
+To log a N-Fer hunt that does not automatically put the data into the N-Fer box,
+click the `N-FER` button and enter in the **OTHER** park references. These are
+the parks that are NOT the main spotted park.
 
 ### Logging SOTA chases
 

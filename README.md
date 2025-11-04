@@ -1,6 +1,6 @@
 # Hunterlog 
-[![GitHub Release](https://img.shields.io/badge/download-windows-green)](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.8/hunterlog_0.0.8.zip)
-[![GitHub Release](https://img.shields.io/badge/download-linux-green)](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.8/hunterlog-ubuntu_0.0.8.zip)
+[![GitHub Release](https://img.shields.io/badge/download-windows-green)](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.9/hunterlog_0.0.9.zip)
+[![GitHub Release](https://img.shields.io/badge/download-linux-green)](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.9/hunterlog-ubuntu_0.0.9-hotfix.zip)
 [![GitHub Release](https://img.shields.io/badge/download-mac-green)](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.6/hunterlog-macos_0.0.6.zip)
 [![GitHub Release](https://img.shields.io/github/v/release/cwhelchel/hunterlog?style=flat-square)](https://github.com/cwhelchel/hunterlog/releases)
 
@@ -11,7 +11,7 @@
 </div>
 <hr/>
 
-This application allows you to browse the current POTA and SOTA spots, QSY your rig via
+This application allows you to browse the current POTA, SOTA, and other OTA program's spots, QSY your rig via
 CAT control, and log them to your master logger. It will also keep track of the references you have worked in an internal database. This allows you to know at a glance if a spot is for a reference you need to work.
 
 ![Demo of the goods](docs/img/demo.gif)
@@ -19,8 +19,8 @@ CAT control, and log them to your master logger. It will also keep track of the 
 
 ## Features
 
-* Quickly display and filter spots from POTA and SOTA
-* Track hunted parks and summits
+* Quickly display and filter spots from POTA, SOTA, and other programs
+* Track hunted parks, summits, and references
 * Track QSO count with activators
 * Log QSOs to your main logger via UDP or TCP connection
 * Use CAT control to immediately jump to a spot
@@ -31,6 +31,14 @@ CAT control, and log them to your master logger. It will also keep track of the 
 If you're not comfortable using Github to submit issues and enhancement requests, feel free to join our Discord community server. Hop in and ask questions, share comments, propose new features or get help using Hunterlog.
 
 [Discord Invite Link](https://discord.gg/DfqMVMuMnG)
+
+If you'd like some video style walk-throughs of setting up Hunterlog check out my [YouTube channel](https://www.youtube.com/@cainan-n9fz)
+
+# Installation and Setup
+
+Here's a video overview of installing and setting up Hunterlog for you first time:
+
+[![Watch the video](https://img.youtube.com/vi/VPdCBknlsxk/0.jpg)](https://youtu.be/VPdCBknlsxk)
 
 ## Usage
 
@@ -52,7 +60,22 @@ Let's take a look at the configuration options.
 
 ![Configuration options](docs/img/config.png)
 
-*My Callsign* and *My Gridsquare* are your base callsign and home QTH 6 digit Maidenhead gridsquare. Your call should also be what your POTA user account is registered as. 
+### Basic Info
+
+*My Callsign* and *My Gridsquare* are your base callsign and home QTH 6 digit Maidenhead gridsquare. Your call should also be what your POTA user account is registered as.
+
+The sliders those here should be self explanatory, but the Highlight New option enables a
+blinking background for rows of references you have not hunted (to make sure you 
+never miss on in the list)
+
+#### QTH string
+
+When spotting on the POTA network the RST you put in the QSO entry is added to your spot comment. This string is appended directly after the RST sent with a whitespace before it.
+
+If you put in `South TX` for QTH string and you Spot or Spot & Log a station with a Sent
+RST of 57, it will post a spot to the POTA network with a comment like this:
+
+> [57 South TX]
 
 ### CAT settings 
 First is a drop down selection of CAT interface types. 
@@ -83,16 +106,8 @@ The remote IP address and port where the logger is currently running. This compu
 > The port can usually be configured with in the logger program. See your loggers
 > documentation for specifics
 
-### QTH string
 
-When spotting on the POTA network the RST you put in the QSO entry is added to your spot comment. This string is appended directly after the RST sent with a whitespace before it.
-
-If you put in `South TX` for QTH string and you Spot or Spot & Log a station with a Sent
-RST of 57, it will post a spot to the POTA network with a comment like this:
-
-> [57 South TX]
-
-## Stats
+# Loading in your POTA Stats
 
 > [!IMPORTANT]
 > 👉 **For more in-depth instructions on importing stats** [See the STAT guide](docs/STATS.md) 👈
@@ -116,21 +131,21 @@ you can see what parks you need to hunt.
 >*STATISTICAL DATA SHOWN IN THIS APP IS NOT AUTHORITATIVE* The authoritative data
 of record is your data in https://pota.app
 
-### Logging QSOs
+# Logging QSOs
 
 Click a spot to load the QSO info into the top portion of the screen. Click green frequency button to QSY with CAT control. Click Log QSO after you've had the contact. The app will update stats and send the QSO data (with any modifications you do to the input) to your main logger. 
 
 *It also will store a copy locally in hunter.adi as well as in the database.* This
 is for your convenience and I'd hate for anyone to lose a QSO.
 
-### Spotting
+## Spotting
 
 You can spot/re-spot POTA activators through Hunterlog. When this is done the 
 `RST Sent` and `COMMENT` QSO field are used to build the spot comment. Other
 posted spot info also comes from the QSO entry fields: Frequency, Callsign, and Mode.
 These will be sent to the POTA website and everyone will be able to see them.
 
-## Files
+# Files
 
 Running the app will create the `spots.db` which is very important as it will 
 contain all your qsos, configuration settings and stats such as parks and 
@@ -143,8 +158,10 @@ Javascript console that maybe seen when inspecting the webpage.
 `hunter.adi` is a backup store of logged QSOs, if there's an error with the network
 connection between HunterLog and your main logger. Your QSOs are here still.
 
+The app also requires a few data files but they will be packaged with the release.
+It may also download new files as you use it.
 
-## Bug reporting
+# Bug reporting
 
 This app is currently under pre-release. Please report bugs here on Github 
 issues. In your report, please include both the app version number and the db
