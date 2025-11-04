@@ -30,6 +30,11 @@ This probably the single most useful thing to import and it also ***takes the lo
 Once imported the park stats will allow hunter log to show you what parks you have hunted and how many times you've hunted them. More importantly it shows you what 
 parks you _haven't_ hunted.
 
+*If you prefer, here is a video guide that shows how to import the POTA park hunts:*
+
+[![Watch the video](https://img.youtube.com/vi/VPdCBknlsxk/0.jpg)](https://youtu.be/VPdCBknlsxk?t=357)
+
+
 ### Step 1 - Download hunter_parks.csv
 
 You must to visit [https://pota.app/#stats/](https://pota.app/#/user/stats) and use the Hunted Parks "Export CSV" button to download the `hunter_parks.csv` file.
@@ -67,21 +72,36 @@ Since this _should_ be a one time process and since it takes _so long_, I added 
 
 ## OPEARTOR STATS
 
+
+**Here's a video guide for the OP stats import please watch so you are aware of
+some of the pitfalls with this import:**
+
+[![Watch the video](https://img.youtube.com/vi/YZaEVVyKh3M/0.jpg)](https://youtu.be/YZaEVVyKh3M)
+
+
 This will display how many QSOs you have had with a given callsign at a POTA 
 park activation. This is marginally useful given that the counts will be off
 from what the POTA website has because of how "two-fer" parks are counted.
 
 To load up historical data for this stat, an ADIF copy of your 'main' log file 
 is needed. Your QSOs should have the ADIF fields set as so:
-- SIG set to 'POTA'
-- SIG_INFO set to the park reference
+- SIG must be set to 'POTA', 'SOTA', 'WWFF'
+- SIG_INFO set to the reference identifier (per the given SIG program)
 - COMMENT like the POTAPLUS comment ex: `[POTA K-4451 US-AL EM72el Tuskegee National Forest]`
+  * the comment style should be last resort
 
 The import will try it's best to match the park and will worst case parse the POTAPlus
-comment. *This data is not used for Park hunt counts but only for Operator hunt counts.*
+comment. 
 
-_Note_: if you are like me and only log one QSO with an activator even if they are
-at a two-fer park, then the operator hunt numbers will not match with POTA.APP
+> [!NOTE]
+> This data is NOT used for Park hunt counts that are stored in Hunterlog, but 
+> will be used for other counts like Operator hunts or location hunts. Park hunts
+> counts are imported in the previous section
+
+> [!WARNING]
+> I assume that most people only log one QSO with an activator even if they are
+> at a two-fer park, this means that operator hunt numbers will not match with POTA.APP
+
 
 ### Step 1 - Export you master log to ADIF
 
@@ -90,6 +110,11 @@ up to you is to have the correct ADIF fields in the file (SIG, SIG_INFO) as
 described above.
 
 Once you have this adi file, proceed to the next step.
+
+> [!WARNING]
+> You should also probably remove some unneeded adif fields from the adi log. A log
+> file that is too large could cause very poor performance. The video above shows 
+> a good way to do this with ADIF master.
 
 ### Step 2 - Load file into hunterlog
 
