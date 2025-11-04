@@ -1,6 +1,6 @@
 # Hunterlog 
-[![GitHub Release](https://img.shields.io/badge/download-windows-green)](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.8/hunterlog_0.0.8.zip)
-[![GitHub Release](https://img.shields.io/badge/download-linux-green)](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.8/hunterlog-ubuntu_0.0.8.zip)
+[![GitHub Release](https://img.shields.io/badge/download-windows-green)](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.9/hunterlog_0.0.9.zip)
+[![GitHub Release](https://img.shields.io/badge/download-linux-green)](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.9/hunterlog-ubuntu_0.0.9-hotfix.zip)
 [![GitHub Release](https://img.shields.io/badge/download-mac-green)](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.6/hunterlog-macos_0.0.6.zip)
 [![GitHub Release](https://img.shields.io/github/v/release/cwhelchel/hunterlog?style=flat-square)](https://github.com/cwhelchel/hunterlog/releases)
 
@@ -11,7 +11,7 @@
 </div>
 <hr/>
 
-This application allows you to browse the current POTA and SOTA spots, QSY your rig via
+This application allows you to browse the current POTA, SOTA, and other OTA program's spots, QSY your rig via
 CAT control, and log them to your master logger. It will also keep track of the references you have worked in an internal database. This allows you to know at a glance if a spot is for a reference you need to work.
 
 ![Demo of the goods](docs/img/demo.gif)
@@ -19,8 +19,8 @@ CAT control, and log them to your master logger. It will also keep track of the 
 
 ## Features
 
-* Quickly display and filter spots from POTA and SOTA
-* Track hunted parks and summits
+* Quickly display and filter spots from POTA, SOTA, and other programs
+* Track hunted parks, summits, and references
 * Track QSO count with activators
 * Log QSOs to your main logger via UDP or TCP connection
 * Use CAT control to immediately jump to a spot
@@ -31,6 +31,8 @@ CAT control, and log them to your master logger. It will also keep track of the 
 If you're not comfortable using Github to submit issues and enhancement requests, feel free to join our Discord community server. Hop in and ask questions, share comments, propose new features or get help using Hunterlog.
 
 [Discord Invite Link](https://discord.gg/DfqMVMuMnG)
+
+If you'd like some video style walk-throughs of setting up Hunterlog check out my [YouTube channel](https://www.youtube.com/@cainan-n9fz)
 
 ## Usage
 
