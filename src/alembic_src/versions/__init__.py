@@ -17,7 +17,7 @@ def get_app_global_path():
         # were running from source (npm run start) and this file is in 
         # src/alembic_src/versions we need to back up a little so the code
         # below works 
-        return os.path.dirname(__file__) + "../../../"
+        return os.path.dirname(__file__) + "/../../"
     
 
 # we dont want to worry about alembic.ini when running programmatically. so we

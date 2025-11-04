@@ -1,6 +1,19 @@
 
 import os
+import sys
 import threading
+import logging as L
+
+log = L.getLogger(__name__)
+
+
+def res_path(rel_path):
+    try:
+        base_path = sys._MEIPASS
+    except:  # NOQA E722
+        base_path = os.path.abspath('.')
+
+    return os.path.join(base_path, rel_path)
 
 
 def get_entrypoint():
@@ -11,11 +24,19 @@ def get_entrypoint():
     from a frozen path, development tree, or a bundled app
     '''
     def exists(path):
-        return os.path.exists(os.path.join(os.path.dirname(__file__), path))
+        p = os.path.join(os.path.dirname(__file__) or '.', path)
+        b = os.path.exists(p)
+        return b
 
     # now that this is in the utils module folder we have to check for
     # existence of files up one directory BUT return the path relative to
     # index.py
+
+    root = res_path('gui')
+    x = os.path.join(root, 'index.html')
+
+    if os.path.exists(x):
+        return x
 
     if exists('../../gui/index.html'):  # unfrozen development
         return '../gui/index.html'
@@ -24,6 +45,9 @@ def get_entrypoint():
         return '../Resources/gui/index.html'
 
     if exists('../gui/index.html'):
+        return '../gui/index.html'
+
+    if exists('./gui/index.html'):
         return './gui/index.html'
 
     raise Exception('No index.html found')
