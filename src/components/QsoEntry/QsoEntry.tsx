@@ -51,6 +51,7 @@ export default function QsoEntry() {
     const [qsoTime, setQsoTime] = React.useState<Dayjs>(dayjs('2022-04-17T15:30'));
     const { contextData, setData } = useAppContext();
     const [spinnerOpen, setSpinnerOpen] = React.useState(false);
+    const [isSwapped, setIsSwapped] = React.useState(false);
 
     function logQso() {
         const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -405,7 +406,13 @@ export default function QsoEntry() {
         else
             setSpinnerOpen(false);
     }, [contextData.loadingQsoData]);
-    
+
+    React.useEffect(() => {
+        if (contextData.swapRstOrder)
+            setIsSwapped(true);
+        else
+            setIsSwapped(false);
+    }, [contextData.swapRstOrder])
 
     React.useEffect(() => {
         function handleEscapeKey(event: KeyboardEvent) {
@@ -413,6 +420,8 @@ export default function QsoEntry() {
                 handleClearClick(null);
             }
         }
+        let swapStr = window.localStorage.getItem("SWAP_RST_ORDER") || '1';
+        setIsSwapped(parseInt(swapStr) == 1 ? true : false);
 
         document.addEventListener('keydown', handleEscapeKey)
         return () => document.removeEventListener('keydown', handleEscapeKey)
@@ -471,23 +480,46 @@ export default function QsoEntry() {
                             setQso({ ...qso, mode: e.target.value });
                         }} />
                 </Grid>
-                <Grid item xs={4} lg={2}>
-                    <TextField id="rstSent" label="RST Sent"
-                        value={qso.rst_sent}
-                        inputProps={{ style: textFieldStyle }}
-                        onChange={(e) => {
-                            setQso({ ...qso, rst_sent: e.target.value });
-                        }} />
-                </Grid>
-                <Grid item xs={4} lg={2}>
-                    <TextField id="rstRecv" label="RST Recv"
-                        value={qso.rst_recv}
-                        inputProps={{ style: textFieldStyle }}
-                        onChange={(e) => {
-                            setQso({ ...qso, rst_recv: e.target.value });
-                        }} />
-                </Grid>
-
+                {isSwapped &&
+                    <>
+                        <Grid item xs={4} lg={2}>
+                            <TextField id="rstRecv" label="RST Recv"
+                                value={qso.rst_recv}
+                                inputProps={{ style: textFieldStyle }}
+                                onChange={(e) => {
+                                    setQso({ ...qso, rst_recv: e.target.value });
+                                }} />
+                        </Grid>
+                        <Grid item xs={4} lg={2}>
+                            <TextField id="rstSent" label="RST Sent"
+                                value={qso.rst_sent}
+                                inputProps={{ style: textFieldStyle }}
+                                onChange={(e) => {
+                                    setQso({ ...qso, rst_sent: e.target.value });
+                                }} />
+                        </Grid>
+                    </>
+                }
+                {!isSwapped &&
+                    <>
+                        <Grid item xs={4} lg={2}>
+                            <TextField id="rstSent" label="RST Sent"
+                                value={qso.rst_sent}
+                                inputProps={{ style: textFieldStyle }}
+                                onChange={(e) => {
+                                    setQso({ ...qso, rst_sent: e.target.value });
+                                }} />
+                        </Grid>
+                        <Grid item xs={4} lg={2}>
+                            <TextField id="rstRecv" label="RST Recv"
+                                value={qso.rst_recv}
+                                inputProps={{ style: textFieldStyle }}
+                                onChange={(e) => {
+                                    setQso({ ...qso, rst_recv: e.target.value });
+                                }} />
+                        </Grid>
+                    </>
+                }
 
                 <Grid item xs={4} lg={2}>
                     <TextField id="park" label="Park"

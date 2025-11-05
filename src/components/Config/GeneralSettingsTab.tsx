@@ -1,22 +1,17 @@
 import * as React from 'react';
-import { Checkbox, FormControlLabel, Grid, Stack, Switch, TextField, Tooltip } from "@mui/material";
+import { Grid, Stack, TextField, Tooltip } from "@mui/material";
 import { useConfigContext } from './ConfigContextProvider';
 import { useAppContext } from '../AppContext';
+import ToggleSwitch from './ToggleSwitch';
 
 export default function GeneralSettingsTab() {
 
     const { contextData, setData } = useAppContext();
     const { config, setConfig } = useConfigContext();
 
-    const [imperialChecked, setImperialChecked] = React.useState(true);
-    const [useDarkMode, setUseDarkMode] = React.useState(true);
-    const [showSpotAge, setShowSpotAge] = React.useState(true);
-    const [highlightNewRef, setHighlightNewRef] = React.useState(true);
-
     // function to toggle the dark mode as true or false
-    const toggleDarkTheme = () => {
-        const newMode = !useDarkMode;
-        setUseDarkMode(newMode);
+    const toggleDarkTheme = (newVal: boolean) => {
+        const newMode = newVal;
 
         const newCtx = { ...contextData };
         if (newMode)
@@ -25,47 +20,13 @@ export default function GeneralSettingsTab() {
             newCtx.themeMode = 'light';
 
         setData(newCtx);
-        window.localStorage.setItem("USE_DARK_MODE", newMode ? '1' : '0');
     };
 
-    const toggleShowSpotAge = () => {
-        const newMode = !showSpotAge;
-        setShowSpotAge(newMode);
-        window.localStorage.setItem("SHOW_SPOT_AGE", newMode ? '1' : '0');
+    const toggleSwapRst = (newVal: boolean) => {
+        const newCtx = { ...contextData };
+        newCtx.swapRstOrder = newVal;
+        setData(newCtx);
     };
-
-    const toggleHighlightNewRef = () => {
-        const newMode = !highlightNewRef;
-        setHighlightNewRef(newMode);
-        window.localStorage.setItem("HIGHLIGHT_NEW_REF", newMode ? '1' : '0');
-    };
-
-    const handleCheckedChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setImperialChecked(event.target.checked);
-        let x = event.target.checked ? '1' : '0';
-        // this is a display only config so we don't put this in the db
-        // we put this into localstorage
-        window.localStorage.setItem("USE_FREEDOM_UNITS", x);
-    };
-
-    React.useEffect(() => {
-        let units = window.localStorage.getItem("USE_FREEDOM_UNITS") || '1';
-        let use_imperial = parseInt(units);
-        setImperialChecked(use_imperial != 0 ? true : false);
-
-        let darkMode = window.localStorage.getItem("USE_DARK_MODE") || '1';
-        let darkModeInt = parseInt(darkMode);
-        setUseDarkMode(darkModeInt == 1 ? true : false);
-
-        let spotAgeStr = window.localStorage.getItem("SHOW_SPOT_AGE") || '1';
-        let showSage = parseInt(spotAgeStr);
-        setShowSpotAge(showSage == 1 ? true : false);
-
-        let highlightNewStr = window.localStorage.getItem("HIGHLIGHT_NEW_REF") || '1';
-        let highlightNew = parseInt(highlightNewStr);
-        setHighlightNewRef(highlightNew == 1 ? true : false);
-    }, []);
-
 
     return (
         <>
@@ -94,27 +55,19 @@ export default function GeneralSettingsTab() {
                     </Tooltip>
                 </Grid>
             </Grid>
-            <Stack direction={'row'} spacing={1}>
-                <FormControlLabel control={<Checkbox defaultChecked checked={imperialChecked}
-                    onChange={handleCheckedChange} />} label="Display Imperial Units" />
-
-                <FormControlLabel control={<Switch checked={useDarkMode}
-                    onChange={toggleDarkTheme} />} label="Dark Mode" />
-
-                <Tooltip title="Show spot time as age: '5 min' vs 'hh:mm'">
-                    <FormControlLabel control={<Switch checked={showSpotAge}
-                        onChange={toggleShowSpotAge} />} label="Show Spot Age" />
-                </Tooltip>
-
-                <Tooltip title="Add extra highlighting to new park rows">
-                    <FormControlLabel control={<Switch checked={highlightNewRef}
-                        onChange={toggleHighlightNewRef} />} label="Highlight New" />
-                </Tooltip>
+            <Stack direction={'row'} spacing={1} marginTop={3} sx={{ flexWrap: 'wrap' }}>
+                <ToggleSwitch storageKey={'USE_DARK_MODE'} initialState={true} label='Dark Mode' onChange={toggleDarkTheme} />
+                <ToggleSwitch storageKey={'USE_FREEDOM_UNITS'} initialState={true} label='Display Imperial Units' longTrueText='Display distance in miles' longFalseText='Display distance in kilometers' />
+                <ToggleSwitch storageKey={'SHOW_SPOT_AGE'} initialState={true} label='Show Spot Age' longTrueText='Shows spot age as minutes past' longFalseText='Shows spot timestamps' />
+            </Stack>
+            <Stack direction={'row'} spacing={1} marginTop={3} sx={{ flexWrap: 'wrap' }}>
+                <ToggleSwitch storageKey={'HIGHLIGHT_NEW_REF'} initialState={true} label='Highlight New' longTrueText='Highlight new references' longFalseText='No highlighting' />
+                <ToggleSwitch storageKey={'SWAP_RST_ORDER'} initialState={false} label='Swap RST Order' longTrueText='Recv RST first' longFalseText='Sent RST first' onChange={toggleSwapRst} />
             </Stack>
             <Stack spacing={2} marginTop={3}>
                 <p className="modal-config-text">
-                    QTH string is inserted when posting spots to POTA.app ex: 'mid GA'
-                    is inserted into comment like '[599 mid GA] thx fb qso'
+                    QTH string is inserted when posting spots to POTA.app ex: &apos;mid GA&apos;
+                    is inserted into comment like &apos;[599 mid GA] thx fb qso&apos;
                 </p>
                 <TextField id="qth_string" label="QTH String"
                     value={config?.qth_string}
