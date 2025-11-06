@@ -15,7 +15,7 @@ import { Alert, Avatar, Tooltip, AlertColor, Snackbar } from '@mui/material';
 import StatsMenu from './StatsMenu';
 import AlertsArea from './AlertsArea';
 import AlertsMenu from './AlertsMenu';
-import { checkApiResponse } from '../../util';
+import { checkApiResponse } from '../../tsx/util';
 import { ConfigContextProvider } from '../Config/ConfigContextProvider';
 
 export default function AppMenu() {

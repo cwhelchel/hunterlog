@@ -12,7 +12,7 @@ import { useConfigContext } from './ConfigContextProvider'
 import GeneralSettingsTab from './GeneralSettingsTab';
 import LoggerSettingsTab from './LoggerSettingsTab';
 import RadioSettingsTab from './RadioSettingsTab';
-import { setErrorMsg } from '../../util';
+import { setErrorMsg } from '../../tsx/util';
 import { useAppContext } from '../AppContext';
 
 

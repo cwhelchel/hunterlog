@@ -3,7 +3,7 @@ import './Footer.scss'
 import * as React from 'react'
 import Link from '@mui/material/Link';
 import { Box, LinearProgress } from '@mui/material';
-import { checkApiResponse } from '../../util';
+import { checkApiResponse } from '../../tsx/util';
 import { useAppContext } from '../AppContext';
 
 export default function Footer() {

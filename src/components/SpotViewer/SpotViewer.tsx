@@ -17,7 +17,7 @@ import HuntedCheckbox from './HuntedCheckbox';
 import FreqButton from './FreqButton';
 import SpotCommentsButton from './SpotComments';
 import SpotTimeCell from './SpotTime';
-import { checkApiResponse } from '../../util';
+import { checkApiResponse } from '../../tsx/util';
 import HandleSpotRowClick from './HandleSpotRowClick';
 
 // https://mui.com/material-ui/react-table/

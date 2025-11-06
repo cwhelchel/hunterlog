@@ -8,7 +8,7 @@ import { Tooltip } from '@mui/material';
 import TimelineIcon from '@mui/icons-material/Timeline';
 
 import './ActivatorInfo.scss'
-import { checkApiResponse } from '../../util';
+import { checkApiResponse } from '../../tsx/util';
 
 interface IActivatorInfoProps {
 }

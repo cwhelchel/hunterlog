@@ -5,7 +5,7 @@ import { getParkStats } from '../../tsx/pota';
 import { ParkStats } from '../../@types/PotaTypes';
 
 import './ParkInfo.scss'
-import { checkApiResponse } from '../../util';
+import { checkApiResponse } from '../../tsx/util';
 
 export default function ParkInfo() {
     const { contextData, setData } = useAppContext();

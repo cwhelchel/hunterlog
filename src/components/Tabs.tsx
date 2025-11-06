@@ -8,7 +8,7 @@ import Stack from '@mui/material/Stack';
 import ParkIcon from '@mui/icons-material/Park';
 import PersonIcon from '@mui/icons-material/Person';
 import { useAppContext } from './AppContext';
-import { checkApiResponse } from '../util';
+import { checkApiResponse } from '../tsx/util';
 import Badge from '@mui/material/Badge';
 import { Tooltip } from '@mui/material';
 

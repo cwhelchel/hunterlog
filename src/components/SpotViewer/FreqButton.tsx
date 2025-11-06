@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Button, Tooltip } from '@mui/material';
-import { checkApiResponse } from '../../util';
+import { checkApiResponse } from '../../tsx/util';
 import { useAppContext } from '../AppContext';
 
 // Update the Button's color options to include an alert option
