@@ -1,7 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import * as React from 'react';
-import Button from '@mui/material/Button';
-import { Backdrop, Badge, CircularProgress, styled } from '@mui/material';
-import { DataGrid, GridColDef, GridValueGetterParams, GridValueFormatterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams, GridRowClassNameParams, GridToolbar, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarColumnsButton, GridToolbarQuickFilter, GridPaginationModel } from '@mui/x-data-grid';
+import { Backdrop, Badge, CircularProgress } from '@mui/material';
+import { DataGrid, GridColDef, GridValueGetterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams, GridRowClassNameParams, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarColumnsButton, GridToolbarQuickFilter, GridPaginationModel } from '@mui/x-data-grid';
 import { GridEventListener } from '@mui/x-data-grid';
 import LandscapeIcon from '@mui/icons-material/Landscape';
 import ParkIcon from '@mui/icons-material/Park';
@@ -9,7 +9,6 @@ import Brightness3Icon from '@mui/icons-material/Brightness3';
 
 import { useAppContext } from '../AppContext';
 
-import { Qso } from '../../@types/QsoTypes';
 import CallToolTip from './CallTooltip';
 import { SpotRow } from '../../@types/Spots';
 
@@ -17,11 +16,7 @@ import './SpotViewer.scss'
 import HuntedCheckbox from './HuntedCheckbox';
 import FreqButton from './FreqButton';
 import SpotCommentsButton from './SpotComments';
-import { Park } from '../../@types/Parks';
 import SpotTimeCell from './SpotTime';
-import { SpotComments } from '../../@types/SpotComments';
-import { getSummitInfo } from '../../pota';
-import { Summit } from '../../@types/Summit';
 import { checkApiResponse } from '../../util';
 import HandleSpotRowClick from './HandleSpotRowClick';
 
@@ -148,15 +143,15 @@ const columns: GridColDef[] = [
 const rows: SpotRow[] = [];
 
 
-var currentSortFilter = { field: 'spotTime', sort: 'desc' as GridSortDirection };
-var currentPageFilter = { pageSize: 25, page: 0, };
+const currentSortFilter = { field: 'spotTime', sort: 'desc' as GridSortDirection };
+const currentPageFilter = { pageSize: 25, page: 0, };
 
 export default function SpotViewer() {
     const [spots, setSpots] = React.useState(rows)
     const [sortModel, setSortModel] = React.useState<GridSortModel>([currentSortFilter]);
     const [pageModel, setPaginationModel] = React.useState<GridPaginationModel>(currentPageFilter);
     const [backdropOpen, setBackdropOpen] = React.useState(false);
-    const { contextData, setData, qsyButtonId, setLastQsyBtnId } = useAppContext();
+    const { contextData, setData } = useAppContext();
 
     function getSpots() {
         // get the spots from the db
@@ -165,7 +160,7 @@ export default function SpotViewer() {
         setBackdropOpen(true);
         const spots = window.pywebview.api.get_spots()
         spots.then((r: string) => {
-            var x = JSON.parse(r);
+            const x = JSON.parse(r);
             setSpots(x);
             setBackdropOpen(false);
         });
@@ -195,7 +190,7 @@ export default function SpotViewer() {
 
         const p = window.pywebview.api.get_seen_regions();
         p.then((x: string) => {
-            let json = checkApiResponse(x, contextData, setData);
+            const json = checkApiResponse(x, contextData, setData);
             if (json.success) {
                 contextData.regions = json.seen_regions;
                 setData(contextData);
@@ -209,7 +204,7 @@ export default function SpotViewer() {
             if (spot === null)
                 return;
             if (spot.spot_source == 'POTA') {
-                let location = spot.locationDesc.substring(0, 5);
+                const location = spot.locationDesc.substring(0, 5);
                 if (!contextData.locations.includes(location))
                     contextData.locations.push(location);
             }
@@ -236,16 +231,16 @@ export default function SpotViewer() {
         }
 
         try {
-            let j = window.localStorage.getItem("SORT_MODEL") || '';
-            let sm = JSON.parse(j) as GridSortModel;
+            const j = window.localStorage.getItem("SORT_MODEL") || '';
+            const sm = JSON.parse(j) as GridSortModel;
             setSortModel(sm);
         } catch {
             console.log("ignored error loading sortmodel. using default");
         }
 
         try {
-            let j = window.localStorage.getItem("PAGE_MODEL") || '';
-            let pm = JSON.parse(j) as GridPaginationModel;
+            const j = window.localStorage.getItem("PAGE_MODEL") || '';
+            const pm = JSON.parse(j) as GridPaginationModel;
             console.log(`pagemodel ${j} ${pm}`)
             setPaginationModel(pm);
         } catch {
@@ -266,6 +261,7 @@ export default function SpotViewer() {
     );
 
     // return the correct PK id for our rows
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     function getRowId(row: { spotId: any; }) {
         return row.spotId;
     }
@@ -298,8 +294,8 @@ export default function SpotViewer() {
     }
 
     function getClassName(params: GridRowClassNameParams<SpotRow>) {
-        let highlightNewStr = window.localStorage.getItem("HIGHLIGHT_NEW_REF") || '1';
-        let highlightNew = parseInt(highlightNewStr);
+        const highlightNewStr = window.localStorage.getItem("HIGHLIGHT_NEW_REF") || '1';
+        const highlightNew = parseInt(highlightNewStr);
 
         if (params.row.is_qrt)
             return 'spotviewer-row-qrt';
@@ -309,15 +305,14 @@ export default function SpotViewer() {
             return 'spotviewer-row';
     };
 
-    function CustomToolbar() {
-        return (
-            <GridToolbarContainer>
-                <GridToolbarColumnsButton />
-                <GridToolbarDensitySelector />
-                <GridToolbarQuickFilter />
-            </GridToolbarContainer>
-        );
-    }
+    // memoize this so it doesn't re-render on all the key presses
+    const CustomToolbar = React.useCallback(() => (
+        <GridToolbarContainer>
+            <GridToolbarColumnsButton />
+            <GridToolbarDensitySelector />
+            <GridToolbarQuickFilter />
+        </GridToolbarContainer>
+    ), []);
 
     return (
         <div className='spots-container'>

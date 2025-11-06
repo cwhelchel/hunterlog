@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import * as React from 'react';
-import { Button, TextField, Grid, Stack, Tooltip, Box, Backdrop, CircularProgress } from '@mui/material';
+import { Button, TextField, Grid, Stack, Tooltip, Box } from '@mui/material';
 import { useAppContext } from '../AppContext';
 import { Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
@@ -11,14 +12,13 @@ import './QsoEntry.scss'
 import QsoTimeEntry from './QsoTimeEntry';
 import { Qso } from '../../@types/QsoTypes';
 import { checkApiResponse, checkReferenceForPota, checkReferenceForSota, checkReferenceForWwff, setToastMsg } from '../../util';
-import { getParkInfo, getStateFromLocDesc } from '../../pota';
+import { getStateFromLocDesc } from '../../pota';
 import { Park } from '../../@types/Parks';
-import { ParkInfo } from '../../@types/PotaTypes';
 
 dayjs.extend(utc);
 
 
-let defaultQso: Qso = {
+const defaultQso: Qso = {
     call: "",
     rst_sent: "",
     rst_recv: "",
@@ -60,9 +60,9 @@ export default function QsoEntry() {
 
         if (qso.sig_info !== undefined && qso.sig_info !== "") {
             // NOTE: compress this for multi location parks like PotaPlus?
-            let loc = contextData.park?.locationDesc;
-            let cmt = qso.comment ?? '';
-            let name = `${contextData.park?.name} ${contextData.park?.parktypeDesc}`;
+            const loc = contextData.park?.locationDesc;
+            const cmt = qso.comment ?? '';
+            const name = `${contextData.park?.name} ${contextData.park?.parktypeDesc}`;
             qso.comment = `[${qso.sig} ${qso.sig_info} ${loc} ${qso.gridsquare} ${name}] ` + cmt;
         }
 
@@ -81,10 +81,10 @@ export default function QsoEntry() {
             qso.comment += ` {Also: ${myPotaRef.otherParks}}`;
         }
 
-        let multiOps = otherOps;
+        const multiOps = otherOps;
 
         if (multiOps !== null && multiOps != '') {
-            let ops = multiOps.split(',');
+            const ops = multiOps.split(',');
 
             // log main window first then loop thru multiops
             window.pywebview.api.log_qso(qso).then((x: string) => {
@@ -93,7 +93,7 @@ export default function QsoEntry() {
                 ops.forEach(async function (call) {
                     console.log(`logging multiop QSO: ${call}`);
                     await sleep(100);
-                    let newQso = { ...qso };
+                    const newQso = { ...qso };
                     newQso.call = call.trim();
                     window.pywebview.api.log_qso(newQso).then((x: string) => {
                         checkApiResponse(x, contextData, setData);
@@ -103,7 +103,7 @@ export default function QsoEntry() {
         } else {
             // log a single operator
             window.pywebview.api.log_qso(qso).then((x: string) => {
-                let json = checkApiResponse(x, contextData, setData);
+                const json = checkApiResponse(x, contextData, setData);
 
                 window.pywebview.api.refresh_spot(contextData.spotId, qso.call, qso.sig_info)
                     .then((x: string) => {
@@ -120,9 +120,9 @@ export default function QsoEntry() {
     }
 
     function getPotaRef(): IGetPotaRef {
-        let res = otherParks;
+        const res = otherParks;
         const currentPark = qso.sig_info;
-        let arr = res.split(',');
+        const arr = res.split(',');
 
         arr.forEach((x) => {
             const isPota = checkReferenceForPota(x);
@@ -145,9 +145,9 @@ export default function QsoEntry() {
         if (qso.sig != 'POTA')
             return;
         console.log(`spotting activator at ${contextData.park?.name}`);
-        let park = qso.sig_info;
+        const park = qso.sig_info;
 
-        let multiOps = otherOps;
+        const multiOps = otherOps;
         if (multiOps !== null && multiOps != '') {
             const ops = multiOps.split(',');
             const x = ops.filter(e => e !== contextData.qso?.call);
@@ -228,11 +228,11 @@ export default function QsoEntry() {
 
     function getDistance() {
         // default to yes
-        let units = window.localStorage.getItem("USE_FREEDOM_UNITS") || '1';
-        let use_imperial = parseInt(units);
+        const units = window.localStorage.getItem("USE_FREEDOM_UNITS") || '1';
+        const use_imperial = parseInt(units);
 
         if (use_imperial) {
-            let mi = Math.trunc(qso.distance * 0.621371);
+            const mi = Math.trunc(qso.distance * 0.621371);
             return `${mi} mi`;
         }
         else
@@ -264,7 +264,7 @@ export default function QsoEntry() {
 
         function updateQsoData(grid6: string, sig: string, sig_info: string, state: string) {
             function setLocalQso() {
-                let newQso = { ...qso };
+                const newQso = { ...qso };
                 newQso.gridsquare = grid6;
                 newQso.sig = sig;
                 newQso.sig_info = sig_info;
@@ -284,7 +284,7 @@ export default function QsoEntry() {
                 setLocalQso();
             }
             else {
-                let newQso = setLocalQso();
+                const newQso = setLocalQso();
 
                 // create a qso object in context data
                 newCtxData.qso = newQso;
@@ -292,10 +292,11 @@ export default function QsoEntry() {
             }
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         function getRefInfo(): any {
 
-            let isSota = checkReferenceForSota(park);
-            let isWwff = checkReferenceForWwff(park);
+            const isSota = checkReferenceForSota(park);
+            const isWwff = checkReferenceForWwff(park);
 
             let sig = 'POTA';
             if (isSota)
@@ -305,12 +306,12 @@ export default function QsoEntry() {
 
             window.pywebview.api.get_reference(sig, park)
                 .then((r: string) => {
-                    let result = checkApiResponse(r, contextData, setData);
+                    const result = checkApiResponse(r, contextData, setData);
                     if (!result.success) {
                         console.log("get_qso_from_spot failed: " + result.message);
                         return;
                     }
-                    let p = JSON.parse(result.park_data) as Park;
+                    const p = JSON.parse(result.park_data) as Park;
                     newCtxData.park = p;
 
                     let state = '';
@@ -354,7 +355,7 @@ export default function QsoEntry() {
         const ops = otherOperators.trim().split(',');
 
         // remove current qso call if needed
-        let x = ops.filter(e => e !== contextData.qso?.call);
+        const x = ops.filter(e => e !== contextData.qso?.call);
 
         if (x.length > 0) {
             setOtherOps(x.join(','));
@@ -378,7 +379,7 @@ export default function QsoEntry() {
         const parks = otherParks.trim().split(',');
 
         // remove current qso call if needed
-        let x = parks.filter(e => e !== contextData.qso?.sig_info);
+        const x = parks.filter(e => e !== contextData.qso?.sig_info);
 
         if (x.length > 0) {
             setOtherParks(x.join(','));
@@ -420,7 +421,7 @@ export default function QsoEntry() {
                 handleClearClick(null);
             }
         }
-        let swapStr = window.localStorage.getItem("SWAP_RST_ORDER") || '1';
+        const swapStr = window.localStorage.getItem("SWAP_RST_ORDER") || '1';
         setIsSwapped(parseInt(swapStr) == 1 ? true : false);
 
         document.addEventListener('keydown', handleEscapeKey)
