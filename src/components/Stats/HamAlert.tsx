@@ -5,7 +5,7 @@ import { Tooltip, Button, Divider, Typography, MenuItem, InputLabel, FormControl
 import { Modal as BaseModal } from '@mui/base/Modal';
 import { checkApiResponse, setToastMsg } from '../../util';
 import { useAppContext } from '../AppContext';
-import { getPotaLocations } from '../../pota';
+import { getPotaLocations } from '../../tsx/pota';
 
 declare interface IHamAlertButtonProps {
 }

@@ -12,7 +12,7 @@ import './QsoEntry.scss'
 import QsoTimeEntry from './QsoTimeEntry';
 import { Qso } from '../../@types/QsoTypes';
 import { checkApiResponse, checkReferenceForPota, checkReferenceForSota, checkReferenceForWwff, setToastMsg } from '../../util';
-import { getStateFromLocDesc } from '../../pota';
+import { getStateFromLocDesc } from '../../tsx/pota';
 import { Park } from '../../@types/Parks';
 
 dayjs.extend(utc);

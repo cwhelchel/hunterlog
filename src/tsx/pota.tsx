@@ -1,11 +1,11 @@
-import { ParkInfo, ParkStats } from "./@types/PotaTypes";
-import { Summit } from "./@types/Summit";
+import { ParkInfo, ParkStats } from "../@types/PotaTypes";
+import { Summit } from "../@types/Summit";
 
 /*
 !!!!Dont use this!!!! the python api will take care of getting the park info
 */
 export function getParkInfo(park: string): Promise<ParkInfo> {
-    let url = "https://api.pota.app/park/" + park;
+    const url = "https://api.pota.app/park/" + park;
 
     return fetch(url)
         .then(res => res.json()) // the JSON body is taken from the response
@@ -17,7 +17,7 @@ export function getParkInfo(park: string): Promise<ParkInfo> {
 }
 
 export function getParkStats(park: string): Promise<ParkStats> {
-    let url = 'https://api.pota.app/park/stats/' + park;
+    const url = 'https://api.pota.app/park/stats/' + park;
 
     return fetch(url)
         .then(res => res.json())
@@ -27,7 +27,7 @@ export function getParkStats(park: string): Promise<ParkStats> {
 }
 
 export function getSummitInfo(summitCode: string): Promise<Summit> {
-    let url = "https://api2.sota.org.uk/api/summits/" + summitCode;
+    const url = "https://api2.sota.org.uk/api/summits/" + summitCode;
 
     return fetch(url)
         .then(res => res.json()) 
@@ -37,9 +37,9 @@ export function getSummitInfo(summitCode: string): Promise<Summit> {
 }
 
 export function getStateFromLocDesc(locDesc: string): string {
-    let loc = locDesc.split(',')[0];
+    const loc = locDesc.split(',')[0];
 
-    let arr = loc.split('-');
+    const arr = loc.split('-');
     console.log(`${arr[0]} === ${arr[1]}`);
 
     if (arr[0] === 'US' || arr[0] == 'CA') {

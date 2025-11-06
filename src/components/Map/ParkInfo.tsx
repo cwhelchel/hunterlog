@@ -1,7 +1,7 @@
 import * as React from 'react';
 import LeafMap from './Map'
 import { useAppContext } from '../AppContext';
-import { getParkStats } from '../../pota';
+import { getParkStats } from '../../tsx/pota';
 import { ParkStats } from '../../@types/PotaTypes';
 
 import './ParkInfo.scss'
