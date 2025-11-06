@@ -45,7 +45,7 @@
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.15.10",
     "@mui/material": "^5.15.10",
-    "@mui/x-data-grid": "^6.19.4",
+    "@mui/x-data-grid": "^6.20.4",
     "@mui/x-date-pickers": "^6.19.4",
     "@types/leaflet": "^1.9.8",
     "dayjs": "^1.11.10",
