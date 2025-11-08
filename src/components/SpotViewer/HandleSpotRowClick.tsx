@@ -72,6 +72,7 @@ export default function HandleSpotRowClick() {
 
             if (!result.success) {
                 console.log("get_qso_from_spot failed: " + result.message);
+                setIsWorking(false);
                 return;
             }
 
@@ -100,6 +101,8 @@ export default function HandleSpotRowClick() {
                         setData(newCtxData);
                     }
 
+                    // this is ignored if the logger doesn't support staging
+                    window.pywebview.api.stage_qso(JSON.stringify(x));
                     setIsWorking(false);
                 });
         });
@@ -109,8 +112,9 @@ export default function HandleSpotRowClick() {
         if (window.pywebview === undefined || window.pywebview === null)
             return;
 
-        //console.log('loadingSpotData ' + spotId);
-
+        // clearing via escape key making spot be reloaded here.
+        if (spotId == 0)
+            return;
 
         const newCtxData = { ...contextData };
         contextData.loadingQsoData = true;
@@ -130,8 +134,6 @@ export default function HandleSpotRowClick() {
             setData(newCtxData);
         });
     }
-
-
 
     useEffect(() => {
         if (!isWorking) {

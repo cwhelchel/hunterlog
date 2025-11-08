@@ -53,7 +53,7 @@ export default function QsoEntry() {
     const [spinnerOpen, setSpinnerOpen] = React.useState(false);
     const [isSwapped, setIsSwapped] = React.useState(false);
 
-    function logQso() {
+    async function logQso() {
         const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
         console.log(`logging qso at ${contextData.park?.name}`);
@@ -87,7 +87,7 @@ export default function QsoEntry() {
             const ops = multiOps.split(',');
 
             // log main window first then loop thru multiops
-            window.pywebview.api.log_qso(qso).then((x: string) => {
+            await window.pywebview.api.log_qso(qso).then((x: string) => {
                 checkApiResponse(x, contextData, setData);
 
                 ops.forEach(async function (call) {
@@ -102,7 +102,7 @@ export default function QsoEntry() {
             });
         } else {
             // log a single operator
-            window.pywebview.api.log_qso(qso).then((x: string) => {
+            await window.pywebview.api.log_qso(qso).then((x: string) => {
                 const json = checkApiResponse(x, contextData, setData);
 
                 window.pywebview.api.refresh_spot(contextData.spotId, qso.call, qso.sig_info)
@@ -165,17 +165,17 @@ export default function QsoEntry() {
         });
     }
 
-    function handleLogQsoClick(
+    async function handleLogQsoClick(
         event: React.MouseEvent<HTMLButtonElement, MouseEvent>
     ) {
-        logQso();
+        await logQso();
         handleClearClick(event);
     }
 
-    function handleSpotAndLogClick(
+    async function handleSpotAndLogClick(
         event: React.MouseEvent<HTMLButtonElement, MouseEvent>
     ) {
-        logQso();
+        await logQso();
         spotActivator();
         handleClearClick(event);
     };
@@ -196,12 +196,17 @@ export default function QsoEntry() {
         contextData.qso = null;
         contextData.otherOperators = '';
         contextData.otherParks = '';
+        contextData.spotId = 0;
         setData(contextData);
 
         setOtherOpsHidden(true);
         setOtherOps('');
         setOtherParksHidden(true);
         setOtherParks('');
+
+        if (event?.currentTarget.id == 'clear-btn' || event == null) {
+            window.pywebview.api.clear_staged_qso();
+        }
     }
 
     function handleMultiOpClick(
@@ -391,6 +396,10 @@ export default function QsoEntry() {
     // we need to update our TextFields
     React.useEffect(() => {
         updateQsoEntry();
+
+        // this is ignored if the logger doesn't support staging
+        if (contextData.qso)
+            window.pywebview.api.stage_qso(JSON.stringify(contextData.qso));
     }, [contextData.qso]);
 
     React.useEffect(() => {
@@ -581,7 +590,7 @@ export default function QsoEntry() {
                         Spot
                     </StyledTypoGraphy>
                 </Button>
-                <Button variant="outlined" onClick={(e) => handleClearClick(e)}
+                <Button id="clear-btn" variant="outlined" onClick={(e) => handleClearClick(e)}
                     color='secondary'>
                     <StyledTypoGraphy>
                         Clear

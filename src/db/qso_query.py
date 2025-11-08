@@ -1,10 +1,11 @@
 from datetime import datetime
+import json
 import logging
 from typing import List
 import sqlalchemy as sa
 from sqlalchemy.orm import scoped_session
 
-from db.models.qsos import Qso
+from db.models.qsos import Qso, QsoSchema
 from bands import Bands, get_band, bandLimits, bandNames
 
 
@@ -92,6 +93,16 @@ class QsoQuery:
 
     def get_qso(self, id: int) -> Qso:
         return self.session.query(Qso).get(id)
+
+    def get_qso_transient(self, qso_data) -> Qso:
+        schema = QsoSchema()
+        dic = json.loads(qso_data)
+        dic['qso_id'] = 0
+        q = schema.load(
+            dic,
+            session=self.session,
+            transient=True)
+        return q
 
     def get_qsos_from_app(self) -> List[Qso]:
         x = self.session.query(Qso) \

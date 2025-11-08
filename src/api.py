@@ -343,6 +343,33 @@ class JsApi:
 
         return self._response(True, "Completed ADIF import", persist=True)
 
+    def stage_qso(self, qso_data):
+        logging.debug('staging qso')
+        try:
+            qso_dic = json.loads(qso_data)
+            self.adif_log.stage_qso(qso_dic)
+        except Exception as log_ex:
+            logging.exception(
+                msg="Error staging QSO:",
+                exc_info=log_ex)
+            self.lock.release()
+            return self._response(False, f"Error staging qso: {log_ex}")
+
+        return self._response(True, '')
+
+    def clear_staged_qso(self):
+        logging.debug('clear_staged_qso qso')
+        try:
+            self.adif_log.clear_staged()
+        except Exception as log_ex:
+            logging.exception(
+                msg="Error clearing staged qsos:",
+                exc_info=log_ex)
+            self.lock.release()
+            return self._response(False, "Error clearing staged qsos")
+
+        return self._response(True, '')
+
     def log_qso(self, qso_data):
         '''
         Logs the QSO to the database, adif file, and updates stats. Will force
