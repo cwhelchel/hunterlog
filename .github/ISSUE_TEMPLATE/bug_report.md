@@ -2,7 +2,7 @@
 name: Bug report
 about: Create a report to help us improve
 title: ''
-labels: ''
+labels: bug
 assignees: ''
 
 ---
@@ -27,9 +27,6 @@ If applicable, add screenshots to help explain your problem.
  - OS: [e.g. Windows, Ubuntu]
  - Hunterlog application version: [e.g. 0.0.1L]
  - Hunterlog database version: [e.g. db: 922a7b854b71]
-
-*The hunterlog version info is at the bottom of the application screen. Scroll down all the way to see it.*
-
 
 **Additional context**
 Add any other context about the problem here.
