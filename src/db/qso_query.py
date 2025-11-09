@@ -46,9 +46,11 @@ class QsoQuery:
         # and add it directly
         logging.debug(f"inserting qso: {qso}")
         q = Qso()
-        q.call = qso['call']
-        if q.call is None or not q.call.strip():
+        temp_call = qso['call']
+        if temp_call is None or not temp_call.strip():
             raise ValueError("Empty Callsign")
+        q.call = temp_call.upper()
+
         q.rst_sent = qso['rst_sent']
         q.rst_recv = qso['rst_recv']
         q.freq = qso['freq']
@@ -57,9 +59,10 @@ class QsoQuery:
         elif not check_float(q.freq):
             raise ValueError("Invalid Frequency number")
         q.freq_rx = qso['freq_rx']
-        q.mode = qso['mode']
-        if q.mode is None or not q.mode.strip():
+        temp_mode = qso['mode']
+        if temp_mode is None or not temp_mode.strip():
             raise ValueError("Empty Mode")
+        q.mode = temp_mode.upper()
         q.comment = qso['comment']
         temp: str = trim_z(qso['qso_date'])
         q.qso_date = datetime.fromisoformat(temp)
@@ -69,8 +72,8 @@ class QsoQuery:
         q.rx_pwr = qso['rx_pwr']
         q.gridsquare = qso['gridsquare']
         q.state = qso['state']
-        q.sig = qso['sig']
-        q.sig_info = qso['sig_info']
+        q.sig = qso['sig'] and qso['sig'].upper()
+        q.sig_info = qso['sig_info'] and qso['sig_info'].upper()
         q.distance = qso['distance']
         q.bearing = qso['bearing']
         q.from_app = True
