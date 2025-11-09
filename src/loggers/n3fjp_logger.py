@@ -49,6 +49,9 @@ class N3fjpLogger(GenericFileLogger):
         sig_info = str.upper(qso['sig_info'])
         self.update_control(sig_info, 'TXTENTRYOTHER1')
 
+        grid = str.upper(qso['gridsquare'])
+        self.update_control(grid, 'TXTENTRYGRID')
+
         if 'freq' in qso and 'mode' in qso:
             self.update_band_mode(qso)
 
