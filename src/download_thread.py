@@ -1,9 +1,7 @@
 
 import threading
 import logging as L
-from pota import PotaApi
-from sota import SotaApi
-from wwff import WwffApi
+from programs.apis import SotaApi, PotaApi, WwffApi
 
 logging = L.getLogger(__name__)
 

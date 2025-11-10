@@ -5,7 +5,7 @@ import os
 import logging as L
 from typing import Any
 
-from sota.sota import SotaApi
+from programs.apis import SotaApi
 
 logging = L.getLogger(__name__)
 

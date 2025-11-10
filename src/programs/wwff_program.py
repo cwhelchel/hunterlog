@@ -6,7 +6,7 @@ import sqlalchemy as sa
 import logging as L
 import time
 
-from wwff.wwff import WwffApi
+from programs.apis import WwffApi
 
 log = L.getLogger(__name__)
 

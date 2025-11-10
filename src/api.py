@@ -16,10 +16,8 @@ from db.models.spot_comments import SpotCommentSchema
 from db.models.spots import Spot, SpotSchema
 from loggers import LoggerInterface
 from loggers.logger_interface import LoggerParams
-from pota import PotaApi, PotaStats
+from programs.apis import PotaApi, PotaStats
 from programs import Program, SotaProgram, WwffProgram, PotaProgram, NoProgram
-from sota import SotaApi
-from wwff import WwffApi
 from utils.adif import AdifLog
 from version import __version__
 
@@ -33,8 +31,6 @@ class JsApi:
         self.lock = threading.Lock()
         self.db = DataBase()
         self.pota = PotaApi()
-        self.sota = SotaApi()
-        self.wwff = WwffApi()
         self.programs: dict[str, Program] = {
             "POTA": PotaProgram(self.db),
             "SOTA": SotaProgram(self.db),

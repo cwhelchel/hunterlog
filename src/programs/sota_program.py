@@ -6,7 +6,7 @@ import sqlalchemy as sa
 import logging as L
 import time
 
-from sota.sota import SotaApi
+from programs.apis import SotaApi
 
 log = L.getLogger(__name__)
 

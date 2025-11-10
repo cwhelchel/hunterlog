@@ -1,6 +1,6 @@
 from db.models.parks import Park, ParkSchema
 from db.models.qsos import Qso
-from pota.pota import Api
+from programs.apis import PotaApi
 from programs.program import Program
 from db.db import DataBase
 from db.models.spots import Spot, SpotSchema
@@ -21,7 +21,7 @@ class PotaProgram(Program):
                       ref: str,
                       pull_from_api: bool = True) -> Park:
         def dl_park(db: DataBase, ref: str):
-            api_res = Api().get_park(ref)
+            api_res = PotaApi().get_park(ref)
             log.debug(f"park data from api: {api_res}")
 
             to_add = self.parse_ref_data(api_res)
@@ -44,7 +44,7 @@ class PotaProgram(Program):
             park = dl_park(self.db, ref)
         elif park.name is None:
             log.info(f"{ref} park found but half-loaded. pulling from api")
-            api_res = Api().get_park(ref)
+            api_res = PotaApi().get_park(ref)
             log.debug(f"park data from api: {api_res}")
             self.db.parks.update_park_data(api_res)
             park = self.db.parks.get_park(ref)
@@ -113,7 +113,7 @@ class PotaProgram(Program):
         def inc_park_hunt(db: DataBase, ref: str):
             ok = db.parks.inc_ref_hunt(ref)
             if not ok:
-                api_res = Api().get_park(ref)
+                api_res = PotaApi().get_park(ref)
                 # db.parks.update_park_data(park)
                 to_add = self.parse_ref_data(api_res)
                 if to_add:
