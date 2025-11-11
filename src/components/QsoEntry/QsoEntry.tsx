@@ -38,7 +38,8 @@ const defaultQso: Qso = {
     name: '',
     state: '',
     pota_ref: undefined,
-    sota_ref: undefined
+    sota_ref: undefined,
+    wwff_ref: undefined
 }
 
 
@@ -71,6 +72,9 @@ export default function QsoEntry() {
         if (qso.sig == "SOTA")
             qso.sota_ref = qso.sig_info;
 
+        if (qso.sig == "WWFF")
+            qso.wwff_ref = qso.sig_info;
+
         if (otherParks) {
             const myPotaRef = getPotaRef();
 
@@ -79,6 +83,9 @@ export default function QsoEntry() {
 
             qso.pota_ref = myPotaRef.pota_ref;
             qso.comment += ` {Also: ${myPotaRef.otherParks}}`;
+        } else {
+            if (qso.sig == "POTA")
+                qso.pota_ref = qso.sig_info;
         }
 
         const multiOps = otherOps;

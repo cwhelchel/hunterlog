@@ -37,6 +37,7 @@ class Qso(Base):
     # 👆 true confirmed from hunter.csv
     pota_ref = sa.Column(sa.String)
     sota_ref = sa.Column(sa.String)
+    wwff_ref = sa.Column(sa.String)
 
     def init_from_spot(self, spot: Spot, name: str):
         rst = self.get_default_rst(spot.mode)
@@ -52,6 +53,7 @@ class Qso(Base):
         self.sig_info = spot.reference
         self.pota_ref = None
         self.sota_ref = None
+        self.wwff_ref = None
         self.state = ''
 
         # program specific logic done in /src/programs/
