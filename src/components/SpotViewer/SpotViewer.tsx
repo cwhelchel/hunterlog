@@ -5,7 +5,7 @@ import { DataGrid, GridColDef, GridValueGetterParams, GridFilterModel, GridSortM
 import { GridEventListener } from '@mui/x-data-grid';
 import LandscapeIcon from '@mui/icons-material/Landscape';
 import ParkIcon from '@mui/icons-material/Park';
-import Brightness3Icon from '@mui/icons-material/Brightness3';
+import LocalFloristIcon from '@mui/icons-material/LocalFlorist';
 
 import { useAppContext } from '../AppContext';
 
@@ -19,6 +19,7 @@ import SpotCommentsButton from './SpotComments';
 import SpotTimeCell from './SpotTime';
 import { checkApiResponse } from '../../tsx/util';
 import HandleSpotRowClick from './HandleSpotRowClick';
+import ProgramIcon from '../Icons/ProgramIcon';
 
 // https://mui.com/material-ui/react-table/
 
@@ -123,16 +124,7 @@ const columns: GridColDef[] = [
         field: 'sig', headerName: 'SIG', width: 100,
         renderCell: (x) => {
             return <>
-                {x.row.spot_source == 'SOTA' && (
-                    <LandscapeIcon color='secondary' />
-                )}
-                {x.row.spot_source == 'POTA' && (
-                    <ParkIcon color='primary' />
-                )}
-                {x.row.spot_source == 'WWFF' && (
-                    <Brightness3Icon color='success' />
-                )}
-
+                <ProgramIcon sig={x.row.spot_source} />
                 <span id="sig">{x.row.spot_source}</span>
             </>
         }

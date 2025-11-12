@@ -45,9 +45,9 @@ parser.add_argument("-w", "--reset-win", action="store_true",
                     help="reset the window size and position to default")
 
 
-def do_update(pota, sota, wwff):
+def do_update(spots: dict):
     logging.debug('updating db')
-    the_api._do_update(pota, sota, wwff)
+    the_api._do_update(spots)
 
 
 def show_frontend_work():
@@ -90,7 +90,7 @@ def update_ticker(t: DownloadThread):
 
     spot_arr = t.get_spots()
     show_frontend_work()
-    do_update(spot_arr[0], spot_arr[1], spot_arr[2])
+    do_update(spot_arr)
     refresh_frontend()
 
 

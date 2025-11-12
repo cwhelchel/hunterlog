@@ -25,6 +25,29 @@ class Program(ABC):
         self.db = db
 
     @abstractmethod
+    def download_reference_data(self, ref_code: str) -> any:
+        '''
+        Downloads the reference data from the program's API. Should
+        return a JSON dict-like object
+
+        :param ref_code str: a singular reference identifier
+        :returns bool: Parsed Python object or None
+        '''
+        raise NotImplementedError
+
+    @abstractmethod
+    def parse_ref_data(self, ref_data) -> Park:
+        '''
+        The program logic for converting the the API provided data for a
+        reference into the Hunterlog specific Park row
+
+        :param ref str: a singular reference identifier
+        :param ota_ref str: possible comma separated list of references
+        :returns bool: False if a ref row not in db
+        '''
+        raise NotImplementedError
+
+    @abstractmethod
     def get_reference(self,
                       ref: str,
                       pull_from_api: bool = True) -> Park:
@@ -60,30 +83,6 @@ class Program(ABC):
         '''
         raise NotImplementedError
 
-    @abstractmethod
-    def inc_ref_hunt(self, ref: str, ota_ref: str) -> bool:
-        '''
-        The program logic for incrementing the hunts for a give ref or list
-        of refs
-
-        :param ref str: a singular reference identifier
-        :param ota_ref str: possible comma separated list of references
-        :returns bool: False if a ref row not in db
-        '''
-        raise NotImplementedError
-
-    @abstractmethod
-    def parse_ref_data(self, ref_data) -> Park:
-        '''
-        The program logic for converting the the API provided data for a
-        reference into the Hunterlog specific Park row
-
-        :param ref str: a singular reference identifier
-        :param ota_ref str: possible comma separated list of references
-        :returns bool: False if a ref row not in db
-        '''
-        raise NotImplementedError
-
     @property
     @abstractmethod
     def seen_regions(self) -> list[str]:
@@ -93,6 +92,27 @@ class Program(ABC):
         :returns list[str]: list of regions, preferably unique.
         '''
         raise NotImplementedError
+
+    def inc_ref_hunt(self, ref: str, ota_ref: str) -> bool:
+        '''
+        The program logic for incrementing the hunts for a give ref or list
+        of refs. Common between all programs.
+
+        :param ref str: a singular reference identifier
+        :param ota_ref str: possible comma separated list of references
+        :returns bool: False if a ref row not in db
+        '''
+
+        if ota_ref is not None:
+            multi = ota_ref.split(',')
+            for r in multi:
+                self._inc(r)
+        else:
+            # for programs like wwbota this could be csv list of refs
+            multi = ref.split(',')
+            log.debug(f"{ref} - > {multi}")
+            for r in multi:
+                self._inc(r)
 
     def update_spot_metadata(self, to_add: Spot):
         '''
@@ -133,3 +153,14 @@ class Program(ABC):
             bearing = Distance.bearing(my_grid, q.gridsquare)
             q.distance = dist
             q.bearing = bearing
+
+    def _inc(self, ref: str):
+        ok = self.db.parks.inc_ref_hunt(ref)
+        if not ok:
+            json = self.download_reference_data(ref)
+            to_add = self.parse_ref_data(json)
+            if to_add:
+                self.db.session.add(to_add)
+                self.db.session.commit()
+            if not self.db.parks.inc_ref_hunt(ref):
+                log.error('unable to update ref hunt')

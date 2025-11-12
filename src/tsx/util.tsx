@@ -74,3 +74,9 @@ export function checkReferenceForPota(ref: string) {
     const regex = new RegExp('[A-Z0-9]+-[0-9]*');
     return regex.test(ref);
 }
+
+export function checkReferenceForWwbota(ref: string) {
+    // eslint-disable-next-line no-useless-escape
+    const regex = new RegExp('B\/[A-Z0-9]+-[0-9]*');
+    return regex.test(ref);
+}

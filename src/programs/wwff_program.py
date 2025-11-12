@@ -116,16 +116,8 @@ class WwffProgram(Program):
         self.update_qso_dist_bearing(q)
         return q
 
-    def inc_ref_hunt(self, ref: str, ota_ref: str):
-        wwff_code = ref
-        ok = self.db.parks.inc_ref_hunt(wwff_code)
-        if not ok:
-            api_res = WwffApi().get_wwff_info(wwff_code)
-            to_add = self.parse_ref_data(api_res)
-            if to_add:
-                self.db.session.add(to_add)
-                self.db.session.commit()
-            self.db.parks.inc_ref_hunt(wwff_code)
+    def download_reference_data(self, ref_code: str) -> any:
+        return WwffApi().get_wwff_info(ref_code)
 
     def parse_ref_data(self, wwff) -> Park:
         r = Park()

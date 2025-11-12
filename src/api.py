@@ -17,7 +17,7 @@ from db.models.spots import Spot, SpotSchema
 from loggers import LoggerInterface
 from loggers.logger_interface import LoggerParams
 from programs.apis import PotaApi, PotaStats
-from programs import Program, SotaProgram, WwffProgram, PotaProgram, NoProgram
+from programs import Program, SotaProgram, WwffProgram, PotaProgram, WwbotaProgram, NoProgram  # NOQA
 from utils.adif import AdifLog
 from version import __version__
 
@@ -35,6 +35,7 @@ class JsApi:
             "POTA": PotaProgram(self.db),
             "SOTA": SotaProgram(self.db),
             "WWFF": WwffProgram(self.db),
+            "WWBOTA": WwbotaProgram(self.db),
             '': NoProgram(self.db)
         }
         self.seen_regions = [""]
@@ -732,7 +733,7 @@ class JsApi:
 
         return self._response(False, 'Error getting hamalert text')
 
-    def _do_update(self, pota: any, sota: any, wwff: any):
+    def _do_update(self, spots: dict[any]):
         '''
         The main update method. Called on a timer
 
@@ -755,9 +756,10 @@ class JsApi:
                 logging.error('no lock aquired')
                 return
             self.db.delete_spots()
-            self.programs["POTA"].update_spots(pota)
-            self.programs["SOTA"].update_spots(sota)
-            self.programs["WWFF"].update_spots(wwff)
+            self.programs["POTA"].update_spots(spots["POTA"])
+            self.programs["SOTA"].update_spots(spots["SOTA"])
+            self.programs["WWFF"].update_spots(spots["WWFF"])
+            self.programs["WWBOTA"].update_spots(spots["WWBOTA"])
             self.db.session.commit()
             logging.info("spots updated for programs")
             self.lock.release()

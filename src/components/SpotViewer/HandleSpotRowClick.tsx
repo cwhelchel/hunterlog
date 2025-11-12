@@ -39,7 +39,8 @@ export default function HandleSpotRowClick() {
             return testForNfer(el.comments);
         });
 
-        // console.log(nferComments);
+        console.log('nferComments');
+        console.log(nferComments);
 
         function getMultiOps(ops: SpotComments[]): string {
             if (ops.length > 0) {
@@ -91,7 +92,7 @@ export default function HandleSpotRowClick() {
                     newCtxData.qso = x;
                     newCtxData.park = p;
                     newCtxData.summit = null;
-                    if (x.sig == 'POTA') {
+                    if (x.sig == 'POTA' || x.sig == 'WWBOTA') {
                         getOtherData(id).then((oo) => {
                             newCtxData.otherOperators = oo.otherOps;
                             newCtxData.otherParks = oo.otherParks;

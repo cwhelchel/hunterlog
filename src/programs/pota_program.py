@@ -109,31 +109,15 @@ class PotaProgram(Program):
         self.update_qso_dist_bearing(q)
         return q
 
-    def inc_ref_hunt(self, ref, pota_ref):
-        def inc_park_hunt(db: DataBase, ref: str):
-            ok = db.parks.inc_ref_hunt(ref)
-            if not ok:
-                api_res = PotaApi().get_park(ref)
-                # db.parks.update_park_data(park)
-                to_add = self.parse_ref_data(api_res)
-                if to_add:
-                    db.session.add(to_add)
-                    db.session.commit()
-                db.parks.inc_ref_hunt(ref)
-
-        if pota_ref is not None:
-            parks = pota_ref.split(',')
-            for p in parks:
-                inc_park_hunt(self.db, p)
-        else:
-            inc_park_hunt(self.db, ref)
-
     def parse_ref_data(self, park) -> Park:
         # the Park schema was created directly from the POTA api so we can
         # just use sqlalchemy-marshmallow to load it
         schema = ParkSchema()
         p: Park = schema.load(park, transient=True)
         return p
+
+    def download_reference_data(self, ref_code: str) -> any:
+        return PotaApi().get_park(ref_code)
 
     def get_state(self, locationDesc: str) -> str:
         if not locationDesc or locationDesc == 'None':  # None for k-test

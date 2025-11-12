@@ -28,11 +28,11 @@ class NoProgram(Program):
     def build_qso(self, spot: Spot) -> Qso:
         return Qso()
 
-    def inc_ref_hunt(self, ref, pota_ref):
-        return
-
     def parse_ref_data(self, park) -> Park:
         return None
 
     def get_state(self, locationDesc: str) -> str:
         return ''
+
+    def download_reference_data(self, ref_code: str) -> any:
+        return None
