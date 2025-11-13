@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Grid, Stack, TextField, Tooltip } from "@mui/material";
+import { Checkbox, FormControlLabel, Grid, Stack, TextField, Tooltip } from "@mui/material";
 import { useConfigContext } from './ConfigContextProvider';
 import { useAppContext } from '../AppContext';
 import ToggleSwitch from './ToggleSwitch';
@@ -69,12 +69,24 @@ export default function GeneralSettingsTab() {
                     QTH string is inserted when posting spots to POTA.app ex: &apos;mid GA&apos;
                     is inserted into comment like &apos;[599 mid GA] thx fb qso&apos;
                 </p>
-                <TextField id="qth_string" label="QTH String"
-                    value={config?.qth_string}
-                    fullWidth
-                    onChange={(e) => {
-                        setConfig({ ...config, qth_string: e.target.value });
-                    }} />
+                <Stack direction={'row'}>
+                    <TextField id="qth_string" label="QTH String"
+                        value={config?.qth_string}
+                        fullWidth
+                        onChange={(e) => {
+                            setConfig({ ...config, qth_string: e.target.value });
+                        }} />
+                    <FormControlLabel label="Include RST in Spot"
+                        style={{ width: "50%", marginLeft: 20 }}
+                        control={
+                            <Checkbox checked={config.include_rst}
+                                inputProps={{ 'aria-label': 'controlled' }}
+                                onChange={(e) => {
+                                    const val = Boolean(e.target.checked);
+                                    setConfig({ ...config, include_rst: val });
+                                }} />
+                        } />
+                </Stack>
             </Stack>
         </>
     )

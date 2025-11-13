@@ -14,6 +14,7 @@ export interface UserConfig {
     ftx_mode: string,
     qth_string: string,
     rig_if_type: string,
+    include_rst: boolean,
 }
 
 export interface ConfigVer2 {

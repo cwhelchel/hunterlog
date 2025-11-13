@@ -59,7 +59,6 @@ export default function ConfigModal() {
     const { config, setConfig } = useConfigContext();
     const { contextData, setData } = useAppContext();
 
-
     const handleOpen = () => setOpen(true);
 
     const handleCancel = () => {
@@ -83,10 +82,10 @@ export default function ConfigModal() {
             window.addEventListener('pywebviewready', initConfig);
 
         function initConfig() {
-            let x = window.pywebview.api.get_user_config2();
+            const x = window.pywebview.api.get_user_config2();
             x.then((r: string) => {
                 if (r == null) return;
-                var cfg2 = JSON.parse(r) as ConfigVer2[];
+                const cfg2 = JSON.parse(r) as ConfigVer2[];
                 setConfig2(cfg2);
                 loadLocalCfg(cfg2);
             });
@@ -107,6 +106,7 @@ export default function ConfigModal() {
         config.qth_string = getVar(cfg2, 'qth_string');
         config.rig_if_type = getVar(cfg2, 'rig_if_type');
         config.logger_type = Number(getVar(cfg2, "logger_type"));
+        config.include_rst = Number(getVar(cfg2, "include_rst")) != 0;
         setConfig(config);
     }
 
@@ -123,6 +123,7 @@ export default function ConfigModal() {
         setVar(config2, "ftx_mode", config.ftx_mode);
         setVar(config2, "qth_string", config.qth_string);
         setVar(config2, "rig_if_type", config.rig_if_type);
+        setVar(config2, "include_rst", config.include_rst.toString());
         setConfig2(config2);
     }
 
@@ -196,7 +197,7 @@ export default function ConfigModal() {
 
 const Backdrop = React.forwardRef<
     HTMLDivElement,
-    { open?: boolean; className: string }
+    { open?: boolean; className: string; }
 >((props, ref) => {
     const { open, className, ...other } = props;
     return (
@@ -207,15 +208,8 @@ const Backdrop = React.forwardRef<
         />
     );
 });
+Backdrop.displayName = 'config-modal-backdrop';
 
-const blue = {
-    200: '#99CCFF',
-    300: '#66B2FF',
-    400: '#3399FF',
-    500: '#007FFF',
-    600: '#0072E5',
-    700: '#0066CC',
-};
 
 const grey = {
     50: '#F3F6F9',
@@ -291,33 +285,4 @@ const ModalContent = styled('div')(
   `,
 );
 
-const TriggerButton = styled('button')(
-    ({ theme }) => css`
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-weight: 600;
-    font-size: 0.875rem;
-    line-height: 1.5;
-    padding: 8px 16px;
-    border-radius: 8px;
-    transition: all 150ms ease;
-    cursor: pointer;
-    background: ${theme.palette.mode === 'dark' ? grey[900] : '#fff'};
-    border: 1px solid ${theme.palette.mode === 'dark' ? grey[700] : grey[200]};
-    color: ${theme.palette.mode === 'dark' ? grey[200] : grey[900]};
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 
-    &:hover {
-      background: ${theme.palette.mode === 'dark' ? grey[800] : grey[50]};
-      border-color: ${theme.palette.mode === 'dark' ? grey[600] : grey[300]};
-    }
-
-    &:active {
-      background: ${theme.palette.mode === 'dark' ? grey[700] : grey[100]};
-    }
-
-    &:focus-visible {
-      box-shadow: 0 0 0 4px ${theme.palette.mode === 'dark' ? blue[300] : blue[200]};
-      outline: none;
-    }
-  `,
-);

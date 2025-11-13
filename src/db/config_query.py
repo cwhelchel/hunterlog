@@ -169,6 +169,15 @@ class ConfigQuery:
             'group': '',
             'enabled': 'True',
             'editable': 'False'
+        },
+        {
+            'key': 'include_rst',
+            'val': '1',
+            'type': 'bool',
+            'description': 'Include RST portion in POTA spot comment',
+            'group': 'general',
+            'enabled': 'True',
+            'editable': 'True'
         }
     ]
 
@@ -181,18 +190,6 @@ class ConfigQuery:
             .first()
 
     def get_value(self, k: str) -> Any:
-        def str_to_bool(s):
-            """
-            Converts a string to boolean based on common truthy/falsy values.
-            """
-            s_lower = s.lower()
-            if s_lower in ('true', '1', 't', 'y', 'yes'):
-                return True
-            elif s_lower in ('false', '0', 'f', 'n', 'no'):
-                return False
-            else:
-                raise ValueError(f"Invalid boolean string: '{s}'")
-
         x = self.get_config(k)
 
         if x is None:
@@ -203,7 +200,7 @@ class ConfigQuery:
         elif x.type == "string":
             return str(x.val)
         elif x.type == "bool":
-            return str_to_bool(x.val)
+            return self._str_to_bool(x.val)
         else:
             logging.warning(f"unknown type: {x.type} for key {k}")
             return str(x.val)
@@ -219,7 +216,7 @@ class ConfigQuery:
         elif x.type == "string":
             x.val = str(val)
         elif x.type == "bool":
-            x.val = True if (val) else False
+            x.val = True if self._str_to_bool(val) else False
         else:
             logging.warning(f"unknown type: {x.type} for key {k}")
             x.val = val
@@ -260,6 +257,7 @@ class ConfigQuery:
         for y in x:
             row: ConfigVer2 = y
             if row.editable:
+                logging.debug(f"setting {row.key} to {row.val}")
                 self.set_value(row.key, row.val)
 
         self.session.commit()
@@ -330,3 +328,15 @@ class ConfigQuery:
                 add = cs.load(self.DEFAULTS[i], session=self.session)
                 self.session.add(add)
             self.session.commit()
+
+    def _str_to_bool(self, s):
+        """
+        Converts a string to boolean based on common truthy/falsy values.
+        """
+        s_lower = str(s).lower()
+        if s_lower in ('true', '1', 't', 'y', 'yes'):
+            return True
+        elif s_lower in ('false', '0', 'f', 'n', 'no'):
+            return False
+        else:
+            raise ValueError(f"Invalid boolean string: '{s}'")

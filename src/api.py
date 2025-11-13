@@ -294,15 +294,22 @@ class JsApi:
             x = c.index("]") + 1
             c = c[x:]
 
+        include_rst = self.db.config.get_value("include_rst")
         qth = self.db.config.get_value("qth_string")
         my_call = self.db.config.get_value("my_call")
 
+        if include_rst:
+            r += ' '  # add space between rst and qth str
+        else:
+            r = ''
+
         if qth is not None:
-            spot_comment = f"[{r} {qth}] {c}"
+            spot_comment = f"[{r}{qth}] {c}"
         else:
             spot_comment = f"[{r}] {c}"
 
         try:
+            # logging.debug(f"posting spot with {spot_comment}")
             PotaApi.post_spot(activator_call=a,
                               park_ref=park,
                               freq=f,
@@ -874,7 +881,7 @@ class JsApi:
         self.db.config.set_value('pos_y', position[1], commit=True)
 
     def _store_win_maxi(self, is_max: bool):
-        self.db.config.set_value('is_max', 1 if is_max else 0, commit=True)
+        self.db.config.set_value('is_max', is_max, commit=True)
 
     def _handle_alerts(self):
         def get_str(spot: Spot) -> str:
