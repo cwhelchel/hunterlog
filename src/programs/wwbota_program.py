@@ -45,22 +45,22 @@ class WwbotaProgram(Program):
             log.warning('spots object is Null')
             return
 
+        # spotid's need to be pota has a UUID in the spot data from api and
+        # we use it. but other programs dont and we have to generated ids for
+        # the db. WWBOTA starts at 1000
         id: int = 1000
         for bunker in spots:
-            # the sota spots are returned in a descending spot time order.
-            # where the first spot is the newest.
             to_add = Spot()
             refs = self._init_spot(to_add, bunker, id)
             id = id + 1
 
-            log.debug(f"{id} loc desc: {to_add.locationDesc}")
+            # locationDesc is the WWBOTA 'scheme' 9ABOTA, CABOTA, etc
+            # locationDesc could be null
+            if to_add.locationDesc:
+                to_add.continent = self.continents.find_continent_wwbota(
+                    to_add.locationDesc.split('|')[0]
+                )
 
-# todo
-            to_add.continent = self.continents.find_continent_sota(
-                to_add.reference.split('/')[0]
-            )
-
-            # this is wwbota scheme, 9ABOTA, CABOTA, etc
             self.regions.append(to_add.locationDesc)
 
             statement = sa.select(Spot) \
@@ -92,9 +92,6 @@ class WwbotaProgram(Program):
                             'mode': to_add.mode
                         }
                     ]
-
-                    # log.debug(f"adding wwff spot cmts {cmts}")
-
                     self.db.insert_spot_comments(act, ref, cmts)
             else:
                 self.db.session.add(to_add)
@@ -118,24 +115,25 @@ class WwbotaProgram(Program):
                     }
                 ]
 
-                log.debug(f"{act} {ref} {cmts}")
                 self.db.insert_spot_comments(act, ref, cmts)
 
             self.update_spot_metadata(to_add)
 
         end_time = time.perf_counter()
         elapsed_time = end_time - start_time
-        log.debug(f"SOTA Elapsed time: {elapsed_time:.6f} seconds")
+        log.debug(f"WWBOTA Elapsed time: {elapsed_time:.6f} seconds")
 
     def build_qso(self, spot: Spot) -> Qso:
         name = spot.name
         if spot.grid4 == '':
             api = WwbotaApi()
-            summit = api.get_bunker(spot.reference)
-            spot.grid4 = summit['locator'][:4]
-            spot.grid6 = summit['locator']
-            spot.latitude = summit['lat']
-            spot.longitude = summit['long']
+            bunker = api.get_bunker(spot.reference)
+            if bunker is None:
+                return
+            spot.grid4 = bunker['locator'][:4]
+            spot.grid6 = bunker['locator']
+            spot.latitude = bunker['lat']
+            spot.longitude = bunker['long']
             self.db.session.commit()
 
         q = Qso()
@@ -229,8 +227,8 @@ class WwbotaProgram(Program):
         s.name = first['name']
         if is_multi_bunker:
             s.name += f" (+{x-1} more)"
-        s.grid4 = first['locator'][:4]
-        s.grid6 = first['locator']
+        s.grid4 = first['locator'][:4] if first['locator'] else ''
+        s.grid6 = first['locator'] if first['locator'] else ''
         s.latitude = first['lat']
         s.longitude = first['long']
         s.count = 0

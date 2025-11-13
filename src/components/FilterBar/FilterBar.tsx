@@ -428,6 +428,7 @@ export const FilterBar = (props: IFilterBarPros) => {
                         <MenuItem value='POTA'>POTA</MenuItem>
                         <MenuItem value='SOTA'>SOTA</MenuItem>
                         <MenuItem value='WWFF'>WWFF</MenuItem>
+                        <MenuItem value='WWBOTA'>WWBOTA</MenuItem>
                     </Select>
                 </FormControl>
                 <Button onClick={handleClear} variant="outlined"

@@ -1,0 +1,70 @@
+{
+    "9MBOTA": {
+        "country": "Malaysia",
+        "continent": "AS"
+    },
+    "DLBOTA": {
+        "country": "Germany",
+        "continent": "EU"
+    },
+    "EABOTA": {
+        "country": "Spain",
+        "continent": "EU"
+    },
+    "EIBOTA": {
+        "country": "Ireland",
+        "continent": "EU"
+    },
+    "FBOTA": {
+        "country": "France",
+        "continent": "EU"
+    },
+    "ITABOTA": {
+        "country": "Italy",
+        "continent": "EU"
+    },
+    "LABOTA": {
+        "country": "Norway",
+        "continent": "EU"
+    },
+    "OKBOTA": {
+        "country": "Czech Republic",
+        "continent": "EU"
+    },
+    "ONBOTA": {
+        "country": "Belgium",
+        "continent": "EU"
+    },
+    "PABOTA": {
+        "country": "Netherlands",
+        "continent": "EU"
+    },
+    "S5BOTA": {
+        "country": "Slovenia",
+        "continent": "EU"
+    },
+    "UKBOTA": {
+        "country": "United Kingdon",
+        "continent": "EU"
+    },
+    "Z3BOTA": {
+        "country": "North Macedonia",
+        "continent": "EU"
+    },
+    "ZABOTA": {
+        "country": "Albania",
+        "continent": "EU"
+    },
+    "ROBOTA": {
+        "country": "Romania",
+        "continent": "EU"
+    },
+    "SPBOTA": {
+        "country": "Poland",
+        "continent": "EU"
+    },
+    "CABOTA": {
+        "country": "Canada",
+        "continent": "NA"
+    }
+}

@@ -195,9 +195,9 @@ export default function ParkInfo() {
     }
 
     function bunkerInfo(): React.ReactNode {
-        // for random summit info we hijack some of the not-displayed pieces of park info
         return <>
-            <span>desc: {contextData?.park?.locationDesc}</span> <br />
+            <span>scheme: {contextData?.park?.locationDesc}</span> <br />
+            <span>type: {contextData?.park?.locationName}</span> <br />
         </>;
     }
 

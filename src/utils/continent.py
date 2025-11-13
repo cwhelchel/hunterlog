@@ -27,6 +27,7 @@ class Continents():
 
     def __init__(self):
         root = self._get_app_global_path()
+        self.data_root = Path(str(root), 'data/')
         pota_f = Path(str(root), 'data/', 'continents.json')
         if pota_f.exists():
             with open(file=pota_f) as f:
@@ -35,6 +36,7 @@ class Continents():
             logging.warning(f'no continent file found at {pota_f}')
 
         self._init_sota(root)
+        self.wwbota: dict[str, Any] = None
 
     def find_continent(self, ccode: str) -> str:
         if ccode not in self.pota.keys():
@@ -52,6 +54,15 @@ class Continents():
 
         cont = self.sota[association_code]
         return cont
+
+    def find_continent_wwbota(self, scheme: str) -> str:
+        fn = Path(str(self.data_root), 'wwbota_continents.json')
+
+        if self.wwbota is None:
+            with open(file=fn, mode='r', encoding='utf-8') as f:
+                self.wwbota = json.load(f)
+
+        return self.wwbota[scheme]['continent'].upper()
 
     def _init_sota(self, root: str):
         sota_f = Path(root, 'data/', 'sota_associations.json')
