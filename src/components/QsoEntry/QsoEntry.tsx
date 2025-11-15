@@ -11,7 +11,8 @@ import utc from 'dayjs/plugin/utc';
 import './QsoEntry.scss'
 import QsoTimeEntry from './QsoTimeEntry';
 import { Qso } from '../../@types/QsoTypes';
-import { checkApiResponse, checkReferenceForPota, checkReferenceForSota, checkReferenceForWwbota, checkReferenceForWwff, setToastMsg } from '../../tsx/util';
+import { checkApiResponse, setToastMsg } from '../../tsx/util';
+import { checkReferenceForPota, checkReferenceForSota, checkReferenceForWwbota, checkReferenceForWwff, checkForValidRefs, sigCheckers } from '../../tsx/referenceUtils';
 import { getStateFromLocDesc } from '../../tsx/pota';
 import { Park } from '../../@types/Parks';
 
@@ -69,36 +70,19 @@ export default function QsoEntry() {
 
         qso.time_on = (qsoTime) ? qsoTime.toISOString() : dayjs().toISOString();
         qso.qso_date = qso.time_on;
-        if (qso.sig == "SOTA")
-            qso.sota_ref = qso.sig_info;
 
-        if (qso.sig == "WWFF")
-            qso.wwff_ref = qso.sig_info;
+        const wasHandled = getCustomRefs();
 
-        if (qso.sig == "POTA") {
-            if (otherParks) {
-                const myPotaRef = getPotaRef(checkReferenceForPota);
-
-                if (!myPotaRef.ok)
-                    setToastMsg("Bad POTA Ref in Other Parks", contextData, setData);
-
-                qso.pota_ref = myPotaRef.pota_ref;
-                qso.comment += ` {Also: ${myPotaRef.otherParks}}`;
-            } else {
-                qso.pota_ref = qso.sig_info;
-            }
-        }
-
-        // all other sigs
-        if (otherParks) {
-            // TODO: map sigs to functions to check references
-            const othersRef = getPotaRef(checkReferenceForWwbota);
+        // all other sigs that can be multi-reference handled here by stuffing
+        // the csv refs into sig_info
+        if (otherParks && !wasHandled) {
+            const othersRef = checkForValidRefs(qso.sig_info, otherParks, sigCheckers[qso.sig]);
             if (!othersRef.ok)
                 setToastMsg("Bad Ref in Others list", contextData, setData);
             else {
                 // sig info can be a comma separated list. 
-                qso.sig_info = othersRef.pota_ref ? othersRef.pota_ref : qso.sig_info;
-                qso.comment += ` {Also: ${othersRef.otherParks}}`;
+                qso.sig_info = othersRef.xota_ref ? othersRef.xota_ref : qso.sig_info;
+                qso.comment += ` {Also: ${othersRef.otherRefs}}`;
             }
         }
 
@@ -134,31 +118,35 @@ export default function QsoEntry() {
         }
     }
 
-    interface IGetPotaRef {
-        pota_ref: string | undefined;
-        otherParks: string | undefined;
-        ok: boolean;
-    }
+    function getCustomRefs() {
+        if (qso.sig == "SOTA") {
+            qso.sota_ref = qso.sig_info;
+            return true;
+        }
 
-    function getPotaRef(checker: (ref: string) => boolean): IGetPotaRef {
-        const res = otherParks;
-        const currentPark = qso.sig_info;
-        const arr = res.split(',');
+        if (qso.sig == "WWFF") {
+            qso.wwff_ref = qso.sig_info;
+            return true;
+        }
 
-        arr.forEach((x) => {
-            const isPota = checker(x);
-            if (!isPota) {
-                return { ok: false };
+        if (qso.sig == "POTA") {
+            if (otherParks) {
+                const myPotaRef = checkForValidRefs(qso.sig_info, otherParks, checkReferenceForPota);
+
+                if (!myPotaRef.ok)
+                    setToastMsg("Bad POTA Ref in Other Parks", contextData, setData);
+
+                qso.pota_ref = myPotaRef.xota_ref;
+                qso.comment += ` {Also: ${myPotaRef.otherRefs}}`;
+            } else {
+                qso.pota_ref = qso.sig_info;
             }
-        })
+            return true;
+        }
 
-        arr.push(currentPark);
-        return {
-            ok: true,
-            pota_ref: arr.join(','),
-            otherParks: res
-        };
+        return false;
     }
+
 
     function spotActivator() {
         if (qso.sig != 'POTA')
