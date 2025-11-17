@@ -317,16 +317,19 @@ class ConfigQuery:
                 self.DEFAULTS, session=self.session, many=True)
             self.session.add_all(default_config)
             self.session.commit()
-        elif x < len(self.DEFAULTS):
-            assert (x > 0)
+        else:
+            logging.debug("checking cfg v2 rows against defaults...")
 
-            logging.info("adding new default cfg rows...")
+            current = self.get_all()
+            current_keys = [str(cfg.key) for cfg in current]
 
-            # already has new cfg rows, but defaults there's new stuff at end
-            num_missing = len(self.DEFAULTS) - x
-            for i in range(x, x+num_missing):
-                add = cs.load(self.DEFAULTS[i], session=self.session)
-                self.session.add(add)
+            for def_val in self.DEFAULTS:
+                if def_val['key'] not in current_keys:
+                    logging.warning(f"missing key, adding default {def_val}")
+
+                    add = cs.load(def_val, session=self.session)
+                    self.session.add(add)
+
             self.session.commit()
 
     def _str_to_bool(self, s):
