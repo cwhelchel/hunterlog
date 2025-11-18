@@ -211,7 +211,7 @@ export default function QsoEntry() {
         setOtherParksHidden(true);
         setOtherParks('');
 
-        if (event?.currentTarget.id == 'clear-btn' || event == null) {
+        if (event?.currentTarget?.id == 'clear-btn' || event == null) {
             window.pywebview.api.clear_staged_qso();
         }
     }
@@ -374,7 +374,7 @@ export default function QsoEntry() {
         }
     }
 
-    function updateOtherParks(otherParks: string) {
+    function updateOtherParks(otherParks: string | null) {
         if (otherParks == null || otherParks === undefined) {
             setOtherParks('');
             setOtherParksHidden(true);
@@ -402,6 +402,7 @@ export default function QsoEntry() {
     // when the app context changes (ie a user clicks on a different spot)
     // we need to update our TextFields
     React.useEffect(() => {
+        updateOtherParks(null);
         updateQsoEntry();
 
         // this is ignored if the logger doesn't support staging

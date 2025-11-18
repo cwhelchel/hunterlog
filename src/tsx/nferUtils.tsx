@@ -40,6 +40,8 @@ export function getMultiParkString(comms: SpotComments[]): string {
             return pl;
         }
     }
+
+    // console.log('comms.length was <= 0');
     return '';
 }
 
@@ -52,4 +54,6 @@ export function testForNfer(comment: string) {
     // Ham2k Polo self spot for n-fers
     if (comment.match(/\b[0-9]+-fer:(?: [A-Z0-9]+-(?:[0-9]{4,5}|TEST)){2,}/))
         return true;
+
+    return false;
 }

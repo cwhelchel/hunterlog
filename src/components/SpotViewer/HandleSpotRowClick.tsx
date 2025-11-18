@@ -39,8 +39,8 @@ export default function HandleSpotRowClick() {
             return testForNfer(el.comments);
         });
 
-        console.log('nferComments');
-        console.log(nferComments);
+        // console.log('nferComments');
+        // console.log(nferComments);
 
         function getMultiOps(ops: SpotComments[]): string {
             if (ops.length > 0) {
@@ -102,9 +102,10 @@ export default function HandleSpotRowClick() {
                         setData(newCtxData);
                     }
 
+                    setIsWorking(false);
+
                     // this is ignored if the logger doesn't support staging
                     window.pywebview.api.stage_qso(JSON.stringify(x));
-                    setIsWorking(false);
                 });
         });
     }
@@ -138,6 +139,9 @@ export default function HandleSpotRowClick() {
 
     useEffect(() => {
         if (!isWorking) {
+            // a cleared or logged qso changes spotId to 0
+            if (contextData.spotId == 0)
+                return;
             setIsWorking(true);
             loadSpotData(contextData.spotId);
         } else {
