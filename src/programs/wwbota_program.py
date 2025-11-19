@@ -57,11 +57,11 @@ class WwbotaProgram(Program):
             # locationDesc is the WWBOTA 'scheme' 9ABOTA, CABOTA, etc
             # locationDesc could be null
             if to_add.locationDesc:
+                loc = to_add.locationDesc.split('|')[0]
                 to_add.continent = self.continents.find_continent_wwbota(
-                    to_add.locationDesc.split('|')[0]
+                    loc
                 )
-
-            self.regions.append(to_add.locationDesc)
+                self.regions.append(loc)
 
             statement = sa.select(Spot) \
                 .filter_by(activator=bunker['call']) \

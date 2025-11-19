@@ -1,14 +1,16 @@
 import * as React from 'react';
 import clsx from 'clsx';
-import { styled, css, maxWidth } from '@mui/system';
+import { styled, css } from '@mui/system';
 import { Modal as BaseModal } from '@mui/base/Modal';
 import Button from '@mui/material/Button';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import Stack from '@mui/material/Stack';
-
-import { useAppContext } from '../AppContext';
 import { DataGrid, GridActionsCellItem, GridColDef, GridRowId } from '@mui/x-data-grid';
+
+import './AlertsMenu.scss';
 import { AlertRow } from '../../@types/AlertTypes';
+import { checkApiResponse } from '../../tsx/util';
+import { useAppContext } from '../AppContext';
 
 const rows: AlertRow[] = [];
 
@@ -16,6 +18,7 @@ export default function AlertsMenu() {
     const [open, setOpen] = React.useState(false);
     const [alerts, setAlerts] = React.useState(rows);
     const [toDelete, setToDelete] = React.useState<number[]>([]);
+    const [statusOptions, setStatusOptions] = React.useState([]);
     const { contextData, setData } = useAppContext();
 
     const columns: GridColDef<(typeof rows)[number]>[] = [
@@ -23,6 +26,7 @@ export default function AlertsMenu() {
         {
             field: 'enabled',
             headerName: 'Enabled',
+            headerClassName: 'hl-alert-col-hdr',
             type: 'boolean',
             width: 100,
             editable: true,
@@ -30,6 +34,7 @@ export default function AlertsMenu() {
         {
             field: 'new_only',
             headerName: 'New Only?',
+            headerClassName: 'hl-alert-col-hdr',
             type: 'boolean',
             width: 100,
             editable: true,
@@ -37,6 +42,7 @@ export default function AlertsMenu() {
         {
             field: 'name',
             headerName: 'Alert Name',
+            headerClassName: 'hl-alert-col-hdr',
             type: 'string',
             width: 150,
             editable: true,
@@ -44,6 +50,15 @@ export default function AlertsMenu() {
         {
             field: 'loc_search',
             headerName: 'Location',
+            headerClassName: 'hl-alert-col-hdr',
+            type: 'string',
+            width: 110,
+            editable: true,
+        },
+        {
+            field: 'call_search',
+            headerName: 'Calsign',
+            headerClassName: 'hl-alert-col-hdr',
             type: 'string',
             width: 110,
             editable: true,
@@ -51,18 +66,39 @@ export default function AlertsMenu() {
         {
             field: 'exclude_modes',
             headerName: 'Excluded Modes (comma separated)',
+            headerClassName: 'hl-alert-col-hdr',
             type: 'string',
             width: 225,
             editable: true,
         },
         {
+            field: 'excl_band_above',
+            headerName: 'Exclude Bands Above',
+            headerClassName: 'hl-alert-col-hdr',
+            type: 'singleSelect',
+            width: 160,
+            editable: true,
+            valueOptions: statusOptions
+        },
+        {
+            field: 'excl_band_below',
+            headerName: 'Exclude Bands Below',
+            headerClassName: 'hl-alert-col-hdr',
+            type: 'singleSelect',
+            width: 160,
+            editable: true,
+            valueOptions: statusOptions
+        },
+        {
             field: 'actions',
             type: 'actions',
             headerName: 'Delete',
+            headerClassName: 'hl-alert-col-hdr',
             width: 100,
             cellClassName: 'actions',
             getActions: ({ id }) => [
                 <GridActionsCellItem
+                    key="delete-action"
                     icon={<DeleteIcon />}
                     label="Delete"
                     onClick={handleDeleteClick(id)}
@@ -70,6 +106,36 @@ export default function AlertsMenu() {
             ],
         }
     ];
+
+
+    const getBands = () => {
+        const y = window.pywebview.api.get_band_names();
+
+        y.then((json: string) => {
+            console.log(json);
+            const obj = checkApiResponse(json, contextData, setData);
+            if (!obj.success)
+                return;
+            console.log(obj);
+            const x = obj.band_names;
+            console.log('bandnames type: ' + typeof x);
+            console.log('bandnames: ' + x);
+            // const wtf = JSON.parse(x);
+            setStatusOptions(x);
+            //columns.filter(column => column.field === "excl_band_above").valueOptions = x;
+        });
+    };
+
+    React.useEffect(() => {
+        if (window.pywebview !== undefined && window.pywebview.api !== null) {
+            getBands();
+        }
+        else {
+            window.addEventListener('pywebviewready', getBands);
+        }
+    }, []);
+
+
 
     const handleOpen = () => {
         setOpen(true);
@@ -80,28 +146,28 @@ export default function AlertsMenu() {
     function getAlerts() {
         const p = window.pywebview.api.get_alerts()
         p.then((r: string) => {
-            var x = JSON.parse(r);
+            const x = JSON.parse(r);
             setAlerts(x);
         });
     }
 
     const handleSave = () => {
         if (window.pywebview !== undefined) {
-            let deletes = [...toDelete];
+            const deletes = [...toDelete];
 
             deletes.forEach(d => {
                 console.log(`deleting alert id: ${d}`);
                 window.pywebview.api.delete_alert(d);
             });
 
-            let x = [...alerts];
+            const x = [...alerts];
             window.pywebview.api.set_alerts(JSON.stringify(x));
             handleClose();
         }
     };
 
     function handleAdd(): void {
-        let x = [...alerts];
+        const x = [...alerts];
         let max_id = -1;
         if (x.length > 0) {
             const a = x.map(y => y.id);
@@ -111,7 +177,12 @@ export default function AlertsMenu() {
             id: max_id + 1,
             enabled: true, new_only: true,
             name: '', loc_search: '', exclude_modes: '',
-            last_triggered: null, dismissed_until: null, dismissed_callsigns: ''
+            last_triggered: null,
+            dismissed_until: null,
+            dismissed_callsigns: '',
+            call_search: null,
+            excl_band_above: null,
+            excl_band_below: null
         });
 
         setAlerts(x);
@@ -168,8 +239,8 @@ export default function AlertsMenu() {
             }
         }
 
-        let x = [...toDelete];
-        let num = parseInt(getValue(id));
+        const x = [...toDelete];
+        const num = parseInt(getValue(id));
         x.push(num);
         setToDelete(x);
         setAlerts(alerts.filter((row) => row.id !== id));
@@ -196,16 +267,27 @@ export default function AlertsMenu() {
                 onClose={handleClose}
                 slots={{ backdrop: StyledBackdrop }}
             >
-                <ModalContent sx={{ width: '70%' }}>
+                <ModalContent sx={{ width: '90%' }}>
                     <h2 id="unstyled-modal-title" className="modal-title">
                         Alert Configuration
                     </h2>
-                    <div style={{ maxWidth: '75%', fontSize: '0.8rem' }}>
-                        <ul style={{ margin: '1px', paddingInlineStart: '20px' }}>
-                            <li>The <b>Name</b> specified is used only when displaying the alert.</li>
-                            <li>The <b>Location</b> field is a string like 'US-TX', it will match the beginning of a spots location ('US-'' would match all locations in the US).</li>
-                            <li>If <b>New Only</b> is checked, only ATNO are alerted for a given location.</li>
-                        </ul>
+                    <div style={{ display: 'flex', flexDirection: 'row' }}>
+                        <div style={{ margin: '2px', maxWidth: '75%', fontSize: '0.8rem' }}>
+                            <ul style={{ paddingInlineStart: '20px' }}>
+                                <li>The <b>Name</b> specified is used only when displaying the alert.</li>
+                                <li>The <b>Location</b> field is a string like &apos;US-TX&apos;, it will match the beginning of a spots location (&apos;US-&apos;&apos; would match all locations in the US).</li>
+                                <li>If <b>New Only</b> is checked, only ATNO are alerted for a given location.</li>
+                                <li>Callsign should be the base callsign without modifiers like VE3/ or /P.</li>
+                            </ul>
+                        </div>
+                        <div style={{ margin: '2px', maxWidth: '75%', fontSize: '0.8rem' }}>
+                            The &apos;Exclude Band&apos; filters work like this:
+                            <ul style={{ paddingInlineStart: '20px' }}>
+                                <li>Exclude Bands Above will exclude spots where <code>freq &gt;= band lower limit</code></li>
+                                <li>Exclude Bands Below will exclude spots where <code>freq &lt;= band upper limit</code></li>
+                                <li>If you enter <i>20m</i> for &apos;Exclude Bands Above&apos;, any alerts on 20m <em>AND</em> above will not be shown for that filter.</li>
+                            </ul>
+                        </div>
                     </div>
                     <Stack direction={'row'} spacing={1}>
                         <Button sx={{ maxWidth: '15%' }} onClick={handleAdd}>Add Alert Filter</Button>
@@ -249,15 +331,8 @@ const Backdrop = React.forwardRef<
         />
     );
 });
+Backdrop.displayName = 'alerts-modal-backdrop';
 
-const blue = {
-    200: '#99CCFF',
-    300: '#66B2FF',
-    400: '#3399FF',
-    500: '#007FFF',
-    600: '#0072E5',
-    700: '#0066CC',
-};
 
 const grey = {
     50: '#F3F6F9',
@@ -333,33 +408,4 @@ const ModalContent = styled('div')(
   `,
 );
 
-const TriggerButton = styled('button')(
-    ({ theme }) => css`
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-weight: 600;
-    font-size: 0.875rem;
-    line-height: 1.5;
-    padding: 8px 16px;
-    border-radius: 8px;
-    transition: all 150ms ease;
-    cursor: pointer;
-    background: ${theme.palette.mode === 'dark' ? grey[900] : '#fff'};
-    border: 1px solid ${theme.palette.mode === 'dark' ? grey[700] : grey[200]};
-    color: ${theme.palette.mode === 'dark' ? grey[200] : grey[900]};
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 
-    &:hover {
-      background: ${theme.palette.mode === 'dark' ? grey[800] : grey[50]};
-      border-color: ${theme.palette.mode === 'dark' ? grey[600] : grey[300]};
-    }
-
-    &:active {
-      background: ${theme.palette.mode === 'dark' ? grey[700] : grey[100]};
-    }
-
-    &:focus-visible {
-      box-shadow: 0 0 0 4px ${theme.palette.mode === 'dark' ? blue[300] : blue[200]};
-      outline: none;
-    }
-  `,
-);

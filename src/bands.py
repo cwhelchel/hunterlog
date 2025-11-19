@@ -93,6 +93,46 @@ def get_name_of_band(band: Bands) -> str:
     return bandNames[band]
 
 
+def get_band_from_name(band_name: str) -> Bands:
+    x = band_name.lower()
+    if (x not in bandNames):
+        logging.warning(f"bad band_name given: {band_name}")
+        return Bands.NOBAND
+
+    i = bandNames.index(x)
+    return Bands(i)
+
+
+def freq_is_gt(freq: str, band: Bands) -> bool:
+    '''
+    Determine if the frequency is greater than the start of the given band.
+    '''
+    try:
+        logging.debug(f"freq_is_gt {band} at {freq}")
+        f = float(freq)
+        (_, upper) = bandLimits[band]
+        if (f >= upper):
+            return True
+    except ValueError:
+        logging.error("invalid str to float in freq_is_gt. default to false")
+        return False
+
+
+def freq_is_lt(freq: str, band: Bands) -> bool:
+    '''
+    Determine if the frequency is less than the start of the given band.
+    '''
+    try:
+        logging.debug(f"freq_is_lt {band} at {freq}")
+        f = float(freq)
+        (lower, _) = bandLimits[band]
+        if (f <= lower):
+            return True
+    except ValueError:
+        logging.error("invalid str to float in freq_is_gt. default to false")
+        return False
+
+
 def is_freq_in_band(freq: str, band: Bands) -> bool:
     '''
     Checks to see if given freq string is in the given band

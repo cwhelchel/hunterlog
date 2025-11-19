@@ -6,7 +6,7 @@ import datetime
 import threading
 from datetime import timedelta
 
-from bands import get_band, get_name_of_band
+from bands import get_band, get_name_of_band, bandNames
 from db.db import DataBase
 from db.models.activators import Activator, ActivatorSchema
 from db.models.alerts import AlertsSchema
@@ -721,6 +721,10 @@ class JsApi:
     def get_pota_locations(self) -> str:
         locs = self.db.locations.get_all_locations()
         return self._response(True, '', locations=locs)
+
+    def get_band_names(self) -> str:
+        bns = bandNames
+        return self._response(True, '', band_names=bns)
 
     def get_hamalert_text(self, location: str) -> str:
         hunted = self.db.parks.get_hunted_parks(location)
