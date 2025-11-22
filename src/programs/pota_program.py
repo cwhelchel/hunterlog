@@ -1,6 +1,7 @@
 from db.models.parks import Park, ParkSchema
 from db.models.qsos import Qso
 from programs.apis import PotaApi
+from programs.apis.iapi import IApi
 from programs.program import Program
 from db.db import DataBase
 from db.models.spots import Spot, SpotSchema
@@ -16,6 +17,11 @@ class PotaProgram(Program):
     @property
     def seen_regions(self) -> list[str]:
         return self.regions
+
+    @property
+    def api(self) -> IApi:
+        self.pota_api = PotaApi() if self.pota_api is None else self.pota_api
+        return self.pota_api
 
     def get_reference(self,
                       ref: str,
@@ -132,3 +138,6 @@ class PotaProgram(Program):
             return post
 
         return ''
+
+    def parse_hunt_data(self, data) -> dict[str, int]:
+        return {}

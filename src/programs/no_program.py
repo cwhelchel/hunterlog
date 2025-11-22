@@ -1,5 +1,6 @@
 from db.models.parks import Park
 from db.models.qsos import Qso
+from programs.apis.iapi import IApi
 from programs.program import Program
 from db.models.spots import Spot
 import logging as L
@@ -16,6 +17,10 @@ class NoProgram(Program):
     @property
     def seen_regions(self) -> list[str]:
         return []
+
+    @property
+    def api(self) -> IApi:
+        return None
 
     def get_reference(self,
                       ref: str,
@@ -36,3 +41,6 @@ class NoProgram(Program):
 
     def download_reference_data(self, ref_code: str) -> any:
         return None
+
+    def parse_hunt_data(self, data) -> dict[str, int]:
+        return {}

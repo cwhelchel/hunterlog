@@ -106,7 +106,7 @@ class ParkQuery:
         return True
 
     def update_park_hunts(self, park: any, hunts: int,
-                          delay_commit: bool = True):
+                          delay_commit: bool = True) -> str:
         '''
         Update the hunts field of a park in the db with the given hunt. Will
         create a park row if none exists
@@ -114,9 +114,12 @@ class ParkQuery:
         :param any park: park json/dic
         :param int hunts: new hunts value
         :param bool delay_commit: if true will not call session.commit
+        :returns str: returns the ref id if no ref was found and a stripped
+                      down park was inserted
         '''
         schema = ParkSchema()
         obj = self.get_park(park['reference'])
+        res = None
 
         if obj is None:
             # logging.debug(f"adding new park row for {park}")
@@ -127,6 +130,7 @@ class ParkQuery:
             # logging.debug(to_add)
             self.session.add(to_add)
             obj = to_add
+            res = to_add.reference
         else:
             # logging.debug(f"increment hunts for park {obj.reference}")
             # if this was hunted in the app and the the stats are imported
@@ -136,6 +140,8 @@ class ParkQuery:
 
         if not delay_commit:
             self.session.commit()
+
+        return res
 
     def get_hunted_parks(self, location: str) -> list[str]:
         '''

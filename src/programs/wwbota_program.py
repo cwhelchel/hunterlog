@@ -1,6 +1,7 @@
 from datetime import datetime
 from db.models.parks import Park
 from db.models.qsos import Qso
+from programs.apis.iapi import IApi
 from programs.program import Program
 from db.models.spots import Spot
 import sqlalchemy as sa
@@ -17,6 +18,11 @@ class WwbotaProgram(Program):
     @property
     def seen_regions(self) -> list[str]:
         return self.regions
+
+    @property
+    def api(self) -> IApi:
+        self.bunk_api = WwbotaApi() if self.bunk_api is None else self.bunk_api
+        return self.bunk_api
 
     def get_reference(self,
                       ref: str,
@@ -241,3 +247,6 @@ class WwbotaProgram(Program):
 
         # send the list of references back to caller
         return result
+
+    def parse_hunt_data(self, data) -> dict[str, int]:
+        return {}

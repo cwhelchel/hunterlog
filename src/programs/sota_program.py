@@ -1,5 +1,6 @@
 from db.models.parks import Park
 from db.models.qsos import Qso
+from programs.apis.iapi import IApi
 from programs.program import Program
 from db.models.spots import Spot
 import sqlalchemy as sa
@@ -16,6 +17,11 @@ class SotaProgram(Program):
     @property
     def seen_regions(self) -> list[str]:
         return self.regions
+
+    @property
+    def api(self) -> IApi:
+        self.sota_api = SotaApi() if self.sota_api is None else self.sota_api
+        return self.sota_api
 
     def get_reference(self,
                       ref: str,
@@ -150,3 +156,6 @@ class SotaProgram(Program):
         s.firstActivationDate = ''
         s.website = f"https://www.sotadata.org.uk/en/summit/{summit['summitCode']}"  # noqa E501
         return s
+
+    def parse_hunt_data(self, data) -> dict[str, int]:
+        return {}

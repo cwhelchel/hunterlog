@@ -623,6 +623,49 @@ class JsApi:
 
         return self._update_all_parks()
 
+    def update_park_hunts_from_csv_qsos(
+            self,
+            program: str,
+            file_contents: str) -> str:
+        '''
+        Import hunts from a program csv files that contain QSO style data
+        (i.e. one row per contact).
+
+        This does not download park data.
+        '''
+        def call_update_progress(x: float):
+            if len(webview.windows) > 0:
+                js = """if (window.pywebview.state !== undefined &&  window.pywebview.state.updateImportProgress !== undefined)  {{  // # noqa
+                                window.pywebview.state.updateImportProgress({obj}); // # noqa
+                        }}
+                    """.format(obj=x)
+            webview.windows[0].evaluate_js(js)
+
+        try:
+
+            # the program has to know how to handle the files from the program
+            # website.
+            hunts = self.programs[program].parse_hunt_data(file_contents)
+
+            total = len(hunts)
+            x = 0.0
+
+            for ref, hunt_count in hunts.items():
+                j = {'reference': ref}
+                self.db.parks.update_park_hunts(j, hunt_count)
+                x += 1.0
+                per = (x / total) * 100.0
+                call_update_progress(per)
+
+            self.db.commit_session()
+        except Exception as ex:
+            logging.error(
+                f'error importing hunt counts for program: {program}',
+                exc_info=ex)
+            return self._response(False, 'Error importing hunts. See log.')
+
+        return self._response(True, '')
+
     def export_park_data(self) -> str:
         '''
         Dumps the entire parks table into a file named 'park_export.json'.

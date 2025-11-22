@@ -1,5 +1,9 @@
+from collections import defaultdict
+import csv
+from io import StringIO
 from db.models.parks import Park
 from db.models.qsos import Qso
+from programs.apis.iapi import IApi
 from programs.program import Program
 from db.models.spots import Spot
 import sqlalchemy as sa
@@ -13,9 +17,16 @@ log = L.getLogger(__name__)
 
 class WwffProgram(Program):
 
+    wwff_api = None
+
     @property
     def seen_regions(self) -> list[str]:
         return self.regions
+
+    @property
+    def api(self) -> IApi:
+        self.wwff_api = WwffApi() if self.wwff_api is None else self.wwff_api
+        return self.wwff_api
 
     def get_reference(self,
                       ref: str,
@@ -30,13 +41,20 @@ class WwffProgram(Program):
 
         if wwff is None and pull_from_api:
             log.info(f"wwff not found in db {ref}")
-            api_res = WwffApi().get_wwff_info(ref)
+            api_res = WwffApi().get_reference(ref)
             log.debug(f"wwff data from api {api_res}")
             to_add = self.parse_ref_data(api_res)
             if to_add:
                 self.db.session.add(to_add)
                 self.db.session.commit()
             wwff = self.db.parks.get_park(ref)
+        elif wwff.name is None and pull_from_api:
+            log.info('wwff ref is half-loaded pulling rest of data')
+
+            api_res = self.api.get_reference(ref)
+            new_ref = self.parse_ref_data(api_res)
+            self.update_half_loaded_ref(wwff, new_ref)
+            self.db.commit_session()
 
         return wwff
 
@@ -103,7 +121,7 @@ class WwffProgram(Program):
         name = spot.name
         if spot.grid4 == '':
             wwff_api = WwffApi()
-            wwff = wwff_api.get_wwff_info(spot.reference)
+            wwff = wwff_api.get_reference(spot.reference)
             spot.grid4 = wwff['locator'][:4]
             spot.grid6 = wwff['locator']
             spot.latitude = wwff['latitude']
@@ -117,7 +135,7 @@ class WwffProgram(Program):
         return q
 
     def download_reference_data(self, ref_code: str) -> any:
-        return WwffApi().get_wwff_info(ref_code)
+        return WwffApi().get_reference(ref_code)
 
     def parse_ref_data(self, wwff) -> Park:
         r = Park()
@@ -149,3 +167,25 @@ class WwffProgram(Program):
         r.firstActivationDate = ''
         r.website = wwff['wikipedia']
         return r
+
+    def parse_hunt_data(self, data) -> dict[str, int]:
+        # data here is a raw string csv from front end
+
+        csv_file = StringIO(data)
+        csv_reader = csv.DictReader(csv_file, delimiter=',')
+
+        result = defaultdict(int)
+
+        skip_headers = True
+        for row in csv_reader:
+            if skip_headers:
+                skip_headers = False
+                continue
+            else:
+                # log.debug(row)
+                # not exactly sure what 'Status' is, but lets use it
+                if row['Status'] == 'valid':
+                    k = row['Reference']
+                    result[k] += 1
+
+        return result

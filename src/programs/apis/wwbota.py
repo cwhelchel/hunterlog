@@ -5,7 +5,7 @@ from cachetools.func import ttl_cache
 logging = L.getLogger(__name__)
 
 # 1 = gets last hour of spots
-SPOT_URL = "https://api.wwbota.org/spots/?age=1"
+SPOT_URL = "https://api.wwbota.org/spots/?age=23"
 BUNKERS_URL = "https://api.wwbota.org/bunkers/"
 
 

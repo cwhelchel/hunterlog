@@ -4,6 +4,7 @@ from db.db import DataBase
 from db.models.parks import Park
 from db.models.qsos import Qso
 from db.models.spots import Spot
+from programs.apis.iapi import IApi
 from utils.continent import Continents
 from utils.distance import Distance
 import logging as L
@@ -23,6 +24,16 @@ class Program(ABC):
     def __init__(self, db: DataBase):
         self.continents = Continents()
         self.db = db
+
+    @property
+    @abstractmethod
+    def api(self) -> IApi:
+        '''
+        Get the IApi object for the program.
+
+        :returns IApi: concrete IApi object
+        '''
+        raise NotImplementedError
 
     @abstractmethod
     def download_reference_data(self, ref_code: str) -> any:
@@ -93,6 +104,17 @@ class Program(ABC):
         '''
         raise NotImplementedError
 
+    @abstractmethod
+    def parse_hunt_data(self, data) -> dict[str, int]:
+        '''
+        Parse the reference hunt data given and return a dictionary where the
+        key is the reference id and the value is the number of hunts.
+
+        :param data: The data in arbitrary format. program dependent.
+        :returns  dict[str, int]: dict of total hunts keyed by reference id
+        '''
+        raise NotImplementedError
+
     def inc_ref_hunt(self, ref: str, ota_ref: str) -> bool:
         '''
         The program logic for incrementing the hunts for a give ref or list
@@ -153,6 +175,37 @@ class Program(ABC):
             bearing = Distance.bearing(my_grid, q.gridsquare)
             q.distance = dist
             q.bearing = bearing
+
+    def update_half_loaded_ref(self, old: Park, new_ref: Park):
+        '''
+        Updates a half-loaded park row with new data. Half-loaded parks are
+        most likely from stats imports
+        '''
+        # dont set id, hunts, or reference
+        old.name = new_ref.name
+        old.accessibility = new_ref.accessibility
+        old.accessMethods = new_ref.accessMethods
+        old.activationMethods = new_ref.activationMethods
+        old.active = new_ref.active
+        old.agencyURLs = new_ref.agencyURLs
+        old.entityDeleted = new_ref.entityDeleted
+        old.agencies = new_ref.agencies
+        old.entityId = new_ref.entityId
+        old.entityName = new_ref.entityName
+        old.firstActivationDate = new_ref.firstActivationDate
+        old.firstActivator = new_ref.firstActivator
+        old.grid4 = new_ref.grid4
+        old.grid6 = new_ref.grid6
+        old.latitude = new_ref.latitude
+        old.longitude = new_ref.longitude
+        old.parkComments = new_ref.parkComments
+        old.parkURLs = new_ref.parkURLs
+        old.parktypeId = new_ref.parktypeId
+        old.parktypeDesc = new_ref.parktypeDesc
+        old.locationDesc = new_ref.locationDesc
+        old.locationName = new_ref.locationName
+        old.referencePrefix = new_ref.referencePrefix
+        old.website = new_ref.website
 
     def _inc(self, ref: str):
         ok = self.db.parks.inc_ref_hunt(ref)
