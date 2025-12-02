@@ -152,10 +152,22 @@ const rows: SpotRow[] = [];
 var currentSortFilter = { field: 'spotTime', sort: 'desc' as GridSortDirection };
 var currentPageFilter = { pageSize: 25, page: 0, };
 
+function CustomToolbar() {
+    return (
+        <GridToolbarContainer>
+            <GridToolbarColumnsButton />
+            <GridToolbarDensitySelector />
+            <GridToolbarQuickFilter />
+            <ScanButton />
+        </GridToolbarContainer>
+    );
+}
+
 export default function SpotViewer() {
     const [spots, setSpots] = React.useState(rows)
     const [sortModel, setSortModel] = React.useState<GridSortModel>([currentSortFilter]);
     const [pageModel, setPaginationModel] = React.useState<GridPaginationModel>(currentPageFilter);
+    const [rowSelectionModel, setRowSelectionModel] = React.useState<any[]>([]);
     const [backdropOpen, setBackdropOpen] = React.useState(false);
     const { contextData, setData, qsyButtonId, setLastQsyBtnId } = useAppContext();
 
@@ -281,6 +293,9 @@ export default function SpotViewer() {
         // console.log('setting spot to ' + params.row.spotId);
         newCtxData.spotId = params.row.spotId;
         setData(newCtxData);
+
+        // Also update visual selection to highlight the clicked row
+        setRowSelectionModel([params.row.spotId]);
     };
 
     function setFilterModel(e: GridFilterModel) {
@@ -310,16 +325,7 @@ export default function SpotViewer() {
             return 'spotviewer-row';
     };
 
-    function CustomToolbar() {
-        return (
-            <GridToolbarContainer>
-                <GridToolbarColumnsButton />
-                <GridToolbarDensitySelector />
-                <GridToolbarQuickFilter />
-                <ScanButton />
-            </GridToolbarContainer>
-        );
-    }
+
 
     return (
         <div className='spots-container'>
@@ -357,6 +363,8 @@ export default function SpotViewer() {
                 onSortModelChange={(e) => setSortModelAndSave(e)}
                 onPaginationModelChange={(e) => setPaginationModelAndSave(e)}
                 getRowClassName={getClassName}
+                rowSelectionModel={rowSelectionModel}
+                onRowSelectionModelChange={(newSelection) => setRowSelectionModel(newSelection)}
             />
             <HandleSpotRowClick />
         </div>

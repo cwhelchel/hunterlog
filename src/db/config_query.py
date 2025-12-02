@@ -169,6 +169,15 @@ class ConfigQuery:
             'group': '',
             'enabled': 'True',
             'editable': 'False'
+        },
+        {
+            'key': 'scan_wait_time',
+            'val': '5',
+            'type': 'int',
+            'description': 'Time in seconds to wait on each station during scanning',
+            'group': 'scanning',
+            'enabled': 'True',
+            'editable': 'True'
         }
     ]
 

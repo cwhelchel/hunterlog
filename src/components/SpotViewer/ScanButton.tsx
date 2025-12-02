@@ -9,11 +9,15 @@ export default function ScanButton() {
     const apiRef = useGridApiContext();
     const filteredIds = useGridSelector(apiRef, gridFilteredSortedRowIdsSelector);
     const { config } = useConfigContext();
-    const { contextData, setData } = useAppContext();
+    const { contextData, setData, setLastQsyBtnId } = useAppContext();
     const [isScanning, setIsScanning] = React.useState(false);
     const [scanIndex, setScanIndex] = React.useState(0);
 
     const waitTime = (config.scan_wait_time || 5) * 1000;
+
+    React.useEffect(() => {
+        console.log("isScanning state changed to:", isScanning);
+    }, [isScanning]);
 
     React.useEffect(() => {
         let interval: NodeJS.Timeout;
@@ -25,7 +29,9 @@ export default function ScanButton() {
                     try {
                         const pttResp = await window.pywebview.api.get_ptt();
                         const json = checkApiResponse(pttResp, contextData, setData);
-                        if (json.success && json.ptt !== '0') {
+                        // loose equality check or string conversion to handle int/string return
+                        if (json.success && String(json.ptt) !== '0') {
+                            console.log("Stopping scan due to PTT: ", json.ptt);
                             setIsScanning(false);
                             return;
                         }
@@ -48,10 +54,25 @@ export default function ScanButton() {
                 setScanIndex(nextIndex);
 
                 const nextId = currentIds[nextIndex];
+                console.log("Scanning to row:", nextIndex, "ID:", nextId);
                 if (nextId) {
                     apiRef.current.setRowSelectionModel([nextId]);
+                    console.log("Set selection model to:", [nextId]);
                     const row = apiRef.current.getRow(nextId);
                     if (row && window.pywebview?.api) {
+                        console.log("QSY to:", row.frequency, row.mode);
+
+                        // Update qsyButtonId so FreqButton changes color
+                        const actId = [row.activator, row.frequency, row.mode].join("|");
+                        const buttonId = actId + '==scan';
+                        setLastQsyBtnId(buttonId);
+
+                        // Update contextData.spotId to trigger HandleSpotRowClick
+                        // This loads the park/activator info at the top of the screen
+                        const newCtxData = { ...contextData };
+                        newCtxData.spotId = nextId;
+                        setData(newCtxData);
+
                         window.pywebview.api.qsy_to(row.frequency, row.mode);
                     }
                 }
@@ -63,9 +84,12 @@ export default function ScanButton() {
     }, [isScanning, scanIndex, waitTime, apiRef, contextData, setData]);
 
     const handleScanClick = () => {
+        console.log("handleScanClick - Current isScanning:", isScanning);
         if (isScanning) {
+            console.log("Stopping scan");
             setIsScanning(false);
         } else {
+            console.log("Starting scan");
             // Start scanning
             const currentIds = gridFilteredSortedRowIdsSelector(apiRef);
             if (currentIds.length > 1) {
@@ -80,6 +104,7 @@ export default function ScanButton() {
 
                 setScanIndex(startIndex);
                 setIsScanning(true);
+                console.log("Scan started, isScanning set to true");
 
                 // Immediately tune to start? Or wait? User said "wait_time... go to next". 
                 // But usually you want immediate feedback. 
