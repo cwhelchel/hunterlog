@@ -16,7 +16,8 @@ const defData: UserConfig = {
     cw_mode: '',
     ftx_mode: '',
     qth_string: '',
-    rig_if_type: ''
+    rig_if_type: '',
+    scan_wait_time: 5
 };
 
 export interface ConfigContextType {
@@ -26,7 +27,7 @@ export interface ConfigContextType {
 
 export const ConfigContext = React.createContext<ConfigContextType | null>(null);
 
-export const ConfigContextProvider = ( {children}: any ) => {
+export const ConfigContextProvider = ({ children }: any) => {
     const [configData, setConfigData] = React.useState<UserConfig>(defData);
 
     const x = (ctx: UserConfig) => {
@@ -45,7 +46,8 @@ export const ConfigContextProvider = ( {children}: any ) => {
             cw_mode: ctx.cw_mode,
             ftx_mode: ctx.ftx_mode,
             qth_string: ctx.qth_string,
-            rig_if_type: ctx.rig_if_type
+            rig_if_type: ctx.rig_if_type,
+            scan_wait_time: ctx.scan_wait_time
         };
         setConfigData(newContext);
     };

@@ -12,6 +12,7 @@ import { useConfigContext } from './ConfigContextProvider'
 import GeneralSettingsTab from './GeneralSettingsTab';
 import LoggerSettingsTab from './LoggerSettingsTab';
 import RadioSettingsTab from './RadioSettingsTab';
+import ScanningSettingsTab from './ScanningSettingsTab';
 import { setErrorMsg } from '../../util';
 import { useAppContext } from '../AppContext';
 
@@ -107,6 +108,7 @@ export default function ConfigModal() {
         config.qth_string = getVar(cfg2, 'qth_string');
         config.rig_if_type = getVar(cfg2, 'rig_if_type');
         config.logger_type = Number(getVar(cfg2, "logger_type"));
+        config.scan_wait_time = Number(getVar(cfg2, "scan_wait_time"));
         setConfig(config);
     }
 
@@ -123,6 +125,7 @@ export default function ConfigModal() {
         setVar(config2, "ftx_mode", config.ftx_mode);
         setVar(config2, "qth_string", config.qth_string);
         setVar(config2, "rig_if_type", config.rig_if_type);
+        setVar(config2, "scan_wait_time", config.scan_wait_time.toString());
         setConfig2(config2);
     }
 
@@ -165,7 +168,8 @@ export default function ConfigModal() {
                     >
                         <Tab label={'General'} {...a11yProps(0)} />
                         <Tab label={'CAT'} {...a11yProps(1)} />
-                        <Tab label={'Logging'} {...a11yProps(1)} />
+                        <Tab label={'Logging'} {...a11yProps(2)} />
+                        <Tab label={'Scanning'} {...a11yProps(3)} />
                     </Tabs>
 
                     <CustomTabPanel value={value} index={0}>
@@ -176,6 +180,9 @@ export default function ConfigModal() {
                     </CustomTabPanel>
                     <CustomTabPanel value={value} index={2}>
                         <LoggerSettingsTab />
+                    </CustomTabPanel>
+                    <CustomTabPanel value={value} index={3}>
+                        <ScanningSettingsTab />
                     </CustomTabPanel>
 
                     <Divider aria-hidden="true" />

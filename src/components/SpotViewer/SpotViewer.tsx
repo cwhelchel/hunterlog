@@ -24,6 +24,7 @@ import { getSummitInfo } from '../../pota';
 import { Summit } from '../../@types/Summit';
 import { checkApiResponse } from '../../util';
 import HandleSpotRowClick from './HandleSpotRowClick';
+import ScanButton from './ScanButton';
 
 // https://mui.com/material-ui/react-table/
 
@@ -315,6 +316,7 @@ export default function SpotViewer() {
                 <GridToolbarColumnsButton />
                 <GridToolbarDensitySelector />
                 <GridToolbarQuickFilter />
+                <ScanButton />
             </GridToolbarContainer>
         );
     }

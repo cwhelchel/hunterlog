@@ -564,6 +564,14 @@ class JsApi:
 
         return self._response(True, "")
 
+    def get_ptt(self):
+        '''Returns the PTT state from CAT control'''
+        if self.cat is None:
+            return self._response(False, "CAT control failure.")
+        
+        ptt = self.cat.get_ptt()
+        return self._response(True, "", ptt=ptt)
+
     def update_park_hunts_from_csv(self) -> str:
         '''
         Will use the current pota stats from hunter.csv to update the db with
