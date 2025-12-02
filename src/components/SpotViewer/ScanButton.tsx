@@ -20,15 +20,17 @@ export default function ScanButton() {
     }, [isScanning]);
 
     React.useEffect(() => {
-        let interval: NodeJS.Timeout;
+        let scanInterval: NodeJS.Timeout;
+        let pttInterval: NodeJS.Timeout;
 
         if (isScanning) {
-            interval = setInterval(async () => {
-                // Check PTT
+            // Fast PTT check every 250ms
+            pttInterval = setInterval(async () => {
                 if (window.pywebview?.api) {
                     try {
                         const pttResp = await window.pywebview.api.get_ptt();
                         const json = checkApiResponse(pttResp, contextData, setData);
+                        console.log("PTT check - success:", json.success, "ptt value:", json.ptt, "type:", typeof json.ptt);
                         // loose equality check or string conversion to handle int/string return
                         if (json.success && String(json.ptt) !== '0') {
                             console.log("Stopping scan due to PTT: ", json.ptt);
@@ -39,7 +41,10 @@ export default function ScanButton() {
                         console.error("Error checking PTT", e);
                     }
                 }
+            }, 250); // Check PTT every 250ms
 
+            // Scan interval to move to next station
+            scanInterval = setInterval(async () => {
                 // Get next row
                 const currentIds = gridFilteredSortedRowIdsSelector(apiRef);
                 if (currentIds.length <= 1) {
@@ -80,8 +85,11 @@ export default function ScanButton() {
             }, waitTime);
         }
 
-        return () => clearInterval(interval);
-    }, [isScanning, scanIndex, waitTime, apiRef, contextData, setData]);
+        return () => {
+            clearInterval(scanInterval);
+            clearInterval(pttInterval);
+        };
+    }, [isScanning, scanIndex, waitTime, apiRef, contextData, setData, setLastQsyBtnId]);
 
     const handleScanClick = () => {
         console.log("handleScanClick - Current isScanning:", isScanning);
@@ -105,20 +113,6 @@ export default function ScanButton() {
                 setScanIndex(startIndex);
                 setIsScanning(true);
                 console.log("Scan started, isScanning set to true");
-
-                // Immediately tune to start? Or wait? User said "wait_time... go to next". 
-                // But usually you want immediate feedback. 
-                // Requirement 3a: "go to the next channel... park... after wait_time... go to next"
-                // So it implies wait first? Or move then wait?
-                // "when pushed... on a predetermined timeout... go to next"
-                // This sounds like it waits first. 
-                // But usually "Scan" starts immediately. 
-                // Let's trigger the first move immediately for better UX, or at least tune to current.
-                // If I set index to current, the interval will move to next after wait_time.
-                // That seems correct based on "go to the next channel".
-
-                // Also Requirement 5: "As Scan is going through the stations, it should highlight the selected station"
-                // This is handled by setRowSelectionModel.
             }
         }
     };
