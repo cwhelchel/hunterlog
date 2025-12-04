@@ -1,4 +1,7 @@
 import json
+import os
+from pathlib import Path
+import sys
 import time
 import webview
 import logging as L
@@ -595,33 +598,63 @@ class JsApi:
 
         return self._response(True, "")
 
-    def update_park_hunts_from_csv(self) -> str:
+    def update_park_hunts_from_csv(self, file_contents) -> str:
         '''
         Will use the current pota stats from hunter.csv to update the db with
         new park hunt numbers. It will then update all the parks with data from
         the POTA API. This method will run a while depending on how many parks
         are in the csv file.
         '''
-        ft = ('CSV files (*.csv;*.txt)', 'All files (*.*)')
-        filename = webview.windows[0] \
-            .create_file_dialog(
-                webview.OPEN_DIALOG,
-                file_types=ft)
-        if not filename:
-            return self._response(True, "user cancelled")
 
-        logging.info(f"updating park hunts from {filename[0]}")
-        stats = PotaStats(filename[0])
-        hunts = stats.get_all_hunts()
+        def _get_app_global_path():
+            '''stolen from alembic/versions/__init__.py'''
+            if getattr(sys, 'frozen', False):
+                return os.path.abspath(os.path.dirname(sys.executable))
+            elif __file__:
+                # were running from source (npm run start) and this file is in
+                # so we need to back up a little so the code works
+                return os.path.dirname(__file__) + "/../"
 
-        for park in hunts:
-            count = stats.get_park_hunt_count(park)
-            j = {'reference': park, 'hunts': count}
-            self.db.parks.update_park_hunts(j, count)
+        def call_update_progress(x: float):
+            if len(webview.windows) > 0:
+                js = """if (window.pywebview.state !== undefined &&  window.pywebview.state.updateImportProgress !== undefined)  {{  // # noqa
+                                window.pywebview.state.updateImportProgress({obj}); // # noqa
+                        }}
+                    """.format(obj=x)
+            webview.windows[0].evaluate_js(js)
 
-        self.db.commit_session()
+        try:
+            root = _get_app_global_path()
+            timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            new_fn = f'hunter_parks_{timestamp_str}.csv'
+            imp_fn = Path(str(root), 'data/',  new_fn)
 
-        return self._update_all_parks()
+            with open(imp_fn, 'x', encoding='utf-8') as output:
+                output.writelines(file_contents)
+
+            logging.info(f"updating park hunts from {imp_fn}")
+            stats = PotaStats(imp_fn)
+            hunts = stats.get_all_hunts()
+
+            total = len(hunts)
+            x = 0.0
+
+            for park in hunts:
+                count = stats.get_park_hunt_count(park)
+                j = {'reference': park, 'hunts': count}
+                self.db.parks.update_park_hunts(j, count)
+                x += 1.0
+                per = (x / total) * 100.0
+                call_update_progress(per)
+
+            self.db.commit_session()
+
+            return self._response(
+                True, "Park Hunts imported", persist=True)
+
+        except Exception as e:
+            logging.error('error importing pota reference hunts', exc_info=e)
+            return self._response(False, "Import Failed", persist=True)
 
     def update_park_hunts_from_csv_qsos(
             self,
@@ -632,6 +665,9 @@ class JsApi:
         (i.e. one row per contact).
 
         This does not download park data.
+
+        :param program str: The programs SIG ID
+        :param file_contents str: the string contents of the file
         '''
         def call_update_progress(x: float):
             if len(webview.windows) > 0:

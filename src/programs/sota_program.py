@@ -1,3 +1,6 @@
+from collections import defaultdict
+import csv
+from io import StringIO
 from db.models.parks import Park
 from db.models.qsos import Qso
 from programs.apis.iapi import IApi
@@ -158,4 +161,24 @@ class SotaProgram(Program):
         return s
 
     def parse_hunt_data(self, data) -> dict[str, int]:
-        return {}
+        # data here is a raw string csv from the sota chaser complete log
+        # download
+
+        hdr = ['version', 'my_call', 'x', 'date', 'time', 'band',
+               'mode', 'call', 'summit', 'comment', 'points']
+        csv_file = StringIO(data)
+        csv_reader = csv.DictReader(csv_file, delimiter=',', fieldnames=hdr)
+
+        result = defaultdict(int)
+
+        skip_headers = False  # no headers in sota file
+
+        for row in csv_reader:
+            if skip_headers:
+                skip_headers = False
+                continue
+            else:
+                k = row['summit']
+                result[k] += 1
+
+        return result
