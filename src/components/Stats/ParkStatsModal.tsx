@@ -53,7 +53,7 @@ export default function ParkStatsModal(props: IParkStatsModalProps) {
                 if (event) {
                     const fileContents = event?.target?.result;
                     // this is POTA specific api call
-                    const x = window.pywebview.api.update_park_hunts_from_csv(fileContents);
+                    const x = window.pywebview.api.imports.update_park_hunts_from_csv(fileContents);
                     x.then((r: string) => {
                         const x = checkApiResponse(r, contextData, setData);
                         if (x.success) {
@@ -71,7 +71,7 @@ export default function ParkStatsModal(props: IParkStatsModalProps) {
                     const fileContents = event?.target?.result;
                     const prog = PROGS[importType];
 
-                    const y = window.pywebview.api.update_park_hunts_from_csv_qsos(prog, fileContents);
+                    const y = window.pywebview.api.imports.update_ref_hunts_from_prog_data(prog, fileContents);
                     y.then((r: string) => {
                         const x = checkApiResponse(r, contextData, setData);
                         if (x.success) {
@@ -207,10 +207,12 @@ export default function ParkStatsModal(props: IParkStatsModalProps) {
                     <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '10px', padding: '5px' }}>
                         <Typography variant="body2">
                             Select a SIG program in the dropdown to the right to get step-by-step instructions for downloading
-                            and importing reference hunt counts. If you have the right file name from
-                            the program website, the SIG should be auto-detected.
+                            and importing reference hunt counts. If you have the file from
+                            the program website, you can drag and drop and the SIG should be auto-detected (as long as its named correctly).
 
-                            Then click the Import button. Drag and Drop a new file to start over.
+                            <p>
+                                Once the file is in place, click the Import button. Then click Close or Drag and Drop a new file to start over.
+                            </p>
                         </Typography>
                         <div style={{ marginLeft: 'auto', paddingTop: '5px' }}>
                             <Select
@@ -227,7 +229,7 @@ export default function ParkStatsModal(props: IParkStatsModalProps) {
                             </Select>
                         </div>
                     </Box>
-                    <Box sx={{padding: '4em', border: '1px dashed grey'}}>
+                    <Box sx={{ padding: '4em', border: '1px dashed grey' }}>
                         <Stepper activeStep={activeStep} alternativeLabel>
                             {steps.map((label, index) => (
                                 <Step
