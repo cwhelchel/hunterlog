@@ -132,11 +132,8 @@ export default function ParkInfo() {
         }
         return <>
             <span className={getClassName(hunts)}>You have {hunts} QSOs for {contextData?.park?.reference} </span>
-            {(hunts == 0 && contextData?.park?.parktypeDesc == 'SOTA SUMMIT') && (
-                <span className="label label-danger">NEW SUMMIT</span>
-            )}
-            {(hunts == 0 && contextData?.park?.parktypeDesc != 'SOTA SUMMIT') && (
-                <span className="label label-danger">NEW PARK</span>
+            {hunts == 0 && (
+                <span className="label label-danger">NEW REF</span>
             )}
             {newBand && (
                 <span className="label label-warning" title={bandsText}>NEW BAND</span>

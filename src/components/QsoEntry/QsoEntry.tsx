@@ -540,7 +540,7 @@ export default function QsoEntry() {
                 }
 
                 <Grid item xs={4} lg={2}>
-                    <TextField id="park" label="Park"
+                    <TextField id="park" label="Reference"
                         value={qso.sig_info}
                         inputProps={{ style: textFieldStyle }}
                         onBlur={(e) => {
@@ -610,7 +610,7 @@ export default function QsoEntry() {
                         MultiOp
                     </StyledTypoGraphy>
                 </Button>
-                <Tooltip title="POTA only: multi-park logging">
+                <Tooltip title="Multi-reference logging">
                     <Button variant={otherParksHidden ? 'outlined' : 'contained'} onClick={(e) => handleMultiParkClick(e)}
                         color='secondary'>
                         <StyledTypoGraphy>
@@ -639,7 +639,7 @@ export default function QsoEntry() {
                     )}
 
                     {!otherParksHidden && (
-                        <TextField id="otherParks" label="Other Parks (comma separated)"
+                        <TextField id="otherParks" label="Other Refs (comma separated)"
                             value={otherParks}
                             color='warning'
                             margin='normal'
