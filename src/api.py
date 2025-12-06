@@ -1,5 +1,6 @@
 import json
 import time
+from typing import Any
 import webview
 import logging as L
 import datetime
@@ -328,29 +329,6 @@ class JsApi:
 
         return self._response(True, "spot posted")
 
-    def import_adif(self) -> str:
-        '''
-        Opens a Open File Dialog to allow the user to select a ADIF file
-        containing POTA QSOs to be imported into the app's database.
-        '''
-        ft = ('ADIF files (*.adi;*.adif)', 'All files (*.*)')
-        filename = webview.windows[0] \
-            .create_file_dialog(
-                webview.OPEN_DIALOG,
-            file_types=ft)
-        if not filename:
-            return self._response(True, "")
-
-        logging.info("starting import of ADIF file...")
-
-        try:
-            AdifLog.import_from_log(filename[0], self.db)
-        except Exception as ex:
-            logging.error('error importing log', exc_info=ex)
-            return self._response(False, "Error with ADIF import.")
-
-        return self._response(True, "Completed ADIF import", persist=True)
-
     def stage_qso(self, qso_data):
         logging.debug('staging qso')
         try:
@@ -562,12 +540,6 @@ class JsApi:
         else:
             logging.warning(f"activator callsign {callsign} not found")
             return -1
-
-    def load_location_data(self):
-        logging.debug("downloading location data...")
-        locations = PotaApi.get_locations()
-        self.db.locations.load_location_data(locations)
-        return self._response(True, "Downloaded location data successfully")
 
     def qsy_to(self, freq, mode: str):
         '''Use CAT control to QSY'''
@@ -841,6 +813,14 @@ class JsApi:
         Get the stored windows size.
         '''
         return self.db.config.get_value('is_max')
+
+    def _get_program_cfg(self) -> Any:
+        '''
+        Get the program configuration
+        '''
+        s = self.db.config.get_value('enabled_programs')
+        # json config values are stringify-d have to loads here too
+        return s
 
     def _store_win_size(self, size: tuple[int, int]):
         '''

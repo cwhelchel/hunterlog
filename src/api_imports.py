@@ -6,9 +6,12 @@ from pathlib import Path
 import sys
 import webview
 from db.db import DataBase
+from programs.apis import PotaApi
 from programs.apis.stats import PotaStats
 from programs.program import Program
 import logging as L
+
+from utils.adif import AdifLog
 
 
 log = L.getLogger(__name__)
@@ -125,3 +128,39 @@ class ImportApi:
         except Exception as e:
             log.error('error importing pota reference hunts', exc_info=e)
             return _response(False, "Import Failed", persist=True)
+
+    def import_adif(self) -> str:
+        '''
+        Opens a Open File Dialog to allow the user to select a ADIF file
+        containing POTA QSOs to be imported into the app's database.
+        '''
+        ft = ('ADIF files (*.adi;*.adif)', 'All files (*.*)')
+        filename = webview.windows[0] \
+            .create_file_dialog(
+                webview.OPEN_DIALOG,
+            file_types=ft)
+        if not filename:
+            return _response(True, "")
+
+        log.info("starting import of ADIF file...")
+
+        try:
+            AdifLog.import_from_log(filename[0], self.db)
+        except Exception as ex:
+            log.error('error importing log', exc_info=ex)
+            return _response(False, "Error with ADIF import.")
+
+        return _response(True, "Completed ADIF import", persist=True)
+
+    def load_location_data(self):
+        log.debug("downloading location data...")
+
+        try:
+            locations = PotaApi.get_locations()
+            log.debug(locations)
+            self.db.locations.load_location_data(locations)
+        except Exception as ex:
+            log.error('Error downloaded location data', exc_info=ex)
+            return _response(False, 'Error loading location data')
+
+        return _response(True, "Downloaded location data successfully")

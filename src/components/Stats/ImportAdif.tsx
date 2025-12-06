@@ -10,13 +10,14 @@ declare interface IImportAdifProps {
 
 
 export const ImportAdif = (props: IImportAdifProps) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [isWorking, _] = React.useState(false);
     const { contextData, setData } = useAppContext();
 
     const handleClick = () => {
         if (window.pywebview !== undefined) {
             props.setIsWorking(true);
-            window.pywebview.api.import_adif().then((r: string) => {
+            window.pywebview.api.imports.import_adif().then((r: string) => {
                 props.setIsWorking(false);
                 checkApiResponse(r, contextData, setData);
             },

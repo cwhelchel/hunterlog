@@ -1,6 +1,5 @@
 import * as React from 'react';
 
-import { useAppContext } from '../AppContext';
 import { UpdateStats } from '../Stats/UpdateStats';
 import { ImportAdif } from '../Stats/ImportAdif';
 import { Button, CircularProgress, Divider, Menu, MenuItem } from '@mui/material';
@@ -10,7 +9,6 @@ import { HamAlertButton } from '../Stats/HamAlert';
 export default function StatusMenu() {
 
     const [isWorking, setIsWorking] = React.useState(false);
-    const { contextData, setData } = useAppContext();
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
 
