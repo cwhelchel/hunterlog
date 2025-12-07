@@ -178,6 +178,15 @@ class ConfigQuery:
             'group': 'general',
             'enabled': 'True',
             'editable': 'True'
+        },
+        {
+            'key': 'enabled_programs',
+            'val': json.dumps({"POTA": True, "SOTA": True, 'WWFF': True, 'WWBOTA': True}),  # NOQA
+            'type': 'json',
+            'description': 'List of programs that are enabled',
+            'group': 'general',
+            'enabled': 'True',
+            'editable': 'True'
         }
     ]
 
@@ -201,6 +210,10 @@ class ConfigQuery:
             return str(x.val)
         elif x.type == "bool":
             return self._str_to_bool(x.val)
+        elif x.type == 'json':
+            yyy = json.loads(x.val)
+            logging.debug(yyy)
+            return yyy
         else:
             logging.warning(f"unknown type: {x.type} for key {k}")
             return str(x.val)
@@ -217,6 +230,14 @@ class ConfigQuery:
             x.val = str(val)
         elif x.type == "bool":
             x.val = True if self._str_to_bool(val) else False
+        elif x.type == 'json':
+            # x.val = json.dumps(val)
+            # we DONT want to dumps here. the exchange of data b/w frontend and
+            # back end will already encodes the string once. if we do it again
+            # here it just turns it into an encoded string and not an obj.
+            # NOTE: any direct calls of set_value with a json type will have
+            # to account for this
+            x.val = str(val)
         else:
             logging.warning(f"unknown type: {x.type} for key {k}")
             x.val = val

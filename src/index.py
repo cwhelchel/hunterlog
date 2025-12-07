@@ -119,6 +119,7 @@ if __name__ == '__main__':
     (width, height) = the_api._get_win_size()
     (x, y) = the_api._get_win_pos()
     maxi = the_api._get_win_maximized()
+    progs = the_api._get_program_cfg()
 
     if args.reset_win:
         logging.info('resetting window size and position to defaults')
@@ -162,7 +163,7 @@ if __name__ == '__main__':
 
     logging.debug('starting dl thread')
     stopFlag = threading.Event()
-    dl = DownloadThread(event=stopFlag)
+    dl = DownloadThread(event=stopFlag, progs=progs)
     dl.start()
 
     if platform.system() == "Linux":

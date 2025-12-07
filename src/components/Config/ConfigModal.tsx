@@ -14,6 +14,7 @@ import LoggerSettingsTab from './LoggerSettingsTab';
 import RadioSettingsTab from './RadioSettingsTab';
 import { setErrorMsg } from '../../tsx/util';
 import { useAppContext } from '../AppContext';
+import ProgramSettingsTab from './ProgramSettingsTab';
 
 
 const def2: ConfigVer2[] = [];
@@ -107,6 +108,7 @@ export default function ConfigModal() {
         config.rig_if_type = getVar(cfg2, 'rig_if_type');
         config.logger_type = Number(getVar(cfg2, "logger_type"));
         config.include_rst = Number(getVar(cfg2, "include_rst")) != 0;
+        config.enabled_progs = getVar(cfg2, 'enabled_programs');
         setConfig(config);
     }
 
@@ -124,6 +126,7 @@ export default function ConfigModal() {
         setVar(config2, "qth_string", config.qth_string);
         setVar(config2, "rig_if_type", config.rig_if_type);
         setVar(config2, "include_rst", config.include_rst.toString());
+        setVar(config2, "enabled_programs", config.enabled_progs);
         setConfig2(config2);
     }
 
@@ -167,6 +170,7 @@ export default function ConfigModal() {
                         <Tab label={'General'} {...a11yProps(0)} />
                         <Tab label={'CAT'} {...a11yProps(1)} />
                         <Tab label={'Logging'} {...a11yProps(1)} />
+                        <Tab label={'Programs'} {...a11yProps(1)} />
                     </Tabs>
 
                     <CustomTabPanel value={value} index={0}>
@@ -177,6 +181,9 @@ export default function ConfigModal() {
                     </CustomTabPanel>
                     <CustomTabPanel value={value} index={2}>
                         <LoggerSettingsTab />
+                    </CustomTabPanel>
+                    <CustomTabPanel value={value} index={3}>
+                        <ProgramSettingsTab />
                     </CustomTabPanel>
 
                     <Divider aria-hidden="true" />

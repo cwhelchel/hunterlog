@@ -17,7 +17,8 @@ const defData: UserConfig = {
     ftx_mode: '',
     qth_string: '',
     rig_if_type: '',
-    include_rst: false
+    include_rst: false,
+    enabled_progs: ''
 };
 
 export interface ConfigContextType {

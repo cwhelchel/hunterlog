@@ -38,10 +38,10 @@ class LoggerInterface:
         be used by hunterlog to handle QSO logging.
 
         The IAdifLogger object will be initialized here via calling
-        IAdifLogger.init_logger() with `**kwargs** set properly using settings
+        IAdifLogger.init_logger() with **kwargs** set properly using settings
         from `config` param
 
-        :param UserConfig config: config obj from DB
+        :param LoggerParams config: config data
         :param str app_ver: hunterlog version from__version__
 
         :returns IAdifLogger: a usable logger obj

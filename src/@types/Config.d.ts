@@ -15,6 +15,7 @@ export interface UserConfig {
     qth_string: string,
     rig_if_type: string,
     include_rst: boolean,
+    enabled_progs: string
 }
 
 export interface ConfigVer2 {

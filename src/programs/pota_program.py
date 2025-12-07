@@ -14,6 +14,10 @@ log = L.getLogger(__name__)
 
 class PotaProgram(Program):
 
+    def __init__(self, db: DataBase):
+        super().__init__(db)
+        self.regions = list[str]()
+
     @property
     def seen_regions(self) -> list[str]:
         return self.regions
@@ -58,11 +62,12 @@ class PotaProgram(Program):
         return park
 
     def update_spots(self, spots):
+        if spots is None:
+            log.warning('POTA spots object is Null')
+            return
         start_time = time.perf_counter()
 
         schema = SpotSchema()
-
-        self.regions = list[str]()
 
         s_list = schema.load(
             spots,
