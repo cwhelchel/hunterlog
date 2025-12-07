@@ -8,6 +8,8 @@ import Stepper from '@mui/material/Stepper';
 import StepLabel from '@mui/material/StepLabel';
 import Step from '@mui/material/Step';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 
 import { HlModal, HlModalContent, HlStyledBackdrop } from './Modals';
 import { checkApiResponse } from '../../tsx/util';
@@ -154,6 +156,7 @@ export default function ParkStatsModal(props: IParkStatsModalProps) {
     }, [files]);
 
     React.useEffect(() => {
+        setActiveStep(0);
         const s = availSteps[importType];
         setSteps(s);
     }, [importType]);
@@ -204,17 +207,16 @@ export default function ParkStatsModal(props: IParkStatsModalProps) {
                     <Divider />
                 </Box>
                 <Box sx={{ width: '100%' }} >
-                    <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '10px', padding: '5px' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '5px', padding: '1px' }}>
                         <Typography variant="body2">
                             Select a SIG program in the dropdown to the right to get step-by-step instructions for downloading
                             and importing reference hunt counts. If you have the file from
                             the program website, you can drag and drop and the SIG should be auto-detected (as long as its named correctly).
-
                             <p>
                                 Once the file is in place, click the Import button. Then click Close or Drag and Drop a new file to start over.
                             </p>
                         </Typography>
-                        <div style={{ marginLeft: 'auto', paddingTop: '5px' }}>
+                        <div style={{ marginLeft: 'auto', paddingTop: '2px' }}>
                             <Select
                                 value={importType}
                                 label="Import Type"
@@ -229,7 +231,7 @@ export default function ParkStatsModal(props: IParkStatsModalProps) {
                             </Select>
                         </div>
                     </Box>
-                    <Box sx={{ padding: '4em', border: '1px dashed grey' }}>
+                    <Box sx={{ padding: '2em', border: '1px dashed grey' }}>
                         <Stepper activeStep={activeStep} alternativeLabel>
                             {steps.map((label, index) => (
                                 <Step
@@ -240,10 +242,6 @@ export default function ParkStatsModal(props: IParkStatsModalProps) {
                             ))}
                         </Stepper>
                         <React.Fragment>
-                            <div className='step-info'>
-                                <p dangerouslySetInnerHTML={{ __html: steps[activeStep][1] }} />
-                                <img className='step-img' src={steps[activeStep][2]} />
-                            </div>
                             <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
                                 <Button
                                     color="inherit"
@@ -251,11 +249,16 @@ export default function ParkStatsModal(props: IParkStatsModalProps) {
                                     onClick={handleBack}
                                     sx={{ mr: 1 }}
                                 >
-                                    Back
+                                    <KeyboardArrowLeftIcon />
                                 </Button>
-                                <Box sx={{ flex: '1 1 auto' }} />
+                                <Box sx={{ flex: '1 1 auto' }} >
+                                    <div className='step-info'>
+                                        <Typography variant='body2' dangerouslySetInnerHTML={{ __html: steps[activeStep][1] }} />
+                                        <img className='step-img' src={steps[activeStep][2]} />
+                                    </div>
+                                </Box>
                                 <Button onClick={handleNext} sx={{ mr: 1 }}>
-                                    Next
+                                    <KeyboardArrowRightIcon />
                                 </Button>
                             </Box>
                         </React.Fragment>
