@@ -69,7 +69,7 @@ class dxlabs(ICat):
         t = f'<xcvrfreq:{fMHz_size}>{fMHz}'
         cmd = f'<command:10>CmdSetFreq<parameters:{len(t)}>{t}'
         
-        # logger.debug(f"dxlabs vfocmd: {cmd}")
+        logger.debug(f"dxlabs vfocmd: {cmd}")
 
         if self.dxlabs_sock:
             try:

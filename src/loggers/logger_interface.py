@@ -14,6 +14,7 @@ from loggers.l4om_logger import Log4omLogger
 from loggers.n3fjp_logger import N3fjpLogger
 from loggers.tcp_logger import TcpLogger
 from loggers.udp_logger import UdpLogger
+from loggers.wsjtx_logger import WsjtxLogger
 
 log = logging.getLogger(__name__)
 
@@ -57,6 +58,8 @@ class LoggerInterface:
             logger = N3fjpLogger()
         elif interface == UserConfig.LoggerType.Log4om.value:
             logger = Log4omLogger()
+        elif interface == UserConfig.LoggerType.WsjtxUdp.value:
+            logger = WsjtxLogger()
         else:
             log.warning(f"unknown logger type: {interface}")
             logger = GenericFileLogger()
