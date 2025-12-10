@@ -235,6 +235,11 @@ export default function QsoEntry() {
         }
         x.time_on = dayjs().toISOString();
         setQsoTime(dayjs())
+
+        // bugfix: set to empty str to force clear of comment text box
+        if (x.comment === null)
+            x.comment = ''; 
+
         setQso(x);
     }
 
