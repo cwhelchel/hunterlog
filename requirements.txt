@@ -16,7 +16,7 @@ Mako==1.3.2
 MarkupSafe==2.1.5
 marshmallow==3.20.2
 marshmallow-sqlalchemy==1.0.0
-modulegraph==0.19.6; platform_system == "Darwin"
+modulegraph>=0.19.7; platform_system == "Darwin"
 packaging==23.2
 pefile==2023.2.7
 proxy-tools==0.1.0
