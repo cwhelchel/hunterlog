@@ -20,7 +20,7 @@ modulegraph==0.19.6; platform_system == "Darwin"
 packaging==23.2
 pefile==2023.2.7
 proxy-tools==0.1.0
-py2app==0.28.8; platform_system == "Darwin"
+py2app==0.28.9; platform_system == "Darwin"
 pycairo==1.26.0; platform_system == "Linux"
 pycparser==2.21
 PyGObject==3.48.1; platform_system == "Linux"
