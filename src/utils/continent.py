@@ -30,7 +30,7 @@ class Continents():
         self.data_root = Path(str(root), 'data/')
         pota_f = Path(str(root), 'data/', 'continents.json')
         if pota_f.exists():
-            with open(file=pota_f) as f:
+            with open(file=pota_f, encoding='utf-8') as f:
                 self.pota: dict[str, Any] = json.load(f)
         else:
             logging.warning(f'no continent file found at {pota_f}')
@@ -68,7 +68,7 @@ class Continents():
         sota_f = Path(root, 'data/', 'sota_associations.json')
 
         if sota_f.exists():
-            with open(file=sota_f) as f:
+            with open(file=sota_f, encoding='utf-8') as f:
                 self.sota = json.load(f)
         else:
             logging.info(

@@ -17,13 +17,17 @@ if os.path.exists('dist/index.app'):
 
 ENTRY_POINT = ['src/index.py']
 
+# pull all the files from data/ dir. really only need continents.json,
+# sota_associations.json, wwbota_continents.json [cmw]
+HL_DATA = [('', ['data'])]
+
 DATA_FILES = tree('gui')
 OPTIONS = {
     'argv_emulation': False,
     'strip': False,
     'iconfile': 'src/assets/logo.icns',
     'includes': ['charset_normalizer.md__mypyc'],
-    'packages': ['WebKit', 'Foundation', 'webview'],
+    'packages': ['WebKit', 'Foundation', 'webview', 'objc'],
     'plist': {
         'NSRequiresAquaSystemAppearance': False
     },
@@ -32,6 +36,7 @@ OPTIONS = {
 
 setup(
     app=ENTRY_POINT,
+    data_files=HL_DATA,
     name='Hunterlog',
     options={'py2app': OPTIONS},
     setup_requires=['py2app'],
