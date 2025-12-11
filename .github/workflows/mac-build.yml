@@ -32,6 +32,8 @@ jobs:
       run: npm run build
     - name: chmod executables
       run: chmod +x dist/Hunterlog.app dist/Hunterlog.app/Contents/MacOS/Hunterlog
+    - name: copy data to exe dir
+      run: cp -R data dist/Hunterlog.app/Contents/MacOS/data
     - uses: actions/upload-artifact@v4
       with:
         name: hunterlog-macos
