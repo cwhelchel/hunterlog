@@ -30,6 +30,8 @@ jobs:
       run: npm run init
     - name: Build Output
       run: npm run build
+    - name: chmod executables
+      run: chmod +x dist/Hunterlog.app dist/Hunterlog.app/Contents/MacOS/Hunterlog
     - uses: actions/upload-artifact@v4
       with:
         name: hunterlog-macos
