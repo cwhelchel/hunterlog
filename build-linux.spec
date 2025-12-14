@@ -50,5 +50,11 @@ import os
 
 shutil.copyfile('logging.conf', '{0}/logging.conf'.format(DISTPATH))
 os.makedirs(os.path.dirname('{0}/data/'.format(DISTPATH)), exist_ok=True)
-shutil.copyfile('./data/continents.json', '{0}/data/continents.json'.format(DISTPATH))
-shutil.copyfile('./data/sota_associations.json', '{0}/data/sota_associations.json'.format(DISTPATH))
+
+# copy everything in data/ to dist. make sure any
+# downloaded files aren't included by accident. right now its only 
+# continent files
+shutil.copytree('./data', '{0}/data/'.format(DISTPATH), dirs_exist_ok=True)
+
+# shutil.copyfile('./data/continents.json', '{0}/data/continents.json'.format(DISTPATH))
+# shutil.copyfile('./data/sota_associations.json', '{0}/data/sota_associations.json'.format(DISTPATH))

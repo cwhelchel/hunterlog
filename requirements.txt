@@ -24,8 +24,8 @@ py2app==0.28.9; platform_system == "Darwin"
 pycairo==1.26.0; platform_system == "Linux"
 pycparser==2.21
 PyGObject==3.48.1; platform_system == "Linux"
-pyinstaller==6.3.0; platform_system != "Darwin"
-pyinstaller-hooks-contrib==2024.0; platform_system != "Darwin"
+pyinstaller==6.17.0; platform_system != "Darwin"
+pyinstaller-hooks-contrib==2025.9; platform_system != "Darwin"
 pythonnet==3.0.3; platform_system != "Darwin"
 pywebview==5.1
 pywin32==306; platform_system == "Windows"
