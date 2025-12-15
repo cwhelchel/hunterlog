@@ -23,6 +23,9 @@ jobs:
     - name: Update APT
       run: |
         sudo apt-get update
+    - name: Add glib-networking
+      run: |
+        sudo apt-get install glib-networking        
     - name: Use Node.js
       uses: actions/setup-node@v3
       with:
