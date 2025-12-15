@@ -8,11 +8,31 @@ added_files = [
     ('./src/alembic_src/versions/*', 'alembic_src/versions'),
 ]
 
+
+hidden_imports = ['clr']
+bins = []
+
+import platform
+
+
+if platform.system() == 'Linux':
+    codename = platform.freedesktop_os_release().get('UBUNTU_CODENAME')
+
+    # ubuntu 24.04 LTS (also linux mint 22.2)
+    if codename == 'noble':
+        # hidden_imports = ['clr', 'pkg_resources._vendor.jaraco.functools', 'pkg_resources._vendor.jaraco.context', 'pkg_resources._vendor.jaraco.text']
+        bins = [
+            ("/usr/lib/x86_64-linux-gnu/gio/modules/libgiognutls.so", "gio_modules"),
+            ("/usr/lib/x86_64-linux-gnu/gio/modules/libgiolibproxy.so", "gio_modules"),
+            ("/usr/lib/x86_64-linux-gnu/gio/modules/libgiognomeproxy.so", "gio_modules")
+        ]
+
+
 a = Analysis(['./src/index.py'],
              pathex=['./dist'],
-             binaries=[],
+             binaries=bins,
              datas=added_files,
-             hiddenimports=['clr'],
+             hiddenimports=hidden_imports,
              hookspath=[],
              hooksconfig={},
              runtime_hooks=[],
@@ -56,5 +76,3 @@ os.makedirs(os.path.dirname('{0}/data/'.format(DISTPATH)), exist_ok=True)
 # continent files
 shutil.copytree('./data', '{0}/data/'.format(DISTPATH), dirs_exist_ok=True)
 
-# shutil.copyfile('./data/continents.json', '{0}/data/continents.json'.format(DISTPATH))
-# shutil.copyfile('./data/sota_associations.json', '{0}/data/sota_associations.json'.format(DISTPATH))
