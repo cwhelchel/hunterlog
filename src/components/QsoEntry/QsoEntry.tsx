@@ -15,6 +15,7 @@ import { checkApiResponse, setToastMsg } from '../../tsx/util';
 import { checkReferenceForPota, checkReferenceForSota, checkReferenceForWwbota, checkReferenceForWwff, checkForValidRefs, sigCheckers } from '../../tsx/referenceUtils';
 import { getStateFromLocDesc } from '../../tsx/pota';
 import { Park } from '../../@types/Parks';
+import { getModeDefaultRst } from '../../tsx/defaultRst';
 
 dayjs.extend(utc);
 
@@ -238,7 +239,7 @@ export default function QsoEntry() {
 
         // bugfix: set to empty str to force clear of comment text box
         if (x.comment === null)
-            x.comment = ''; 
+            x.comment = '';
 
         setQso(x);
     }
@@ -268,6 +269,7 @@ export default function QsoEntry() {
             newCtxData.qso = { ...defaultQso, call: entry };
         } else if (newCtxData.qso.call != entry) {
             newCtxData.qso = { ...newCtxData.qso, call: entry };
+            newCtxData.spotId = 0;
         }
 
         //console.log(newCtxData.qso?.call);
@@ -275,10 +277,30 @@ export default function QsoEntry() {
         setData(newCtxData);
     }
 
-    function onParkEntry(park: string) {
-        if (park === null || park === '')
+    function onModeEntry(entry: string) {
+        if (entry === null || entry === '')
             return;
 
+        entry = entry.toUpperCase();
+        const rst = getModeDefaultRst(entry);
+
+        setQso({ ...qso, mode: entry });
+
+        const newCtxData = { ...contextData };
+
+        if (newCtxData.qso === null) {
+            newCtxData.qso = { ...defaultQso, mode: entry, rst_sent: rst, rst_recv: rst };
+            setQso({ ...qso, rst_sent: rst, rst_recv: rst });
+        } else if (newCtxData.qso.mode != entry) {
+            newCtxData.qso = { ...newCtxData.qso, mode: entry, rst_sent: rst, rst_recv: rst };
+            setQso({ ...qso, rst_sent: rst, rst_recv: rst });
+        }
+
+        setData(newCtxData);
+    }
+
+
+    function onParkEntry(park: string) {
         function updateQsoData(grid6: string, sig: string, sig_info: string, state: string) {
             function setLocalQso() {
                 const newQso = { ...qso };
@@ -345,6 +367,12 @@ export default function QsoEntry() {
         }
 
         const newCtxData = { ...contextData };
+
+        if (park === null || park === '') {
+            // clear out values
+            updateQsoData('', '', '', '');
+            return;
+        }
 
         if (newCtxData.park === null) {
             getRefInfo();
@@ -499,6 +527,7 @@ export default function QsoEntry() {
                     <TextField id="mode" label="Mode"
                         value={qso.mode}
                         inputProps={{ style: textFieldStyle }}
+                        onBlur={(e) => { onModeEntry(e.target.value); }}
                         onChange={(e) => {
                             setQso({ ...qso, mode: e.target.value });
                         }} />

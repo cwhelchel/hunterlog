@@ -155,7 +155,10 @@ class JsApi:
         logging.debug("getting activator stats...")
         ac = self._get_activator(callsign)
         if ac is None:
-            return self._response(False, f"Activator {callsign} not found")
+            return self._response(
+                False,
+                f"POTA account for {callsign} not found",
+                transient=True)
         return ActivatorSchema().dumps(ac)
 
     def get_activator_hunts(self, callsign):

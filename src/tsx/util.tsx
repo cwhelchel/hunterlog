@@ -25,13 +25,20 @@ export function checkApiResponse(x: string, contextData: ContextData, setData: (
             setInfoMsg(j['message'], contextData, setData);
             return j;
         }
-        
+
         // if a success response's message is empty string, dont toast
         if (j['message'] !== "")
             setToastMsg(j['message'], contextData, setData);
 
     } else {
-        setErrorMsg(j['message'], contextData, setData);
+        // unsuccessful returns
+        if (j['transient']) {
+            // message is a toast. failure is not critical
+            setToastMsg(j['message'], contextData, setData);
+        } else {
+            // user needs to see this and clear it
+            setErrorMsg(j['message'], contextData, setData);
+        }
     }
 
     return j;
