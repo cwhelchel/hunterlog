@@ -63,6 +63,10 @@ xl, extra-large: 1536px
     animation: pulse 5s 1s 2;
 }
 
+.actions-cell {
+    opacity: 0.65;
+}
+
 @keyframes pulse {
 
     0%,

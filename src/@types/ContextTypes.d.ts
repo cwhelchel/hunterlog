@@ -26,6 +26,7 @@ export interface ContextData {
     continentFilter: string;
     loadingQsoData: boolean;
     swapRstOrder: boolean;
+    showHiddenFilter: boolean;
 }
 
 export  interface AppContextType {

@@ -29,7 +29,8 @@ const defData: ContextData = {
     otherParks: '',
     continentFilter: '',
     loadingQsoData: false,
-    swapRstOrder: false
+    swapRstOrder: false,
+    showHiddenFilter: false
 };
 
 export const AppContext = React.createContext<AppContextType | null>(null);

@@ -53,6 +53,9 @@ class Spot(Base):
     spot_source = sa.Column(sa.String)
     continent = sa.Column(sa.String)
 
+    # calculated metadata. set via user
+    is_hidden = sa.Column(sa.Boolean, default=False)
+
     def __repr__(self):
         return "<spot(id={self.spotId!r})>".format(self=self)
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from 'react';
 import Button from '@mui/material/Button';
 import InputLabel from '@mui/material/InputLabel';
@@ -6,7 +7,7 @@ import FormControl from '@mui/material/FormControl';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
-import { Box, Stack, Typography, createStyles, useTheme } from '@mui/material';
+import { Box, Stack, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { createEqualityFilter, useAppContext } from '../AppContext';
 
@@ -14,10 +15,12 @@ import './FilterBar.scss'
 
 // https://mui.com/material-ui/react-table/
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface IFilterBarPros {
 }
 
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const FilterBar = (props: IFilterBarPros) => {
     const [mode, setMode] = React.useState('');
     const [band, setBand] = React.useState('');
@@ -28,6 +31,7 @@ export const FilterBar = (props: IFilterBarPros) => {
     const [qrt, setQrt] = React.useState(true);
     const [hunted, setHunted] = React.useState(false);
     const [onlyNew, setOnlyNew] = React.useState(false);
+    const [showHidden, setShowHidden] = React.useState(false);
 
     const { contextData, setData } = useAppContext();
 
@@ -40,37 +44,50 @@ export const FilterBar = (props: IFilterBarPros) => {
             window.addEventListener('pywebviewready', initFilters);
 
         function initFilters() {
-            let bf = window.localStorage.getItem("BAND_FILTER") || '0';
+            const bf = window.localStorage.getItem("BAND_FILTER") || '0';
             setBandFilter(bf);
-            let rf = window.localStorage.getItem("REGION_FILTER") || '';
+            const rf = window.localStorage.getItem("REGION_FILTER") || '';
             setRegionFilter(rf.split(","));
-            let mf = window.localStorage.getItem("MODE_FILTER") || '';
+            const mf = window.localStorage.getItem("MODE_FILTER") || '';
             setModeFilter(mf);
-            let lf = window.localStorage.getItem("LOCATION_FILTER") || '';
+            const lf = window.localStorage.getItem("LOCATION_FILTER") || '';
             setLocationFilter(lf);
-            let cf = window.localStorage.getItem("CONTINENT_FILTER") || '';
+            const cf = window.localStorage.getItem("CONTINENT_FILTER") || '';
             setContinentFilter(cf.split(","));
 
-            let qrtF = window.localStorage.getItem("QRT_FILTER");
+            const qrtF = window.localStorage.getItem("QRT_FILTER");
             setQrtFilter((qrtF === "true"));
-            let hf = window.localStorage.getItem("HUNTED_FILTER");
+            const hf = window.localStorage.getItem("HUNTED_FILTER");
             setHuntedFilter((hf === "true"));
-            let on = window.localStorage.getItem("ATNO_FILTER");
+            const on = window.localStorage.getItem("ATNO_FILTER");
             setOnlyNewFilter((on === "true"));
+            const hidden = window.localStorage.getItem("SHOW_HIDDEN_FLT");
+            const bHidden = (hidden === "true")
+            setDbShowHiddenFilter(bHidden);
+            // NOTE: there's an issue with these on first load and refresh 
+            // where the first two prints will be true (if show hidden is on)
+            // but the stuff in the state and context will be false. and when
+            // the switch is toggled it doesn't register a change until toggled
+            // several times
+            // This issue affects the other filters too
+            // console.log(hidden);
+            // console.log(bHidden);
+            // console.log(showHidden);
+            // console.log(contextData.showHiddenFilter);
 
-            let sf = window.localStorage.getItem("SIG_FILTER") || '';
+            const sf = window.localStorage.getItem("SIG_FILTER") || '';
             setSigFilter(sf);
         };
     }, []);
 
     const handleChange = (event: SelectChangeEvent) => {
-        let m = event.target.value as string
+        const m = event.target.value as string
         setModeFilter(m);
         window.localStorage.setItem("MODE_FILTER", m);
     };
 
     const handleBandChange = (event: SelectChangeEvent) => {
-        let m = event.target.value as string;
+        const m = event.target.value as string;
         setBandFilter(m);
         window.localStorage.setItem("BAND_FILTER", m);
     }
@@ -94,8 +111,8 @@ export const FilterBar = (props: IFilterBarPros) => {
         // their selection, we invert the selection. helpful for those who dont
         // want to see US spots.
         if (event.shiftKey) {
-            let curr = { ...contextData };
-            let current = curr.regions;
+            const curr = { ...contextData };
+            const current = curr.regions;
             let filterBy = "";
             if (r.length > 1 && r[0] === "") {
                 // the very first time it's clicked there's an empty string in
@@ -104,7 +121,7 @@ export const FilterBar = (props: IFilterBarPros) => {
             } else {
                 filterBy = r[0];
             }
-            let inv = current.filter((x) => x != filterBy);
+            const inv = current.filter((x) => x != filterBy);
             setRegionFilter(inv);
             window.localStorage.setItem("REGION_FILTER", inv.join(","));
             return;
@@ -118,13 +135,13 @@ export const FilterBar = (props: IFilterBarPros) => {
     }
 
     const handleLocationChange = (event: SelectChangeEvent) => {
-        let l = event.target.value as string;
+        const l = event.target.value as string;
         setLocationFilter(l);
         window.localStorage.setItem("LOCATION_FILTER", l);
     }
 
     const handleSigChange = (event: SelectChangeEvent) => {
-        let sig = event.target.value as string;
+        const sig = event.target.value as string;
         setSigFilter(sig);
         window.localStorage.setItem("SIG_FILTER", sig);
     }
@@ -140,6 +157,7 @@ export const FilterBar = (props: IFilterBarPros) => {
         window.pywebview.api.set_region_filter([]);
         window.pywebview.api.set_continent_filter([]);
         window.pywebview.api.set_qrt_filter(true);
+        window.pywebview.api.set_hidden_filter(false);
         window.pywebview.api.set_hunted_filter(false);
         window.pywebview.api.set_only_new_filter(false);
         window.pywebview.api.set_sig_filter("");
@@ -169,7 +187,8 @@ export const FilterBar = (props: IFilterBarPros) => {
             qrtFilter: true,
             huntedFilter: false,
             onlyNew: false,
-            sigFilter: ''
+            sigFilter: '',
+            showHiddenFilter: false
         };
         setData(next);
 
@@ -191,11 +210,16 @@ export const FilterBar = (props: IFilterBarPros) => {
         window.localStorage.setItem("ATNO_FILTER", checked.toString());
     }
 
+    function handleShowHiddenSwitch(event: any, checked: boolean): void {
+        setDbShowHiddenFilter(checked);
+        window.localStorage.setItem("SHOW_HIDDEN_FLT", checked.toString());
+    }
+
     function setQrtFilter(checked: boolean) {
         console.log("changing qrt filter to: " + checked);
         window.pywebview.api.set_qrt_filter(checked);
 
-        let next = { ...contextData, qrtFilter: checked };
+        const next = { ...contextData, qrtFilter: checked };
         setData(next);
         setQrt(checked);
     }
@@ -204,7 +228,7 @@ export const FilterBar = (props: IFilterBarPros) => {
         console.log("changing hunted filter to: " + checked);
         window.pywebview.api.set_hunted_filter(checked);
 
-        let next = { ...contextData, huntedFilter: checked };
+        const next = { ...contextData, huntedFilter: checked };
         setData(next);
         setHunted(checked);
     }
@@ -213,7 +237,7 @@ export const FilterBar = (props: IFilterBarPros) => {
         console.log("changing onlynew filter to: " + checked);
         window.pywebview.api.set_only_new_filter(checked);
 
-        let next = { ...contextData, onlyNewFilter: checked };
+        const next = { ...contextData, onlyNewFilter: checked };
         setData(next);
         setOnlyNew(checked);
     }
@@ -230,11 +254,11 @@ export const FilterBar = (props: IFilterBarPros) => {
     }
 
     function setBandFilter(m: string) {
-        let x = parseInt(m);
+        const x = parseInt(m);
         console.log("changing band to: " + m);
         window.pywebview.api.set_band_filter(x);
 
-        let next = { ...contextData, bandFilter: x };
+        const next = { ...contextData, bandFilter: x };
         setData(next);
         setBand(m);
     }
@@ -243,14 +267,14 @@ export const FilterBar = (props: IFilterBarPros) => {
         console.log("changing region to: " + r);
         window.pywebview.api.set_region_filter(r);
 
-        let next = { ...contextData, regionFilter: r.join(",") };
+        const next = { ...contextData, regionFilter: r.join(",") };
         setData(next);
         setRegion(r);
     }
 
     function setContinentFilter(r: string[]) {
         window.pywebview.api.set_continent_filter(r);
-        let next = { ...contextData, continentFilter: r.join(",") };
+        const next = { ...contextData, continentFilter: r.join(",") };
         setData(next);
         setContinent(r);
     }
@@ -259,7 +283,7 @@ export const FilterBar = (props: IFilterBarPros) => {
         console.log("changing location to: " + l);
         window.pywebview.api.set_location_filter(l);
 
-        let next = { ...contextData, locationFilter: l };
+        const next = { ...contextData, locationFilter: l };
         setData(next);
         setLocation(l);
     }
@@ -268,9 +292,20 @@ export const FilterBar = (props: IFilterBarPros) => {
         console.log("changing sig filt to: " + sig);
         window.pywebview.api.set_sig_filter(sig);
 
-        let next = { ...contextData, locationFilter: sig };
+        const next = { ...contextData, locationFilter: sig };
         setData(next);
         setSig(sig);
+    }
+
+    function setDbShowHiddenFilter(checked: boolean) {
+        console.log("changing showhidden filter to: " + checked);
+        window.pywebview.api.set_hidden_filter(checked);
+
+        setShowHidden(checked);
+
+        const next = { ...contextData, showHiddenFilter: checked };
+        console.log(next);
+        setData(next);
     }
 
 
@@ -311,6 +346,9 @@ export const FilterBar = (props: IFilterBarPros) => {
                 <FormControlLabel
                     control={<Switch onChange={handleOnlyNewSwitch} checked={onlyNew} />}
                     label={<StyledTypoGraphy>Only New</StyledTypoGraphy>} />
+                <FormControlLabel
+                    control={<Switch onChange={handleShowHiddenSwitch} checked={showHidden} />}
+                    label={<StyledTypoGraphy>Show Hidden</StyledTypoGraphy>} />
                 <FormControl size='small'>
                     <StyledInputLabel id="band-label">Band</StyledInputLabel>
                     <Select

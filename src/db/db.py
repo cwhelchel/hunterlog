@@ -15,6 +15,7 @@ from db.loc_query import LocationQuery
 from db.spot_query import SpotQuery
 from db.alerts_query import AlertsQuery
 from db.config_query import ConfigQuery
+from db.hidden_spots_query import HiddenSpotsQuery
 from utils.callsigns import get_basecall
 import upgrades
 
@@ -26,7 +27,7 @@ logging = L.getLogger(__name__)
 # L.getLogger('sqlalchemy.engine').setLevel(L.INFO)
 
 
-VER_FROM_ALEMBIC = '1b8efa0b1c91'
+VER_FROM_ALEMBIC = 'fad1af574a92'
 '''
 This value indicates the version of the DB scheme the app is made for.
 
@@ -98,14 +99,19 @@ class DataBase:
         self._sq = SpotQuery(self.session, self.filters)
         self._aq = AlertsQuery(self.session)
         self._cq1 = ConfigQuery(self.session)
+        self._hsq = HiddenSpotsQuery(self.session)
 
         # do this FIRST. will upgrade the db to latest schema
         self._iq.init_alembic_ver()
 
         self._sq.delete_all_spots()
+        self._hsq.delete_stale_hidden_spots()
+
         # self._iq.init_config()
         self._cq1.init_config()
         self._cq1.init_config_v2()
+
+        # self._hsq._add_test()
 
     def commit_session(self):
         '''
@@ -148,6 +154,10 @@ class DataBase:
     @property
     def alerts(self) -> AlertsQuery:
         return self._aq
+
+    @property
+    def hidden_spots(self) -> HiddenSpotsQuery:
+        return self._hsq
 
     def delete_spots(self):
         '''

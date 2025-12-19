@@ -7,6 +7,7 @@ import datetime
 import threading
 from datetime import timedelta
 
+from api_hidden_spots import HiddenSpotsApi
 from api_imports import ImportApi
 from bands import get_band, get_name_of_band, bandNames
 from db.db import DataBase
@@ -44,8 +45,9 @@ class JsApi:
 
         # refactored APIs for js use
         self.imports = ImportApi(self.db, self.programs)
+        self.hidden_spots = HiddenSpotsApi(self.db, self.programs)
 
-        logging.debug("init CAT...")
+        logging.debug("init logger...")
         lp = LoggerParams(
             self.db.config.get_value('logger_type'),
             self.db.config.get_value('my_call'),
@@ -55,7 +57,9 @@ class JsApi:
         )
         self.adif_log = LoggerInterface.get_logger(lp, __version__)
         logging.debug(f"got logger {self.adif_log}")
+
         try:
+            logging.debug("init CAT...")
             rig_if = self.db.config.get_value('rig_if_type')
             ip = self.db.config.get_value('flr_host')
             port = self.db.config.get_value('flr_port')
@@ -516,8 +520,14 @@ class JsApi:
         logging.debug(f"api setting qrt filter to: {is_qrt}")
         self.db.filters.set_qrt_filter(is_qrt)
 
+    def set_hidden_filter(self, show_hidden: bool):
+        logging.debug(f"api setting hidden filter to: {not show_hidden}")
+
+        # if show_hidden is true, then the filter needs to be turned off
+        self.db.filters.set_hidden_filter(not show_hidden)
+
     def set_hunted_filter(self, filter_hunted: bool):
-        logging.debug(f"api setting qrt filter to: {filter_hunted}")
+        logging.debug(f"api setting hunted filter to: {filter_hunted}")
         self.db.filters.set_hunted_filter(filter_hunted)
 
     def set_only_new_filter(self, filter_only_new: bool):

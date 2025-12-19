@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import * as React from 'react';
 import { Backdrop, Badge, CircularProgress } from '@mui/material';
-import { DataGrid, GridColDef, GridValueGetterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams, GridRowClassNameParams, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarColumnsButton, GridToolbarQuickFilter, GridPaginationModel } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridValueGetterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams, GridRowClassNameParams, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarColumnsButton, GridToolbarQuickFilter, GridPaginationModel, GridActionsCell, GridActionsCellItem } from '@mui/x-data-grid';
 import { GridEventListener } from '@mui/x-data-grid';
-import LandscapeIcon from '@mui/icons-material/Landscape';
-import ParkIcon from '@mui/icons-material/Park';
-import LocalFloristIcon from '@mui/icons-material/LocalFlorist';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import { useAppContext } from '../AppContext';
 
@@ -128,7 +127,15 @@ const columns: GridColDef[] = [
                 <span id="sig">{x.row.spot_source}</span>
             </>
         }
-    }
+    },
+    // {
+    //     field: 'actions', width: 80, type: 'actions',
+    //     renderCell: (params) => {
+    //         return <GridActionsCell {...params} >
+    //             <GridActionsCellItem icon={<VisibilityIcon />} onClick={() => hideSpot(params.row.spotId)} label='Hide' />
+    //         </GridActionsCell>
+    //     }
+    // }
 ];
 
 
@@ -157,6 +164,48 @@ export default function SpotViewer() {
             setBackdropOpen(false);
         });
     }
+
+    function hideSpot(spotId: number, isHidden: boolean): React.MouseEventHandler<HTMLButtonElement> | undefined {
+        console.log(spotId);
+
+        if (window.pywebview.api !== undefined) {
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let p: any;
+            
+            if (isHidden)
+                p = window.pywebview.api.hidden_spots.unhide_spot(spotId);
+            else
+                p = window.pywebview.api.hidden_spots.hide_spot(spotId);
+            p.then((r: string) => {
+                const x = checkApiResponse(r, contextData, setData);
+
+                if (x.success) {
+                    getSpots();
+                }
+            });
+        }
+        return;
+    }
+
+    function getVisIcon(is_hidden: boolean) {
+        if (is_hidden)
+            return <VisibilityOffIcon />
+        else
+            return <VisibilityIcon />
+    };
+
+    // add the actions column here so we can have a callback func
+    columns.push(
+        {
+            field: 'actions', width: 80, type: 'actions', cellClassName: "actions-cell",
+            getActions: (params) => {
+                return [
+                    <GridActionsCellItem key='action-hide' icon={getVisIcon(params.row.is_hidden)} onClick={() => hideSpot(params.row.spotId, params.row.is_hidden)} label='Hide' />
+                ]
+            }
+        }
+    );
 
 
     function setWorking() {
@@ -249,7 +298,7 @@ export default function SpotViewer() {
         [contextData.bandFilter, contextData.regionFilter,
         contextData.qrtFilter, contextData.locationFilter,
         contextData.huntedFilter, contextData.onlyNewFilter,
-        contextData.continentFilter]
+        contextData.continentFilter, contextData.showHiddenFilter]
     );
 
     // return the correct PK id for our rows
@@ -289,7 +338,7 @@ export default function SpotViewer() {
         const highlightNewStr = window.localStorage.getItem("HIGHLIGHT_NEW_REF") || '1';
         const highlightNew = parseInt(highlightNewStr);
 
-        if (params.row.is_qrt)
+        if (params.row.is_qrt || params.row.is_hidden)
             return 'spotviewer-row-qrt';
         else if (params.row.park_hunts === 0 && highlightNew)
             return 'spotviewer-row-new';

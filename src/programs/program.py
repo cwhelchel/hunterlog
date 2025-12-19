@@ -161,6 +161,11 @@ class Program(ABC):
         to_add.hunted = hunted
         to_add.hunted_bands = bands
 
+        is_hidden = self.db.hidden_spots.is_hidden(
+            to_add.activator, to_add.reference, to_add.spotTime)
+        # log.debug(f"spot hidden: {to_add.activator} = {is_hidden}")
+        to_add.is_hidden = is_hidden
+
     def update_qso_dist_bearing(self, q: Qso):
         '''
         Updates distance and bearing to a given qso with a set gridsquare.
