@@ -1,6 +1,7 @@
 from db.models.parks import Park, ParkSchema
 from db.models.qsos import Qso
-from pota.pota import Api
+from programs.apis import PotaApi
+from programs.apis.iapi import IApi
 from programs.program import Program
 from db.db import DataBase
 from db.models.spots import Spot, SpotSchema
@@ -13,15 +14,24 @@ log = L.getLogger(__name__)
 
 class PotaProgram(Program):
 
+    def __init__(self, db: DataBase):
+        super().__init__(db)
+        self.regions = list[str]()
+
     @property
     def seen_regions(self) -> list[str]:
         return self.regions
+
+    @property
+    def api(self) -> IApi:
+        self.pota_api = PotaApi() if self.pota_api is None else self.pota_api
+        return self.pota_api
 
     def get_reference(self,
                       ref: str,
                       pull_from_api: bool = True) -> Park:
         def dl_park(db: DataBase, ref: str):
-            api_res = Api().get_park(ref)
+            api_res = PotaApi().get_park(ref)
             log.debug(f"park data from api: {api_res}")
 
             to_add = self.parse_ref_data(api_res)
@@ -44,7 +54,7 @@ class PotaProgram(Program):
             park = dl_park(self.db, ref)
         elif park.name is None:
             log.info(f"{ref} park found but half-loaded. pulling from api")
-            api_res = Api().get_park(ref)
+            api_res = PotaApi().get_park(ref)
             log.debug(f"park data from api: {api_res}")
             self.db.parks.update_park_data(api_res)
             park = self.db.parks.get_park(ref)
@@ -52,11 +62,12 @@ class PotaProgram(Program):
         return park
 
     def update_spots(self, spots):
+        if spots is None:
+            log.warning('POTA spots object is Null')
+            return
         start_time = time.perf_counter()
 
         schema = SpotSchema()
-
-        self.regions = list[str]()
 
         s_list = schema.load(
             spots,
@@ -109,31 +120,15 @@ class PotaProgram(Program):
         self.update_qso_dist_bearing(q)
         return q
 
-    def inc_ref_hunt(self, ref, pota_ref):
-        def inc_park_hunt(db: DataBase, ref: str):
-            ok = db.parks.inc_ref_hunt(ref)
-            if not ok:
-                api_res = Api().get_park(ref)
-                # db.parks.update_park_data(park)
-                to_add = self.parse_ref_data(api_res)
-                if to_add:
-                    db.session.add(to_add)
-                    db.session.commit()
-                db.parks.inc_ref_hunt(ref)
-
-        if pota_ref is not None:
-            parks = pota_ref.split(',')
-            for p in parks:
-                inc_park_hunt(self.db, p)
-        else:
-            inc_park_hunt(self.db, ref)
-
     def parse_ref_data(self, park) -> Park:
         # the Park schema was created directly from the POTA api so we can
         # just use sqlalchemy-marshmallow to load it
         schema = ParkSchema()
         p: Park = schema.load(park, transient=True)
         return p
+
+    def download_reference_data(self, ref_code: str) -> any:
+        return PotaApi().get_park(ref_code)
 
     def get_state(self, locationDesc: str) -> str:
         if not locationDesc or locationDesc == 'None':  # None for k-test
@@ -148,3 +143,6 @@ class PotaProgram(Program):
             return post
 
         return ''
+
+    def parse_hunt_data(self, data) -> dict[str, int]:
+        return {}

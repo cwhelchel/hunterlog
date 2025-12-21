@@ -1,12 +1,15 @@
 import json
 import time
+from typing import Any
 import webview
 import logging as L
 import datetime
 import threading
 from datetime import timedelta
 
-from bands import get_band, get_name_of_band
+from api_hidden_spots import HiddenSpotsApi
+from api_imports import ImportApi
+from bands import get_band, get_name_of_band, bandNames
 from db.db import DataBase
 from db.models.activators import Activator, ActivatorSchema
 from db.models.alerts import AlertsSchema
@@ -16,10 +19,8 @@ from db.models.spot_comments import SpotCommentSchema
 from db.models.spots import Spot, SpotSchema
 from loggers import LoggerInterface
 from loggers.logger_interface import LoggerParams
-from pota import PotaApi, PotaStats
-from programs import Program, SotaProgram, WwffProgram, PotaProgram, NoProgram
-from sota import SotaApi
-from wwff import WwffApi
+from programs.apis import PotaApi
+from programs import Program, SotaProgram, WwffProgram, PotaProgram, WwbotaProgram, NoProgram  # NOQA
 from utils.adif import AdifLog
 from version import __version__
 
@@ -33,17 +34,20 @@ class JsApi:
         self.lock = threading.Lock()
         self.db = DataBase()
         self.pota = PotaApi()
-        self.sota = SotaApi()
-        self.wwff = WwffApi()
         self.programs: dict[str, Program] = {
             "POTA": PotaProgram(self.db),
             "SOTA": SotaProgram(self.db),
             "WWFF": WwffProgram(self.db),
+            "WWBOTA": WwbotaProgram(self.db),
             '': NoProgram(self.db)
         }
         self.seen_regions = [""]
 
-        logging.debug("init CAT...")
+        # refactored APIs for js use
+        self.imports = ImportApi(self.db, self.programs)
+        self.hidden_spots = HiddenSpotsApi(self.db, self.programs)
+
+        logging.debug("init logger...")
         lp = LoggerParams(
             self.db.config.get_value('logger_type'),
             self.db.config.get_value('my_call'),
@@ -53,7 +57,9 @@ class JsApi:
         )
         self.adif_log = LoggerInterface.get_logger(lp, __version__)
         logging.debug(f"got logger {self.adif_log}")
+
         try:
+            logging.debug("init CAT...")
             rig_if = self.db.config.get_value('rig_if_type')
             ip = self.db.config.get_value('flr_host')
             port = self.db.config.get_value('flr_port')
@@ -153,7 +159,10 @@ class JsApi:
         logging.debug("getting activator stats...")
         ac = self._get_activator(callsign)
         if ac is None:
-            return self._response(False, f"Activator {callsign} not found")
+            return self._response(
+                False,
+                f"POTA account for {callsign} not found",
+                transient=True)
         return ActivatorSchema().dumps(ac)
 
     def get_activator_hunts(self, callsign):
@@ -297,15 +306,22 @@ class JsApi:
             x = c.index("]") + 1
             c = c[x:]
 
+        include_rst = self.db.config.get_value("include_rst")
         qth = self.db.config.get_value("qth_string")
         my_call = self.db.config.get_value("my_call")
 
+        if include_rst:
+            r += ' '  # add space between rst and qth str
+        else:
+            r = ''
+
         if qth is not None:
-            spot_comment = f"[{r} {qth}] {c}"
+            spot_comment = f"[{r}{qth}] {c}"
         else:
             spot_comment = f"[{r}] {c}"
 
         try:
+            # logging.debug(f"posting spot with {spot_comment}")
             PotaApi.post_spot(activator_call=a,
                               park_ref=park,
                               freq=f,
@@ -320,28 +336,32 @@ class JsApi:
 
         return self._response(True, "spot posted")
 
-    def import_adif(self) -> str:
-        '''
-        Opens a Open File Dialog to allow the user to select a ADIF file
-        containing POTA QSOs to be imported into the app's database.
-        '''
-        ft = ('ADIF files (*.adi;*.adif)', 'All files (*.*)')
-        filename = webview.windows[0] \
-            .create_file_dialog(
-                webview.OPEN_DIALOG,
-            file_types=ft)
-        if not filename:
-            return self._response(True, "")
-
-        logging.info("starting import of ADIF file...")
-
+    def stage_qso(self, qso_data):
+        logging.debug('staging qso')
         try:
-            AdifLog.import_from_log(filename[0], self.db)
-        except Exception as ex:
-            logging.error('error importing log', exc_info=ex)
-            return self._response(False, "Error with ADIF import.")
+            qso_dic = json.loads(qso_data)
+            self.adif_log.stage_qso(qso_dic)
+        except Exception as log_ex:
+            logging.exception(
+                msg="Error staging QSO:",
+                exc_info=log_ex)
+            self.lock.release()
+            return self._response(False, f"Error staging qso: {log_ex}")
 
-        return self._response(True, "Completed ADIF import", persist=True)
+        return self._response(True, '')
+
+    def clear_staged_qso(self):
+        logging.debug('clear_staged_qso qso')
+        try:
+            self.adif_log.clear_staged()
+        except Exception as log_ex:
+            logging.exception(
+                msg="Error clearing staged qsos:",
+                exc_info=log_ex)
+            self.lock.release()
+            return self._response(False, "Error clearing staged qsos")
+
+        return self._response(True, '')
 
     def log_qso(self, qso_data):
         '''
@@ -500,8 +520,14 @@ class JsApi:
         logging.debug(f"api setting qrt filter to: {is_qrt}")
         self.db.filters.set_qrt_filter(is_qrt)
 
+    def set_hidden_filter(self, show_hidden: bool):
+        logging.debug(f"api setting hidden filter to: {not show_hidden}")
+
+        # if show_hidden is true, then the filter needs to be turned off
+        self.db.filters.set_hidden_filter(not show_hidden)
+
     def set_hunted_filter(self, filter_hunted: bool):
-        logging.debug(f"api setting qrt filter to: {filter_hunted}")
+        logging.debug(f"api setting hunted filter to: {filter_hunted}")
         self.db.filters.set_hunted_filter(filter_hunted)
 
     def set_only_new_filter(self, filter_only_new: bool):
@@ -525,18 +551,8 @@ class JsApi:
             # from api. probably they dont have an account
             return self.db.update_activator_stat(j)
         else:
-            logging.warn(f"activator callsign {callsign} not found")
+            logging.warning(f"activator callsign {callsign} not found")
             return -1
-
-    def launch_pota_window(self):
-        self.pw = webview.create_window(
-            title='POTA APP', url='https://pota.app/#/user/stats')
-
-    def load_location_data(self):
-        logging.debug("downloading location data...")
-        locations = PotaApi.get_locations()
-        self.db.locations.load_location_data(locations)
-        return self._response(True, "Downloaded location data successfully")
 
     def qsy_to(self, freq, mode: str):
         '''Use CAT control to QSY'''
@@ -571,34 +587,6 @@ class JsApi:
         
         ptt = self.cat.get_ptt()
         return self._response(True, "", ptt=ptt)
-
-    def update_park_hunts_from_csv(self) -> str:
-        '''
-        Will use the current pota stats from hunter.csv to update the db with
-        new park hunt numbers. It will then update all the parks with data from
-        the POTA API. This method will run a while depending on how many parks
-        are in the csv file.
-        '''
-        ft = ('CSV files (*.csv;*.txt)', 'All files (*.*)')
-        filename = webview.windows[0] \
-            .create_file_dialog(
-                webview.OPEN_DIALOG,
-                file_types=ft)
-        if not filename:
-            return self._response(True, "user cancelled")
-
-        logging.info(f"updating park hunts from {filename[0]}")
-        stats = PotaStats(filename[0])
-        hunts = stats.get_all_hunts()
-
-        for park in hunts:
-            count = stats.get_park_hunt_count(park)
-            j = {'reference': park, 'hunts': count}
-            self.db.parks.update_park_hunts(j, count)
-
-        self.db.commit_session()
-
-        return self._update_all_parks()
 
     def export_park_data(self) -> str:
         '''
@@ -699,6 +687,10 @@ class JsApi:
         locs = self.db.locations.get_all_locations()
         return self._response(True, '', locations=locs)
 
+    def get_band_names(self) -> str:
+        bns = bandNames
+        return self._response(True, '', band_names=bns)
+
     def get_hamalert_text(self, location: str) -> str:
         hunted = self.db.parks.get_hunted_parks(location)
         self.pota.check_and_download_parks(location)
@@ -717,7 +709,7 @@ class JsApi:
 
         return self._response(False, 'Error getting hamalert text')
 
-    def _do_update(self, pota: any, sota: any, wwff: any):
+    def _do_update(self, spots: dict[any]):
         '''
         The main update method. Called on a timer
 
@@ -740,9 +732,10 @@ class JsApi:
                 logging.error('no lock aquired')
                 return
             self.db.delete_spots()
-            self.programs["POTA"].update_spots(pota)
-            self.programs["SOTA"].update_spots(sota)
-            self.programs["WWFF"].update_spots(wwff)
+            self.programs["POTA"].update_spots(spots["POTA"])
+            self.programs["SOTA"].update_spots(spots["SOTA"])
+            self.programs["WWFF"].update_spots(spots["WWFF"])
+            self.programs["WWBOTA"].update_spots(spots["WWBOTA"])
             self.db.session.commit()
             logging.info("spots updated for programs")
             self.lock.release()
@@ -842,6 +835,14 @@ class JsApi:
         '''
         return self.db.config.get_value('is_max')
 
+    def _get_program_cfg(self) -> Any:
+        '''
+        Get the program configuration
+        '''
+        s = self.db.config.get_value('enabled_programs')
+        # json config values are stringify-d have to loads here too
+        return s
+
     def _store_win_size(self, size: tuple[int, int]):
         '''
         Save the window size to the database
@@ -857,7 +858,7 @@ class JsApi:
         self.db.config.set_value('pos_y', position[1], commit=True)
 
     def _store_win_maxi(self, is_max: bool):
-        self.db.config.set_value('is_max', 1 if is_max else 0, commit=True)
+        self.db.config.set_value('is_max', is_max, commit=True)
 
     def _handle_alerts(self):
         def get_str(spot: Spot) -> str:

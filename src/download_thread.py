@@ -1,24 +1,44 @@
 
 import threading
 import logging as L
-from pota import PotaApi
-from sota import SotaApi
-from wwff import WwffApi
+from programs.apis import SotaApi, PotaApi, WwffApi, WwbotaApi
 
 logging = L.getLogger(__name__)
 
 
 class DownloadThread(threading.Thread):
-    def __init__(self, event: threading.Event):
+    def __init__(self, event: threading.Event, progs: any):
+        '''
+        Creates a new instance of DownloadThread
+
+        :param threading.Event event: the stopper event.
+        :param any progs: the configured list of enabled programs. stored in db
+        '''
         threading.Thread.__init__(self, daemon=True)
         self.lock = threading.Lock()
-        self.pota = PotaApi()
-        self.sota = SotaApi()
-        self.wwff = WwffApi()
-        self.pota_spots = None
-        self.sota_spots = None
-        self.wwff_spots = None
         self.stopped = event
+
+        self.config = {}
+
+        # progs is like dict like: {"POTA": true, "SOTA": false, ... }
+        for sig, enabled in progs.items():
+            is_enabled = enabled
+            self.config[sig] = is_enabled
+
+        # all apis must have method get_spots()
+        self.apis = {
+            "POTA": PotaApi(),
+            "SOTA": SotaApi(),
+            "WWFF": WwffApi(),
+            "WWBOTA": WwbotaApi()
+        }
+
+        self.spots = {
+            "POTA": None,
+            "SOTA": None,
+            "WWFF": None,
+            "WWBOTA": None
+        }
 
     def run(self):
         logging.debug("download thread run")
@@ -30,13 +50,16 @@ class DownloadThread(threading.Thread):
                 break
 
     def download(self):
-        try:
-            self.pota_spots = self.pota.get_spots()
-            self.sota_spots = self.sota.get_spots()
-            self.wwff_spots = self.wwff.get_spots()
-        except Exception as e:
-            logging.error("error in download thread", exc_info=e)
+        for sig, api in self.apis.items():
+            try:
+                if self.config[sig]:
+                    self.spots[sig] = api.get_spots()
+            except Exception as e:
+                logging.error(
+                    "error in getting spots for: " + sig,
+                    exc_info=e)
+                self.spots[sig] = None
 
-    def get_spots(self) -> list[any]:
+    def get_spots(self) -> dict[any]:
         with self.lock:
-            return [self.pota_spots, self.sota_spots, self.wwff_spots]
+            return self.spots

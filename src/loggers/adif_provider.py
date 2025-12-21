@@ -1,15 +1,23 @@
 import bands
 from db.models.qsos import Qso
+import logging as L
+
+log = L.getLogger(__name__)
 
 
 class AdifProvider():
+
+    def __init__(self, my_call, my_grid6):
+        self.my_call = my_call
+        self.my_grid6 = my_grid6
+
     def get_adif_field(self, field_name: str, field_data: str) -> str:
         '''
         Get a properly formatted ADIF field.
         '''
         return f"<{field_name.upper()}:{len(field_data)}>{field_data}\n"
 
-    def get_adif(self, qso: Qso) -> str:
+    def get_adif(self, qso: Qso, extra: str = '') -> str:
         '''
         Get the adif fields for a generic QSO. Child class can provide extra
         adif fields by defining method `get_extra_field_adif() -> str` which
@@ -24,10 +32,11 @@ class AdifProvider():
         q_time_on = qso.time_on.strftime('%H%M%S')
         state = qso.state if qso.state else ''
 
-        if hasattr(self, "get_extra_field_adif"):
-            extra = self.get_extra_field_adif()
-        else:
-            extra = ''
+        # if hasattr(self, "get_extra_field_adif"):
+        #     extra = self.get_extra_field_adif(qso)
+        log.debug(f"extraaaaaa {extra}")
+        # else:
+        #     extra = ''
 
         # if these are logged with just SIG info but missing the xota_ref,
         # we just set the xota_ref to the sig_info
@@ -36,6 +45,9 @@ class AdifProvider():
 
         if qso.sig == 'SOTA' and qso.sota_ref is None:
             qso.sota_ref = qso.sig_info
+
+        if qso.sig == 'WWFF' and qso.wwff_ref is None:
+            qso.wwff_ref = qso.sig_info
 
         adif = \
             self.get_adif_field("call", qso.call) + \
@@ -59,6 +71,7 @@ class AdifProvider():
             self.get_adif_field("my_gridsquare", self.my_grid6) + \
             self.get_adif_field("pota_ref", qso.pota_ref or '') + \
             self.get_adif_field("sota_ref", qso.sota_ref or '') + \
+            self.get_adif_field("wwff_ref", qso.wwff_ref or '') + \
             extra +\
             "<EOR>\n"
 

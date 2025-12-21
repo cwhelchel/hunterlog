@@ -4,7 +4,8 @@ import { Park } from "../../@types/Parks";
 import { Qso } from "../../@types/QsoTypes";
 import { SpotComments } from "../../@types/SpotComments";
 import { useAppContext } from "../AppContext";
-import { checkApiResponse } from '../../util';
+import { checkApiResponse } from '../../tsx/util';
+import { getMultiParkString, testForNfer } from '../../tsx/nferUtils';
 
 interface MultiData {
     otherOps: string;
@@ -28,16 +29,18 @@ export default function HandleSpotRowClick() {
     async function getOtherData(spotId: number): Promise<MultiData> {
         const r = await window.pywebview.api.get_spot_comments(spotId);
 
-        let t = JSON.parse(r) as SpotComments[];
-        let filtered = t.filter(function (el) {
+        const t = JSON.parse(r) as SpotComments[];
+
+        const filtered = t.filter(function (el) {
             return el.comments.includes('{With:');
         });
 
-        let filtered2 = t.filter(function (el) {
-            return el.comments.includes('{Also:');
+        const nferComments = t.filter(function (el) {
+            return testForNfer(el.comments);
         });
 
-        //console.log(filtered2);
+        // console.log('nferComments');
+        // console.log(nferComments);
 
         function getMultiOps(ops: SpotComments[]): string {
             if (ops.length > 0) {
@@ -52,23 +55,9 @@ export default function HandleSpotRowClick() {
             return '';
         }
 
-        function getMultiParks(p: SpotComments[]): string {
-            if (p.length > 0) {
-                const str = p[0].comments;
-                // get the raw list of other comma sep parks
-                const re = new RegExp("{Also:([^}]*)}");
-                const m = str.match(re);
-
-                if (m) {
-                    return m[1];
-                }
-            }
-            return '';
-        }
-
-        let result: MultiData = {
+        const result: MultiData = {
             otherOps: getMultiOps(filtered),
-            otherParks: getMultiParks(filtered2)
+            otherParks: getMultiParkString(nferComments)
         };
 
         return result;
@@ -78,30 +67,32 @@ export default function HandleSpotRowClick() {
         // use the spot to generate qso data (unsaved)
         const q = window.pywebview.api.get_qso_from_spot(id);
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         q.then((r: any) => {
-            let result = checkApiResponse(r, contextData, setData);
+            const result = checkApiResponse(r, contextData, setData);
 
             if (!result.success) {
                 console.log("get_qso_from_spot failed: " + result.message);
+                setIsWorking(false);
                 return;
             }
 
-            var x = JSON.parse(result.qso) as Qso;
+            const x = JSON.parse(result.qso) as Qso;
 
             window.pywebview.api.get_reference(x.sig, x.sig_info)
                 .then((r: string) => {
-                    let result = checkApiResponse(r, contextData, setData);
+                    const result = checkApiResponse(r, contextData, setData);
                     if (!result.success) {
                         console.log("get_qso_from_spot failed: " + result.message);
                         setIsWorking(false);
                         return;
                     }
-                    let p = JSON.parse(result.park_data) as Park;
+                    const p = JSON.parse(result.park_data) as Park;
                     const newCtxData = { ...contextData };
                     newCtxData.qso = x;
                     newCtxData.park = p;
                     newCtxData.summit = null;
-                    if (x.sig == 'POTA') {
+                    if (x.sig == 'POTA' || x.sig == 'WWBOTA') {
                         getOtherData(id).then((oo) => {
                             newCtxData.otherOperators = oo.otherOps;
                             newCtxData.otherParks = oo.otherParks;
@@ -112,6 +103,9 @@ export default function HandleSpotRowClick() {
                     }
 
                     setIsWorking(false);
+
+                    // this is ignored if the logger doesn't support staging
+                    window.pywebview.api.stage_qso(JSON.stringify(x));
                 });
         });
     }
@@ -120,15 +114,16 @@ export default function HandleSpotRowClick() {
         if (window.pywebview === undefined || window.pywebview === null)
             return;
 
-        //console.log('loadingSpotData ' + spotId);
-
+        // clearing via escape key making spot be reloaded here.
+        if (spotId == 0)
+            return;
 
         const newCtxData = { ...contextData };
         contextData.loadingQsoData = true;
         setData(newCtxData);
 
         // load the spot's comments into the db
-        let x = window.pywebview.api.insert_spot_comments(spotId);
+        const x = window.pywebview.api.insert_spot_comments(spotId);
 
         //getQsoData(spotId);
 
@@ -142,10 +137,11 @@ export default function HandleSpotRowClick() {
         });
     }
 
-
-
     useEffect(() => {
         if (!isWorking) {
+            // a cleared or logged qso changes spotId to 0
+            if (contextData.spotId == 0)
+                return;
             setIsWorking(true);
             loadSpotData(contextData.spotId);
         } else {

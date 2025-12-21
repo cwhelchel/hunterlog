@@ -3,9 +3,9 @@ import clsx from 'clsx';
 import { styled, css, Stack } from '@mui/system';
 import { Tooltip, Button, Divider, Typography, MenuItem, InputLabel, FormControl, Select, SelectChangeEvent, Autocomplete, TextField, Snackbar, SnackbarCloseReason } from '@mui/material';
 import { Modal as BaseModal } from '@mui/base/Modal';
-import { checkApiResponse, setToastMsg } from '../../util';
+import { checkApiResponse, setToastMsg } from '../../tsx/util';
 import { useAppContext } from '../AppContext';
-import { getPotaLocations } from '../../pota';
+import { getPotaLocations } from '../../tsx/pota';
 
 declare interface IHamAlertButtonProps {
 }

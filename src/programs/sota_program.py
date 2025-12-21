@@ -1,12 +1,16 @@
+from collections import defaultdict
+import csv
+from io import StringIO
 from db.models.parks import Park
 from db.models.qsos import Qso
+from programs.apis.iapi import IApi
 from programs.program import Program
 from db.models.spots import Spot
 import sqlalchemy as sa
 import logging as L
 import time
 
-from sota.sota import SotaApi
+from programs.apis import SotaApi
 
 log = L.getLogger(__name__)
 
@@ -16,6 +20,11 @@ class SotaProgram(Program):
     @property
     def seen_regions(self) -> list[str]:
         return self.regions
+
+    @property
+    def api(self) -> IApi:
+        self.sota_api = SotaApi() if self.sota_api is None else self.sota_api
+        return self.sota_api
 
     def get_reference(self,
                       ref: str,
@@ -118,17 +127,8 @@ class SotaProgram(Program):
         self.update_qso_dist_bearing(q)
         return q
 
-    def inc_ref_hunt(self, ref: str, pota_ref: str):
-        summit_code = ref
-        ok = self.db.parks.inc_ref_hunt(summit_code)
-        if not ok:
-            summit = SotaApi().get_summit(summit_code)
-            to_add = self.parse_ref_data(summit)
-            if to_add:
-                self.db.session.add(to_add)
-                self.db.session.commit()
-            if not self.db.parks.inc_ref_hunt(summit_code):
-                log.error('unable to update ref hunt')
+    def download_reference_data(self, ref_code: str) -> any:
+        return SotaApi().get_summit(ref_code)
 
     def parse_ref_data(self, summit) -> Park:
         s = Park()
@@ -159,3 +159,26 @@ class SotaProgram(Program):
         s.firstActivationDate = ''
         s.website = f"https://www.sotadata.org.uk/en/summit/{summit['summitCode']}"  # noqa E501
         return s
+
+    def parse_hunt_data(self, data) -> dict[str, int]:
+        # data here is a raw string csv from the sota chaser complete log
+        # download
+
+        hdr = ['version', 'my_call', 'x', 'date', 'time', 'band',
+               'mode', 'call', 'summit', 'comment', 'points']
+        csv_file = StringIO(data)
+        csv_reader = csv.DictReader(csv_file, delimiter=',', fieldnames=hdr)
+
+        result = defaultdict(int)
+
+        skip_headers = False  # no headers in sota file
+
+        for row in csv_reader:
+            if skip_headers:
+                skip_headers = False
+                continue
+            else:
+                k = row['summit']
+                result[k] += 1
+
+        return result

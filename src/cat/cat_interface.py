@@ -13,6 +13,7 @@ from cat.aclog_interface import aclog
 from cat.dxlabs import dxlabs
 from cat.flrig import flrig
 from cat.rigctld import rigctld
+from cat.wsjtx import wsjtx
 
 if __name__ == "__main__":
     print("I'm not the program you are looking for.")
@@ -48,6 +49,8 @@ class CAT:
             return aclog()
         elif interface == "dxlabs":
             return dxlabs()
+        elif interface == "wsjtx":
+            return wsjtx()
 
         return None
     

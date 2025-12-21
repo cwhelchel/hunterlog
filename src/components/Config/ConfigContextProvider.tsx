@@ -17,6 +17,8 @@ const defData: UserConfig = {
     ftx_mode: '',
     qth_string: '',
     rig_if_type: '',
+    include_rst: false,
+    enabled_progs: '',
     scan_wait_time: 5
 };
 
@@ -27,27 +29,13 @@ export interface ConfigContextType {
 
 export const ConfigContext = React.createContext<ConfigContextType | null>(null);
 
-export const ConfigContextProvider = ({ children }: any) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const ConfigContextProvider = ( {children}: any ) => {
     const [configData, setConfigData] = React.useState<UserConfig>(defData);
 
     const x = (ctx: UserConfig) => {
         const newContext: UserConfig = {
-            my_call: ctx.my_call,
-            my_grid6: ctx.my_grid6,
-            default_pwr: ctx.default_pwr,
-            flr_host: ctx.flr_host,
-            flr_port: ctx.flr_port,
-            adif_host: ctx.adif_host,
-            adif_port: ctx.adif_port,
-            logger_type: ctx.logger_type,
-            size_x: ctx.size_x,
-            size_y: ctx.size_y,
-            is_max: ctx.is_max,
-            cw_mode: ctx.cw_mode,
-            ftx_mode: ctx.ftx_mode,
-            qth_string: ctx.qth_string,
-            rig_if_type: ctx.rig_if_type,
-            scan_wait_time: ctx.scan_wait_time
+            ...ctx
         };
         setConfigData(newContext);
     };

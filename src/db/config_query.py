@@ -171,6 +171,24 @@ class ConfigQuery:
             'editable': 'False'
         },
         {
+            'key': 'include_rst',
+            'val': '1',
+            'type': 'bool',
+            'description': 'Include RST portion in POTA spot comment',
+            'group': 'general',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'enabled_programs',
+            'val': json.dumps({"POTA": True, "SOTA": True, 'WWFF': True, 'WWBOTA': True}),  # NOQA
+            'type': 'json',
+            'description': 'List of programs that are enabled',
+            'group': 'general',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
             'key': 'scan_wait_time',
             'val': '5',
             'type': 'int',
@@ -190,18 +208,6 @@ class ConfigQuery:
             .first()
 
     def get_value(self, k: str) -> Any:
-        def str_to_bool(s):
-            """
-            Converts a string to boolean based on common truthy/falsy values.
-            """
-            s_lower = s.lower()
-            if s_lower in ('true', '1', 't', 'y', 'yes'):
-                return True
-            elif s_lower in ('false', '0', 'f', 'n', 'no'):
-                return False
-            else:
-                raise ValueError(f"Invalid boolean string: '{s}'")
-
         x = self.get_config(k)
 
         if x is None:
@@ -212,7 +218,11 @@ class ConfigQuery:
         elif x.type == "string":
             return str(x.val)
         elif x.type == "bool":
-            return str_to_bool(x.val)
+            return self._str_to_bool(x.val)
+        elif x.type == 'json':
+            yyy = json.loads(x.val)
+            logging.debug(yyy)
+            return yyy
         else:
             logging.warning(f"unknown type: {x.type} for key {k}")
             return str(x.val)
@@ -228,7 +238,15 @@ class ConfigQuery:
         elif x.type == "string":
             x.val = str(val)
         elif x.type == "bool":
-            x.val = True if (val) else False
+            x.val = True if self._str_to_bool(val) else False
+        elif x.type == 'json':
+            # x.val = json.dumps(val)
+            # we DONT want to dumps here. the exchange of data b/w frontend and
+            # back end will already encodes the string once. if we do it again
+            # here it just turns it into an encoded string and not an obj.
+            # NOTE: any direct calls of set_value with a json type will have
+            # to account for this
+            x.val = str(val)
         else:
             logging.warning(f"unknown type: {x.type} for key {k}")
             x.val = val
@@ -269,6 +287,7 @@ class ConfigQuery:
         for y in x:
             row: ConfigVer2 = y
             if row.editable:
+                logging.debug(f"setting {row.key} to {row.val}")
                 self.set_value(row.key, row.val)
 
         self.session.commit()
@@ -328,14 +347,29 @@ class ConfigQuery:
                 self.DEFAULTS, session=self.session, many=True)
             self.session.add_all(default_config)
             self.session.commit()
-        elif x < len(self.DEFAULTS):
-            assert (x > 0)
+        else:
+            logging.debug("checking cfg v2 rows against defaults...")
 
-            logging.info("adding new default cfg rows...")
+            current = self.get_all()
+            current_keys = [str(cfg.key) for cfg in current]
 
-            # already has new cfg rows, but defaults there's new stuff at end
-            num_missing = len(self.DEFAULTS) - x
-            for i in range(x, x+num_missing):
-                add = cs.load(self.DEFAULTS[i], session=self.session)
-                self.session.add(add)
+            for def_val in self.DEFAULTS:
+                if def_val['key'] not in current_keys:
+                    logging.warning(f"missing key, adding default {def_val}")
+
+                    add = cs.load(def_val, session=self.session)
+                    self.session.add(add)
+
             self.session.commit()
+
+    def _str_to_bool(self, s):
+        """
+        Converts a string to boolean based on common truthy/falsy values.
+        """
+        s_lower = str(s).lower()
+        if s_lower in ('true', '1', 't', 'y', 'yes'):
+            return True
+        elif s_lower in ('false', '0', 'f', 'n', 'no'):
+            return False
+        else:
+            raise ValueError(f"Invalid boolean string: '{s}'")

@@ -1,4 +1,4 @@
-import { ContextData } from "./@types/ContextTypes";
+import { ContextData } from "../@types/ContextTypes";
 
 /*
 Check the JSON response from the backend endpoints found in api.py
@@ -12,7 +12,7 @@ export function checkApiResponse(x: string, contextData: ContextData, setData: (
     if (x === null)
         return null;
 
-    let j = JSON.parse(x);
+    const j = JSON.parse(x);
 
     if (!("success" in j)) {
         // normal success values is missing. this is some other object just return it
@@ -25,13 +25,20 @@ export function checkApiResponse(x: string, contextData: ContextData, setData: (
             setInfoMsg(j['message'], contextData, setData);
             return j;
         }
-        
+
         // if a success response's message is empty string, dont toast
         if (j['message'] !== "")
             setToastMsg(j['message'], contextData, setData);
 
     } else {
-        setErrorMsg(j['message'], contextData, setData);
+        // unsuccessful returns
+        if (j['transient']) {
+            // message is a toast. failure is not critical
+            setToastMsg(j['message'], contextData, setData);
+        } else {
+            // user needs to see this and clear it
+            setErrorMsg(j['message'], contextData, setData);
+        }
     }
 
     return j;
@@ -57,19 +64,4 @@ export function setInfoMsg(msg: string, contextData: ContextData, setData: (d: C
     newCtxData.errorMsg = msg;
     newCtxData.errorSeverity = 'info';
     setData(newCtxData);
-}
-
-export function checkReferenceForSota(ref: string) {
-    var regex = new RegExp('[a-zA-Z0-9]{2,3}\/[a-zA-Z0-9]{2}-[0-9]{3}');
-    return regex.test(ref);
-}
-
-export function checkReferenceForWwff(ref: string) {
-    var regex = new RegExp('[a-zA-Z0-9]{1,2}FF-[0-9]{4}');
-    return regex.test(ref);
-}
-
-export function checkReferenceForPota(ref: string) {
-    var regex = new RegExp('[A-Z0-9]+-[0-9]*');
-    return regex.test(ref);
 }

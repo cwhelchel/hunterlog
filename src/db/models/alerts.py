@@ -17,6 +17,9 @@ class Alerts(Base):
     last_triggered = sa.Column(sa.TIMESTAMP, nullable=True)
     dismissed_until = sa.Column(sa.TIMESTAMP, nullable=True)
     dismissed_callsigns = sa.Column(sa.String, nullable=True)
+    call_search = sa.Column(sa.String, nullable=True)
+    excl_band_above = sa.Column(sa.String, nullable=True)
+    excl_band_below = sa.Column(sa.String, nullable=True)
 
     def __repr__(self):
         return "<alert(id={self.id!r},name={self.name})>".format(self=self)

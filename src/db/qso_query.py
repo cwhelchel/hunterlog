@@ -1,10 +1,11 @@
 from datetime import datetime
+import json
 import logging
 from typing import List
 import sqlalchemy as sa
 from sqlalchemy.orm import scoped_session
 
-from db.models.qsos import Qso
+from db.models.qsos import Qso, QsoSchema
 from bands import Bands, get_band, bandLimits, bandNames
 
 
@@ -45,9 +46,11 @@ class QsoQuery:
         # and add it directly
         logging.debug(f"inserting qso: {qso}")
         q = Qso()
-        q.call = qso['call']
-        if q.call is None or not q.call.strip():
+        temp_call = qso['call']
+        if temp_call is None or not temp_call.strip():
             raise ValueError("Empty Callsign")
+        q.call = temp_call.upper()
+
         q.rst_sent = qso['rst_sent']
         q.rst_recv = qso['rst_recv']
         q.freq = qso['freq']
@@ -56,9 +59,10 @@ class QsoQuery:
         elif not check_float(q.freq):
             raise ValueError("Invalid Frequency number")
         q.freq_rx = qso['freq_rx']
-        q.mode = qso['mode']
-        if q.mode is None or not q.mode.strip():
+        temp_mode = qso['mode']
+        if temp_mode is None or not temp_mode.strip():
             raise ValueError("Empty Mode")
+        q.mode = temp_mode.upper()
         q.comment = qso['comment']
         temp: str = trim_z(qso['qso_date'])
         q.qso_date = datetime.fromisoformat(temp)
@@ -68,14 +72,15 @@ class QsoQuery:
         q.rx_pwr = qso['rx_pwr']
         q.gridsquare = qso['gridsquare']
         q.state = qso['state']
-        q.sig = qso['sig']
-        q.sig_info = qso['sig_info']
+        q.sig = qso['sig'] and qso['sig'].upper()
+        q.sig_info = qso['sig_info'] and qso['sig_info'].upper()
         q.distance = qso['distance']
         q.bearing = qso['bearing']
         q.from_app = True
         q.cnfm_hunt = False
         q.pota_ref = qso['pota_ref'] if q.sig == 'POTA' else None
         q.sota_ref = qso['sota_ref'] if q.sig == 'SOTA' else None
+        q.wwff_ref = qso['wwff_ref'] if q.sig == 'WWFF' else None
         self.session.add(q)
         self.session.commit()
         return q.qso_id
@@ -92,6 +97,16 @@ class QsoQuery:
 
     def get_qso(self, id: int) -> Qso:
         return self.session.query(Qso).get(id)
+
+    def get_qso_transient(self, qso_data) -> Qso:
+        schema = QsoSchema()
+        dic = json.loads(qso_data)
+        dic['qso_id'] = 0
+        q = schema.load(
+            dic,
+            session=self.session,
+            transient=True)
+        return q
 
     def get_qsos_from_app(self) -> List[Qso]:
         x = self.session.query(Qso) \

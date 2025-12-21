@@ -2,7 +2,7 @@ import * as React from 'react';
 import Button from '@mui/material/Button';
 import { useGridApiContext, gridFilteredSortedRowIdsSelector, useGridSelector } from '@mui/x-data-grid';
 import { useConfigContext } from '../Config/ConfigContextProvider';
-import { checkApiResponse } from '../../util';
+import { checkApiResponse } from '../../tsx/util'
 import { useAppContext } from '../AppContext';
 
 export default function ScanButton() {
@@ -20,8 +20,8 @@ export default function ScanButton() {
     }, [isScanning]);
 
     React.useEffect(() => {
-        let scanInterval: NodeJS.Timeout;
-        let pttInterval: NodeJS.Timeout;
+        let scanInterval: number;
+        let pttInterval: number;
 
         if (isScanning) {
             // Fast PTT check every 250ms

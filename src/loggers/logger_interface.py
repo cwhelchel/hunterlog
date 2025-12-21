@@ -14,6 +14,7 @@ from loggers.l4om_logger import Log4omLogger
 from loggers.n3fjp_logger import N3fjpLogger
 from loggers.tcp_logger import TcpLogger
 from loggers.udp_logger import UdpLogger
+from loggers.wsjtx_logger import WsjtxLogger
 
 log = logging.getLogger(__name__)
 
@@ -38,10 +39,10 @@ class LoggerInterface:
         be used by hunterlog to handle QSO logging.
 
         The IAdifLogger object will be initialized here via calling
-        IAdifLogger.init_logger() with `**kwargs** set properly using settings
+        IAdifLogger.init_logger() with **kwargs** set properly using settings
         from `config` param
 
-        :param UserConfig config: config obj from DB
+        :param LoggerParams config: config data
         :param str app_ver: hunterlog version from__version__
 
         :returns IAdifLogger: a usable logger obj
@@ -57,6 +58,8 @@ class LoggerInterface:
             logger = N3fjpLogger()
         elif interface == UserConfig.LoggerType.Log4om.value:
             logger = Log4omLogger()
+        elif interface == UserConfig.LoggerType.WsjtxUdp.value:
+            logger = WsjtxLogger()
         else:
             log.warning(f"unknown logger type: {interface}")
             logger = GenericFileLogger()

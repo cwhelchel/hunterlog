@@ -1,6 +1,5 @@
 import { GridFilterModel } from "@mui/x-data-grid/models";
 import { Qso } from "./QsoTypes";
-import { ParkInfo } from "./PotaTypes";
 import { Park } from "./Parks";
 import { Summit } from "./Summit";
 
@@ -26,6 +25,8 @@ export interface ContextData {
     otherParks: string;
     continentFilter: string;
     loadingQsoData: boolean;
+    swapRstOrder: boolean;
+    showHiddenFilter: boolean;
 }
 
 export  interface AppContextType {

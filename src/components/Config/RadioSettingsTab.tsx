@@ -21,6 +21,7 @@ export default function RadioSettingsTab() {
                 <MenuItem value={"rigctld"}>RIGCTLD</MenuItem>
                 <MenuItem value={"aclog"}>ACLOG</MenuItem>
                 <MenuItem value={"dxlabs"}>DXLABS</MenuItem>
+                <MenuItem value={"wsjtx"}>WSJT-X (MacLoggerDX)</MenuItem>
             </Select>
 
             <p className="modal-config-text">
