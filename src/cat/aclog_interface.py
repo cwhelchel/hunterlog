@@ -62,3 +62,6 @@ class aclog(ICat):
                 return False
 
         return False
+
+    def get_ptt(self) -> bool:
+        raise NotImplementedError

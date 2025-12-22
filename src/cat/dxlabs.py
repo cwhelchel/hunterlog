@@ -68,7 +68,7 @@ class dxlabs(ICat):
         fMHz_size = len(str(fMHz))
         t = f'<xcvrfreq:{fMHz_size}>{fMHz}'
         cmd = f'<command:10>CmdSetFreq<parameters:{len(t)}>{t}'
-        
+
         logger.debug(f"dxlabs vfocmd: {cmd}")
 
         if self.dxlabs_sock:
@@ -85,6 +85,8 @@ class dxlabs(ICat):
                 logger.error("set_vfo", exc_info=e)
                 self.dxlabs_sock = None
                 return False
-        
+
         return False
 
+    def get_ptt(self) -> bool:
+        raise NotImplementedError

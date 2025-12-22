@@ -58,8 +58,10 @@ class flrig(ICat):
         """Returns ptt state via flrig"""
         try:
             self.online = True
-            return self.server.rig.get_ptt()
+            res = self.server.rig.get_ptt()
+            logger.debug(f'get_ptt -> {res}')
+            return res 
         except ConnectionRefusedError as exception:
             self.online = False
             logger.debug("%s", exception)
-        return "0"
+        return False

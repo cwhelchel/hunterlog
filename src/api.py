@@ -584,8 +584,15 @@ class JsApi:
         '''Returns the PTT state from CAT control'''
         if self.cat is None:
             return self._response(False, "CAT control failure.")
-        
-        ptt = self.cat.get_ptt()
+
+        try:
+            ptt = self.cat.get_ptt()
+        except NotImplementedError as nie:
+            logging.error(
+                'get_ptt not available for this CAT mode',
+                exc_info=nie)
+            return self._response(False, '', not_implemented=True)
+
         return self._response(True, "", ptt=ptt)
 
     def export_park_data(self) -> str:

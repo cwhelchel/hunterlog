@@ -74,9 +74,10 @@ class rigctld(ICat):
                 ptt = self.socket.recv(1024).decode()
                 logger.debug("%s", ptt)
                 ptt = ptt.strip()
+                logger.debug(f'get_ptt -> {ptt}')
                 return ptt
             except socket.error as exception:
                 self.online = False
                 logger.debug("%s", exception)
                 self.socket = None
-        return "0"
+        return False

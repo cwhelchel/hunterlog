@@ -35,6 +35,7 @@ const defData: ContextData = {
 
 export const AppContext = React.createContext<AppContextType | null>(null);
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const AppContextProvider = ( {children}: any ) => {
     const [contextData, setContextData] = React.useState<ContextData>(defData);
     const [qsyButtonId, setQsyButtonId] = React.useState<string>('');

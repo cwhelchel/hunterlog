@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import * as React from 'react';
 import { Backdrop, Badge, CircularProgress } from '@mui/material';
-import { DataGrid, GridColDef, GridValueGetterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams, GridRowClassNameParams, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarColumnsButton, GridToolbarQuickFilter, GridPaginationModel, GridActionsCell, GridActionsCellItem } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridValueGetterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams, GridRowClassNameParams, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarColumnsButton, GridToolbarQuickFilter, GridPaginationModel, GridActionsCell, GridActionsCellItem, GridInputRowSelectionModel } from '@mui/x-data-grid';
 import { GridEventListener } from '@mui/x-data-grid';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
@@ -151,7 +151,7 @@ export default function SpotViewer() {
     const [spots, setSpots] = React.useState(rows)
     const [sortModel, setSortModel] = React.useState<GridSortModel>([currentSortFilter]);
     const [pageModel, setPaginationModel] = React.useState<GridPaginationModel>(currentPageFilter);
-    const [rowSelectionModel, setRowSelectionModel] = React.useState<any[]>([]);
+    const [rowSelectionModel, setRowSelectionModel] = React.useState<GridInputRowSelectionModel>([]);
     const [backdropOpen, setBackdropOpen] = React.useState(false);
     const { contextData, setData } = useAppContext();
 
