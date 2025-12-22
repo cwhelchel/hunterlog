@@ -181,7 +181,7 @@ class ConfigQuery:
         },
         {
             'key': 'enabled_programs',
-            'val': json.dumps({"POTA": True, "SOTA": True, 'WWFF': True, 'WWBOTA': True}),  # NOQA
+            'val': json.dumps({"POTA": True, "SOTA": True, 'WWFF': True, 'WWBOTA': True}),  # NOQA E501
             'type': 'json',
             'description': 'List of programs that are enabled',
             'group': 'general',
@@ -192,7 +192,7 @@ class ConfigQuery:
             'key': 'scan_wait_time',
             'val': '5',
             'type': 'int',
-            'description': 'Time in seconds to wait on each station during scanning',
+            'description': 'Time in seconds to wait on each station during scanning',  # NOQA E501
             'group': 'scanning',
             'enabled': 'True',
             'editable': 'True'

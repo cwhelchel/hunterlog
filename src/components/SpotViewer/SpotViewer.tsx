@@ -21,8 +21,20 @@ import HandleSpotRowClick from './HandleSpotRowClick';
 import ProgramIcon from '../Icons/ProgramIcon';
 import ScanButton from './ScanButton';
 
-// https://mui.com/material-ui/react-table/
 
+// this needs to be moved outside of the grid's rendering function (e.g. SpotViewer())
+// to fix the quick filter losing focus bug and to have the new ScanButton work
+// properly
+function CustomToolbar() {
+    return (
+        <GridToolbarContainer>
+            <GridToolbarColumnsButton />
+            <GridToolbarDensitySelector />
+            <GridToolbarQuickFilter />
+            <ScanButton />
+        </GridToolbarContainer>
+    );
+}
 
 const columns: GridColDef[] = [
     // { field: 'spotId', headerName: 'ID', width: 70 },
@@ -101,10 +113,7 @@ const columns: GridColDef[] = [
         }
     },
     {
-        field: 'spotOrig', headerName: 'Spot', width: 400,
-        // valueGetter: (params: GridValueGetterParams) => {
-        //     return `${params.row.spotter || ''}: ${params.row.comments || ''}`;
-        // },
+        field: 'spotOrig', headerName: 'Spot', width: 370,
         // do this to have a popup for all spots comments
         renderCell: (x) => {
             return (
@@ -128,15 +137,7 @@ const columns: GridColDef[] = [
                 <span id="sig">{x.row.spot_source}</span>
             </>
         }
-    },
-    // {
-    //     field: 'actions', width: 80, type: 'actions',
-    //     renderCell: (params) => {
-    //         return <GridActionsCell {...params} >
-    //             <GridActionsCellItem icon={<VisibilityIcon />} onClick={() => hideSpot(params.row.spotId)} label='Hide' />
-    //         </GridActionsCell>
-    //     }
-    // }
+    }
 ];
 
 
@@ -174,7 +175,7 @@ export default function SpotViewer() {
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             let p: any;
-            
+
             if (isHidden)
                 p = window.pywebview.api.hidden_spots.unhide_spot(spotId);
             else
@@ -350,17 +351,6 @@ export default function SpotViewer() {
         else
             return 'spotviewer-row';
     };
-
-    function CustomToolbar() {
-        return (
-            <GridToolbarContainer>
-                <GridToolbarColumnsButton />
-                <GridToolbarDensitySelector />
-                <GridToolbarQuickFilter />
-                <ScanButton />
-            </GridToolbarContainer>
-        );
-    }
 
     return (
         <div className='spots-container'>

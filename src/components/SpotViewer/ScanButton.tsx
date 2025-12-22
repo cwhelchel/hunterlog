@@ -4,6 +4,9 @@ import { useGridApiContext, gridFilteredSortedRowIdsSelector, useGridSelector } 
 import { useConfigContext } from '../Config/ConfigContextProvider';
 import { checkApiResponse } from '../../tsx/util'
 import { useAppContext } from '../AppContext';
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
+import LoopIcon from '@mui/icons-material/Loop';
+import { styled, keyframes } from '@mui/system';
 
 export default function ScanButton() {
     const apiRef = useGridApiContext();
@@ -48,6 +51,7 @@ export default function ScanButton() {
                 // Get next row
                 const currentIds = gridFilteredSortedRowIdsSelector(apiRef);
                 if (currentIds.length <= 1) {
+                    console.log("Stopping scan due to row len: ", currentIds.length);
                     setIsScanning(false);
                     return;
                 }
@@ -119,14 +123,30 @@ export default function ScanButton() {
 
     const disabled = filteredIds.length <= 1;
 
+    // 1. Define the keyframes animation
+    const spin = keyframes`
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+    }
+    `;
+
+    const SpinningIcon = styled(LoopIcon)({
+        animation: `${spin} 2s linear infinite reverse`,
+    });
+
     return (
         <Button
             variant="contained"
+            size='small'
             color={isScanning ? "secondary" : "primary"}
             onClick={handleScanClick}
             disabled={disabled}
+            startIcon={isScanning ? <SpinningIcon /> : <PlayCircleOutlineIcon />}
         >
-            {isScanning ? "Stop Scanning" : "Scan"}
+            {isScanning ? "Stop" : "Scan"}
         </Button>
     );
 }
