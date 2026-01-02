@@ -57,7 +57,11 @@ class WwbotaProgram(Program):
         id: int = 1000
         for bunker in spots:
             to_add = Spot()
-            refs = self._init_spot(to_add, bunker, id)
+            try:
+                refs = self._init_spot(to_add, bunker, id)
+            except Exception as ex:
+                log.warning(f'bad wwbota spot {bunker}', exc_info=ex)
+                continue
             id = id + 1
 
             # locationDesc is the WWBOTA 'scheme' 9ABOTA, CABOTA, etc
@@ -219,6 +223,10 @@ class WwbotaProgram(Program):
         s.spotter = json['spotter']
         s.comments = json['comment']
         s.source = 'WWBOTA'
+
+        # if scheme is null then then this reference is for something that
+        # does not exists. there are many attributes here that will be null.
+        # caught exceptions will be logged
 
         s.locationDesc = first['scheme']
 
