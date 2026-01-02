@@ -37,3 +37,7 @@ class ICat(ABC):
         returns True on success
         '''
         raise NotImplementedError
+
+    @abstractmethod
+    def get_ptt(self) -> bool:
+        raise NotImplementedError

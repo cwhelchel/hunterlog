@@ -18,7 +18,8 @@ const defData: UserConfig = {
     qth_string: '',
     rig_if_type: '',
     include_rst: false,
-    enabled_progs: ''
+    enabled_progs: '',
+    scan_wait_time: 5
 };
 
 export interface ConfigContextType {

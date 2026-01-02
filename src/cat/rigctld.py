@@ -64,3 +64,20 @@ class rigctld(ICat):
 
         self.init_cat(host=self.host, port=self.port)
         return False
+
+    def get_ptt(self):
+        """Returns ptt state via rigctld"""
+        if self.socket:
+            try:
+                self.online = True
+                self.socket.send(b"t\n")
+                ptt = self.socket.recv(1024).decode()
+                logger.debug("%s", ptt)
+                ptt = ptt.strip()
+                logger.debug(f'get_ptt -> {ptt}')
+                return ptt
+            except socket.error as exception:
+                self.online = False
+                logger.debug("%s", exception)
+                self.socket = None
+        return False

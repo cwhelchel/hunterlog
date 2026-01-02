@@ -9,7 +9,7 @@ logger = L.getLogger(__name__)
 class wsjtx(ICat):
     '''
     This class emulated the udp cat commands that wsjt-x emits. 
-     
+
     It's a copy of dxlabs.py because the wsjt-x is based off of dxlabs protocol
     except the freq is different.
     '''
@@ -70,11 +70,11 @@ class wsjtx(ICat):
         # convert the hz to kHz
         fkHz = float(freq) / 1_000
 
-        # heres where wsjt-x differs. we need to add a localized separator to 
+        # heres where wsjt-x differs. we need to add a localized separator to
         # the string or mcloggerdx will truncate it.
         format_kHz = "{:,.3f}".format(fkHz)
 
-        # note: i dont know how macloggerdx will work if in a locale that the 
+        # note: i dont know how macloggerdx will work if in a locale that the
         # comma is not the thousands separator. this maybe a future bug where
         # i need to use the real locale separator
 
@@ -82,7 +82,7 @@ class wsjtx(ICat):
         fMHz_size = len(format_kHz)
         t = f'<xcvrfreq:{fMHz_size}>{format_kHz}'
         cmd = f'<command:10>CmdSetFreq<parameters:{len(t)}>{t}'
-        
+
         logger.debug(f"wjstx vfocmd: {cmd}")
 
         if self.wsjtx_sock:
@@ -99,6 +99,8 @@ class wsjtx(ICat):
                 logger.error("set_vfo", exc_info=e)
                 self.wsjtx_sock = None
                 return False
-        
+
         return False
 
+    def get_ptt(self) -> bool:
+        raise NotImplementedError

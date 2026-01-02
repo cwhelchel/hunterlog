@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import * as React from 'react';
 import { Backdrop, Badge, CircularProgress } from '@mui/material';
-import { DataGrid, GridColDef, GridValueGetterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams, GridRowClassNameParams, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarColumnsButton, GridToolbarQuickFilter, GridPaginationModel, GridActionsCell, GridActionsCellItem } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridValueGetterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams, GridRowClassNameParams, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarColumnsButton, GridToolbarQuickFilter, GridPaginationModel, GridActionsCell, GridActionsCellItem, GridInputRowSelectionModel } from '@mui/x-data-grid';
 import { GridEventListener } from '@mui/x-data-grid';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
@@ -19,9 +19,22 @@ import SpotTimeCell from './SpotTime';
 import { checkApiResponse } from '../../tsx/util';
 import HandleSpotRowClick from './HandleSpotRowClick';
 import ProgramIcon from '../Icons/ProgramIcon';
+import ScanButton from './ScanButton';
 
-// https://mui.com/material-ui/react-table/
 
+// this needs to be moved outside of the grid's rendering function (e.g. SpotViewer())
+// to fix the quick filter losing focus bug and to have the new ScanButton work
+// properly
+function CustomToolbar() {
+    return (
+        <GridToolbarContainer>
+            <GridToolbarColumnsButton />
+            <GridToolbarDensitySelector />
+            <GridToolbarQuickFilter />
+            <ScanButton />
+        </GridToolbarContainer>
+    );
+}
 
 const columns: GridColDef[] = [
     // { field: 'spotId', headerName: 'ID', width: 70 },
@@ -100,10 +113,7 @@ const columns: GridColDef[] = [
         }
     },
     {
-        field: 'spotOrig', headerName: 'Spot', width: 400,
-        // valueGetter: (params: GridValueGetterParams) => {
-        //     return `${params.row.spotter || ''}: ${params.row.comments || ''}`;
-        // },
+        field: 'spotOrig', headerName: 'Spot', width: 370,
         // do this to have a popup for all spots comments
         renderCell: (x) => {
             return (
@@ -127,15 +137,7 @@ const columns: GridColDef[] = [
                 <span id="sig">{x.row.spot_source}</span>
             </>
         }
-    },
-    // {
-    //     field: 'actions', width: 80, type: 'actions',
-    //     renderCell: (params) => {
-    //         return <GridActionsCell {...params} >
-    //             <GridActionsCellItem icon={<VisibilityIcon />} onClick={() => hideSpot(params.row.spotId)} label='Hide' />
-    //         </GridActionsCell>
-    //     }
-    // }
+    }
 ];
 
 
@@ -149,6 +151,7 @@ export default function SpotViewer() {
     const [spots, setSpots] = React.useState(rows)
     const [sortModel, setSortModel] = React.useState<GridSortModel>([currentSortFilter]);
     const [pageModel, setPaginationModel] = React.useState<GridPaginationModel>(currentPageFilter);
+    const [rowSelectionModel, setRowSelectionModel] = React.useState<GridInputRowSelectionModel>([]);
     const [backdropOpen, setBackdropOpen] = React.useState(false);
     const { contextData, setData } = useAppContext();
 
@@ -172,7 +175,7 @@ export default function SpotViewer() {
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             let p: any;
-            
+
             if (isHidden)
                 p = window.pywebview.api.hidden_spots.unhide_spot(spotId);
             else
@@ -317,6 +320,9 @@ export default function SpotViewer() {
         // console.log('setting spot to ' + params.row.spotId);
         newCtxData.spotId = params.row.spotId;
         setData(newCtxData);
+
+        // Also update visual selection to highlight the clicked row
+        setRowSelectionModel([params.row.spotId]);
     };
 
     function setFilterModel(e: GridFilterModel) {
@@ -345,15 +351,6 @@ export default function SpotViewer() {
         else
             return 'spotviewer-row';
     };
-
-    // memoize this so it doesn't re-render on all the key presses
-    const CustomToolbar = React.useCallback(() => (
-        <GridToolbarContainer>
-            <GridToolbarColumnsButton />
-            <GridToolbarDensitySelector />
-            <GridToolbarQuickFilter />
-        </GridToolbarContainer>
-    ), []);
 
     return (
         <div className='spots-container'>
@@ -391,6 +388,8 @@ export default function SpotViewer() {
                 onSortModelChange={(e) => setSortModelAndSave(e)}
                 onPaginationModelChange={(e) => setPaginationModelAndSave(e)}
                 getRowClassName={getClassName}
+                rowSelectionModel={rowSelectionModel}
+                onRowSelectionModelChange={(newSelection) => setRowSelectionModel(newSelection)}
             />
             <HandleSpotRowClick />
         </div>

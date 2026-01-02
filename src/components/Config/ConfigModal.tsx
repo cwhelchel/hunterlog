@@ -12,6 +12,7 @@ import { useConfigContext } from './ConfigContextProvider'
 import GeneralSettingsTab from './GeneralSettingsTab';
 import LoggerSettingsTab from './LoggerSettingsTab';
 import RadioSettingsTab from './RadioSettingsTab';
+import ScanningSettingsTab from './ScanningSettingsTab';
 import { setErrorMsg } from '../../tsx/util';
 import { useAppContext } from '../AppContext';
 import ProgramSettingsTab from './ProgramSettingsTab';
@@ -109,6 +110,7 @@ export default function ConfigModal() {
         config.logger_type = Number(getVar(cfg2, "logger_type"));
         config.include_rst = Number(getVar(cfg2, "include_rst")) != 0;
         config.enabled_progs = getVar(cfg2, 'enabled_programs');
+        config.scan_wait_time = Number(getVar(cfg2, "scan_wait_time"));
         setConfig(config);
     }
 
@@ -127,6 +129,7 @@ export default function ConfigModal() {
         setVar(config2, "rig_if_type", config.rig_if_type);
         setVar(config2, "include_rst", config.include_rst.toString());
         setVar(config2, "enabled_programs", config.enabled_progs);
+        setVar(config2, "scan_wait_time", config.scan_wait_time.toString());
         setConfig2(config2);
     }
 
@@ -169,8 +172,9 @@ export default function ConfigModal() {
                     >
                         <Tab label={'General'} {...a11yProps(0)} />
                         <Tab label={'CAT'} {...a11yProps(1)} />
-                        <Tab label={'Logging'} {...a11yProps(1)} />
-                        <Tab label={'Programs'} {...a11yProps(1)} />
+                        <Tab label={'Logging'} {...a11yProps(2)} />
+                        <Tab label={'Programs'} {...a11yProps(3)} />
+                        <Tab label={'Scanning'} {...a11yProps(4)} />
                     </Tabs>
 
                     <CustomTabPanel value={value} index={0}>
@@ -184,6 +188,9 @@ export default function ConfigModal() {
                     </CustomTabPanel>
                     <CustomTabPanel value={value} index={3}>
                         <ProgramSettingsTab />
+                    </CustomTabPanel>
+                    <CustomTabPanel value={value} index={4}>
+                        <ScanningSettingsTab />
                     </CustomTabPanel>
 
                     <Divider aria-hidden="true" />

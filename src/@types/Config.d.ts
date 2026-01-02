@@ -16,6 +16,7 @@ export interface UserConfig {
     rig_if_type: string,
     include_rst: boolean,
     enabled_progs: string
+    scan_wait_time: number,
 }
 
 export interface ConfigVer2 {
