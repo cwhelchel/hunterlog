@@ -134,16 +134,24 @@ class WwbotaProgram(Program):
         log.debug(f"WWBOTA Elapsed time: {elapsed_time:.6f} seconds")
 
     def build_qso(self, spot: Spot) -> Qso:
+        # note: a bunker could very well not exist in the API but still be
+        # valid. need to account for that here.
         name = spot.name
         if spot.grid4 == '':
             api = WwbotaApi()
             bunker = api.get_bunker(spot.reference)
             if bunker is None:
-                return
-            spot.grid4 = bunker['locator'][:4]
-            spot.grid6 = bunker['locator']
-            spot.latitude = bunker['lat']
-            spot.longitude = bunker['long']
+                # no bunker in API but still could be a valid ref
+                # set loc to 0,0 ll and grid
+                spot.grid4 = 'JJ00'
+                spot.grid6 = 'JJ00aa'
+                spot.latitude = 0.0
+                spot.longitude = 0.0
+            else:
+                spot.grid4 = bunker['locator'][:4]
+                spot.grid6 = bunker['locator']
+                spot.latitude = bunker['lat']
+                spot.longitude = bunker['long']
             self.db.session.commit()
 
         q = Qso()
@@ -188,9 +196,17 @@ class WwbotaProgram(Program):
     def _add_ref_to_db(self, ref):
         api_res = WwbotaApi().get_bunker(ref)
         log.debug(f"ref data from api {api_res}")
-        to_add = self.parse_ref_data(api_res)
-        if to_add:
-            self.db.session.add(to_add)
+
+        if api_res:
+            to_add = self.parse_ref_data(api_res)
+            if to_add:
+                self.db.session.add(to_add)
+                self.db.session.commit()
+        elif api_res is None:
+            # this is a new bunker if ref is good we can add a skeleton 'park'
+            new_ref = Park()
+            new_ref.reference = ref  # TODO regex check bunker
+            self.db.session.add(new_ref)
             self.db.session.commit()
 
     def _init_spot(self, s: Spot, json: any, id: int) -> list[any]:

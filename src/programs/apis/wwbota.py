@@ -1,3 +1,4 @@
+import json
 import requests
 import logging as L
 from cachetools.func import ttl_cache
@@ -33,3 +34,32 @@ class WwbotaApi():
         if response.status_code == 200:
             json = response.json()
             return json
+
+    def get_test_spots(self):
+        # a spot with a new unknown bunker ref
+        # return this from get_spots for testing
+        return json.loads(
+            """
+            [{
+                "freq": 7.134,
+                "comment": "B/ON-9999",
+                "spotter": "ON7DQ/P",
+                "references": [
+                    {
+                        "scheme": null,
+                        "dxcc": 0,
+                        "reference": "B/ON-9999",
+                        "name": null,
+                        "type": null,
+                        "locator": null,
+                        "lat": null,
+                        "long": null
+                    }
+                ],
+                "call": "ON7DQ/P",
+                "mode": "SSB",
+                "type": "Live",
+                "time": "2026-01-05T14:57:19.237062Z"
+            }]
+            """
+        )
