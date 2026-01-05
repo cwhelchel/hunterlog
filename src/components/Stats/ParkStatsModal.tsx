@@ -43,6 +43,8 @@ export default function ParkStatsModal(props: IParkStatsModalProps) {
     const [steps, setSteps] = React.useState(potaSteps);
     const [progress, setProgress] = React.useState(0);
     const [isComplete, setIsComplete] = React.useState(false);
+    // Create a ref for the hidden file input element
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const handleImport = () => {
         if (window.pywebview === undefined) {
@@ -61,6 +63,7 @@ export default function ParkStatsModal(props: IParkStatsModalProps) {
                         if (x.success) {
                             setIsComplete(true);
                             console.log(x.message);
+                            setFiles([]);
                         }
                     });
                 }
@@ -79,6 +82,7 @@ export default function ParkStatsModal(props: IParkStatsModalProps) {
                         if (x.success) {
                             setIsComplete(true);
                             console.log(x.message);
+                            setFiles([]);
                         }
                     });
                 }
@@ -116,6 +120,22 @@ export default function ParkStatsModal(props: IParkStatsModalProps) {
         if (droppedFiles.length > 0) {
             const newFiles = Array.from(droppedFiles);
             setFiles([...newFiles]);
+        }
+    };
+
+    function handleBrowseClick(e: React.MouseEvent<HTMLAnchorElement>) {
+        e.preventDefault();
+        // Trigger the hidden file input click
+        fileInputRef.current?.click();
+    }
+
+    // Handle file selection via the browse button
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const validFiles = Array.from(e.target.files);
+            setFiles([...validFiles]);
+            setIsComplete(false);
+            e.target.value = ''; // allow change event to re-fire
         }
     };
 
@@ -266,14 +286,26 @@ export default function ParkStatsModal(props: IParkStatsModalProps) {
                 </Box>
 
                 {files.length == 0 && (
-                    <div id="drop-zone"
-                        draggable={true}
-                        onDragStart={handleDragStart}
-                        onDragOver={handleDragOver}
-                        onDrop={(e) => handleDrop(e)}>
-                        Drag data files here
-                    </div>
+                    <>
+                        <div id="drop-zone"
+                            draggable={true}
+                            onDragStart={handleDragStart}
+                            onDragOver={handleDragOver}
+                            onDrop={(e) => handleDrop(e)}>
+                            Drag data files here or click&nbsp;
+                            <a href="#" onClick={handleBrowseClick} target="_blank" rel="noopener noreferrer">browse</a>
+                        </div>
+                        
+                    </>
                 )}
+
+                {/* Hidden file input element */}
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    style={{ display: 'none' }}
+                />
 
                 {files.length > 0 && (
                     <div className="file-list">
