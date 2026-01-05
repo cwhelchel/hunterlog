@@ -85,6 +85,9 @@ class JsApi:
     def get_spot_comments(self, spot_id: int):
         spot = self.db.spots.get_spot(spot_id)
 
+        if spot is None:
+            return json.dumps([])
+
         x = self.db.get_spot_comments(spot.activator, spot.reference)
         ss = SpotCommentSchema(many=True)
         return ss.dumps(x)

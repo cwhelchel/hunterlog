@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import * as React from 'react';
 import { Box, Button, CircularProgress, FormControlLabel, Modal, Switch } from '@mui/material';
 import { ClickAwayListener } from '@mui/base/ClickAwayListener';
@@ -15,53 +16,85 @@ interface ISpotCommentsProps {
 export default function SpotCommentsButton(props: ISpotCommentsProps) {
     const [open, setOpen] = React.useState(false);
     const [spinnerOpen, setSpinnerOpen] = React.useState(false);
+    const [isRbnFiltered, setIsRbnFiltered] = React.useState<undefined | boolean>(undefined);
     const [comments, setComments] = React.useState<null | SpotComments[]>(null);
+    // tempComments holds all comments to swap b/w filtered and unfiltered
+    const [tempComments, setTempComments] = React.useState<null | SpotComments[]>(null);
 
     const cellVal = `${props.spotter}: ${props.comments}`;
 
-    function getSpotComments(spotId: number) {
-        let id = spotId;
-
+    async function getSpotComments(spotId: number, filterRbnOut: boolean) {
+        const id = spotId;
         setSpinnerOpen(true);
-        let q = window.pywebview.api.insert_spot_comments(id);
 
-        q.then((_: any) => {
-            let p = window.pywebview.api.get_spot_comments(id);
+        // do these calls synchronously so they can be filtered when
+        // first shown.
+        await window.pywebview.api.insert_spot_comments(id);
 
-            p.then((x: string) => {
-                //console.log('comments json:');
-                let t = JSON.parse(x) as SpotComments[];
-                setComments(t);
-
-                setSpinnerOpen(false);
+        const x = await window.pywebview.api.get_spot_comments(id);
+        const t = JSON.parse(x) as SpotComments[];
+        if (filterRbnOut) {
+            setTempComments(t);
+            // console.log(t);
+            const filtered = t?.filter(c => {
+                const source = c.source;
+                return !source.includes('RBN');
             });
-        });
+            // console.log('filtered', filtered);
+
+            setComments(filtered ?? []);
+        } else {
+            setComments(t);
+            setTempComments(t);
+        }
+        setSpinnerOpen(false);
     }
 
     function onClick(e: React.MouseEvent<HTMLElement>) {
-        getSpotComments(props.spotId);
+        //getSpotComments(props.spotId);
         setOpen(true);
     };
 
-    function handleClickAway(_: any) {
+    function handleClickAway(event: MouseEvent | TouchEvent) {
         setOpen(false);
     }
 
-    function handleChange(event: any, checked: boolean): void {
-        if (comments == null)
-            return;
-
-        if (checked) {
-            let newComments = comments?.filter(c => {
-                const source = c.source
-                return !source.includes('RBN');
-            });
-
-            setComments(newComments);
-        } else {
-            getSpotComments(props.spotId);
-        }
+    function handleChange(event: React.ChangeEvent<HTMLInputElement>, checked: boolean): void {
+        setIsRbnFiltered(checked);
+        window.localStorage.setItem("HIDE_RBN_CMTS", checked ? '1' : '0');
     }
+
+    function filterRbn() {
+        const saved = comments;
+        const newComments = comments?.filter(c => {
+            const source = c.source;
+            return !source.includes('RBN');
+        });
+
+        setComments(newComments ?? []);
+        setTempComments(saved);
+    };
+
+    React.useEffect(() => {
+        if (isRbnFiltered)
+            filterRbn();
+        else {
+            setComments(tempComments);
+        }
+    }, [isRbnFiltered]);
+
+    React.useEffect(() => {
+        const hideRbn = window.localStorage.getItem("HIDE_RBN_CMTS") || '0';
+        // console.log('hideRbn', hideRbn);
+        const isHidden = parseInt(hideRbn) != 0;
+        // console.log('isHidden', isHidden);
+
+
+        if (open) {
+            getSpotComments(props.spotId, isHidden);
+            setIsRbnFiltered(isHidden);
+        }
+    }, [open]);
 
     return (
         <div>
@@ -72,8 +105,9 @@ export default function SpotCommentsButton(props: ISpotCommentsProps) {
             <StyledModal open={open}>
                 <ClickAwayListener onClickAway={handleClickAway}>
                     <ModalContent>
-                        <FormControlLabel control={<Switch onChange={handleChange} />} label="Hide RBN" />
-
+                        {isRbnFiltered !== undefined && (
+                            <FormControlLabel control={<Switch onChange={handleChange} checked={isRbnFiltered} />} label="Hide RBN" />
+                        )}
                         <>
                             {spinnerOpen && (
                                 <Box
