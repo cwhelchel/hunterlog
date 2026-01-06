@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 import logging
 import time
 from bands import get_band_name
@@ -18,9 +19,15 @@ class N3fjpLogger(GenericFileLogger):
     def log_qso(self, qso: Qso) -> str:
         if (self.staged and self.staged['call'] == qso.call):
             # log a staged QSO
+            t = qso.time_on or datetime.now(tz=timezone.utc)
             self.update_control(qso.freq, 'TXTENTRYFREQUENCY')
             self.update_control(qso.sig_info, 'TXTENTRYOTHER1')
             self.update_control(qso.comment, 'TXTENTRYCOMMENTS')
+            self.update_control(qso.rst_sent, 'TXTENTRYRSTS')
+            self.update_control(qso.rst_recv, 'TXTENTRYRSTR')
+            self.update_control(t.strftime('%Y/%m/%d'), 'TXTENTRYDATE')
+            self.update_control(t.strftime('%H:%M:%S'), 'TXTENTRYTIMEON')
+            self.update_control(t.strftime('%H:%M:%S'), 'TXTENTRYTIMEOFF')
             cmd = '<CMD><ACTION><VALUE>ENTER</VALUE></CMD>'
             send_tcp_msg(cmd, self.host, self.port)
         else:
