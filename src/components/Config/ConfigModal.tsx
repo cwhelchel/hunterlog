@@ -111,6 +111,7 @@ export default function ConfigModal() {
         config.include_rst = Number(getVar(cfg2, "include_rst")) != 0;
         config.enabled_progs = getVar(cfg2, 'enabled_programs');
         config.scan_wait_time = Number(getVar(cfg2, "scan_wait_time"));
+        config.stage_qsos = Number(getVar(cfg2, "stage_qsos")) != 0;
         setConfig(config);
     }
 
@@ -130,6 +131,7 @@ export default function ConfigModal() {
         setVar(config2, "include_rst", config.include_rst.toString());
         setVar(config2, "enabled_programs", config.enabled_progs);
         setVar(config2, "scan_wait_time", config.scan_wait_time.toString());
+        setVar(config2, "stage_qsos", config.stage_qsos.toString());
         setConfig2(config2);
     }
 

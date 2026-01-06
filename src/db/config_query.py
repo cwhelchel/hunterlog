@@ -109,7 +109,7 @@ class ConfigQuery:
         },
         {
             'key': 'is_max',
-            'val': 'False',
+            'val': '0',
             'type': 'bool',
             'description': '',
             'group': '',
@@ -194,6 +194,15 @@ class ConfigQuery:
             'type': 'int',
             'description': 'Time in seconds to wait on each station during scanning',  # NOQA E501
             'group': 'scanning',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'stage_qsos',
+            'val': '1',
+            'type': 'bool',
+            'description': 'Enable or disable staging QSOs to logger',
+            'group': 'logger',
             'enabled': 'True',
             'editable': 'True'
         }

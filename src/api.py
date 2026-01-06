@@ -341,6 +341,12 @@ class JsApi:
 
     def stage_qso(self, qso_data):
         logging.debug('staging qso')
+
+        do_stage = self.db.config.get_value('stage_qsos')
+
+        if not do_stage:
+            return self._response(True, '')
+
         try:
             qso_dic = json.loads(qso_data)
             self.adif_log.stage_qso(qso_dic)

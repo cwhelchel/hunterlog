@@ -1,19 +1,22 @@
 import * as React from 'react';
-import { MenuItem, Select, Stack, TextField } from "@mui/material";
+import { Checkbox, Divider, FormControlLabel, MenuItem, Select, Stack, TextField } from "@mui/material";
 import { useConfigContext } from './ConfigContextProvider';
 
 export default function LoggerSettingsTab() {
     const { config, setConfig } = useConfigContext();
-    
+
     return (
         <div style={{ 'display': 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
             <p className="modal-config-text">
-                Hunterlog will send ADIF formed QSO data to a separate logger 
+                Hunterlog will send ADIF formed QSO data to a separate logger
                 application (like Logger32 or Log4OM). If UDP or TCP is selected then
                 Hunterlog will send raw ADIF data to that endpoint. If another logger is selected,
                 the same ADIF data is sent but with other special commands to interact with the
                 selected logger.
             </p>
+
+
+
             <Select
                 value={config?.logger_type}
                 label="Logger Type"
@@ -28,6 +31,25 @@ export default function LoggerSettingsTab() {
                 <MenuItem value={3}>Log4om</MenuItem>
                 <MenuItem value={4}>Wsjt-X UDP</MenuItem>
             </Select>
+
+            <Stack direction={'row'} spacing={1} marginBottom={'10px'}>
+                <FormControlLabel label="Use QSO staging"
+                    style={{ width: "50%", marginLeft: 10 }}
+                    control={
+                        <Checkbox checked={config.stage_qsos}
+                            inputProps={{ 'aria-label': 'controlled' }}
+                            onChange={(e) => {
+                                const val = Boolean(e.target.checked);
+                                setConfig({ ...config, stage_qsos: val });
+                            }} />
+                    } />
+                <p className="modal-config-text">
+                    Some loggers support staging of QSOs to provide extra functionality. You can
+                    disable this with the checkbox.
+                </p>
+            </Stack>
+
+            <Divider aria-hidden="true" />
 
             <p className="modal-config-text">
                 The chosen logger will has a Internet Protocol (IP) address

@@ -17,6 +17,7 @@ export interface UserConfig {
     include_rst: boolean,
     enabled_progs: string
     scan_wait_time: number,
+    stage_qsos: boolean,
 }
 
 export interface ConfigVer2 {

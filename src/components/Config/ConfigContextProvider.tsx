@@ -19,7 +19,8 @@ const defData: UserConfig = {
     rig_if_type: '',
     include_rst: false,
     enabled_progs: '',
-    scan_wait_time: 5
+    scan_wait_time: 5,
+    stage_qsos: true
 };
 
 export interface ConfigContextType {
