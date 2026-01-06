@@ -23,12 +23,14 @@ import wwff_step4 from '../../assets/import_wwff_4.png';
 import sota_step1 from '../../assets/import_sota_1.png';
 import sota_step2 from '../../assets/import_sota_2.png';
 import sota_step3 from '../../assets/import_sota_3.png';
+import wwbota_step1 from '../../assets/import_wwbota1.png';
+import wwbota_step2 from '../../assets/import_wwbota2.png';
 import './ParkStatsModal.scss';
 import LinearProgress from '@mui/material/LinearProgress';
 import { Divider, Typography } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 
-const PROGS = ["POTA", "WWFF", "SOTA"];
+const PROGS = ["POTA", "WWFF", "SOTA", "WWBOTA"];
 
 export interface IParkStatsModalProps {
     isOpen: boolean,
@@ -173,6 +175,8 @@ export default function ParkStatsModal(props: IParkStatsModalProps) {
             setImportType(1);
         else if (fn.includes('_chaser_'))
             setImportType(2);
+        else if (fn.startsWith('WWBOTA_Hunter_Log'))
+            setImportType(3);
     }, [files]);
 
     React.useEffect(() => {
@@ -248,6 +252,7 @@ export default function ParkStatsModal(props: IParkStatsModalProps) {
                                 <MenuItem value={0}>POTA</MenuItem>
                                 <MenuItem value={1}>WWFF</MenuItem>
                                 <MenuItem value={2}>SOTA</MenuItem>
+                                <MenuItem value={3}>WWBOTA</MenuItem>
                             </Select>
                         </div>
                     </Box>
@@ -364,4 +369,10 @@ const sotaSteps = [
     ['Drag & Drop', 'Drag and drop downloaded csv file below and click the Import button', ''],
 ];
 
-const availSteps = [potaSteps, wwffSteps, sotaSteps];
+const bunkerSteps = [
+    ['Go to WWBOTA website', 'Point your browser to <a href="https://wwbota.net/wwlog/" target="_blank">wwbota.net/wwlog/</a>, log into your user account, and click View Hunter Log button.', wwbota_step1],
+    ['Download logs', 'On the popup screen, click Download CSV.', wwbota_step2],
+    ['Drag & Drop', 'Drag and drop downloaded csv file below and click the Import button', ''],
+];
+
+const availSteps = [potaSteps, wwffSteps, sotaSteps, bunkerSteps];

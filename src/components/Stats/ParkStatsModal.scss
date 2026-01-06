@@ -45,7 +45,14 @@
 
 .step-info a:visited {
     color: darkgreen;
-}   
+}
+
+.step-img {
+    max-height: 500px;
+    max-width: 500px;
+    height: auto;
+    width: auto;
+}
 
 .MuiStepLabel-label.Mui-completed {
     color: darkgreen !important;

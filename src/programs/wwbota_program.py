@@ -1,4 +1,7 @@
+from collections import defaultdict
+import csv
 from datetime import datetime
+from io import StringIO
 from db.models.parks import Park
 from db.models.qsos import Qso
 from programs.apis.iapi import IApi
@@ -273,4 +276,21 @@ class WwbotaProgram(Program):
         return result
 
     def parse_hunt_data(self, data) -> dict[str, int]:
-        return {}
+        # data here is a raw string csv from the WWBOTA hunter log download
+
+        csv_file = StringIO(data)
+        csv_reader = csv.DictReader(csv_file, delimiter=',')
+
+        result = defaultdict(int)
+
+        skip_headers = True
+
+        for row in csv_reader:
+            if skip_headers:
+                skip_headers = False
+                continue
+            else:
+                k = row['Reference']
+                result[k] += 1
+
+        return result
