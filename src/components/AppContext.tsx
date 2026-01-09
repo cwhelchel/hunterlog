@@ -11,7 +11,7 @@ const defData: ContextData = {
             value: ''
         }]
     },
-    bandFilter: 0,
+    bandFilter: [],
     regions: [],
     regionFilter: '',
     locationFilter: '',
@@ -30,7 +30,8 @@ const defData: ContextData = {
     continentFilter: '',
     loadingQsoData: false,
     swapRstOrder: false,
-    showHiddenFilter: false
+    showHiddenFilter: false,
+    modeFilter: []
 };
 
 export const AppContext = React.createContext<AppContextType | null>(null);

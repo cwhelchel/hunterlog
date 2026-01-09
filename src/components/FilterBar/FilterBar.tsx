@@ -9,7 +9,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import { Box, Stack, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { createEqualityFilter, useAppContext } from '../AppContext';
+import { useAppContext } from '../AppContext';
 
 import './FilterBar.scss'
 
@@ -22,8 +22,8 @@ interface IFilterBarPros {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const FilterBar = (props: IFilterBarPros) => {
-    const [mode, setMode] = React.useState('');
-    const [band, setBand] = React.useState('');
+    const [mode, setMode] = React.useState<string[]>([]);
+    const [band, setBand] = React.useState<string[]>([]);
     const [region, setRegion] = React.useState<string[]>([]);
     const [continent, setContinent] = React.useState<string[]>([]);
     const [loc, setLocation] = React.useState('');
@@ -45,11 +45,20 @@ export const FilterBar = (props: IFilterBarPros) => {
 
         function initFilters() {
             const bf = window.localStorage.getItem("BAND_FILTER") || '0';
-            setBandFilter(bf);
+            const bf_a = bf.split(',');
+            if (bf_a.length == 1 && bf_a[0] == '')
+                setBandFilter([]);
+            else
+                setBandFilter(bf_a);
+
             const rf = window.localStorage.getItem("REGION_FILTER") || '';
             setRegionFilter(rf.split(","));
             const mf = window.localStorage.getItem("MODE_FILTER") || '';
-            setModeFilter(mf);
+            const mf_a = mf.split(",");
+            if (mf_a.length == 1 && mf_a[0] == '')
+                setModeFilter([]);
+            else
+                setModeFilter(mf_a);
             const lf = window.localStorage.getItem("LOCATION_FILTER") || '';
             setLocationFilter(lf);
             const cf = window.localStorage.getItem("CONTINENT_FILTER") || '';
@@ -80,19 +89,26 @@ export const FilterBar = (props: IFilterBarPros) => {
         };
     }, []);
 
-    const handleChange = (event: SelectChangeEvent) => {
-        const m = event.target.value as string
+    const handleModeChange = (event: SelectChangeEvent<string[]>) => {
+        let m = typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value;
+
+        if (m.includes("")) {
+            m = [];
+        }
         setModeFilter(m);
-        window.localStorage.setItem("MODE_FILTER", m);
+        window.localStorage.setItem("MODE_FILTER", m.join(","));
     };
 
-    const handleBandChange = (event: SelectChangeEvent) => {
-        const m = event.target.value as string;
+    const handleBandChange = (event: SelectChangeEvent<string[]>) => {
+        let m = typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value;
+        if (m.includes("0")) {
+            m = [];
+        }
         setBandFilter(m);
-        window.localStorage.setItem("BAND_FILTER", m);
+        window.localStorage.setItem("BAND_FILTER", m.join(","));
     }
 
-    const handleContinentChange = (event: SelectChangeEvent) => {
+    const handleContinentChange = (event: SelectChangeEvent<string[]>) => {
         let c = typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value;
 
         console.log(c);
@@ -103,14 +119,15 @@ export const FilterBar = (props: IFilterBarPros) => {
         window.localStorage.setItem("CONTINENT_FILTER", c.join(","));
     };
 
-    const handleRegionChange = (event: SelectChangeEvent) => {
+    const handleRegionChange = (event: SelectChangeEvent<string[]>) => {
         let r = typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value;
 
         // the compiler complains that shiftKey isn't there. but it is.
         // if no regions are selected and the user holds shift while clicking
         // their selection, we invert the selection. helpful for those who dont
         // want to see US spots.
-        if (event.shiftKey) {
+        // TODO: continents replaces the need for this. need to remove.
+        if ((event as any).shiftKey) {
             const curr = { ...contextData };
             const current = curr.regions;
             let filterBy = "";
@@ -147,13 +164,13 @@ export const FilterBar = (props: IFilterBarPros) => {
     }
 
     const handleClear = () => {
-        setMode("");
-        setBand("0");
+        setMode([]);
+        setBand([]);
         contextData.filter.items = [];
-        contextData.filter.items.push(
-            createEqualityFilter('mode', '')
-        );
-        window.pywebview.api.set_band_filter(0);
+        // contextData.filter.items.push(
+        //     createEqualityFilter('mode', '')
+        // );
+        window.pywebview.api.set_band_filter([]);
         window.pywebview.api.set_region_filter([]);
         window.pywebview.api.set_continent_filter([]);
         window.pywebview.api.set_qrt_filter(true);
@@ -181,7 +198,7 @@ export const FilterBar = (props: IFilterBarPros) => {
 
         const next = {
             ...contextData,
-            bandFilter: 0,
+            bandFilter: [],
             regionFilter: "",
             locationFilter: "",
             qrtFilter: true,
@@ -242,20 +259,16 @@ export const FilterBar = (props: IFilterBarPros) => {
         setOnlyNew(checked);
     }
 
-    function setModeFilter(m: string) {
-        setMode(m); // it doesn't work without this?????
-
-        contextData.filter.items = [];
-        contextData.filter.items.push(
-            createEqualityFilter('mode', m)
-        );
-
-        setData(contextData);
+    function setModeFilter(m: string[]) {
+        window.pywebview.api.set_mode_filter(m);
+        setMode(m);
+        const next = { ...contextData, modeFilter: m };
+        setData(next);
     }
 
-    function setBandFilter(m: string) {
-        const x = parseInt(m);
-        console.log("changing band to: " + m);
+    function setBandFilter(m: string[]) {
+        const x = m.map((x) => parseInt(x));
+        console.log("changing band to: " + x);
         window.pywebview.api.set_band_filter(x);
 
         const next = { ...contextData, bandFilter: x };
@@ -312,8 +325,8 @@ export const FilterBar = (props: IFilterBarPros) => {
     const StyledTypoGraphy = styled(Typography)(({ theme }) =>
         theme.unstable_sx({
             fontSize: {
-                lg: 16,
-                md: 16,
+                lg: 14,
+                md: 14,
                 sm: 12,
                 xs: 10
             }
@@ -323,8 +336,19 @@ export const FilterBar = (props: IFilterBarPros) => {
     const StyledInputLabel = styled(InputLabel)(({ theme }) =>
         theme.unstable_sx({
             fontSize: {
-                lg: 16,
-                md: 16,
+                lg: 14,
+                md: 14,
+                sm: 12,
+                xs: 10
+            }
+        }),
+    );
+
+    const StyledMenuItem = styled(MenuItem)(({ theme }) =>
+        theme.unstable_sx({
+            fontSize: {
+                lg: 14,
+                md: 14,
                 sm: 12,
                 xs: 10
             }
@@ -353,84 +377,87 @@ export const FilterBar = (props: IFilterBarPros) => {
                     <StyledInputLabel id="band-label">Band</StyledInputLabel>
                     <Select
                         labelId="band-label"
-                        id="band"
+                        id="band-select"
                         value={band}
                         variant='standard'
                         onChange={handleBandChange}
+                        multiple
+                        sx={{ minWidth: 75, maxWidth: 110, textOverflow: 'ellipsis', fontSize: '14px' }}
                     >
                         {/* use style={{ display: "none" }} to hide these later */}
-                        <MenuItem value="0"><em>None</em></MenuItem>
-                        <MenuItem value="1">160</MenuItem>
-                        <MenuItem value="2">80</MenuItem>
-                        <MenuItem value="3">60</MenuItem>
-                        <MenuItem value="4">40</MenuItem>
-                        <MenuItem value="5">30</MenuItem>
-                        <MenuItem value="6">20</MenuItem>
-                        <MenuItem value="7">17</MenuItem>
-                        <MenuItem value="8">15</MenuItem>
-                        <MenuItem value="9">12</MenuItem>
-                        <MenuItem value="10">10</MenuItem>
-                        <MenuItem value="11">6</MenuItem>
-                        <MenuItem value="12">2</MenuItem>
-                        <MenuItem value="14">70cm</MenuItem>
+                        <StyledMenuItem value="0"><em>None</em></StyledMenuItem>
+                        <StyledMenuItem value="1">160</StyledMenuItem>
+                        <StyledMenuItem value="2">80</StyledMenuItem>
+                        <StyledMenuItem value="3">60</StyledMenuItem>
+                        <StyledMenuItem value="4">40</StyledMenuItem>
+                        <StyledMenuItem value="5">30</StyledMenuItem>
+                        <StyledMenuItem value="6">20</StyledMenuItem>
+                        <StyledMenuItem value="7">17</StyledMenuItem>
+                        <StyledMenuItem value="8">15</StyledMenuItem>
+                        <StyledMenuItem value="9">12</StyledMenuItem>
+                        <StyledMenuItem value="10">10</StyledMenuItem>
+                        <StyledMenuItem value="11">6</StyledMenuItem>
+                        <StyledMenuItem value="12">2</StyledMenuItem>
+                        <StyledMenuItem value="14">70cm</StyledMenuItem>
                     </Select>
                 </FormControl>
                 <FormControl size='small'>
-                    <StyledInputLabel id="demo-simple-select-label">Mode</StyledInputLabel>
+                    <StyledInputLabel id="mode-label">Mode</StyledInputLabel>
                     <Select
-                        labelId="demo-simple-select-label"
-                        id="demo-simple-select"
+                        labelId="mode-label"
+                        id="mode-select"
                         value={mode}
                         variant='standard'
-                        sx={{ minWidth: 75 }}
-                        onChange={handleChange}
+                        sx={{ minWidth: 75, maxWidth: 110, textOverflow: 'ellipsis', fontSize: '14px' }}
+                        onChange={handleModeChange}
+                        multiple
                     >
-                        <MenuItem value=""><em>None</em></MenuItem>
-                        <MenuItem value='CW'>CW</MenuItem>
-                        <MenuItem value='SSB'>SSB</MenuItem>
-                        <MenuItem value='AM'>AM</MenuItem>
-                        <MenuItem value='FM'>FM</MenuItem>
-                        <MenuItem value='FT8'>FT8</MenuItem>
-                        <MenuItem value='FT4'>FT4</MenuItem>
+                        <StyledMenuItem value=""><em>None</em></StyledMenuItem>
+                        <StyledMenuItem value='CW'>CW</StyledMenuItem>
+                        <StyledMenuItem value='SSB'>SSB</StyledMenuItem>
+                        <StyledMenuItem value='AM'>AM</StyledMenuItem>
+                        <StyledMenuItem value='FM'>FM</StyledMenuItem>
+                        <StyledMenuItem value='FT8'>FT8</StyledMenuItem>
+                        <StyledMenuItem value='FT4'>FT4</StyledMenuItem>
                     </Select>
                 </FormControl>
                 <FormControl size='small'>
-                    <StyledInputLabel id="demo-simple-select-label">Continent</StyledInputLabel>
+                    <StyledInputLabel id="continent-label">Continent</StyledInputLabel>
                     <Select
-                        labelId="demo-simple-select-label"
-                        id="demo-simple-select"
+                        labelId="continent-label"
+                        id="continent-select"
                         value={continent}
                         multiple
                         variant='standard'
-                        sx={{ minWidth: 75 }}
+                        sx={{ minWidth: 120, maxWidth: 120, textOverflow: 'ellipsis', fontSize: '14px' }}
                         onChange={handleContinentChange}
                     >
-                        <MenuItem value="NONE"><em>None</em></MenuItem>
-                        <MenuItem value='AF'>Africa</MenuItem>
-                        <MenuItem value='AN'>Antarctica</MenuItem>
-                        <MenuItem value='AS'>Asia</MenuItem>
-                        <MenuItem value='EU'>Europe</MenuItem>
-                        <MenuItem value='NA'>North America</MenuItem>
-                        <MenuItem value='OC'>Oceania</MenuItem>
-                        <MenuItem value='SA'>South America</MenuItem>
+                        <StyledMenuItem value="NONE"><em>None</em></StyledMenuItem>
+                        <StyledMenuItem value='AF'>Africa</StyledMenuItem>
+                        <StyledMenuItem value='AN'>Antarctica</StyledMenuItem>
+                        <StyledMenuItem value='AS'>Asia</StyledMenuItem>
+                        <StyledMenuItem value='EU'>Europe</StyledMenuItem>
+                        <StyledMenuItem value='NA'>North America</StyledMenuItem>
+                        <StyledMenuItem value='OC'>Oceania</StyledMenuItem>
+                        <StyledMenuItem value='SA'>South America</StyledMenuItem>
                     </Select>
                 </FormControl>
                 <FormControl size='small'>
-                    <StyledInputLabel id="region-lbl">Region (m)</StyledInputLabel>
+                    <StyledInputLabel id="region-lbl">Region</StyledInputLabel>
                     <Select
                         labelId="region-lbl"
-                        id="region"
+                        id="region-select"
                         multiple
                         value={region}
                         variant='standard'
-                        sx={{ minWidth: 100 }}
+                        sx={{ minWidth: 100, maxWidth: 120, textOverflow: 'ellipsis', fontSize: '14px' }}
                         onChange={handleRegionChange}
                     >
-                        <MenuItem value="NONE"><em>None</em></MenuItem>
+                        <StyledMenuItem value="NONE"><em>None</em></StyledMenuItem>
                         {contextData.regions.map((region) => (
-                            <MenuItem key={region} value={region}>
+                            <StyledMenuItem key={region} value={region}>
                                 {region}
-                            </MenuItem>
+                            </StyledMenuItem>
                         ))}
                     </Select>
                 </FormControl>
@@ -441,14 +468,14 @@ export const FilterBar = (props: IFilterBarPros) => {
                         id="location"
                         value={loc}
                         variant='standard'
-                        sx={{ minWidth: 100 }}
+                        sx={{ minWidth: 100, maxWidth: 120, textOverflow: 'ellipsis', fontSize: '14px' }}
                         onChange={handleLocationChange}
                     >
-                        <MenuItem value=""><em>None</em></MenuItem>
+                        <StyledMenuItem value=""><em>None</em></StyledMenuItem>
                         {contextData.locations.map((loc) => (
-                            <MenuItem key={loc} value={loc}>
+                            <StyledMenuItem key={loc} value={loc}>
                                 {loc}
-                            </MenuItem>
+                            </StyledMenuItem>
                         ))}
                     </Select>
                 </FormControl>
@@ -459,14 +486,14 @@ export const FilterBar = (props: IFilterBarPros) => {
                         id="sig"
                         value={sig}
                         variant='standard'
-                        sx={{ minWidth: 100 }}
+                        sx={{ minWidth: 100, maxWidth: 120, textOverflow: 'ellipsis', fontSize: '14px' }}
                         onChange={handleSigChange}
                     >
-                        <MenuItem value=""><em>None</em></MenuItem>
-                        <MenuItem value='POTA'>POTA</MenuItem>
-                        <MenuItem value='SOTA'>SOTA</MenuItem>
-                        <MenuItem value='WWFF'>WWFF</MenuItem>
-                        <MenuItem value='WWBOTA'>WWBOTA</MenuItem>
+                        <StyledMenuItem value=""><em>None</em></StyledMenuItem>
+                        <StyledMenuItem value='POTA'>POTA</StyledMenuItem>
+                        <StyledMenuItem value='SOTA'>SOTA</StyledMenuItem>
+                        <StyledMenuItem value='WWFF'>WWFF</StyledMenuItem>
+                        <StyledMenuItem value='WWBOTA'>WWBOTA</StyledMenuItem>
                     </Select>
                 </FormControl>
                 <Button onClick={handleClear} variant="outlined"

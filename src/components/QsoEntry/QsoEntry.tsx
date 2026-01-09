@@ -489,7 +489,8 @@ export default function QsoEntry() {
                 md: 14,
                 sm: 11,
                 xs: 9
-            }
+            },
+            fontWeight: 500
         }),
     );
 

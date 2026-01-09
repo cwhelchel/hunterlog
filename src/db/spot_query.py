@@ -37,15 +37,22 @@ class SpotQuery:
         and_flts = []
         or_flts = []
         and_flts = self._flts.get_and_filters()
+        mode_flts = self._flts._get_mode_filters()
+        band_flts = self._flts._get_band_filters()
         or_flts = self._flts.get_or_filters()
 
         # logging.debug(f"get_spots filter {and_flts} {or_flts}")
 
         x = self.session.query(Spot) \
             .filter(sa.and_(*and_flts)) \
-            .filter(sa.or_(*or_flts)) \
-            .all()
-        return x
+            .filter(sa.or_(*mode_flts)) \
+            .filter(sa.or_(*or_flts))
+
+        bfs = []
+        for bf in band_flts:
+            bfs.append(sa.and_(*bf))
+        x = x.filter(sa.or_(*bfs))
+        return x.all()
 
     def get_spot(self, id: int) -> Spot:
         return self.session.query(Spot).get(id)

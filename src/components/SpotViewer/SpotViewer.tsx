@@ -301,7 +301,8 @@ export default function SpotViewer() {
         [contextData.bandFilter, contextData.regionFilter,
         contextData.qrtFilter, contextData.locationFilter,
         contextData.huntedFilter, contextData.onlyNewFilter,
-        contextData.continentFilter, contextData.showHiddenFilter]
+        contextData.continentFilter, contextData.showHiddenFilter,
+        contextData.modeFilter]
     );
 
     // return the correct PK id for our rows
@@ -380,8 +381,8 @@ export default function SpotViewer() {
                     },
                 }}
                 pageSizeOptions={[5, 10, 25, 100]}
-                filterModel={contextData.filter}
-                onFilterModelChange={(v) => setFilterModel(v)}
+                // filterModel={contextData.filter}
+                // onFilterModelChange={(v) => setFilterModel(v)}
                 onRowClick={handleRowClick}
                 sortModel={sortModel}
                 paginationModel={pageModel}

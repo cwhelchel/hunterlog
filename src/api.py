@@ -509,9 +509,13 @@ class JsApi:
         self.adif_log = LoggerInterface.get_logger(lp, __version__)
         logging.debug(f"updating logger {self.adif_log}")
 
-    def set_band_filter(self, band: int):
-        logging.debug(f"api setting band filter to: {band}")
-        self.db.filters.set_band_filter(band)
+    def set_mode_filter(self, modes: list[str]):
+        logging.debug(f"api setting modes filter to: {modes}")
+        self.db.filters.set_mode_filter(modes)
+
+    def set_band_filter(self, bands: list[int]):
+        logging.debug(f"api setting band filter to: {bands}")
+        self.db.filters.set_band_filter(bands)
 
     def set_region_filter(self, region: list[str]):
         logging.debug(f"api setting region filter to: {region}")

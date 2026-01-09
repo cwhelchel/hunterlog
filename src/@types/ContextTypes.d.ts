@@ -9,7 +9,8 @@ export interface ContextData {
     park: Park | null;
     summit: Summit | null;
     filter: GridFilterModel;
-    bandFilter: number;
+    bandFilter: number[];
+    modeFilter: string[];
     regions: string[];
     regionFilter: string;
     locations: string[];
