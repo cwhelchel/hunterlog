@@ -161,7 +161,8 @@ if __name__ == '__main__':
         min_size=(800, 600),
         text_select=True)
 
-    if platform.system() == 'Windows':
+    the_system = platform.system()
+    if the_system == 'Windows' or the_system == 'Darwin':
         window.events.closing += on_closing
         window.events.maximized += on_maximized
         window.events.restored += on_restore
@@ -171,11 +172,11 @@ if __name__ == '__main__':
     dl = DownloadThread(event=stopFlag, progs=progs)
     dl.start()
 
-    if platform.system() == "Linux":
+    if the_system == "Linux":
         webview.start(update_ticker, args=dl, private_mode=False, debug=True, gui="gtk")  # noqa E501
-    elif platform.system() == "Windows":
+    elif the_system == "Windows":
         webview.start(update_ticker, args=dl, private_mode=False, debug=True)
-    elif platform.system() == "Darwin":
+    elif the_system == "Darwin":
         webview.start(update_ticker, args=dl, private_mode=False, debug=True)
 
     stopFlag.set()

@@ -31,7 +31,6 @@ class CallsignNotes():
         self.notes_root.mkdir(exist_ok=True)
         log.debug(f'data root = {self.notes_root} for {rows}')
         self._init_notes(rows)
-        log.debug(self.map)
 
     def get_notes(self, callsign: str) -> str:
         x = self.map[callsign]
@@ -104,4 +103,3 @@ class CallsignNotes():
                 call = x[0].strip()
                 note = x[1].strip()
                 self.map[call].append(note)
-                log.debug(f'got note {call}:{note}')
