@@ -9,6 +9,7 @@ import TimelineIcon from '@mui/icons-material/Timeline';
 
 import './ActivatorInfo.scss'
 import { checkApiResponse } from '../../tsx/util';
+import ReactMarkdown from 'react-markdown'
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface IActivatorInfoProps {
@@ -41,6 +42,7 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
     const [huntCount, setHuntCount] = React.useState(0);
     const [actComments, setActComments] = React.useState(['']);
     const [cwSpeed, setCwSpeed] = React.useState(-1);
+    const [callNotes, setCallNotes] = React.useState('');
 
     React.useEffect(() => {
         if (window.pywebview === undefined) {
@@ -73,27 +75,48 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
         });
 
         const actCall = contextData?.qso?.call;
+        console.log('activator call', actCall);
 
         if (actCall !== null && actCall !== '') {
             const q = window.pywebview.api.get_activator_stats(actCall);
 
             q.then((r: string) => {
                 if (r === null) {
-                    setActivator(defaultActData);
+                    // not pota account add some dummy stuff just to display
+                    // something
+                    const dummy = { ...defaultActData };
+                    dummy.callsign = actCall;
+                    dummy.qth = 'No POTA account'
+                    setActivator(dummy);
                     return;
                 }
 
                 const j = checkApiResponse(r, contextData, setData)
                 if (j.success == false) {
-                    setActivator(defaultActData);
+                    // not pota account add some dummy stuff just to display
+                    // something
+                    const dummy = { ...defaultActData };
+                    dummy.callsign = actCall;
+                    dummy.qth = 'No POTA account'
+                    setActivator(dummy);
                     return;
                 }
 
                 //console.log(`parsing activator data: ${r}`);
                 const x = JSON.parse(r) as ActivatorData;
-                //console.log(x);
+                console.log('activator data', x);
                 setActivator(x);
             });
+
+            const notes = window.pywebview.api.callsign_notes.get_call_note(actCall);
+
+            notes.then((r: string) => {
+                const j = checkApiResponse(r, contextData, setData)
+                if (j.success) {
+                    const theNotes = j.notes;
+                    setCallNotes(theNotes);
+                }
+            })
         }
 
         const hunts = window.pywebview.api.get_activator_hunts(actCall);
@@ -167,7 +190,7 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
 
     return (
         <div className='activator-info'>
-            {activator !== null && activator.activator_id !== 0 &&
+            {activator !== null && activator.callsign !== '' &&
                 <>
                     <div className="activatorTitle">
                         <span>{activator?.callsign} - {activator?.name}</span>
@@ -217,17 +240,38 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
                     </div>
                     <hr className='titleSeparator' role='separator' />
                     <div className='activatorData'>
-                        <img src={getUserAvatarURL(activator?.gravatar)} style={{ float: "left", width: "80px", height: "80px" }} />
-
                         <div className='activatorBasics'>
-                            <span>{activator?.qth}</span>
-                            <br />
-                            <span><em>{activator?.activator.activations} activations {activator?.activator.parks} parks {activator?.activator.qsos} qsos</em></span>
-                            <br />
-                            <span><em>Hunted {activator?.hunter.parks} parks {activator?.hunter.qsos} qsos</em></span>
-                            <br />
-                            <span><em>You have {huntCount} QSOs with {activator?.callsign}</em></span>
-                            <br />
+                            <img src={getUserAvatarURL(activator?.gravatar)} style={{ float: "left", width: "80px", height: "80px" }} />
+
+                            <p style={{ margin: '5px', marginRight: '15px' }}>
+                                <span>{activator?.qth}</span>
+                                <br />
+                                {activator.activator_id !== 0 && (
+                                    <>
+                                        <span><em>{activator?.activator.activations} activations {activator?.activator.parks} parks {activator?.activator.qsos} qsos</em></span>
+                                        <br />
+                                        <span><em>Hunted {activator?.hunter.parks} parks {activator?.hunter.qsos} qsos</em></span>
+                                        <br />
+                                        <span><em>You have {huntCount} QSOs with {activator?.callsign}</em></span>
+                                        <br />
+                                    </>
+                                )}
+                                <div className="call-notes">
+                                    <ReactMarkdown components={{
+                                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                                        a: ({ node, children, ...props }) => {
+                                            return (
+                                                // eslint-disable-next-line react/prop-types
+                                                <a href={props.href} target="_blank" rel="noopener noreferrer">
+                                                    {children}
+                                                </a>
+                                            );
+                                        },
+                                    }}>
+                                        {callNotes}
+                                    </ReactMarkdown>
+                                </div>
+                            </p>
                         </div>
                         <div className='activatorCommentMetaData'>
                             <span className='activatorCmtsHdg'>Activator comments:</span>

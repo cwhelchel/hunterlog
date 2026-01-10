@@ -9,7 +9,6 @@ import CloseIcon from '@mui/icons-material/Close';
 
 import { useAppContext } from '../AppContext';
 import ConfigModal from '../Config/ConfigModal';
-import { ConfigVer2, UserConfig } from '../../@types/Config';
 import { ActivatorData } from '../../@types/ActivatorTypes';
 import { Alert, Avatar, Tooltip, AlertColor, Snackbar } from '@mui/material';
 import StatsMenu from './StatsMenu';
@@ -17,6 +16,7 @@ import AlertsArea from './AlertsArea';
 import AlertsMenu from './AlertsMenu';
 import { checkApiResponse } from '../../tsx/util';
 import { ConfigContextProvider } from '../Config/ConfigContextProvider';
+import CallNotesMenu from './CallNotesMenu';
 
 export default function AppMenu() {
 
@@ -27,8 +27,7 @@ export default function AppMenu() {
     const [errorMsg, setErrorMsg] = React.useState('');
     const [errorSeverity, seterrorSeverity] = React.useState<AlertColor>('info');
     const [alertHidden, setAlertHidden] = React.useState(true);
-    const [refreshBtnColor, setRefreshBtnColor] = React.useState("primary");
-
+    const [refreshBtnColor, setRefreshBtnColor] = React.useState('#008C2C');
 
     function getCfg() {
         // pywebview is ready so api can be called here:
@@ -50,11 +49,11 @@ export default function AppMenu() {
         //     });
         // })
 
-        let y = window.pywebview.api.get_user_config_val('my_call');
+        const y = window.pywebview.api.get_user_config_val('my_call');
 
         y.then((cfgStr: string) => {
-            let obj = checkApiResponse(cfgStr, contextData, setData);
-            
+            const obj = checkApiResponse(cfgStr, contextData, setData);
+
             if (!obj.success)
                 return;
 
@@ -63,10 +62,10 @@ export default function AppMenu() {
                 return;
             setCallsign(call);
 
-            let y = window.pywebview.api.get_activator_stats(call);
+            const y = window.pywebview.api.get_activator_stats(call);
             y.then((actStr: string) => {
-                let actObj: ActivatorData = JSON.parse(actStr) as ActivatorData;
-                let url = getGravatarUrl(actObj.gravatar);
+                const actObj: ActivatorData = JSON.parse(actStr) as ActivatorData;
+                const url = getGravatarUrl(actObj.gravatar);
                 setGravatar(url);
             });
         });
@@ -110,10 +109,10 @@ export default function AppMenu() {
 
     React.useEffect(() => {
         if (contextData.themeMode == 'dark')
-            setRefreshBtnColor('primary')
+            setRefreshBtnColor('#008C2C')
         else if (contextData.themeMode == 'light')
             // using primary on light makes it green on green
-            setRefreshBtnColor('secondary')
+            setRefreshBtnColor('#c599d3')
     }, [contextData.themeMode]);
 
     function getGravatarUrl(md5: string) {
@@ -169,6 +168,7 @@ export default function AppMenu() {
                     </ConfigContextProvider>
                     <StatsMenu />
                     <AlertsMenu />
+                    <CallNotesMenu />
 
                     <AlertsArea />
 
@@ -184,7 +184,7 @@ export default function AppMenu() {
                         <IconButton onClick={() => {
                             location.reload();
                         }}>
-                            <RefreshIcon color={refreshBtnColor} />
+                            <RefreshIcon sx={{ color: refreshBtnColor }} />
                         </IconButton>
                     </Tooltip>
                 </Toolbar>

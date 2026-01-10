@@ -7,6 +7,7 @@ import datetime
 import threading
 from datetime import timedelta
 
+from api_callnotes import CallNotesApi
 from api_hidden_spots import HiddenSpotsApi
 from api_imports import ImportApi
 from bands import get_band, get_name_of_band, bandNames
@@ -46,6 +47,7 @@ class JsApi:
         # refactored APIs for js use
         self.imports = ImportApi(self.db, self.programs)
         self.hidden_spots = HiddenSpotsApi(self.db, self.programs)
+        self.callsign_notes = CallNotesApi(self.db, self.programs)
 
         logging.debug("init logger...")
         lp = LoggerParams(
@@ -279,11 +281,13 @@ class JsApi:
         return self._response(True, "", val=x)
 
     def get_version_num(self):
+        db_ver = self.db.get_version()
+        logging.debug(f'get_version_num {__version__} - {db_ver} ')
         return self._response(
             True,
             "",
             app_ver=__version__,
-            db_ver=self.db.get_version())
+            db_ver=db_ver)
 
     def spot_activator(self, qso_data, park: str) -> str:
         '''

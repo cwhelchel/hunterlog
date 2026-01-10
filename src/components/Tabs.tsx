@@ -107,7 +107,7 @@ export default function BasicTabs() {
 
     return (
         <Box sx={{ width: '100%' }}>
-            <Stack direction='row' gap={2} sx={{ justifyContent: 'flex-end' }} >
+            <Stack direction='row' gap={0} sx={{ justifyContent: 'flex-end' }} >
                 <CustomTabPanel value={value} index={0}>
                     <ActivatorInfo />
                 </CustomTabPanel>
@@ -118,7 +118,7 @@ export default function BasicTabs() {
                     onChange={handleChange}
                     aria-label="info tabs"
                     orientation='vertical'
-                    sx={{ marginLeft: 'auto' }}
+                    sx={{ marginLeft: 'auto', maxWidth: '100px' }}
                 >
                     <Tab label={
                         <Tooltip title="Activator Info" >

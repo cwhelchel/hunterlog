@@ -35,7 +35,7 @@ hr.titleSeparator {
 }
 
 .activatorBasics {
-    flex: 1;
+    flex: 1.5;
 }
 
 .activatorCommentMetaData {
@@ -52,7 +52,8 @@ hr.titleSeparator {
     font-size: small;
     font-weight: 400;
     font-style: italic;
-    overflow-y:auto;
+    overflow-y: auto;
+    scrollbar-width: thin;
 }
 
 .activatorCmtsHdg {
@@ -73,7 +74,7 @@ hr.separator {
 .activatorSpeed {
     font-size: 12px;
     font-weight: 400;
-    font-style: bold; 
+    font-style: bold;
     color: lightgreen;
     margin-left: auto;
 }
@@ -83,12 +84,12 @@ hr.separator {
 // }
 
 path {
-    text-indent:0;
-    text-align:start;
-    line-height:normal;
-    text-transform:none;
-    block-progression:tb;
-    -inkscape-font-specification:Sans
+    text-indent: 0;
+    text-align: start;
+    line-height: normal;
+    text-transform: none;
+    block-progression: tb;
+    -inkscape-font-specification: Sans
 }
 
 .activatorTitle svg {
@@ -97,4 +98,20 @@ path {
 
 .svg_icons {
     transform: scale(0.75);
+}
+
+.call-notes {
+    white-space: pre-line;
+    overflow-y: auto;
+    height: 60px;
+    scrollbar-width: thin;
+}
+
+.call-notes p {
+    font-size: small;
+    margin: 1px !important;
+}
+
+.call-notes a {
+    color: darkgreen;
 }

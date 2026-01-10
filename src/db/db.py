@@ -5,6 +5,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 
+from db.callnotes_query import CallNotesQuery
 from db.filters import Filters
 from db.models.activators import Activator, ActivatorSchema
 from db.models.spot_comments import SpotComment, SpotCommentSchema
@@ -27,7 +28,7 @@ logging = L.getLogger(__name__)
 # L.getLogger('sqlalchemy.engine').setLevel(L.INFO)
 
 
-VER_FROM_ALEMBIC = 'fad1af574a92'
+VER_FROM_ALEMBIC = 'cff2b51192d0'
 '''
 This value indicates the version of the DB scheme the app is made for.
 
@@ -98,6 +99,7 @@ class DataBase:
         self._pq = ParkQuery(self.session)
         self._sq = SpotQuery(self.session, self.filters)
         self._aq = AlertsQuery(self.session)
+        self._cnq = CallNotesQuery(self.session)
         self._cq1 = ConfigQuery(self.session)
         self._hsq = HiddenSpotsQuery(self.session)
 
@@ -158,6 +160,10 @@ class DataBase:
     @property
     def hidden_spots(self) -> HiddenSpotsQuery:
         return self._hsq
+
+    @property
+    def callsign_notes(self) -> CallNotesQuery:
+        return self._cnq
 
     def delete_spots(self):
         '''
