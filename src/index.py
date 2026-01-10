@@ -12,6 +12,7 @@ from pathlib import Path
 from api import JsApi
 from download_thread import DownloadThread
 from utils.entrypoint import get_entrypoint, set_interval
+from version import __version__
 
 
 def configure_logging():
@@ -19,11 +20,13 @@ def configure_logging():
     def get_app_global_path():
         '''stolen from alembic/versions/__init__.py'''
         if getattr(sys, 'frozen', False):
+            print('frozen')
             return os.path.abspath(os.path.dirname(sys.executable))
         elif __file__:
+            print(f'not frozen {__file__}')
             # were running from source (npm run start) and this file is in
             # so we need to back up a little so the code works
-            return os.path.dirname(__file__) + "../../"
+            return os.path.dirname(__file__) + "./../"
 
     conf = Path(get_app_global_path(), 'logging.conf')
     if conf.exists():
@@ -37,6 +40,8 @@ def configure_logging():
 
 
 configure_logging()
+
+logging.info(f"!!!!!!!!!!!! Starting Hunterlog {__version__}")
 
 the_api = JsApi()
 

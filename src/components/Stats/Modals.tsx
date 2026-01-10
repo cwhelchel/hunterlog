@@ -90,6 +90,10 @@ export const HlModalContent = styled('div')(
         color: ${theme.palette.mode === 'dark' ? grey[400] : grey[800]};
         margin-bottom: 2px;
       }
+
+    & a {
+        color: darkgreen;
+    }
   `,
 );
 

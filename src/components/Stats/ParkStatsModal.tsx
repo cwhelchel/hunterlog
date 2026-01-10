@@ -203,6 +203,7 @@ export default function ParkStatsModal(props: IParkStatsModalProps) {
             open={props.isOpen}
             onClose={props.onClose}
             slots={{ backdrop: HlStyledBackdrop }}
+            sx={{ overflowY: 'scroll' }}
         >
             <HlModalContent sx={{ width: '60%' }}>
                 <h2 id="unstyled-modal-title" className="modal-title" style={{ display: 'flex' }}>
@@ -300,7 +301,7 @@ export default function ParkStatsModal(props: IParkStatsModalProps) {
                             Drag data files here or click&nbsp;
                             <a href="#" onClick={handleBrowseClick} target="_blank" rel="noopener noreferrer">browse</a>
                         </div>
-                        
+
                     </>
                 )}
 

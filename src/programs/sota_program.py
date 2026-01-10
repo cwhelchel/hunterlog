@@ -45,6 +45,10 @@ class SotaProgram(Program):
                 self.db.session.add(to_add)
                 self.db.session.commit()
             summit = self.db.parks.get_park(ref)
+        elif summit.name is None:
+            log.info(f"{ref} summit found but half-loaded. pulling from api")
+            self._update_ref_in_db(summit)
+            summit = self.db.parks.get_park(ref)
 
         return summit
 
@@ -182,3 +186,36 @@ class SotaProgram(Program):
                 result[k] += 1
 
         return result
+
+    def _update_ref_in_db(self, summit: Park):
+        api_res = SotaApi().get_summit(summit.reference)
+        log.debug(f"ref data from api {api_res}")
+
+        if api_res:
+            temp = self.parse_ref_data(api_res)
+            summit.name = temp.name
+            summit.grid4 = temp.grid4
+            summit.grid6 = temp.grid6
+            summit.active = temp.active
+            summit.latitude = temp.latitude
+            summit.longitude = temp.longitude
+            summit.parkComments = temp.parkComments
+            summit.accessibility = temp.accessibility
+            summit.sensitivity = temp.sensitivity
+            summit.accessMethods = temp.accessMethods
+            summit.activationMethods = temp.activationMethods
+            summit.agencies = temp.agencies
+            summit.agencyURLs = temp.agencyURLs
+            summit.parkURLs = temp.parkURLs
+            summit.parktypeId = temp.parktypeId
+            summit.parktypeDesc = temp.parktypeDesc
+            summit.locationDesc = temp.locationDesc
+            summit.locationName = temp.locationName
+            summit.entityId = temp.entityId
+            summit.entityName = temp.entityName
+            summit.referencePrefix = temp.referencePrefix
+            summit.entityDeleted = temp.entityDeleted
+            summit.firstActivator = temp.firstActivator
+            summit.firstActivationDate = temp.firstActivationDate
+            summit.website = temp.website
+            self.db.session.commit()

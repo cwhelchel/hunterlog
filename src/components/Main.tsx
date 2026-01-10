@@ -70,8 +70,8 @@ export default function Main() {
             window.addEventListener('pywebviewready', initTheme);
 
         function initTheme() {
-            let darkMode = window.localStorage.getItem("USE_DARK_MODE") || '1';
-            let darkModeInt = parseInt(darkMode);
+            const darkMode = window.localStorage.getItem("USE_DARK_MODE") || '1';
+            const darkModeInt = parseInt(darkMode);
 
             const isDark = darkModeInt == 1;
             const temp = buildTheme(isDark);
@@ -90,7 +90,7 @@ export default function Main() {
 
     return (
         <ThemeProvider theme={theme}>
-            <CssBaseline />
+            <CssBaseline enableColorScheme />
             <Stack direction="column"
                 ml="1.5rem"
                 mr="1.5rem">

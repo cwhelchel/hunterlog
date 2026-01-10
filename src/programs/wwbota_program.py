@@ -42,6 +42,10 @@ class WwbotaProgram(Program):
 
             self._add_ref_to_db(ref)
             row = self.db.parks.get_park(ref)
+        elif row.name is None:
+            log.info(f"{ref} bunker found but half-loaded. pulling from api")
+            self._update_ref_in_db(row)
+            row = self.db.parks.get_park(ref)
 
         return row
 
@@ -210,6 +214,39 @@ class WwbotaProgram(Program):
             new_ref = Park()
             new_ref.reference = ref  # TODO regex check bunker
             self.db.session.add(new_ref)
+            self.db.session.commit()
+
+    def _update_ref_in_db(self, bunker: Park):
+        api_res = WwbotaApi().get_bunker(bunker.reference)
+        log.debug(f"ref data from api {api_res}")
+
+        if api_res:
+            temp = self.parse_ref_data(api_res)
+            bunker.name = temp.name
+            bunker.grid4 = temp.grid4
+            bunker.grid6 = temp.grid6
+            bunker.active = temp.active
+            bunker.latitude = temp.latitude
+            bunker.longitude = temp.longitude
+            bunker.parkComments = temp.parkComments
+            bunker.accessibility = temp.accessibility
+            bunker.sensitivity = temp.sensitivity
+            bunker.accessMethods = temp.accessMethods
+            bunker.activationMethods = temp.activationMethods
+            bunker.agencies = temp.agencies
+            bunker.agencyURLs = temp.agencyURLs
+            bunker.parkURLs = temp.parkURLs
+            bunker.parktypeId = temp.parktypeId
+            bunker.parktypeDesc = temp.parktypeDesc
+            bunker.locationDesc = temp.locationDesc
+            bunker.locationName = temp.locationName
+            bunker.entityId = temp.entityId
+            bunker.entityName = temp.entityName
+            bunker.referencePrefix = temp.referencePrefix
+            bunker.entityDeleted = temp.entityDeleted
+            bunker.firstActivator = temp.firstActivator
+            bunker.firstActivationDate = temp.firstActivationDate
+            bunker.website = temp.website
             self.db.session.commit()
 
     def _init_spot(self, s: Spot, json: any, id: int) -> list[any]:
