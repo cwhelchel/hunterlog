@@ -33,6 +33,7 @@ class CallsignNotes():
         self._init_notes(rows)
 
     def get_notes(self, callsign: str) -> str:
+        callsign = callsign.upper()
         x = self.map[callsign]
         str_lst = [str(s) for s in x]
         return str.join('\n', str_lst)
