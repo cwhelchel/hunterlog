@@ -1,0 +1,10 @@
+Callsign Notes
+-----------------
+
+Here are some files for call sign notes. Some of these are auto-generated from
+scripts that Jay W6JSV wrote.
+
+https://api.ham2k.net/data/ham2k/hams-of-note.txt
+https://www.qrqcrew.club/members.txt
+https://www.ditdit.club/data/skcc_members.txt
+https://www.ditdit.club/data/cwops_members.txt
