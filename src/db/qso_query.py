@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import json
 import logging
 from typing import List
@@ -7,6 +7,8 @@ from sqlalchemy.orm import scoped_session
 
 from db.models.qsos import Qso, QsoSchema
 from bands import Bands, get_band, bandLimits, bandNames
+
+log = logging.getLogger(__name__)
 
 
 class QsoQuery:
@@ -111,6 +113,38 @@ class QsoQuery:
     def get_qsos_from_app(self) -> List[Qso]:
         x = self.session.query(Qso) \
             .filter(Qso.from_app == True).all()   # noqa E712
+        return x
+
+    def get_qsos_for_local_date(self, date: datetime) -> List[Qso]:
+        '''
+        Returns qsos for the date specified in date.
+
+        This returns the QSOs for a given day in LOCAL time, handling the
+        conversions to UTC for filtering correctly. Meaning from 00:00 of the
+        current day (local tz) until 00:00 of the next day (local tz).
+
+        :param datetime date: datetime in local timezone
+        :return List[Qso]: filtered list of Qso objs
+        '''
+
+        # get midnight of current local tz day
+        d = date.date()
+        midnight: datetime = datetime(
+            day=d.day, month=d.month, year=d.year, hour=0, minute=0)
+        log.debug(f'localtz midnight, before convert: {midnight}')
+
+        # convert midnight 00:00 of local tz day to utc. ex: America/New_York
+        # during standard time, this goes from 00:00EST -> 05:00UTC
+        start_dt = midnight.astimezone(timezone.utc)
+
+        # get midnight UTC of next day
+        end_dt = start_dt + timedelta(days=1)
+        log.debug(f"{start_dt} {end_dt}")
+
+        x = self.session.query(Qso) \
+            .filter(Qso.time_on >= start_dt) \
+            .filter(Qso.time_on <= end_dt) \
+            .all()
         return x
 
     def get_spot_hunted_flag(self,

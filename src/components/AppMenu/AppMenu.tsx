@@ -17,6 +17,7 @@ import AlertsMenu from './AlertsMenu';
 import { checkApiResponse } from '../../tsx/util';
 import { ConfigContextProvider } from '../Config/ConfigContextProvider';
 import CallNotesMenu from './CallNotesMenu';
+import HuntMapMenu from './HuntMapMenu';
 
 export default function AppMenu() {
 
@@ -169,6 +170,7 @@ export default function AppMenu() {
                     <StatsMenu />
                     <AlertsMenu />
                     <CallNotesMenu />
+                    <HuntMapMenu />
 
                     <AlertsArea />
 

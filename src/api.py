@@ -22,6 +22,7 @@ from loggers import LoggerInterface
 from loggers.logger_interface import LoggerParams
 from programs.apis import PotaApi
 from programs import Program, SotaProgram, WwffProgram, PotaProgram, WwbotaProgram, NoProgram  # NOQA
+from utils.distance import Distance
 from utils.adif import AdifLog
 from version import __version__
 
@@ -732,6 +733,42 @@ class JsApi:
                                   unhunted_refs=unhunted)
 
         return self._response(False, 'Error getting hamalert text')
+
+    def grid_to_ll(self, grid6: str):
+        '''
+        Convert 6-digit Maidenhead gridsquare to lat long coordinate.
+
+        :param str grid6: 6-digit maidenhead grid locator
+        '''
+        try:
+            lat, lon = Distance.grid_to_latlon(grid6)
+        except Exception as ex:
+            logging.error('Error converting grid', exc_info=ex)
+            return self._response(False, 'Error converting grid')
+        return self._response(True, '', latitude=lat, longitude=lon)
+
+    def get_daily_qsos(self, date: str):
+        '''
+        Get the QSOs for the users current day, not UTC day.
+
+        :param date: ISO formatted date string
+        :type date: str
+        '''
+        try:
+            logging.debug(f'get_daily_qsos {date} UTC. converting to local')
+            if date.endswith('Z'):
+                date = date.replace('Z', '+00:00')
+            dt = datetime.datetime.fromisoformat(date)
+            dt = dt.astimezone(None)
+            logging.debug(f'get_daily_qsos {dt} local')
+            x = self.db.qsos.get_qsos_for_local_date(dt)
+            qs = QsoSchema(many=True)
+            result = qs.dumps(x)
+            logging.debug(f'daily qsos = {x}')
+            return self._response(True, '', qsos=result)
+        except Exception as ex:
+            logging.error('Error getting QSOs', exc_info=ex)
+            return self._response(False, 'Error getting QSOs')
 
     def _do_update(self, spots: dict[any]):
         '''
