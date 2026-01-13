@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import * as React from 'react';
 import { Backdrop, Badge, CircularProgress } from '@mui/material';
-import { DataGrid, GridColDef, GridValueGetterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams, GridRowClassNameParams, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarColumnsButton, GridToolbarQuickFilter, GridPaginationModel, GridActionsCell, GridActionsCellItem, GridInputRowSelectionModel } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridValueGetterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams, GridRowClassNameParams, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarColumnsButton, GridToolbarQuickFilter, GridPaginationModel, GridActionsCell, GridActionsCellItem, GridInputRowSelectionModel, GridDensity, GridState } from '@mui/x-data-grid';
 import { GridEventListener } from '@mui/x-data-grid';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
@@ -154,6 +154,22 @@ export default function SpotViewer() {
     const [rowSelectionModel, setRowSelectionModel] = React.useState<GridInputRowSelectionModel>([]);
     const [backdropOpen, setBackdropOpen] = React.useState(false);
     const { contextData, setData } = useAppContext();
+    const [density, setDensity] = React.useState<GridDensity>(() => {
+        const storedDensity = localStorage.getItem('DATA_GRID_DENSITY') as GridDensity;
+        return storedDensity || 'standard';
+    });
+
+    const handleStateChange = (state: GridState) => {
+        // console.log('Grid state changed:', state);
+
+        // in newer versions of datagrid there's a onDensityChange. we dont 
+        // have that here so this will be called on any state change and we have
+        // to check for density
+        if (state && state.density?.value != density) {
+            setDensity(state.density.value);
+            localStorage.setItem('DATA_GRID_DENSITY', state.density.value);
+        }
+    }
 
     function getSpots() {
         // get the spots from the db
@@ -326,11 +342,6 @@ export default function SpotViewer() {
         setRowSelectionModel([params.row.spotId]);
     };
 
-    function setFilterModel(e: GridFilterModel) {
-        contextData.filter = e;
-        setData(contextData);
-    };
-
     function setSortModelAndSave(newModel: GridSortModel) {
         setSortModel(newModel);
         window.localStorage.setItem("SORT_MODEL", JSON.stringify(newModel));
@@ -381,11 +392,11 @@ export default function SpotViewer() {
                     },
                 }}
                 pageSizeOptions={[5, 10, 25, 100]}
-                // filterModel={contextData.filter}
-                // onFilterModelChange={(v) => setFilterModel(v)}
                 onRowClick={handleRowClick}
                 sortModel={sortModel}
                 paginationModel={pageModel}
+                density={density}
+                onStateChange={handleStateChange}
                 onSortModelChange={(e) => setSortModelAndSave(e)}
                 onPaginationModelChange={(e) => setPaginationModelAndSave(e)}
                 getRowClassName={getClassName}
