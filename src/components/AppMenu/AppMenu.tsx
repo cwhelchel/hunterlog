@@ -11,13 +11,13 @@ import { useAppContext } from '../AppContext';
 import ConfigModal from '../Config/ConfigModal';
 import { ActivatorData } from '../../@types/ActivatorTypes';
 import { Alert, Avatar, Tooltip, AlertColor, Snackbar } from '@mui/material';
-import StatsMenu from './StatsMenu';
+import StatsMenu from './MenuItems/StatsMenu';
 import AlertsArea from './AlertsArea';
-import AlertsMenu from './AlertsMenu';
+import AlertsMenu from './MenuItems/Alerts/AlertsMenu';
 import { checkApiResponse } from '../../tsx/util';
 import { ConfigContextProvider } from '../Config/ConfigContextProvider';
-import CallNotesMenu from './CallNotesMenu';
-import HuntMapMenu from './HuntMapMenu';
+import CallNotesMenu from './MenuItems/CallNotesMenu';
+import HuntMapMenu from './MenuItems/Map/HuntMapMenu';
 
 export default function AppMenu() {
 

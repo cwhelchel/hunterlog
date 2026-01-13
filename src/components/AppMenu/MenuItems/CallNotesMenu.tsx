@@ -1,13 +1,13 @@
 import * as React from 'react';
 import { Button, Stack } from '@mui/material';
 import { DataGrid, GridActionsCellItem, GridColDef, GridRowId } from '@mui/x-data-grid';
-import { CallsignNoteRow } from '../../@types/CallsignNoteTypes';
+import { CallsignNoteRow } from '../../../@types/CallsignNoteTypes';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import { HlModal, HlModalContent, HlStyledBackdrop } from '../Stats/Modals';
-import { checkApiResponse } from '../../tsx/util';
-import { useAppContext } from '../AppContext';
+import { HlModal, HlModalContent, HlStyledBackdrop } from '../../Stats/Modals';
+import { checkApiResponse } from '../../../tsx/util';
+import { useAppContext } from '../../AppContext';
 
 
 const rows: CallsignNoteRow[] = [];

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import * as L from 'leaflet';
-import logo from '../../assets/logo.png';
+import logo from '../../../../assets/logo.png';
 
 export class HlMapWaterMark extends L.Control {
     options: L.ControlOptions = {

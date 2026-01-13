@@ -8,9 +8,9 @@ import Stack from '@mui/material/Stack';
 import { DataGrid, GridActionsCellItem, GridColDef, GridRowId } from '@mui/x-data-grid';
 
 import './AlertsMenu.scss';
-import { AlertRow } from '../../@types/AlertTypes';
-import { checkApiResponse } from '../../tsx/util';
-import { useAppContext } from '../AppContext';
+import { AlertRow } from '../../../../@types/AlertTypes';
+import { checkApiResponse } from '../../../../tsx/util';
+import { useAppContext } from '../../../AppContext';
 
 const rows: AlertRow[] = [];
 

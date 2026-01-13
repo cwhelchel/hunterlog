@@ -1,10 +1,10 @@
 import * as React from 'react';
 
-import { UpdateStats } from '../Stats/UpdateStats';
-import { ImportAdif } from '../Stats/ImportAdif';
+import { UpdateStats } from '../../Stats/UpdateStats';
+import { ImportAdif } from '../../Stats/ImportAdif';
 import { Button, CircularProgress, Divider, Menu, MenuItem } from '@mui/material';
-import { LocationStatsButton } from '../Stats/LocationStats';
-import { HamAlertButton } from '../Stats/HamAlert';
+import { LocationStatsButton } from '../../Stats/LocationStats';
+import { HamAlertButton } from '../../Stats/HamAlert';
 
 export default function StatusMenu() {
 
