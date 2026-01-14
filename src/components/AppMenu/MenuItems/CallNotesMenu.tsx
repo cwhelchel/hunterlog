@@ -211,10 +211,7 @@ export default function CallNotesMenu() {
 
     return (
         <>
-            <Button onClick={handleOpen} style={{
-                color: "#bdbdbd",
-                marginRight: '15px'
-            }}>
+            <Button onClick={handleOpen} >
                 Callsign Notes
             </Button>
             <HlModal

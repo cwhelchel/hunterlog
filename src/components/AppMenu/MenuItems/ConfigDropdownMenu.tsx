@@ -1,14 +1,13 @@
 import * as React from 'react';
 
-import { UpdateStats } from '../../Stats/UpdateStats';
-import { ImportAdif } from '../../Stats/ImportAdif';
-import { Button, CircularProgress, Divider, Menu, MenuItem } from '@mui/material';
-import { LocationStatsButton } from '../../Stats/LocationStats';
-import { HamAlertButton } from '../../Stats/HamAlert';
+import { Button, Divider, Menu, MenuItem } from '@mui/material';
+import AlertsMenu from './Alerts/AlertsMenu';
+import CallNotesMenu from './CallNotesMenu';
+import { ConfigContextProvider } from '../../Config/ConfigContextProvider';
+import ConfigModal from '../../Config/ConfigModal';
 
-export default function StatusMenu() {
+export default function ConfigDropdownMenu() {
 
-    const [isWorking, setIsWorking] = React.useState(false);
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
 
@@ -18,7 +17,6 @@ export default function StatusMenu() {
     const handleClose = () => {
         setAnchorEl(null);
     };
-
 
     return (
         <div>
@@ -32,12 +30,7 @@ export default function StatusMenu() {
                     color: "#bdbdbd"
                 }}
             >
-                Stats
-                {isWorking && (
-                    <div style={{ 'display': 'flex' }}>
-                        <CircularProgress />
-                    </div>
-                )}
+                Settings
             </Button>
             <Menu
                 id="basic-menu"
@@ -49,17 +42,16 @@ export default function StatusMenu() {
                 }}
             >
                 <MenuItem >
-                    <UpdateStats setIsWorking={setIsWorking} />
+                    <ConfigContextProvider>
+                        <ConfigModal />
+                    </ConfigContextProvider>
+                </MenuItem>
+                <Divider />
+                <MenuItem >
+                    <AlertsMenu />
                 </MenuItem>
                 <MenuItem >
-                    <ImportAdif setIsWorking={setIsWorking} />
-                </MenuItem>
-                <MenuItem >
-                    <LocationStatsButton setIsWorking={setIsWorking} />
-                </MenuItem>
-                <Divider/>
-                <MenuItem>
-                    <HamAlertButton />
+                    <CallNotesMenu />
                 </MenuItem>
             </Menu>
         </div>

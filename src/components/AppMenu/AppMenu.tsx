@@ -8,16 +8,13 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import CloseIcon from '@mui/icons-material/Close';
 
 import { useAppContext } from '../AppContext';
-import ConfigModal from '../Config/ConfigModal';
 import { ActivatorData } from '../../@types/ActivatorTypes';
 import { Alert, Avatar, Tooltip, AlertColor, Snackbar } from '@mui/material';
-import StatsMenu from './MenuItems/StatsMenu';
+import StatsDropdownMenu from './MenuItems/StatsDropdownMenu';
 import AlertsArea from './AlertsArea';
-import AlertsMenu from './MenuItems/Alerts/AlertsMenu';
 import { checkApiResponse } from '../../tsx/util';
-import { ConfigContextProvider } from '../Config/ConfigContextProvider';
-import CallNotesMenu from './MenuItems/CallNotesMenu';
 import HuntMapMenu from './MenuItems/Map/HuntMapMenu';
+import ConfigDropdownMenu from './MenuItems/ConfigDropdownMenu';
 
 export default function AppMenu() {
 
@@ -33,22 +30,6 @@ export default function AppMenu() {
     function getCfg() {
         // pywebview is ready so api can be called here:
         console.log('getting user config');
-        // let x = window.pywebview.api.get_user_config();
-
-        // x.then((cfgStr: string) => {
-        //     console.log('got user confg: ' + cfgStr);
-
-        //     let obj: UserConfig = JSON.parse(cfgStr) as UserConfig;
-
-        //     setCallsign(obj.my_call);
-
-        //     let y = window.pywebview.api.get_activator_stats(obj.my_call);
-        //     y.then((actStr: string) => {
-        //         let actObj: ActivatorData = JSON.parse(actStr) as ActivatorData;
-        //         let url = getGravatarUrl(actObj.gravatar);
-        //         setGravatar(url);
-        //     });
-        // })
 
         const y = window.pywebview.api.get_user_config_val('my_call');
 
@@ -164,14 +145,11 @@ export default function AppMenu() {
                         component="div" ml={1} mr={1}>
                         {callsign}
                     </Typography>
-                    <ConfigContextProvider>
-                        <ConfigModal />
-                    </ConfigContextProvider>
-                    <StatsMenu />
-                    <AlertsMenu />
-                    <CallNotesMenu />
+                    <ConfigDropdownMenu />
+                    <StatsDropdownMenu />
                     <HuntMapMenu />
 
+                    {/* user configured alerts (new parks, callsigns, etc) */}
                     <AlertsArea />
 
                     {/* this Typography contains nothing but it fills space to push our alert to right */}
@@ -191,8 +169,6 @@ export default function AppMenu() {
                     </Tooltip>
                 </Toolbar>
             </AppBar>
-
-
 
             <Snackbar
                 open={snackOpen}

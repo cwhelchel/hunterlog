@@ -151,9 +151,7 @@ export default function ConfigModal() {
 
     return (
         <>
-            <Button onClick={handleOpen} style={{
-                color: "#bdbdbd"
-            }}>
+            <Button onClick={handleOpen} >
                 Configuration
             </Button>
             <Modal

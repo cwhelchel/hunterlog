@@ -254,10 +254,7 @@ export default function AlertsMenu() {
 
     return (
         <>
-            <Button onClick={handleOpen} style={{
-                color: "#bdbdbd",
-                marginRight: '15px'
-            }}>
+            <Button onClick={handleOpen} >
                 Alerts
             </Button>
             <Modal
