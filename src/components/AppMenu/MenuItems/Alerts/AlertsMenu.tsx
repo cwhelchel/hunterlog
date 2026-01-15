@@ -1,7 +1,4 @@
 import * as React from 'react';
-import clsx from 'clsx';
-import { styled, css } from '@mui/system';
-import { Modal as BaseModal } from '@mui/base/Modal';
 import Button from '@mui/material/Button';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import Stack from '@mui/material/Stack';
@@ -11,6 +8,7 @@ import './AlertsMenu.scss';
 import { AlertRow } from '../../../../@types/AlertTypes';
 import { checkApiResponse } from '../../../../tsx/util';
 import { useAppContext } from '../../../AppContext';
+import HlModal2 from '../../../Common/HlModal';
 
 const rows: AlertRow[] = [];
 
@@ -257,152 +255,55 @@ export default function AlertsMenu() {
             <Button onClick={handleOpen} >
                 Alerts
             </Button>
-            <Modal
-                aria-labelledby="unstyled-modal-title"
-                aria-describedby="unstyled-modal-description"
-                open={open}
+            <HlModal2
+                isOpen={open}
                 onClose={handleClose}
-                slots={{ backdrop: StyledBackdrop }}
-            >
-                <ModalContent sx={{ width: '90%' }}>
-                    <h2 id="unstyled-modal-title" className="modal-title">
-                        Alert Configuration
-                    </h2>
-                    <div style={{ display: 'flex', flexDirection: 'row' }}>
-                        <div style={{ margin: '2px', maxWidth: '75%', fontSize: '0.8rem' }}>
-                            <ul style={{ paddingInlineStart: '20px' }}>
-                                <li>The <b>Name</b> specified is used only when displaying the alert.</li>
-                                <li>The <b>Location</b> field is a string like &apos;US-TX&apos;, it will match the beginning of a spots location (&apos;US-&apos;&apos; would match all locations in the US).</li>
-                                <li>If <b>New Only</b> is checked, only ATNO are alerted for a given location.</li>
-                                <li>Callsign should be the base callsign without modifiers like VE3/ or /P.</li>
-                            </ul>
-                        </div>
-                        <div style={{ margin: '2px', maxWidth: '75%', fontSize: '0.8rem' }}>
-                            The &apos;Exclude Band&apos; filters work like this:
-                            <ul style={{ paddingInlineStart: '20px' }}>
-                                <li>Exclude Bands Above will exclude spots where <code>freq &gt;= band lower limit</code></li>
-                                <li>Exclude Bands Below will exclude spots where <code>freq &lt;= band upper limit</code></li>
-                                <li>If you enter <i>20m</i> for &apos;Exclude Bands Above&apos;, any alerts on 20m <em>AND</em> above will not be shown for that filter.</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <Stack direction={'row'} spacing={1}>
-                        <Button sx={{ maxWidth: '15%' }} onClick={handleAdd}>Add Alert Filter</Button>
-                        <Button sx={{ maxWidth: '15%' }} onClick={handleShowTest}>Show Test Alert</Button>
-                    </Stack>
-                    <DataGrid
-                        rows={alerts}
-                        columns={columns}
-                        initialState={{
-                            pagination: {
-                                paginationModel: {
-                                    pageSize: 5,
-                                },
-                            },
-                        }}
-                        pageSizeOptions={[5]}
-                        disableRowSelectionOnClick
-                        processRowUpdate={processRowUpdate}
-                    />
+                title='Alert Configuration'
+                id='alerts'
+                contentStyle={{ width: '80%' }}>
 
-                    <Stack direction={'row'} spacing={1} sx={{ 'align-items': 'stretch', 'justify-content': 'space-evenly' }} useFlexGap>
-                        <Button fullWidth variant='contained' onClick={handleSave}>Save</Button>
-                        <Button fullWidth variant='contained' onClick={handleClose}>Cancel</Button>
-                    </Stack>
-                </ModalContent>
-            </Modal>
+                <div style={{ display: 'flex', flexDirection: 'row' }}>
+                    <div style={{ margin: '2px', maxWidth: '75%', fontSize: '0.8rem' }}>
+                        <ul style={{ paddingInlineStart: '20px' }}>
+                            <li>The <b>Name</b> specified is used only when displaying the alert.</li>
+                            <li>The <b>Location</b> field is a string like &apos;US-TX&apos;, it will match the beginning of a spots location (&apos;US-&apos;&apos; would match all locations in the US).</li>
+                            <li>If <b>New Only</b> is checked, only ATNO are alerted for a given location.</li>
+                            <li>Callsign should be the base callsign without modifiers like VE3/ or /P.</li>
+                        </ul>
+                    </div>
+                    <div style={{ margin: '2px', maxWidth: '75%', fontSize: '0.8rem' }}>
+                        The &apos;Exclude Band&apos; filters work like this:
+                        <ul style={{ paddingInlineStart: '20px' }}>
+                            <li>Exclude Bands Above will exclude spots where <code>freq &gt;= band lower limit</code></li>
+                            <li>Exclude Bands Below will exclude spots where <code>freq &lt;= band upper limit</code></li>
+                            <li>If you enter <i>20m</i> for &apos;Exclude Bands Above&apos;, any alerts on 20m <em>AND</em> above will not be shown for that filter.</li>
+                        </ul>
+                    </div>
+                </div>
+                <Stack direction={'row'} spacing={1}>
+                    <Button sx={{ maxWidth: '15%' }} onClick={handleAdd}>Add Alert Filter</Button>
+                    <Button sx={{ maxWidth: '15%' }} onClick={handleShowTest}>Show Test Alert</Button>
+                </Stack>
+                <DataGrid
+                    rows={alerts}
+                    columns={columns}
+                    initialState={{
+                        pagination: {
+                            paginationModel: {
+                                pageSize: 5,
+                            },
+                        },
+                    }}
+                    pageSizeOptions={[5]}
+                    disableRowSelectionOnClick
+                    processRowUpdate={processRowUpdate}
+                />
+
+                <Stack direction={'row'} spacing={1} sx={{ 'align-items': 'stretch', 'justify-content': 'space-evenly' }} useFlexGap>
+                    <Button fullWidth variant='contained' onClick={handleSave}>Save</Button>
+                    <Button fullWidth variant='contained' onClick={handleClose}>Cancel</Button>
+                </Stack>
+            </HlModal2>
         </>
     );
 }
-
-const Backdrop = React.forwardRef<
-    HTMLDivElement,
-    { open?: boolean; className: string }
->((props, ref) => {
-    const { open, className, ...other } = props;
-    return (
-        <div
-            className={clsx({ 'base-Backdrop-open': open }, className)}
-            ref={ref}
-            {...other}
-        />
-    );
-});
-Backdrop.displayName = 'alerts-modal-backdrop';
-
-
-const grey = {
-    50: '#F3F6F9',
-    100: '#E5EAF2',
-    200: '#DAE2ED',
-    300: '#C7D0DD',
-    400: '#B0B8C4',
-    500: '#9DA8B7',
-    600: '#6B7A90',
-    700: '#434D5B',
-    800: '#303740',
-    900: '#1C2025',
-};
-
-const Modal = styled(BaseModal)`
-  position: fixed;
-  z-index: 1300;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const StyledBackdrop = styled(Backdrop)`
-  z-index: -1;
-  position: fixed;
-  inset: 0;
-  background-color: rgb(0 0 0 / 0.5);
-  -webkit-tap-highlight-color: transparent;
-`;
-
-const ModalContent = styled('div')(
-    ({ theme }) => css`
-    /*font-family: 'IBM Plex Sans', sans-serif;*/
-    font-weight: 500;
-    text-align: start;
-    align-items: stretch;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    overflow: hidden;
-    background-color: ${theme.palette.mode === 'dark' ? grey[900] : '#fff'};
-    border-radius: 8px;
-    border: 1px solid ${theme.palette.mode === 'dark' ? grey[700] : grey[200]};
-    box-shadow: 0 4px 12px
-      ${theme.palette.mode === 'dark' ? 'rgb(0 0 0 / 0.5)' : 'rgb(0 0 0 / 0.2)'};
-    padding: 24px;
-    color: ${theme.palette.mode === 'dark' ? grey[50] : grey[900]};
-
-    & .modal-title {
-      margin: 0;
-      line-height: 1.5rem;
-      margin-bottom: 8px;
-    }
-
-    & .modal-description {
-      margin: 0;
-      line-height: 1.5rem;
-      font-weight: 400;
-      color: ${theme.palette.mode === 'dark' ? grey[400] : grey[800]};
-      margin-bottom: 4px;
-    }
-
-    & .modal-config-text {
-        margin: 0;
-        line-height: 1.1rem;
-        font-weight: 300;
-        font-size: smaller;
-        color: ${theme.palette.mode === 'dark' ? grey[400] : grey[800]};
-        margin-bottom: 2px;
-      }
-  `,
-);
-
-

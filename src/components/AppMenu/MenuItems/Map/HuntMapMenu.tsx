@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Button, Checkbox, CircularProgress, FormControlLabel, Stack, Typography } from '@mui/material';
-import { HlModal, HlModalContent, HlStyledBackdrop } from '../../../Stats/Modals';
 import { useAppContext } from '../../../AppContext';
 import { FeatureGroup, MapContainer, Marker, TileLayer } from 'react-leaflet';
 import { LatLngExpression } from 'leaflet';
@@ -11,6 +10,7 @@ import 'leaflet.geodesic'; // Import the plugin
 import { DatePicker } from '@mui/x-date-pickers';
 import dayjs, { Dayjs } from 'dayjs';
 import waterMarkControl from './HlMapWaterMark';
+import HlModal2 from '../../../Common/HlModal';
 
 const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
@@ -213,65 +213,61 @@ export default function HuntMapMenu() {
             }}>
                 Map
             </Button>
-            <HlModal
+            <HlModal2
                 aria-labelledby="unstyled-modal-title"
                 aria-describedby="unstyled-modal-description"
-                open={open}
+                isOpen={open}
                 onClose={handleClose}
-                sx={{ overflowY: 'scroll' }}
-                slots={{ backdrop: HlStyledBackdrop }}
+                title='Daily Hunt Map'
+                id='huntmap'
+                contentStyle={{ width: '1050px' }}
             >
-                <HlModalContent sx={{ width: '1050px' }}>
-                    <h2 id="unstyled-modal-title" className="modal-title">
-                        Daily Hunt Map
-                    </h2>
-                    <div style={{ display: 'flex', flexDirection: 'row' }}>
-                        <div style={{ margin: '2px', width: '100%', fontSize: '0.9rem' }}>
-                            This map shows hunts for a given day. These QSOs shown are logged during your local day, not UTC day.
-                            <br />
-                            After changing the date, click <code>Show QSOs</code> button.
-                        </div>
+                <div style={{ display: 'flex', flexDirection: 'row' }}>
+                    <div style={{ margin: '2px', width: '100%', fontSize: '0.9rem' }}>
+                        This map shows hunts for a given day. These QSOs shown are logged during your local day, not UTC day.
+                        <br />
+                        After changing the date, click <code>Show QSOs</code> button.
                     </div>
+                </div>
 
-                    {isLoading ? (
-                        <Stack direction={'row'} gap={5} justifyContent={'center'} alignItems={'center'}>
-                            <CircularProgress />
-                            <Typography color={'darkgreen'}>Loading...</Typography>
-                        </Stack>
-                    ) : (
-                        <Stack marginY={'5px'} direction={'row'} gap={3} justifyContent={'center'} alignItems={'center'}>
-                            <DatePicker
-                                label="Select Date"
-                                value={selectedDate}
-                                onChange={(newValue) => { console.log('setting date', newValue); setSelectedDate(newValue); }} />
-                            <Button variant='contained' onClick={() => showQsosOnMap()} >Show QSOs</Button>
-                            <FormControlLabel
-                                label="Show Calls"
-                                control={<Checkbox checked={showCalls} onChange={(e) => setShowCalls(e.target.checked)} />}
-                            />
-                        </Stack>
-                    )}
-
-                    {/* Make sure you set the height and width of the map container otherwise the map won't show */}
-                    <MapContainer
-                        center={homePosition}
-                        zoom={4}
-                        ref={mapRef}
-                        style={{ width: "1000px", height: "750px" }}>
-                        <TileLayer
-                            attribution={attribution}
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                {isLoading ? (
+                    <Stack direction={'row'} gap={5} justifyContent={'center'} alignItems={'center'}>
+                        <CircularProgress />
+                        <Typography color={'darkgreen'}>Loading...</Typography>
+                    </Stack>
+                ) : (
+                    <Stack marginY={'5px'} direction={'row'} gap={3} justifyContent={'center'} alignItems={'center'}>
+                        <DatePicker
+                            label="Select Date"
+                            value={selectedDate}
+                            onChange={(newValue) => { console.log('setting date', newValue); setSelectedDate(newValue); }} />
+                        <Button variant='contained' onClick={() => showQsosOnMap()} >Show QSOs</Button>
+                        <FormControlLabel
+                            label="Show Calls"
+                            control={<Checkbox checked={showCalls} onChange={(e) => setShowCalls(e.target.checked)} />}
                         />
-                        {open && (
-                            <>
-                                <Marker icon={greenIcon} position={homePosition} />
-                            </>
-                        )}
-                        <FeatureGroup ref={featureGroupRef}>
-                        </FeatureGroup>
-                    </MapContainer>
-                </HlModalContent>
-            </HlModal>
+                    </Stack>
+                )}
+
+                {/* Make sure you set the height and width of the map container otherwise the map won't show */}
+                <MapContainer
+                    center={homePosition}
+                    zoom={4}
+                    ref={mapRef}
+                    style={{ width: "1000px", height: "750px" }}>
+                    <TileLayer
+                        attribution={attribution}
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    {open && (
+                        <>
+                            <Marker icon={greenIcon} position={homePosition} />
+                        </>
+                    )}
+                    <FeatureGroup ref={featureGroupRef}>
+                    </FeatureGroup>
+                </MapContainer>
+            </HlModal2>
         </>
     );
 }

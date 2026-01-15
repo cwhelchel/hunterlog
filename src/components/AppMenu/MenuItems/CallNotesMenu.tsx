@@ -5,9 +5,9 @@ import { CallsignNoteRow } from '../../../@types/CallsignNoteTypes';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import { HlModal, HlModalContent, HlStyledBackdrop } from '../../Stats/Modals';
 import { checkApiResponse } from '../../../tsx/util';
 import { useAppContext } from '../../AppContext';
+import HlModal2 from '../../Common/HlModal';
 
 
 const rows: CallsignNoteRow[] = [];
@@ -214,66 +214,61 @@ export default function CallNotesMenu() {
             <Button onClick={handleOpen} >
                 Callsign Notes
             </Button>
-            <HlModal
-                aria-labelledby="unstyled-modal-title"
-                aria-describedby="unstyled-modal-description"
-                open={open}
+            <HlModal2
+                id='callnotes'
+                title='Callsign Notes'
+                isOpen={open}
                 onClose={handleClose}
-                slots={{ backdrop: HlStyledBackdrop }}
+                contentStyle={{ width: '60%' }}
             >
-                <HlModalContent sx={{ width: '60%' }}>
-                    <h2 id="unstyled-modal-title" className="modal-title">
-                        Callsign Notes
-                    </h2>
-                    <div style={{ display: 'flex', flexDirection: 'row' }}>
-                        <div style={{ margin: '2px', width: '100%', fontSize: '0.8rem' }}>
-                            <p>
-                                Here you can add callsign notes to show extra information about a given
-                                callsign that you input. It appears near the Activator Info panel by POTA avatar image.
-                                <ul>
-                                    <li><code style={{ color: 'green' }}>Name</code> must be unique or downloaded files will be overwritten</li>
-                                    <li><code style={{ color: 'green' }}>Path</code> can be a filename <em>myclub.txt</em> or a web URL to a txt file <em>https://krinkl3.net/myclub.txt</em>. Files on web are downloaded every 5 days</li>
-                                    <li>The order the rows appear is the order they will be shown in the Activator Info panel. Use up and down arrows to adjust.</li>
-                                </ul>
-                            </p>
-                            <p>
-                                You can create your own text files using the <a href="https://polo.ham2k.com/docs/polo-features/callsign-notes/" target="_blank" rel="noreferrer">PoLo format</a> with a stripped-down Markdown syntax. Place
-                                them in <code>\data\notes\</code> directory in the Hunterlog folder.
-                            </p>
-                        </div>
+                <div style={{ display: 'flex', flexDirection: 'row' }}>
+                    <div style={{ margin: '2px', width: '100%', fontSize: '0.8rem' }}>
+                        <p>
+                            Here you can add callsign notes to show extra information about a given
+                            callsign that you input. It appears near the Activator Info panel by POTA avatar image.
+                            <ul>
+                                <li><code style={{ color: 'green' }}>Name</code> must be unique or downloaded files will be overwritten</li>
+                                <li><code style={{ color: 'green' }}>Path</code> can be a filename <em>myclub.txt</em> or a web URL to a txt file <em>https://krinkl3.net/myclub.txt</em>. Files on web are downloaded every 5 days</li>
+                                <li>The order the rows appear is the order they will be shown in the Activator Info panel. Use up and down arrows to adjust.</li>
+                            </ul>
+                        </p>
+                        <p>
+                            You can create your own text files using the <a href="https://polo.ham2k.com/docs/polo-features/callsign-notes/" target="_blank" rel="noreferrer">PoLo format</a> with a stripped-down Markdown syntax. Place
+                            them in <code>\data\notes\</code> directory in the Hunterlog folder.
+                        </p>
                     </div>
-                    <DataGrid
-                        rows={callNotes}
-                        columns={columns}
-                        initialState={{
-                            pagination: {
-                                paginationModel: {
-                                    pageSize: 10,
-                                },
+                </div>
+                <DataGrid
+                    rows={callNotes}
+                    columns={columns}
+                    initialState={{
+                        pagination: {
+                            paginationModel: {
+                                pageSize: 10,
                             },
-                            sorting: {
-                                sortModel: [{ field: 'sort', sort: 'asc' }],
+                        },
+                        sorting: {
+                            sortModel: [{ field: 'sort', sort: 'asc' }],
+                        },
+                        columns: {
+                            columnVisibilityModel: {
+                                // Hide columns
+                                id: false,
+                                sort: false,
                             },
-                            columns: {
-                                columnVisibilityModel: {
-                                    // Hide columns
-                                    id: false,
-                                    sort: false,
-                                },
-                            }
-                        }}
-                        pageSizeOptions={[10]}
-                        disableRowSelectionOnClick
-                        processRowUpdate={processRowUpdate}
-                    />
+                        }
+                    }}
+                    pageSizeOptions={[10]}
+                    disableRowSelectionOnClick
+                    processRowUpdate={processRowUpdate}
+                />
 
-                    <Stack direction={'row'} spacing={1} sx={{ 'align-items': 'stretch', 'justify-content': 'space-evenly' }} useFlexGap>
-                        <Button fullWidth variant='contained' onClick={handleAdd}>Add New</Button>
-                        <Button fullWidth variant='contained' onClick={handleSave}>Save</Button>
-                        <Button fullWidth variant='contained' onClick={handleClose}>Cancel</Button>
-                    </Stack>
-                </HlModalContent>
-            </HlModal>
+                <Stack direction={'row'} spacing={1} sx={{ 'align-items': 'stretch', 'justify-content': 'space-evenly' }} useFlexGap>
+                    <Button fullWidth variant='contained' onClick={handleAdd}>Add New</Button>
+                    <Button fullWidth variant='contained' onClick={handleSave}>Save</Button>
+                    <Button fullWidth variant='contained' onClick={handleClose}>Cancel</Button>
+                </Stack>
+            </HlModal2>
         </>
     );
 }

@@ -11,7 +11,7 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 
-import { HlModal, HlModalContent, HlStyledBackdrop } from './Modals';
+import { HlModal, HlModalContent, HlStyledBackdrop } from '../Common/Modals';
 import { checkApiResponse } from '../../tsx/util';
 import { useAppContext } from '../AppContext';
 import pota_step1 from '../../assets/import_pota_1.png';
