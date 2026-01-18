@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Button from '@mui/material/Button';
 import { useGridApiContext, gridFilteredSortedRowIdsSelector, useGridSelector, GridRowId } from '@mui/x-data-grid';
-import { useConfigContext } from '../Config/ConfigContextProvider';
+import { useConfigContext } from '../AppMenu/MenuItems/SettingsMenu/Config/ConfigContextProvider';
 import { checkApiResponse, setToastMsg } from '../Utilities/util'
 import { useAppContext } from '../AppContext';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';

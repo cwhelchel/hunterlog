@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { UserConfig } from '../../@types/Config';
+import { UserConfig } from '../../../../../@types/Config';
 
 const defData: UserConfig = {
     my_call: '',

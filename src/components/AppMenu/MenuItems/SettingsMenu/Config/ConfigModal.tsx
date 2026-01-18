@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Button from '@mui/material/Button';
-import { ConfigVer2 } from '../../@types/Config';
+import { ConfigVer2 } from '../../../../../@types/Config';
 import Stack from '@mui/material/Stack';
 import { Box, Divider, Tab, Tabs } from '@mui/material';
 
@@ -10,10 +10,10 @@ import GeneralSettingsTab from './GeneralSettingsTab';
 import LoggerSettingsTab from './LoggerSettingsTab';
 import RadioSettingsTab from './RadioSettingsTab';
 import ScanningSettingsTab from './ScanningSettingsTab';
-import { setErrorMsg } from '../Utilities/util';
-import { useAppContext } from '../AppContext';
+import { setErrorMsg } from '../../../../Utilities/util';
+import { useAppContext } from '../../../../AppContext';
 import ProgramSettingsTab from './ProgramSettingsTab';
-import HlModal2 from '../Common/HlModal';
+import HlModal2 from '../../../../Common/HlModal';
 
 
 const def2: ConfigVer2[] = [];

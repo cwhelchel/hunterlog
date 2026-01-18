@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Checkbox, FormControlLabel, Grid, Stack, TextField, Tooltip } from "@mui/material";
 import { useConfigContext } from './ConfigContextProvider';
-import { useAppContext } from '../AppContext';
+import { useAppContext } from '../../../../AppContext';
 import ToggleSwitch from './ToggleSwitch';
 
 export default function GeneralSettingsTab() {
