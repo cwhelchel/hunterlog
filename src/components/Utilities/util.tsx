@@ -1,4 +1,4 @@
-import { ContextData } from "../@types/ContextTypes";
+import { ContextData } from "../../@types/ContextTypes";
 
 /*
 Check the JSON response from the backend endpoints found in api.py

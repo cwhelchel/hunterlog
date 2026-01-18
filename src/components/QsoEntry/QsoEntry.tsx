@@ -11,11 +11,11 @@ import utc from 'dayjs/plugin/utc';
 import './QsoEntry.scss'
 import QsoTimeEntry from './QsoTimeEntry';
 import { Qso } from '../../@types/QsoTypes';
-import { checkApiResponse, setToastMsg } from '../../tsx/util';
-import { checkReferenceForPota, checkReferenceForSota, checkReferenceForWwbota, checkReferenceForWwff, checkForValidRefs, sigCheckers } from '../../tsx/referenceUtils';
-import { getStateFromLocDesc } from '../../tsx/pota';
+import { checkApiResponse, setToastMsg } from '../Utilities/util';
+import { checkReferenceForPota, checkReferenceForSota, checkReferenceForWwbota, checkReferenceForWwff, checkForValidRefs, sigCheckers } from '../Utilities/referenceUtils';
+import { getStateFromLocDesc } from '../Utilities/pota';
 import { Park } from '../../@types/Parks';
-import { getModeDefaultRst } from '../../tsx/defaultRst';
+import { getModeDefaultRst } from '../Utilities/defaultRst';
 
 dayjs.extend(utc);
 

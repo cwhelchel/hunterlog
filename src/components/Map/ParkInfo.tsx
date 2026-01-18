@@ -1,11 +1,11 @@
 import * as React from 'react';
 import LeafMap from './Map'
 import { useAppContext } from '../AppContext';
-import { getParkStats } from '../../tsx/pota';
+import { getParkStats } from '../Utilities/pota';
 import { ParkStats } from '../../@types/PotaTypes';
 
 import './ParkInfo.scss'
-import { checkApiResponse } from '../../tsx/util';
+import { checkApiResponse } from '../Utilities/util';
 import ProgramIcon from '../Icons/ProgramIcon';
 
 

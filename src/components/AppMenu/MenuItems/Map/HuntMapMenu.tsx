@@ -3,7 +3,7 @@ import { Button, Checkbox, CircularProgress, FormControlLabel, Stack, Typography
 import { useAppContext } from '../../../AppContext';
 import { FeatureGroup, MapContainer, Marker, TileLayer } from 'react-leaflet';
 import { LatLngExpression } from 'leaflet';
-import { checkApiResponse } from '../../../../tsx/util';
+import { checkApiResponse } from '../../../Utilities/util';
 import { Qso } from '../../../../@types/QsoTypes';
 import * as L from 'leaflet';
 import 'leaflet.geodesic'; // Import the plugin

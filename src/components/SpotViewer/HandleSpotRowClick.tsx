@@ -4,8 +4,8 @@ import { Park } from "../../@types/Parks";
 import { Qso } from "../../@types/QsoTypes";
 import { SpotComments } from "../../@types/SpotComments";
 import { useAppContext } from "../AppContext";
-import { checkApiResponse } from '../../tsx/util';
-import { getMultiParkString, testForNfer } from '../../tsx/nferUtils';
+import { checkApiResponse } from '../Utilities/util';
+import { getMultiParkString, testForNfer } from '../Utilities/nferUtils';
 
 interface MultiData {
     otherOps: string;

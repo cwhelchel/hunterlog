@@ -8,7 +8,7 @@ import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import SnoozeIcon from '@mui/icons-material/Snooze';
-import { checkApiResponse } from '../../tsx/util';
+import { checkApiResponse } from '../Utilities/util';
 import FreqButton from '../SpotViewer/FreqButton';
 
 // Update the Button's color options to include an alert option

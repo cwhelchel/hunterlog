@@ -6,7 +6,7 @@ import { DataGrid, GridActionsCellItem, GridColDef, GridRowId } from '@mui/x-dat
 
 import './AlertsMenu.scss';
 import { AlertRow } from '../../../../@types/AlertTypes';
-import { checkApiResponse } from '../../../../tsx/util';
+import { checkApiResponse } from '../../../Utilities/util';
 import { useAppContext } from '../../../AppContext';
 import HlModal2 from '../../../Common/HlModal';
 

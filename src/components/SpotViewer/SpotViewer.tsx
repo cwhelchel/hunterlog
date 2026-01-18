@@ -16,7 +16,7 @@ import HuntedCheckbox from './HuntedCheckbox';
 import FreqButton from './FreqButton';
 import SpotCommentsButton from './SpotComments';
 import SpotTimeCell from './SpotTime';
-import { checkApiResponse } from '../../tsx/util';
+import { checkApiResponse } from '../Utilities/util';
 import HandleSpotRowClick from './HandleSpotRowClick';
 import ProgramIcon from '../Icons/ProgramIcon';
 import ScanButton from './ScanButton';

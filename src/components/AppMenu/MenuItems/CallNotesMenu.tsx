@@ -5,7 +5,7 @@ import { CallsignNoteRow } from '../../../@types/CallsignNoteTypes';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import { checkApiResponse } from '../../../tsx/util';
+import { checkApiResponse } from '../../Utilities/util';
 import { useAppContext } from '../../AppContext';
 import HlModal2 from '../../Common/HlModal';
 

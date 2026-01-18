@@ -1,4 +1,4 @@
-import { SpotComments } from "../@types/SpotComments";
+import { SpotComments } from "../../@types/SpotComments";
 
 export function getPotaPlusNfer(comment: string) {
     const re = new RegExp("{Also:([^}]*)}");

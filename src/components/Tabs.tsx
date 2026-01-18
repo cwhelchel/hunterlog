@@ -7,7 +7,7 @@ import ParkInfo from './Map/ParkInfo';
 import Stack from '@mui/material/Stack';
 import PersonIcon from '@mui/icons-material/Person';
 import { useAppContext } from './AppContext';
-import { checkApiResponse } from '../tsx/util';
+import { checkApiResponse } from './Utilities/util';
 import Badge from '@mui/material/Badge';
 import { Tooltip } from '@mui/material';
 import ProgramIcon from './Icons/ProgramIcon';

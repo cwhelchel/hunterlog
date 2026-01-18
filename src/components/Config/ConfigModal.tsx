@@ -10,7 +10,7 @@ import GeneralSettingsTab from './GeneralSettingsTab';
 import LoggerSettingsTab from './LoggerSettingsTab';
 import RadioSettingsTab from './RadioSettingsTab';
 import ScanningSettingsTab from './ScanningSettingsTab';
-import { setErrorMsg } from '../../tsx/util';
+import { setErrorMsg } from '../Utilities/util';
 import { useAppContext } from '../AppContext';
 import ProgramSettingsTab from './ProgramSettingsTab';
 import HlModal2 from '../Common/HlModal';

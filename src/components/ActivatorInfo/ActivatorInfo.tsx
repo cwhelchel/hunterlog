@@ -8,7 +8,7 @@ import { Tooltip } from '@mui/material';
 import TimelineIcon from '@mui/icons-material/Timeline';
 
 import './ActivatorInfo.scss'
-import { checkApiResponse } from '../../tsx/util';
+import { checkApiResponse } from '../Utilities/util';
 import ReactMarkdown from 'react-markdown'
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type

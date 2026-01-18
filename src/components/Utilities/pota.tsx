@@ -1,5 +1,5 @@
-import { ParkInfo, ParkStats } from "../@types/PotaTypes";
-import { Summit } from "../@types/Summit";
+import { ParkInfo, ParkStats } from "../../@types/PotaTypes";
+import { Summit } from "../../@types/Summit";
 
 /*
 !!!!Dont use this!!!! the python api will take care of getting the park info

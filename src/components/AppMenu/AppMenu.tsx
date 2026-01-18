@@ -12,7 +12,7 @@ import { ActivatorData } from '../../@types/ActivatorTypes';
 import { Alert, Avatar, Tooltip, AlertColor, Snackbar } from '@mui/material';
 import StatsDropdownMenu from './MenuItems/StatsDropdownMenu';
 import AlertsArea from './AlertsArea';
-import { checkApiResponse } from '../../tsx/util';
+import { checkApiResponse } from '../Utilities/util';
 import HuntMapMenu from './MenuItems/Map/HuntMapMenu';
 import ConfigDropdownMenu from './MenuItems/ConfigDropdownMenu';
 
