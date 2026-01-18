@@ -1,9 +1,9 @@
 import * as React from 'react'
 import { Stack } from '@mui/system';
 import { Tooltip, Button, Divider, Typography, Autocomplete, TextField, Snackbar, SnackbarCloseReason } from '@mui/material';
-import { checkApiResponse } from '../Utilities/util';
-import { useAppContext } from '../AppContext';
-import HlModal2 from '../Common/HlModal';
+import { checkApiResponse } from '../../../Utilities/util';
+import { useAppContext } from '../../../AppContext';
+import HlModal2 from '../../../Common/HlModal';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 declare interface IHamAlertButtonProps {

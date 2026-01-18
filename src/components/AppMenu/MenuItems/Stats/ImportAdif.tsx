@@ -1,8 +1,8 @@
 import * as React from 'react'
 import { Tooltip, Button } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-import { checkApiResponse } from '../Utilities/util';
-import { useAppContext } from '../AppContext';
+import { checkApiResponse } from '../../../Utilities/util';
+import { useAppContext } from '../../../AppContext';
 
 declare interface IImportAdifProps {
     setIsWorking: (val: boolean) => void,
