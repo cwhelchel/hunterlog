@@ -1,8 +1,8 @@
 import * as React from 'react';
 
 import { Button, Divider, Menu, MenuItem } from '@mui/material';
-import AlertsMenu from './Alerts/AlertsMenu';
-import CallNotesMenu from './CallNotesMenu';
+import AlertsMenu from './SettingsMenu/Alerts/AlertsMenu';
+import CallNotesMenu from './SettingsMenu/CallNotesMenu';
 import { ConfigContextProvider } from './SettingsMenu/Config/ConfigContextProvider';
 import ConfigModal from './SettingsMenu/Config/ConfigModal';
 

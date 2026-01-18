@@ -5,10 +5,10 @@ import Stack from '@mui/material/Stack';
 import { DataGrid, GridActionsCellItem, GridColDef, GridRowId } from '@mui/x-data-grid';
 
 import './AlertsMenu.scss';
-import { AlertRow } from '../../../../@types/AlertTypes';
-import { checkApiResponse } from '../../../Utilities/util';
-import { useAppContext } from '../../../AppContext';
-import HlModal2 from '../../../Common/HlModal';
+import { AlertRow } from '../../../../../@types/AlertTypes';
+import { checkApiResponse } from '../../../../Utilities/util';
+import { useAppContext } from '../../../../AppContext';
+import HlModal2 from '../../../../Common/HlModal';
 
 const rows: AlertRow[] = [];
 
