@@ -72,7 +72,9 @@ class wsjtx(ICat):
 
         # heres where wsjt-x differs. we need to add a localized separator to
         # the string or mcloggerdx will truncate it.
-        format_kHz = "{:,.3f}".format(fkHz)
+        # format_kHz = "{:,.3f}".format(fkHz)
+        # - add leading zeros to make 7200.345 kHz => 07,200.345 for mcldx
+        format_kHz = "{:010,.3f}".format(fkHz)
 
         # note: i dont know how macloggerdx will work if in a locale that the
         # comma is not the thousands separator. this maybe a future bug where
