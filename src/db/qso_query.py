@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 import json
 import logging
+import time
 from typing import List
 import sqlalchemy as sa
 from sqlalchemy.orm import scoped_session
@@ -21,6 +22,20 @@ class QsoQuery:
         self.session.add(qso)
         if not delay_commit:
             self.session.commit()
+
+    def insert_new_qso_multi(self, qso: any, calls: list[str]) -> int:
+        first_call = qso['call']
+        calls.insert(0, first_call)
+
+        ids: list[int] = []
+
+        for call in calls:
+            qso['call'] = call
+            i = self.insert_new_qso(qso)
+            ids.append(i)
+            time.sleep(0.5)
+
+        return ids
 
     def insert_new_qso(self, qso: any) -> int:
         '''

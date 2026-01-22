@@ -7,10 +7,11 @@ import ParkInfo from './Map/ParkInfo';
 import Stack from '@mui/material/Stack';
 import PersonIcon from '@mui/icons-material/Person';
 import { useAppContext } from './AppContext';
-import { checkApiResponse } from './Utilities/util';
+import { checkApiResponse2 } from './Utilities/util';
 import Badge from '@mui/material/Badge';
 import { Tooltip } from '@mui/material';
 import ProgramIcon from './Icons/ProgramIcon';
+import { useMessageQueue } from './MessageContext';
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -45,7 +46,8 @@ function a11yProps(index: number) {
 }
 
 export default function BasicTabs() {
-    const { contextData, setData } = useAppContext();
+    const { contextData } = useAppContext();
+    const { addMessage } = useMessageQueue();
     const [value, setValue] = React.useState(0);
     const [hunts, setHunts] = React.useState(0);
     const [newBand, setNewBand] = React.useState(false);
@@ -66,7 +68,7 @@ export default function BasicTabs() {
         setSig(contextData?.qso?.sig || 'POTA');
 
         window.pywebview.api.get_park_hunts(park).then((j: string) => {
-            const o = checkApiResponse(j, contextData, setData);
+            const o = checkApiResponse2(j, addMessage);
             const hunts = parseInt(o.count);
             setHunts(hunts);
             if (hunts > 0) {
@@ -79,7 +81,7 @@ export default function BasicTabs() {
         const freq = contextData?.qso?.freq;
         if (freq !== null || freq !== '') {
             window.pywebview.api.get_park_hunted_bands(freq, park).then((j: string) => {
-                const o = checkApiResponse(j, contextData, setData);
+                const o = checkApiResponse2(j, addMessage);
                 const nb = o.new_band;
                 setNewBand(nb);
                 if (nb) {

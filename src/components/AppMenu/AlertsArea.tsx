@@ -1,15 +1,16 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from 'react';
 
 import { useAppContext } from '../AppContext';
-import { Alert, AlertTitle, Box, Button, CircularProgress, Icon, IconButton, Menu, MenuItem, MobileStepper, Tooltip, Typography } from '@mui/material';
-import { SpotRow } from '../../@types/Spots';
+import { Button, IconButton, MobileStepper } from '@mui/material';
 import './AlertsArea.scss';
 import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import SnoozeIcon from '@mui/icons-material/Snooze';
-import { checkApiResponse } from '../Utilities/util';
+import { checkApiResponse2 } from '../Utilities/util';
 import FreqButton from '../SpotViewer/FreqButton';
+import { useMessageQueue } from '../MessageContext';
 
 // Update the Button's color options to include an alert option
 declare module '@mui/material/IconButton' {
@@ -29,6 +30,7 @@ interface AlertData {
 
 export default function AlertsArea() {
     const { contextData, setData } = useAppContext();
+    const { addMessage } = useMessageQueue();
     const [alertHidden, setAlertHidden] = React.useState(true);
     const [alerts, setAlerts] = React.useState<AlertData[]>([]);
 
@@ -60,12 +62,12 @@ export default function AlertsArea() {
     function handleSnoozeClick(event: any): void {
         // do nothing for now
         if (window.pywebview.api !== null) {
-            let curr = [...alerts];
+            const curr = [...alerts];
             const id = curr[activeStep].alertId;
             console.log(`Snoozing ${id}`);
-            let p = window.pywebview.api.snooze_alert(id);
+            const p = window.pywebview.api.snooze_alert(id);
             p.then((r: string) => {
-                checkApiResponse(r, contextData, setData);
+                checkApiResponse2(r, addMessage );
             });
             handleAlertClose(event);
         }
@@ -79,22 +81,22 @@ export default function AlertsArea() {
         //let data = json;
         //console.log(json);
         //console.log(typeof json);
-        let data = JSON.parse(json);
-        let currAlerts = [...alerts];
+        const data = JSON.parse(json);
+        const currAlerts = [...alerts];
 
-        let k = Object.keys(data);
+        const k = Object.keys(data);
         console.log(k);
 
         k.forEach((key) => {
             const spots = data[key];
 
-            let alertName = key.split('+')[0];
-            let alertId = key.split('+')[1];
-            let alertInt = parseInt(alertId || '-1');
+            const alertName = key.split('+')[0];
+            const alertId = key.split('+')[1];
+            const alertInt = parseInt(alertId || '-1');
 
             spots.forEach((alertMsg: any) => {
                 //console.log('alertMsg: ' + alertMsg);
-                let alertData = alertMsg;//JSON.parse(alertMsg);
+                const alertData = alertMsg;//JSON.parse(alertMsg);
                 const text = `📢 New ref ${alertData.location}: ${alertData.activator} @ ${alertData.reference} 🔸 ${alertData.mode}(${alertData.freq})`;
                 currAlerts.push({ title: alertName, msg: text, alertId: alertInt, freq: alertData.freq, mode: alertData.mode, spotId: alertData.spotId });
             });
@@ -112,7 +114,7 @@ export default function AlertsArea() {
     }, [contextData.themeMode]);
 
     React.useEffect(() => {
-        let x = [...alerts];
+        const x = [...alerts];
 
         // there's no data in alerts, we need to hide it
         if (x.length == 0) {

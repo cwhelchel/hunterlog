@@ -1,8 +1,8 @@
 import * as React from 'react'
 import { Tooltip, Button } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-import { checkApiResponse } from '../../../Utilities/util';
-import { useAppContext } from '../../../AppContext';
+import { checkApiResponse2 } from '../../../Utilities/util';
+import { useMessageQueue } from '../../../MessageContext';
 
 declare interface ILocationStatsButtonProps {
     setIsWorking: (val: boolean) => void,
@@ -12,7 +12,7 @@ declare interface ILocationStatsButtonProps {
 export const LocationStatsButton = (props: ILocationStatsButtonProps) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [isWorking, _] = React.useState(false);
-    const {contextData, setData} = useAppContext();
+    const { addMessage } = useMessageQueue();
 
     const handleClick = () => {
         if (window.pywebview !== undefined) {
@@ -21,7 +21,7 @@ export const LocationStatsButton = (props: ILocationStatsButtonProps) => {
             x.then((r: string) => {
                 props.setIsWorking(false);
 
-                const x = checkApiResponse(r, contextData, setData);
+                const x = checkApiResponse2(r, addMessage);
                 if (x.success) {
                     console.log(x.message);
                 }

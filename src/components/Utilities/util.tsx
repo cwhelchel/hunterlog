@@ -1,67 +1,121 @@
-import { ContextData } from "../../@types/ContextTypes";
-
 /*
 Check the JSON response from the backend endpoints found in api.py
 
 @param x: string json response from api methods
-@param contextData: the context data object
-@param setData: the useContext's
+@param addMessage: addMessage from useMessageQueue
 @returns parsed response JSON or null if no response
 */
-export function checkApiResponse(x: string, contextData: ContextData, setData: (d: ContextData) => void) {
+export function checkApiResponse2(x: string, addMessage: (msg: MessageType) => void) {
     if (x === null)
         return null;
 
     const j = JSON.parse(x);
+    // console.log('checkApiResponse2', j);
+
 
     if (!("success" in j)) {
         // normal success values is missing. this is some other object just return it
         return j;
     }
 
+    const msg = j['message'];
+
     if (j['success']) {
-        // extended flag from API. persist means show this as alert (not toast)
         if (j['persist']) {
-            setInfoMsg(j['message'], contextData, setData);
+            // extended flag from API. persist means show this as alert (not toast)
+            showInfoAlert(msg, addMessage);
             return j;
         }
 
         // if a success response's message is empty string, dont toast
         if (j['message'] !== "")
-            setToastMsg(j['message'], contextData, setData);
-
+            showSuccessToast(msg, addMessage);
     } else {
         // unsuccessful returns
         if (j['transient']) {
             // message is a toast. failure is not critical
-            setToastMsg(j['message'], contextData, setData);
+            showErrorToast(msg, addMessage);
         } else {
             // user needs to see this and clear it
-            setErrorMsg(j['message'], contextData, setData);
+            showErrorAlert(msg, addMessage);
         }
     }
 
     return j;
 }
 
-export function setToastMsg(msg: string, contextData: ContextData, setData: (d: ContextData) => void) {
-    const newCtxData = { ...contextData };
-    newCtxData.errorMsg = msg;
-    newCtxData.errorSeverity = 'success';
-    setData(newCtxData);
+/* TOAST helper functions. React MUI SnackBar == Toast */
+
+export function showSuccessToast(msg: string, addMessage: (msg: MessageType) => void) {
+    addMessage({
+        id: 0,
+        message: msg,
+        type: 1,
+        color: "success"
+    });
 }
 
-export function setErrorMsg(msg: string, contextData: ContextData, setData: (d: ContextData) => void) {
-    const newCtxData = { ...contextData };
-    newCtxData.errorMsg = msg;
-    newCtxData.errorSeverity = 'error';
-    setData(newCtxData);
+export function showInfoToast(msg: string, addMessage: (msg: MessageType) => void) {
+    addMessage({
+        id: 0,
+        message: msg,
+        type: 1,
+        color: "info"
+    });
 }
 
+export function showWarningToast(msg: string, addMessage: (msg: MessageType) => void) {
+    addMessage({
+        id: 0,
+        message: msg,
+        type: 1,
+        color: "warning"
+    });
+}
 
-export function setInfoMsg(msg: string, contextData: ContextData, setData: (d: ContextData) => void) {
-    const newCtxData = { ...contextData };
-    newCtxData.errorMsg = msg;
-    newCtxData.errorSeverity = 'info';
-    setData(newCtxData);
+export function showErrorToast(msg: string, addMessage: (msg: MessageType) => void) {
+    addMessage({
+        id: 0,
+        message: msg,
+        type: 1,
+        color: "error"
+    });
+}
+
+/* Alerts helper functions - persists until closed. See AppMenu.tsx */
+
+export function showSuccessAlert(msg: string, addMessage: (msg: MessageType) => void) {
+    addMessage({
+        id: 0,
+        message: msg,
+        type: 0,
+        color: "success"
+    });
+}
+
+export function showInfoAlert(msg: string, addMessage: (msg: MessageType) => void) {
+    addMessage({
+        id: 0,
+        message: msg,
+        type: 0,
+        color: "info"
+    });
+}
+
+export function showWarningAlert(msg: string, addMessage: (msg: MessageType) => void) {
+    addMessage({
+        id: 0,
+        message: msg,
+        type: 0,
+        color: "warning"
+    });
+}
+
+export function showErrorAlert(msg: string, addMessage: (msg: MessageType) => void) {
+    addMessage({
+        id: 0,
+        message: msg,
+        type: 0,
+        color: "error"
+    });
 }

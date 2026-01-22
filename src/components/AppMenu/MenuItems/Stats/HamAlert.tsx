@@ -1,9 +1,9 @@
 import * as React from 'react'
 import { Stack } from '@mui/system';
 import { Tooltip, Button, Divider, Typography, Autocomplete, TextField, Snackbar, SnackbarCloseReason } from '@mui/material';
-import { checkApiResponse } from '../../../Utilities/util';
-import { useAppContext } from '../../../AppContext';
+import { checkApiResponse2 } from '../../../Utilities/util';
 import HlModal2 from '../../../Common/HlModal';
+import { useMessageQueue } from '../../../MessageContext';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 declare interface IHamAlertButtonProps {
@@ -17,7 +17,7 @@ export const HamAlertButton = (props: IHamAlertButtonProps) => {
     const [loc, setLoc] = React.useState('');
     const [locs, setLocs] = React.useState(['']);
     const [unhunted, setUnhunted] = React.useState('');
-    const { contextData, setData } = useAppContext();
+    const { addMessage } = useMessageQueue();
 
     const handleClose = () => setOpen(false);
 
@@ -27,7 +27,7 @@ export const HamAlertButton = (props: IHamAlertButtonProps) => {
 
             const x = window.pywebview.api.get_pota_locations();
             x.then((r: string) => {
-                const resp = checkApiResponse(r, contextData, setData);
+                const resp = checkApiResponse2(r, addMessage);
                 if (resp.success) {
                     //console.log(resp.locations.join(','));
                     setLocs(resp.locations);
@@ -46,7 +46,7 @@ export const HamAlertButton = (props: IHamAlertButtonProps) => {
 
         const x = window.pywebview.api.get_hamalert_text(newLoc);
         x.then((r: string) => {
-            const resp = checkApiResponse(r, contextData, setData);
+            const resp = checkApiResponse2(r, addMessage);
             if (resp.success) {
                 //setUnhunted(resp.hunted_refs.join(','));
                 const text = resp.unhunted_refs.join(',');

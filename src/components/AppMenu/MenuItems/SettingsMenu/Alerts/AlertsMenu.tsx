@@ -6,9 +6,9 @@ import { DataGrid, GridActionsCellItem, GridColDef, GridRowId } from '@mui/x-dat
 
 import './AlertsMenu.scss';
 import { AlertRow } from '../../../../../@types/AlertTypes';
-import { checkApiResponse } from '../../../../Utilities/util';
-import { useAppContext } from '../../../../AppContext';
+import { checkApiResponse2 } from '../../../../Utilities/util';
 import HlModal2 from '../../../../Common/HlModal';
+import { useMessageQueue } from '../../../../MessageContext';
 
 const rows: AlertRow[] = [];
 
@@ -17,7 +17,7 @@ export default function AlertsMenu() {
     const [alerts, setAlerts] = React.useState(rows);
     const [toDelete, setToDelete] = React.useState<number[]>([]);
     const [statusOptions, setStatusOptions] = React.useState([]);
-    const { contextData, setData } = useAppContext();
+    const { addMessage } = useMessageQueue();
 
     const columns: GridColDef<(typeof rows)[number]>[] = [
         { field: 'id', headerName: 'ID', width: 90 },
@@ -111,7 +111,7 @@ export default function AlertsMenu() {
 
         y.then((json: string) => {
             console.log(json);
-            const obj = checkApiResponse(json, contextData, setData);
+            const obj = checkApiResponse2(json, addMessage);
             if (!obj.success)
                 return;
             console.log(obj);

@@ -17,8 +17,8 @@ export interface ContextData {
     locationFilter: string;
     qrtFilter: boolean; // true to filter out QRT spots
     huntedFilter: boolean; // true to filter out already hunted spots
-    errorMsg: string; // when set to a value, an alert is displayed in AppMenu
-    errorSeverity: string;
+    // errorMsg: string; // when set to a value, an alert is displayed in AppMenu
+    // errorSeverity: string;
     themeMode: string;
     onlyNewFilter: boolean;
     sigFilter: string;
@@ -30,7 +30,7 @@ export interface ContextData {
     showHiddenFilter: boolean;
 }
 
-export  interface AppContextType {
+export interface AppContextType {
     contextData: ContextData;
     qsyButtonId: string;
     setData: (d: ContextData) => void;

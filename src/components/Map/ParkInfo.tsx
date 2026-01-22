@@ -5,16 +5,18 @@ import { getParkStats } from '../Utilities/pota';
 import { ParkStats } from '../../@types/PotaTypes';
 
 import './ParkInfo.scss'
-import { checkApiResponse } from '../Utilities/util';
+import { checkApiResponse2 } from '../Utilities/util';
 import ProgramIcon from '../Icons/ProgramIcon';
+import { useMessageQueue } from '../MessageContext';
 
 
 export default function ParkInfo() {
-    const { contextData, setData } = useAppContext();
+    const { contextData } = useAppContext();
     const [stats, setStats] = React.useState<ParkStats | null>(null);
     const [hunts, setHunts] = React.useState(0);
     const [newBand, setNewBand] = React.useState(false);
     const [bandsText, setBandsText] = React.useState("");
+    const { addMessage } = useMessageQueue();
 
     function onParkChange() {
         const park = contextData?.park?.reference || '';
@@ -30,14 +32,14 @@ export default function ParkInfo() {
         }
 
         window.pywebview.api.get_park_hunts(park).then((j: string) => {
-            const o = checkApiResponse(j, contextData, setData);
+            const o = checkApiResponse2(j, addMessage);
             const hunts = parseInt(o.count);
             setHunts(hunts);
         });
 
         if (freq !== null || freq !== '') {
             window.pywebview.api.get_park_hunted_bands(freq, park).then((j: string) => {
-                const o = checkApiResponse(j, contextData, setData);
+                const o = checkApiResponse2(j, addMessage);
                 const bandTxt = o.bands;
                 const nb = o.new_band;
                 setNewBand(nb);

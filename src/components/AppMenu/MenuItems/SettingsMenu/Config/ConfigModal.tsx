@@ -10,8 +10,8 @@ import GeneralSettingsTab from './GeneralSettingsTab';
 import LoggerSettingsTab from './LoggerSettingsTab';
 import RadioSettingsTab from './RadioSettingsTab';
 import ScanningSettingsTab from './ScanningSettingsTab';
-import { setErrorMsg } from '../../../../Utilities/util';
-import { useAppContext } from '../../../../AppContext';
+import { showErrorAlert } from '../../../../Utilities/util';
+import { useMessageQueue } from '../../../../MessageContext';
 import ProgramSettingsTab from './ProgramSettingsTab';
 import HlModal2 from '../../../../Common/HlModal';
 
@@ -57,7 +57,7 @@ export default function ConfigModal() {
     const [config2, setConfig2] = React.useState<ConfigVer2[]>(def2);
     const [value, setValue] = React.useState(0);
     const { config, setConfig } = useConfigContext();
-    const { contextData, setData } = useAppContext();
+    const { addMessage } = useMessageQueue();
 
     const handleOpen = () => setOpen(true);
 
@@ -137,7 +137,8 @@ export default function ConfigModal() {
         const cfg = cfg2.find(x => x.key == key);
         if (cfg === undefined) {
             console.log(`error: config key ${key} not found`);
-            setErrorMsg(`error: config key ${key} not found`, contextData, setData);
+            //setErrorMsg(`error: config key ${key} not found`, contextData, setData);
+            showErrorAlert(`error: config key ${key} not found`, addMessage);
             return;
         }
         cfg.val = val;

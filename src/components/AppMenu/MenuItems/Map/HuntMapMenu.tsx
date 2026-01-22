@@ -1,9 +1,8 @@
 import * as React from 'react';
 import { Button, Checkbox, CircularProgress, FormControlLabel, Stack, Typography } from '@mui/material';
-import { useAppContext } from '../../../AppContext';
 import { FeatureGroup, MapContainer, Marker, TileLayer } from 'react-leaflet';
 import { LatLngExpression } from 'leaflet';
-import { checkApiResponse } from '../../../Utilities/util';
+import { checkApiResponse2 } from '../../../Utilities/util';
 import { Qso } from '../../../../@types/QsoTypes';
 import * as L from 'leaflet';
 import 'leaflet.geodesic'; // Import the plugin
@@ -11,6 +10,7 @@ import { DatePicker } from '@mui/x-date-pickers';
 import dayjs, { Dayjs } from 'dayjs';
 import waterMarkControl from './HlMapWaterMark';
 import HlModal2 from '../../../Common/HlModal';
+import { useMessageQueue } from '../../../MessageContext';
 
 const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
@@ -39,7 +39,7 @@ const greenIcon = new L.Icon({
 });
 
 export default function HuntMapMenu() {
-    const { contextData, setData } = useAppContext();
+    const { addMessage } = useMessageQueue();
     const [open, setOpen] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(true);
     const [homePosition, setHomePosition] = React.useState<LatLngExpression>([0.0, 0.0]);
@@ -101,12 +101,12 @@ export default function HuntMapMenu() {
         // get home QTH as LL
         const x = window.pywebview.api.get_user_config_val('my_grid6');
         x.then(async (r: string) => {
-            const x = checkApiResponse(r, contextData, setData);
+            const x = checkApiResponse2(r, addMessage);
             if (x.success) {
                 const home_grid = x.val;
                 // console.log('home grid', home_grid);
                 const grid = await window.pywebview.api.grid_to_ll(home_grid);
-                const gridObj = checkApiResponse(grid, contextData, setData);
+                const gridObj = checkApiResponse2(grid, addMessage);
                 // console.log('grid', gridObj, gridObj['latitude'], gridObj['longitude']);
                 const lat = parseFloat(gridObj['latitude']);
                 let lon = parseFloat(gridObj['longitude']);
@@ -135,7 +135,7 @@ export default function HuntMapMenu() {
 
         const q = await window.pywebview.api.get_daily_qsos(d);
 
-        const x = checkApiResponse(q, contextData, setData);
+        const x = checkApiResponse2(q, addMessage);
         if (x.success) {
             //console.log('qsos', x.qsos);
             const t = JSON.parse(x.qsos) as Qso[];
@@ -143,7 +143,7 @@ export default function HuntMapMenu() {
                 const call = qso.call;
                 const grid = qso.gridsquare;
                 const res = await window.pywebview.api.grid_to_ll(grid);
-                const gridObj = checkApiResponse(res, contextData, setData);
+                const gridObj = checkApiResponse2(res, addMessage);
                 const lat = parseFloat(gridObj['latitude']);
                 let lon = parseFloat(gridObj['longitude']);
                 //console.log('marker', call, lat, lon);

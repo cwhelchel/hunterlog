@@ -405,14 +405,14 @@ class JsApi:
             self.lock.release()
             return self._response(False, f"Error logging QSO: {ex}")
 
-        # db written so commit & release lock
-        self.db.commit_session()
-        self.lock.release()
-
         # get the data to log to the adif file and remote adif host
         qso = self.db.qsos.get_qso(id)
         act = self.db.get_activator_name(qso_data['call'])
         qso.name = act if act is not None else 'ERROR NO NAME'
+
+        # db written so commit & release lock
+        self.db.commit_session()
+        self.lock.release()
 
         try:
             # self.adif_log.log_qso_and_send(qso, cfg)
@@ -424,6 +424,58 @@ class JsApi:
             self.lock.release()
             return self._response(False, f"Error logging as ADIF: {log_ex}")
 
+        return self._response(True, "QSO logged successfully")
+
+    def log_mulitop_qso(self, qso_data, other_ops: list[str]):
+        '''
+        Logs the QSO to the database, adif file, and updates stats. Will log
+        the same qso but change the callsign to each call given in the multi-op
+        list
+
+        :param any qso_data: dict of qso data from the UI
+        :param list[str] other_ops: array of other op callsigns
+        '''
+        logging.info('acquiring lock to log multi-OP qso')
+        self.lock.acquire()
+
+        def_pwr = self.db.config.get_value('default_pwr')
+
+        try:
+            program = qso_data['sig']
+            ref = qso_data['sig_info']
+            pota_ref = qso_data['pota_ref'] if 'pota_ref' in qso_data else ''
+
+            self.programs[program].inc_ref_hunt(ref, pota_ref)
+
+            qso_data['tx_pwr'] = def_pwr
+            logging.debug(f"logging qso: {qso_data}")
+            ids = self.db.qsos.insert_new_qso_multi(qso_data, other_ops)
+        except Exception as ex:
+            logging.error("Error logging QSO to db:")
+            logging.exception(ex)
+            self.lock.release()
+            return self._response(False, f"Error logging QSO: {ex}")
+
+        for id in ids:
+            # get the data to log to the adif file and remote adif host
+            qso = self.db.qsos.get_qso(id)
+            act = self.db.get_activator_name(qso_data['call'])
+            qso.name = act if act is not None else 'ERROR NO NAME'
+            self.db.commit_session()
+            try:
+                self.adif_log.log_qso(qso)
+            except Exception as log_ex:
+                logging.exception(
+                    msg="Error logging QSO to as adif (local/remote):",
+                    exc_info=log_ex)
+                self.lock.release()
+                return self._response(False, f"Error logging ADIF: {log_ex}")
+
+            # delay here - the remote logger may need to catch its breath
+            time.sleep(1.0)
+
+        logging.info('releasing multi-op lock')
+        self.lock.release()
         return self._response(True, "QSO logged successfully")
 
     def refresh_spot(self, spot_id: int, call: str, ref: str):

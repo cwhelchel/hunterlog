@@ -12,8 +12,7 @@ import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 
 import { HlModal, HlModalContent, HlStyledBackdrop } from '../../../Common/Modals';
-import { checkApiResponse } from '../../../Utilities/util';
-import { useAppContext } from '../../../AppContext';
+import { checkApiResponse2 } from '../../../Utilities/util';
 import pota_step1 from '../../../../assets/import_pota_1.png'
 import pota_step2 from '../../../../assets/import_pota_2.png';
 import wwff_step1 from '../../../../assets/import_wwff_1.png';
@@ -29,6 +28,7 @@ import './ParkStatsModal.scss';
 import LinearProgress from '@mui/material/LinearProgress';
 import { Divider, Typography } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
+import { useMessageQueue } from '../../../MessageContext';
 
 const PROGS = ["POTA", "WWFF", "SOTA", "WWBOTA"];
 
@@ -39,7 +39,7 @@ export interface IParkStatsModalProps {
 
 export default function ParkStatsModal(props: IParkStatsModalProps) {
     const [importType, setImportType] = React.useState(0);
-    const { contextData, setData } = useAppContext();
+    const { addMessage } = useMessageQueue();
     const [files, setFiles] = React.useState<File[]>([]);
     const [activeStep, setActiveStep] = React.useState(0);
     const [steps, setSteps] = React.useState(potaSteps);
@@ -61,7 +61,7 @@ export default function ParkStatsModal(props: IParkStatsModalProps) {
                     // this is POTA specific api call
                     const x = window.pywebview.api.imports.update_park_hunts_from_csv(fileContents);
                     x.then((r: string) => {
-                        const x = checkApiResponse(r, contextData, setData);
+                        const x = checkApiResponse2(r, addMessage);
                         if (x.success) {
                             setIsComplete(true);
                             console.log(x.message);
@@ -80,7 +80,7 @@ export default function ParkStatsModal(props: IParkStatsModalProps) {
 
                     const y = window.pywebview.api.imports.update_ref_hunts_from_prog_data(prog, fileContents);
                     y.then((r: string) => {
-                        const x = checkApiResponse(r, contextData, setData);
+                        const x = checkApiResponse2(r, addMessage);
                         if (x.success) {
                             setIsComplete(true);
                             console.log(x.message);

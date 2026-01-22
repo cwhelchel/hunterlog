@@ -3,14 +3,14 @@ import './Footer.scss'
 import * as React from 'react'
 import Link from '@mui/material/Link';
 import { Box, LinearProgress } from '@mui/material';
-import { checkApiResponse } from '../Utilities/util';
-import { useAppContext } from '../AppContext';
+import { checkApiResponse2 } from '../Utilities/util';
+import { useMessageQueue } from '../MessageContext';
 
 export default function Footer() {
     const [version, setVersion] = React.useState('');
     const [dbVersion, setDbVersion] = React.useState('');
     const [isWorking, setIsWorking] = React.useState(false);
-    const { contextData, setData } = useAppContext();
+    const { addMessage } = useMessageQueue();
 
     React.useEffect(() => {
         if (window.pywebview !== undefined && window.pywebview.api !== null)
@@ -35,10 +35,10 @@ export default function Footer() {
         if (window.pywebview) {
             setIsWorking(true);
 
-            let x = window.pywebview.api.export_qsos();
+            const x = window.pywebview.api.export_qsos();
 
             x.then((r: string) => {
-                let x = checkApiResponse(r, contextData, setData);
+                const x = checkApiResponse2(r, addMessage);
                 setIsWorking(false);
                 if (!x.success) {
                     console.log("export qsos failed");
@@ -51,9 +51,9 @@ export default function Footer() {
         if (window.pywebview) {
             setIsWorking(true);
 
-            let x = window.pywebview.api.export_park_data();
+            const x = window.pywebview.api.export_park_data();
             x.then((r: string) => {
-                let x = checkApiResponse(r, contextData, setData);
+                const x = checkApiResponse2(r, addMessage);
                 setIsWorking(false);
                 if (!x.success) {
                     console.log("export park data failed");
@@ -66,9 +66,9 @@ export default function Footer() {
         if (window.pywebview) {
             setIsWorking(true);
 
-            let x = window.pywebview.api.import_park_data();
+            const x = window.pywebview.api.import_park_data();
             x.then((r: string) => {
-                let x = checkApiResponse(r, contextData, setData);
+                const x = checkApiResponse2(r, addMessage);
                 setIsWorking(false);
                 if (!x.success) {
                     console.log("import park data failed");
@@ -96,7 +96,7 @@ export default function Footer() {
                     </Box>
                 )}
             </div>
-            <span id="attributionText">Icons from <a href="https://icons8.com" target='_blank'>icons8.com</a></span>
+            <span id="attributionText">Icons from <a href="https://icons8.com" target='_blank' rel='noreferrer'>icons8.com</a></span>
         </div>
     )
 }

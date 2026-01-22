@@ -5,15 +5,15 @@ import { CallsignNoteRow } from '../../../../@types/CallsignNoteTypes';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import { checkApiResponse } from '../../../Utilities/util';
-import { useAppContext } from '../../../AppContext';
+import { checkApiResponse2 } from '../../../Utilities/util';
 import HlModal2 from '../../../Common/HlModal';
+import { useMessageQueue } from '../../../MessageContext';
 
 
 const rows: CallsignNoteRow[] = [];
 
 export default function CallNotesMenu() {
-    const { contextData, setData } = useAppContext()
+    const { addMessage } = useMessageQueue();
     const [open, setOpen] = React.useState(false);
     const [callNotes, setCallNotes] = React.useState(rows);
     const [toDelete, setToDelete] = React.useState<number[]>([]);
@@ -28,8 +28,8 @@ export default function CallNotesMenu() {
     function getCallsignNotes() {
         const p = window.pywebview.api.callsign_notes.get_all();
         p.then((r: string) => {
-            console.log(r);
-            const result = checkApiResponse(r, contextData, setData);
+            // console.log(r);
+            const result = checkApiResponse2(r, addMessage);
 
             if (result.success) {
                 const x = JSON.parse(result.call_notes);
@@ -202,7 +202,7 @@ export default function CallNotesMenu() {
             const x = [...callNotes];
             const res = await window.pywebview.api.callsign_notes.set_notes(JSON.stringify(x));
 
-            const result = checkApiResponse(res, contextData, setData);
+            const result = checkApiResponse2(res, addMessage);
             if (result.success)
                 handleClose();
         }

@@ -16,10 +16,11 @@ import HuntedCheckbox from './HuntedCheckbox';
 import FreqButton from './FreqButton';
 import SpotCommentsButton from './SpotComments';
 import SpotTimeCell from './SpotTime';
-import { checkApiResponse } from '../Utilities/util';
+import { checkApiResponse2 } from '../Utilities/util';
 import HandleSpotRowClick from './HandleSpotRowClick';
 import ProgramIcon from '../Icons/ProgramIcon';
 import ScanButton from './ScanButton';
+import { useMessageQueue } from '../MessageContext';
 
 
 // this needs to be moved outside of the grid's rendering function (e.g. SpotViewer())
@@ -154,6 +155,7 @@ export default function SpotViewer() {
     const [rowSelectionModel, setRowSelectionModel] = React.useState<GridInputRowSelectionModel>([]);
     const [backdropOpen, setBackdropOpen] = React.useState(false);
     const { contextData, setData } = useAppContext();
+    const { addMessage } = useMessageQueue();
     const [density, setDensity] = React.useState<GridDensity>(() => {
         const storedDensity = localStorage.getItem('DATA_GRID_DENSITY') as GridDensity;
         return storedDensity || 'standard';
@@ -197,7 +199,7 @@ export default function SpotViewer() {
             else
                 p = window.pywebview.api.hidden_spots.hide_spot(spotId);
             p.then((r: string) => {
-                const x = checkApiResponse(r, contextData, setData);
+                const x = checkApiResponse2(r, addMessage);
 
                 if (x.success) {
                     getSpots();
@@ -250,7 +252,7 @@ export default function SpotViewer() {
 
         const p = window.pywebview.api.get_seen_regions();
         p.then((x: string) => {
-            const json = checkApiResponse(x, contextData, setData);
+            const json = checkApiResponse2(x, addMessage);
             if (json.success) {
                 contextData.regions = json.seen_regions;
                 setData(contextData);

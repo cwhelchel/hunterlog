@@ -11,11 +11,12 @@ import utc from 'dayjs/plugin/utc';
 import './QsoEntry.scss'
 import QsoTimeEntry from './QsoTimeEntry';
 import { Qso } from '../../@types/QsoTypes';
-import { checkApiResponse, setToastMsg } from '../Utilities/util';
+import { checkApiResponse2, showErrorToast } from '../Utilities/util';
 import { checkReferenceForPota, checkReferenceForSota, checkReferenceForWwbota, checkReferenceForWwff, checkForValidRefs, sigCheckers } from '../Utilities/referenceUtils';
 import { getStateFromLocDesc } from '../Utilities/pota';
 import { Park } from '../../@types/Parks';
 import { getModeDefaultRst } from '../Utilities/defaultRst';
+import { useMessageQueue } from '../MessageContext';
 
 dayjs.extend(utc);
 
@@ -55,6 +56,7 @@ export default function QsoEntry() {
     const { contextData, setData } = useAppContext();
     const [spinnerOpen, setSpinnerOpen] = React.useState(false);
     const [isSwapped, setIsSwapped] = React.useState(false);
+    const { addMessage } = useMessageQueue();
 
     async function logQso() {
         const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -79,7 +81,7 @@ export default function QsoEntry() {
         if (otherParks && !wasHandled) {
             const othersRef = checkForValidRefs(qso.sig_info, otherParks, sigCheckers[qso.sig]);
             if (!othersRef.ok)
-                setToastMsg("Bad Ref in Others list", contextData, setData);
+                showErrorToast("Bad Ref in Others list", addMessage);
             else {
                 // sig info can be a comma separated list. 
                 qso.sig_info = othersRef.xota_ref ? othersRef.xota_ref : qso.sig_info;
@@ -93,29 +95,35 @@ export default function QsoEntry() {
             const ops = multiOps.split(',');
 
             // log main window first then loop thru multiops
-            await window.pywebview.api.log_qso(qso).then((x: string) => {
-                checkApiResponse(x, contextData, setData);
 
-                ops.forEach(async function (call) {
-                    console.log(`logging multiop QSO: ${call}`);
-                    await sleep(100);
-                    const newQso = { ...qso };
-                    newQso.call = call.trim();
-                    window.pywebview.api.log_qso(newQso).then((x: string) => {
-                        checkApiResponse(x, contextData, setData);
-                    });
+            const res = await window.pywebview.api.log_mulitop_qso(qso, ops);
+            const obj = checkApiResponse2(res, addMessage);
+
+            if (!obj.success)
+                return false;
+            
+            window.pywebview.api.refresh_spot(contextData.spotId, qso.call, qso.sig_info)
+                .then((x: string) => {
+                    window.pywebview.state.getSpots();
                 });
-            });
+
+            return true;
         } else {
             // log a single operator
-            await window.pywebview.api.log_qso(qso).then((x: string) => {
-                const json = checkApiResponse(x, contextData, setData);
+            const res = await window.pywebview.api.log_qso(qso);
 
-                window.pywebview.api.refresh_spot(contextData.spotId, qso.call, qso.sig_info)
-                    .then((x: string) => {
-                        window.pywebview.state.getSpots();
-                    });
-            });
+            console.log('log_qso', res);
+            const test = checkApiResponse2(res, addMessage);
+
+            if (!test.success)
+                return false;
+
+            window.pywebview.api.refresh_spot(contextData.spotId, qso.call, qso.sig_info)
+                .then((x: string) => {
+                    window.pywebview.state.getSpots();
+                });
+
+            return true;
         }
     }
 
@@ -132,10 +140,14 @@ export default function QsoEntry() {
 
         if (qso.sig == "POTA") {
             if (otherParks) {
+                console.log('checking other parks', otherParks);
                 const myPotaRef = checkForValidRefs(qso.sig_info, otherParks, checkReferenceForPota);
 
+                console.log('mypotaref', myPotaRef);
                 if (!myPotaRef.ok)
-                    setToastMsg("Bad POTA Ref in Other Parks", contextData, setData);
+                {
+                    showErrorToast("Bad POTA Ref in Other Parks", addMessage);
+                }
 
                 qso.pota_ref = myPotaRef.xota_ref;
                 qso.comment += ` {Also: ${myPotaRef.otherRefs}}`;
@@ -169,21 +181,24 @@ export default function QsoEntry() {
         }
 
         window.pywebview.api.spot_activator(qso, park).then((r: string) => {
-            checkApiResponse(r, contextData, setData);
+            checkApiResponse2(r, addMessage);
         });
     }
 
     async function handleLogQsoClick(
         event: React.MouseEvent<HTMLButtonElement, MouseEvent>
     ) {
-        await logQso();
-        handleClearClick(event);
+        const success = await logQso();
+        if (success)
+            handleClearClick(event);
     }
 
     async function handleSpotAndLogClick(
         event: React.MouseEvent<HTMLButtonElement, MouseEvent>
     ) {
-        await logQso();
+        const success = await logQso();
+        if (!success)
+            return;
         spotActivator();
         handleClearClick(event);
     };
@@ -198,14 +213,15 @@ export default function QsoEntry() {
     function handleClearClick(
         event: React.MouseEvent<HTMLButtonElement, MouseEvent> | null
     ) {
-        console.log("clearing qso...");
+        console.log("clearing qso...",  event, contextData);
         setQso(defaultQso);
-        contextData.park = null;
-        contextData.qso = null;
-        contextData.otherOperators = '';
-        contextData.otherParks = '';
-        contextData.spotId = 0;
-        setData(contextData);
+        const newCtx = {...contextData};
+        newCtx.park = null;
+        newCtx.qso = null;
+        newCtx.otherOperators = '';
+        newCtx.otherParks = '';
+        newCtx.spotId = 0;
+        setData(newCtx);
 
         setOtherOpsHidden(true);
         setOtherOps('');
@@ -345,7 +361,7 @@ export default function QsoEntry() {
 
             window.pywebview.api.get_reference(sig, park)
                 .then((r: string) => {
-                    const result = checkApiResponse(r, contextData, setData);
+                    const result = checkApiResponse2(r, addMessage);
                     if (!result.success) {
                         console.log("get_qso_from_spot failed: " + result.message);
                         return;

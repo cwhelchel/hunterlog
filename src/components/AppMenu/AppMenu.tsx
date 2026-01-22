@@ -12,20 +12,60 @@ import { ActivatorData } from '../../@types/ActivatorTypes';
 import { Alert, Avatar, Tooltip, AlertColor, Snackbar } from '@mui/material';
 import StatsDropdownMenu from './MenuItems/StatsDropdownMenu';
 import AlertsArea from './AlertsArea';
-import { checkApiResponse } from '../Utilities/util';
+import { checkApiResponse2 } from '../Utilities/util';
 import HuntMapMenu from './MenuItems/Map/HuntMapMenu';
 import ConfigDropdownMenu from './MenuItems/ConfigDropdownMenu';
+import { useMessageQueue } from '../MessageContext';
+
+
 
 export default function AppMenu() {
 
-    const { contextData, setData } = useAppContext();
+    const { contextData } = useAppContext();
     const [callsign, setCallsign] = React.useState('');
     const [gravatar, setGravatar] = React.useState('');
-    const [snackOpen, setSnackOpen] = React.useState(false);
-    const [errorMsg, setErrorMsg] = React.useState('');
-    const [errorSeverity, seterrorSeverity] = React.useState<AlertColor>('info');
-    const [alertHidden, setAlertHidden] = React.useState(true);
     const [refreshBtnColor, setRefreshBtnColor] = React.useState('#008C2C');
+
+    const [snackOpen, setSnackOpen] = React.useState(false);
+    const [snackMsg, setSnackMsg] = React.useState('');
+    const [alertHidden, setAlertHidden] = React.useState(true);
+    const [alertMsg, setAlertMsg] = React.useState('');
+    const [severity, setSeverity] = React.useState<AlertColor>('info');
+
+    const { messages, removeMessage, addMessage } = useMessageQueue();
+
+    // Logic to auto-remove messages after a duration (e.g., 3 seconds)
+    React.useEffect(() => {
+        if (messages.length > 0) {
+            // console.log('messages queue updated', messages);
+
+            if (messages[0].type == 1) {
+                showSnackMsg(messages[0]);
+            }
+            else if (messages[0].type == 0) {
+                showAlertMsg(messages[0]);
+            }
+
+            const timer = setTimeout(() => {
+                removeMessage(messages[0].id); // Remove the oldest message
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [messages, removeMessage]);
+
+
+    function showSnackMsg(msg: MessageType) {
+        setSeverity(msg.color as AlertColor);
+        setSnackMsg(msg.message);
+        setSnackOpen(true);
+    }
+
+    function showAlertMsg(msg: MessageType) {
+        setAlertMsg(msg.message);
+        setSeverity(msg.color as AlertColor);
+        setAlertHidden(false);
+    }
+
 
     function getCfg() {
         // pywebview is ready so api can be called here:
@@ -34,7 +74,7 @@ export default function AppMenu() {
         const y = window.pywebview.api.get_user_config_val('my_call');
 
         y.then((cfgStr: string) => {
-            const obj = checkApiResponse(cfgStr, contextData, setData);
+            const obj = checkApiResponse2(cfgStr, addMessage);
 
             if (!obj.success)
                 return;
@@ -64,31 +104,6 @@ export default function AppMenu() {
         }
     }, []);
 
-
-    function fn() {
-        console.log("errorMsg Changed: " + contextData.errorMsg);
-
-        if (contextData.errorMsg !== '') {
-            if (["error", "warning", "info"].includes(contextData.errorSeverity)) {
-                setAlertHidden(false);
-                seterrorSeverity(contextData.errorSeverity as AlertColor);
-                setErrorMsg(contextData.errorMsg);
-            } else if (["success"].includes(contextData.errorSeverity)) {
-                setSnackOpen(true);
-            }
-        }
-        else if (errorMsg === '') {
-            // dont hide if there's still a message
-            setAlertHidden(true);
-            seterrorSeverity('info');
-        }
-    };
-
-    React.useEffect(() => {
-        fn();
-    }, [contextData.errorMsg]);
-
-
     React.useEffect(() => {
         if (contextData.themeMode == 'dark')
             setRefreshBtnColor('#008C2C')
@@ -103,14 +118,10 @@ export default function AppMenu() {
     }
 
     function handleAlertClose() {
-        const x = { ...contextData };
-        x.errorMsg = '';
-        setData(x);
         // this indicates user has cleared the message
-        setErrorMsg('');
+        setAlertMsg('');
         setAlertHidden(true);
     }
-
 
     const handleSnackClose = (event: React.SyntheticEvent | Event, reason?: string) => {
         if (reason === 'clickaway') {
@@ -148,6 +159,9 @@ export default function AppMenu() {
                     <ConfigDropdownMenu />
                     <StatsDropdownMenu />
                     <HuntMapMenu />
+                    {/* <Button onClick={() => checkApiResponse2('{ "success": false, "message": "Test msg" }', addMessage)}>
+                        Test
+                    </Button> */}
 
                     {/* user configured alerts (new parks, callsigns, etc) */}
                     <AlertsArea />
@@ -158,7 +172,7 @@ export default function AppMenu() {
                     </Typography>
 
                     {!alertHidden &&
-                        <Alert variant="filled" severity={errorSeverity} onClose={() => { handleAlertClose() }} >{errorMsg}</Alert>
+                        <Alert variant="filled" severity={severity} onClose={() => { handleAlertClose() }} >{alertMsg}</Alert>
                     }
                     <Tooltip title="Refresh">
                         <IconButton onClick={() => {
@@ -174,9 +188,11 @@ export default function AppMenu() {
                 open={snackOpen}
                 autoHideDuration={6000}
                 onClose={handleSnackClose}
-                message={contextData.errorMsg}
-                action={action}
-            />
+                action={action}>
+                <Alert onClose={handleSnackClose} variant='filled' severity={severity} sx={{ width: '100%' }}>
+                    {snackMsg}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 }

@@ -1,9 +1,9 @@
 import React from "react";
-import ReactDOM from 'react-dom'
 import { createRoot } from "react-dom/client";
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { LocalizationProvider } from '@mui/x-date-pickers'
 import { AppContextProvider } from './components/AppContext'
+import { MessageContextProvider } from './components/MessageContext'
 import { ConfigContextProvider } from './components/AppMenu/MenuItems/SettingsMenu/Config/ConfigContextProvider'
 import Main from './components/Main'
 
@@ -15,7 +15,9 @@ export default function App() {
             <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <AppContextProvider>
                     <ConfigContextProvider>
-                        <Main />
+                        <MessageContextProvider>
+                            <Main />
+                        </MessageContextProvider>
                     </ConfigContextProvider>
                 </AppContextProvider>
             </LocalizationProvider >

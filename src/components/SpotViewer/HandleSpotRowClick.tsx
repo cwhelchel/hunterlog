@@ -4,8 +4,9 @@ import { Park } from "../../@types/Parks";
 import { Qso } from "../../@types/QsoTypes";
 import { SpotComments } from "../../@types/SpotComments";
 import { useAppContext } from "../AppContext";
-import { checkApiResponse } from '../Utilities/util';
+import { checkApiResponse2 } from '../Utilities/util';
 import { getMultiParkString, testForNfer } from '../Utilities/nferUtils';
+import { useMessageQueue } from '../MessageContext';
 
 interface MultiData {
     otherOps: string;
@@ -24,6 +25,7 @@ interface MultiData {
 export default function HandleSpotRowClick() {
 
     const { contextData, setData } = useAppContext();
+    const { addMessage } = useMessageQueue();
     const [isWorking, setIsWorking] = useState(false);
 
     async function getOtherData(spotId: number): Promise<MultiData> {
@@ -69,7 +71,7 @@ export default function HandleSpotRowClick() {
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         q.then((r: any) => {
-            const result = checkApiResponse(r, contextData, setData);
+            const result = checkApiResponse2(r, addMessage);
 
             if (!result.success) {
                 console.log("get_qso_from_spot failed: " + result.message);
@@ -81,7 +83,7 @@ export default function HandleSpotRowClick() {
 
             window.pywebview.api.get_reference(x.sig, x.sig_info)
                 .then((r: string) => {
-                    const result = checkApiResponse(r, contextData, setData);
+                    const result = checkApiResponse2(r, addMessage);
                     if (!result.success) {
                         console.log("get_qso_from_spot failed: " + result.message);
                         setIsWorking(false);

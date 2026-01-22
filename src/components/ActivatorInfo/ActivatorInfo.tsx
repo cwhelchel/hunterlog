@@ -8,8 +8,9 @@ import { Tooltip } from '@mui/material';
 import TimelineIcon from '@mui/icons-material/Timeline';
 
 import './ActivatorInfo.scss'
-import { checkApiResponse } from '../Utilities/util';
+import { checkApiResponse2 } from '../Utilities/util';
 import ReactMarkdown from 'react-markdown'
+import { useMessageQueue } from '../MessageContext';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface IActivatorInfoProps {
@@ -37,7 +38,8 @@ const getUserAvatarURL = (md5: string) => {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const ActivatorInfo = (props: IActivatorInfoProps) => {
-    const { contextData, setData } = useAppContext();
+    const { contextData } = useAppContext();
+    const { addMessage } = useMessageQueue();
     const [activator, setActivator] = React.useState<ActivatorData>(defaultActData);
     const [huntCount, setHuntCount] = React.useState(0);
     const [actComments, setActComments] = React.useState(['']);
@@ -91,7 +93,7 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
                     return;
                 }
 
-                const j = checkApiResponse(r, contextData, setData)
+                const j = checkApiResponse2(r, addMessage);
                 if (j.success == false) {
                     // not pota account add some dummy stuff just to display
                     // something
@@ -111,7 +113,7 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
             const notes = window.pywebview.api.callsign_notes.get_call_note(actCall);
 
             notes.then((r: string) => {
-                const j = checkApiResponse(r, contextData, setData)
+                const j = checkApiResponse2(r, addMessage)
                 if (j.success) {
                     const theNotes = j.notes;
                     setCallNotes(theNotes);

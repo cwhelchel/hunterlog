@@ -2,17 +2,19 @@ import * as React from 'react';
 import Button from '@mui/material/Button';
 import { useGridApiContext, gridFilteredSortedRowIdsSelector, useGridSelector, GridRowId } from '@mui/x-data-grid';
 import { useConfigContext } from '../AppMenu/MenuItems/SettingsMenu/Config/ConfigContextProvider';
-import { checkApiResponse, setToastMsg } from '../Utilities/util'
+import { checkApiResponse2, showWarningToast } from '../Utilities/util'
 import { useAppContext } from '../AppContext';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import LoopIcon from '@mui/icons-material/Loop';
 import { styled, keyframes } from '@mui/system';
+import { useMessageQueue } from '../MessageContext';
 
 export default function ScanButton() {
     const apiRef = useGridApiContext();
     const filteredIds = useGridSelector(apiRef, gridFilteredSortedRowIdsSelector);
     const { config } = useConfigContext();
     const { contextData, setData, setLastQsyBtnId } = useAppContext();
+    const { addMessage } = useMessageQueue();
     const [isScanning, setIsScanning] = React.useState(false);
     const [firstError, setFirstError] = React.useState(true);
     const [scanIndex, setScanIndex] = React.useState(0);
@@ -33,7 +35,7 @@ export default function ScanButton() {
                 if (window.pywebview?.api) {
                     try {
                         const pttResp = await window.pywebview.api.get_ptt();
-                        const json = checkApiResponse(pttResp, contextData, setData);
+                        const json = checkApiResponse2(pttResp, addMessage);
                         // console.log("PTT check - success:", json.success, "ptt value:", json.ptt, "type:", typeof json.ptt);
                         // loose equality check or string conversion to handle int/string return
                         if (json.success && String(json.ptt) !== '0') {
@@ -48,7 +50,7 @@ export default function ScanButton() {
                                 console.log('clearing interval', pttRef.current);
                                 clearInterval(pttRef.current as number);
                                 if (firstError) {
-                                    setToastMsg('PTT detection not available. Stop scanning manually.', contextData, setData);
+                                    showWarningToast('PTT detection not available. Stop scanning manually.', addMessage);
                                     setFirstError(false);
                                 }
                             }
