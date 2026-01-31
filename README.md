@@ -1,6 +1,4 @@
-# Hunterlog++
-
-> **Note:** This is an enhanced fork of the original [Hunterlog by N9FZ](https://github.com/cwhelchel/hunterlog) with additional features and improvements.
+# Hunterlog
 
 [![GitHub Release](https://img.shields.io/badge/download-windows-green)](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.9/hunterlog_0.0.9.zip)
 [![GitHub Release](https://img.shields.io/badge/download-linux-green)](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.9/hunterlog-ubuntu_0.0.9-hotfix.zip)
@@ -29,16 +27,6 @@ CAT control, and log them to your master logger. It will also keep track of the 
 * Use CAT control to immediately jump to a spot
   * supports: FLRIG, RIGCTLD, and N3FJP's CAT API (more possible)
 
-## Hunterlog++ Enhancements
-
-This fork includes the following additional features:
-
-* **Automatic Scanning** - Automatically cycle through filtered POTA/SOTA spots
-  * Configurable wait time per station
-  * Smart PTT detection to pause scanning when transmitting
-  * Visual indicators for currently scanned station
-  * See [Scanning Feature](#scanning-feature) for detailed usage instructions
-
 ## Community
 
 If you're not comfortable using Github to submit issues and enhancement requests, feel free to join our Discord community server. Hop in and ask questions, share comments, propose new features or get help using Hunterlog.
@@ -46,6 +34,15 @@ If you're not comfortable using Github to submit issues and enhancement requests
 [Discord Invite Link](https://discord.gg/DfqMVMuMnG)
 
 If you'd like some video style walk-throughs of setting up Hunterlog check out my [YouTube channel](https://www.youtube.com/@cainan-n9fz)
+
+## Bug Reporting and Support 🔍🐜
+
+This app is in continual development. Please report bugs and feature requests here
+on Github issues. In your report, please include both the app version number and 
+the db version number. Both are displayed at the very bottom of Hunterlog.
+
+For simple questions please use the Github Discussions area, join the Discord,
+or email me.
 
 # Installation and Setup
 
@@ -144,7 +141,7 @@ you can see what parks you need to hunt.
 >*STATISTICAL DATA SHOWN IN THIS APP IS NOT AUTHORITATIVE* The authoritative data
 of record is your data in https://pota.app
 
-# Logging QSOs
+# Using Hunterlog
 
 Click a spot to load the QSO info into the top portion of the screen. Click green frequency button to QSY with CAT control. Click Log QSO after you've had the contact. The app will update stats and send the QSO data (with any modifications you do to the input) to your main logger. 
 
@@ -218,11 +215,6 @@ connection between HunterLog and your main logger. Your QSOs are here still.
 The app also requires a few data files but they will be packaged with the release.
 It may also download new files as you use it.
 
-# Bug reporting
-
-This app is currently under pre-release. Please report bugs here on Github 
-issues. In your report, please include both the app version number and the db
-version number. Both are displayed at the very bottom of Hunterlog.
 
 
 *Happy hunting and hpe to CUL 🍻 es 73*
