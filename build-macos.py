@@ -27,6 +27,7 @@ OPTIONS = {
     'strip': False,
     'iconfile': 'src/assets/logo.icns',
     'includes': ['charset_normalizer.md__mypyc'],
+    'excludes': ['setuptools'],
     'packages': ['WebKit', 'Foundation', 'webview', 'objc'],
     'plist': {
         'NSRequiresAquaSystemAppearance': False
