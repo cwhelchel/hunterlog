@@ -12,7 +12,7 @@ export function checkReferenceForWwff(ref: string) {
 }
 
 export function checkReferenceForPota(ref: string) {
-    const regex = new RegExp('[A-Z0-9]+-[0-9]*');
+    const regex = new RegExp('^[A-Z0-9]+-[0-9]{4,}');
     return regex.test(ref);
 }
 
@@ -38,11 +38,15 @@ export function checkForValidRefs(currentRef: string, otherRefs: string, checker
     const res = otherRefs;
     const currentPark = currentRef;
     const arr = res.split(',');
+    let isOk = true;
+
+    //console.log('checkForValidRefs', currentRef, otherRefs, arr);
 
     arr.forEach((x) => {
-        const isValid = checker(x);
+        const isValid = checker(x.trim());
         if (!isValid) {
-            return { ok: false };
+            //console.log('check failed', x);
+            isOk = false;
         }
     })
 
@@ -50,7 +54,7 @@ export function checkForValidRefs(currentRef: string, otherRefs: string, checker
     arr.push(currentPark);
 
     return {
-        ok: true,
+        ok: isOk,
         xota_ref: arr.join(','),
         otherRefs: res
     };
