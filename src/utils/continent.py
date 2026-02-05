@@ -62,7 +62,13 @@ class Continents():
             with open(file=fn, mode='r', encoding='utf-8') as f:
                 self.wwbota = json.load(f)
 
-        return self.wwbota[scheme]['continent'].upper()
+        result = ""
+        try:
+            result = self.wwbota[scheme]['continent'].upper()
+        except Exception as ex:
+            logging.warning('find_continent_wwbota error', exc_info=ex)
+
+        return result
 
     def _init_sota(self, root: str):
         sota_f = Path(root, 'data/', 'sota_associations.json')

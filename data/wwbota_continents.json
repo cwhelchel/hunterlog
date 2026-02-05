@@ -70,5 +70,17 @@
     "CABOTA": {
         "country": "Canada",
         "continent": "NA"
+    },
+    "USBOTA": {
+        "country": "United States of America",
+        "continent": "NA"
+    },
+    "BABOTA": {
+        "country": "Bosnia Herzegovina",
+        "continent": "EU"
+    },
+    "OEBOTA": {
+        "country": "Austria",
+        "continent": "EU"
     }
 }
