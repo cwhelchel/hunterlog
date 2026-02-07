@@ -32,13 +32,10 @@ jobs:
       run: npm run build
 
     - name: Sign windows output
-      uses: skymatic/code-sign-action@v1
+      uses: dlemstra/code-sign-action@v1
       with:
         certificate: '${{ secrets.CERTIFICATE }}'
         password: '${{ secrets.PASSWORD }}'
-        certificatesha1: '${{ secrets.CERTHASH }}'
-        certificatename: '${{ secrets.CERTNAME }}'
-        timestampUrl: 'http://timestamp.digicert.com'
         folder: 'dist'
         recursive: true
         
