@@ -30,12 +30,7 @@ jobs:
       run: npm run init
     - name: Build Output
       run: npm run build
-    - uses: actions/upload-artifact@v4
-      with:
-        name: hunterlog
-        path: dist
-        runs-on: windows-latest
-        
+
     - name: Sign windows output
       uses: skymatic/code-sign-action@v1
       with:
@@ -46,3 +41,11 @@ jobs:
         timestampUrl: 'http://timestamp.digicert.com'
         folder: 'dist'
         recursive: true
+        
+    - uses: actions/upload-artifact@v4
+      with:
+        name: hunterlog
+        path: dist
+        runs-on: windows-latest
+        
+
