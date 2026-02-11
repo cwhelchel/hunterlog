@@ -82,5 +82,9 @@
     "OEBOTA": {
         "country": "Austria",
         "continent": "EU"
+    },
+    "CXBOTA": {
+        "country": "Uruguay",
+        "continent": "SA"
     }
 }
