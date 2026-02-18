@@ -86,5 +86,9 @@
     "CXBOTA": {
         "country": "Uruguay",
         "continent": "SA"
+    },
+    "HBBOTA": {
+        "country": "Switzerland",
+        "continent": "EU"
     }
 }
