@@ -52,3 +52,9 @@ class GenericFileLogger(IAdifLogger):
 
     def get_extra_field_adif(self, qso):
         pass
+
+    def stage_qso(self, qso):
+        pass
+
+    def clear_staged(self):
+        pass

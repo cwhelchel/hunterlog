@@ -188,7 +188,9 @@ export default function QsoEntry() {
     async function handleLogQsoClick(
         event: React.MouseEvent<HTMLButtonElement, MouseEvent>
     ) {
+        setData({...contextData, loadingQsoData: true});
         const success = await logQso();
+        setData({...contextData, loadingQsoData: false});
         if (success)
             handleClearClick(event);
     }
@@ -196,9 +198,11 @@ export default function QsoEntry() {
     async function handleSpotAndLogClick(
         event: React.MouseEvent<HTMLButtonElement, MouseEvent>
     ) {
+        setData({...contextData, loadingQsoData: true});
         const success = await logQso();
         if (!success)
             return;
+        setData({...contextData, loadingQsoData: false});
         spotActivator();
         handleClearClick(event);
     };
