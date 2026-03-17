@@ -36,7 +36,7 @@ class rigctld(ICat):
         if self.socket:
             try:
                 self.online = True
-                self.socket.send(bytes(f"M {mode} 0\n", "utf-8"))
+                self.socket.send(bytes(f"M {mode} -1\n", "utf-8"))
                 _ = self.socket.recv(1024).decode().strip()
                 return True
             except socket.error as e:
