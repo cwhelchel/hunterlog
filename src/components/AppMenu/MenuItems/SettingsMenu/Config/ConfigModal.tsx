@@ -110,6 +110,9 @@ export default function ConfigModal() {
         config.enabled_progs = getVar(cfg2, 'enabled_programs');
         config.scan_wait_time = Number(getVar(cfg2, "scan_wait_time"));
         config.stage_qsos = Number(getVar(cfg2, "stage_qsos")) != 0;
+        config.wavelog_url = getVar(cfg2, 'wl_url');
+        config.wavelog_api_key = getVar(cfg2, 'wl_api_key');
+        config.qrz_api_key = getVar(cfg2, 'qrz_api_key');
         setConfig(config);
     }
 
@@ -130,6 +133,9 @@ export default function ConfigModal() {
         setVar(config2, "enabled_programs", config.enabled_progs);
         setVar(config2, "scan_wait_time", config.scan_wait_time.toString());
         setVar(config2, "stage_qsos", config.stage_qsos.toString());
+        setVar(config2, "wl_url", config.wavelog_url);
+        setVar(config2, "wl_api_key", config.wavelog_api_key);
+        setVar(config2, "qrz_api_key", config.qrz_api_key);
         setConfig2(config2);
     }
 

@@ -205,6 +205,33 @@ class ConfigQuery:
             'group': 'logger',
             'enabled': 'True',
             'editable': 'True'
+        },
+        {
+            'key': 'wl_url',
+            'val': '',
+            'type': 'string',
+            'description': 'URL of Wavelog instance. http://yada.com/',
+            'group': 'wavelog',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'wl_api_key',
+            'val': '',
+            'type': 'string',
+            'description': 'API key for Wavelog access',
+            'group': 'wavelog',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'qrz_api_key',
+            'val': '',
+            'type': 'string',
+            'description': 'API key for QRZ access',
+            'group': 'qrz',
+            'enabled': 'True',
+            'editable': 'True'
         }
     ]
 

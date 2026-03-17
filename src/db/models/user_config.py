@@ -34,6 +34,8 @@ class UserConfig(Base):
         Aclog = 2
         Log4om = 3
         WsjtxUdp = 4
+        Wavelog = 5
+        Qrz = 6
 
     def __repr__(self):
         return "<config({self.my_call!r}:{self.my_grid6!r})>" \

@@ -57,6 +57,9 @@ class JsApi:
             self.db.config.get_value('my_grid6'),
             self.db.config.get_value('adif_host'),
             self.db.config.get_value('adif_port'),
+            self.db.config.get_value('wl_url'),
+            self.db.config.get_value('wl_api_key'),
+            self.db.config.get_value('qrz_api_key')
         )
         self.adif_log = LoggerInterface.get_logger(lp, __version__)
         logging.debug(f"got logger {self.adif_log}")
@@ -562,6 +565,8 @@ class JsApi:
             self.db.config.get_value('my_grid6'),
             self.db.config.get_value('adif_host'),
             self.db.config.get_value('adif_port'),
+            self.db.config.get_value('wl_url'),
+            self.db.config.get_value('wl_api_key'),
         )
         self.adif_log = LoggerInterface.get_logger(lp, __version__)
         logging.debug(f"updating logger {self.adif_log}")

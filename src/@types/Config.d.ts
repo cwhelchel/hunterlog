@@ -18,6 +18,9 @@ export interface UserConfig {
     enabled_progs: string
     scan_wait_time: number,
     stage_qsos: boolean,
+    wavelog_url: string,
+    wavelog_api_key: string,
+    qrz_api_key: string
 }
 
 export interface ConfigVer2 {

@@ -12,8 +12,10 @@ from loggers.iadif_logger import IAdifLogger
 from loggers.generic_logger import GenericFileLogger
 from loggers.l4om_logger import Log4omLogger
 from loggers.n3fjp_logger import N3fjpLogger
+from loggers.qrz_logger import QrzLogger
 from loggers.tcp_logger import TcpLogger
 from loggers.udp_logger import UdpLogger
+from loggers.wavelog_logger import WavelogLogger
 from loggers.wsjtx_logger import WsjtxLogger
 
 log = logging.getLogger(__name__)
@@ -26,6 +28,9 @@ class LoggerParams:
     my_grid6: str
     adif_host: str
     adif_port: int
+    wl_url: str
+    wl_api_key: str
+    qrz_api_key: str
 
 
 class LoggerInterface:
@@ -60,6 +65,10 @@ class LoggerInterface:
             logger = Log4omLogger()
         elif interface == UserConfig.LoggerType.WsjtxUdp.value:
             logger = WsjtxLogger()
+        elif interface == UserConfig.LoggerType.Wavelog.value:
+            logger = WavelogLogger()
+        elif interface == UserConfig.LoggerType.Qrz.value:
+            logger = QrzLogger()
         else:
             log.warning(f"unknown logger type: {interface}")
             logger = GenericFileLogger()
@@ -70,7 +79,10 @@ class LoggerInterface:
             log_filename='hunter.adi',
             app_ver=app_ver,
             host=config.adif_host,
-            port=config.adif_port
+            port=config.adif_port,
+            wl_url=config.wl_url,
+            wl_api_key=config.wl_api_key,
+            qrz_api_key=config.qrz_api_key
         )
 
         return logger

@@ -20,7 +20,10 @@ const defData: UserConfig = {
     include_rst: false,
     enabled_progs: '',
     scan_wait_time: 5,
-    stage_qsos: true
+    stage_qsos: true,
+    wavelog_url: '',
+    wavelog_api_key: '',
+    qrz_api_key: ''
 };
 
 export interface ConfigContextType {
