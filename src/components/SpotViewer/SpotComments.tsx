@@ -1,14 +1,16 @@
 import * as React from 'react';
 import { Box, Button, CircularProgress, FormControlLabel, Switch } from '@mui/material';
 import { SpotComments } from '../../@types/SpotComments';
+import HistoryIcon from '@mui/icons-material/History';
 
 import './SpotComments.scss'
 import HlModal2 from '../Common/HlModal';
 
 interface ISpotCommentsProps {
     spotId: number,
-    spotter: string,
-    comments: string,
+    spotter?: string,
+    comments?: string,
+    respotCount?: number 
 };
 
 export default function SpotCommentsButton(props: ISpotCommentsProps) {
@@ -97,7 +99,15 @@ export default function SpotCommentsButton(props: ISpotCommentsProps) {
     return (
         <div>
             <Button variant='text' onClick={onClick}>
-                {cellVal}
+                {props.respotCount === undefined &&
+                    <div>{cellVal}</div>
+                }
+                {props.respotCount !== undefined && props.respotCount > 0 &&
+                    <div style={{ display: 'flex' }}>
+                        <HistoryIcon />
+                        {props.respotCount}
+                    </div>
+                }
             </Button>
 
             <HlModal2

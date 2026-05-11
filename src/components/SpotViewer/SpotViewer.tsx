@@ -5,6 +5,7 @@ import { DataGrid, GridColDef, GridValueGetterParams, GridFilterModel, GridSortM
 import { GridEventListener } from '@mui/x-data-grid';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import HistoryIcon from '@mui/icons-material/History';
 
 import { useAppContext } from '../AppContext';
 
@@ -120,6 +121,15 @@ const columns: GridColDef[] = [
             return (
                 <SpotCommentsButton spotId={x.row.spotId} spotter={x.row.spotter} comments={x.row.comments} />
             )
+        }
+    },
+    {
+        field: 'count', headerName: '', width: 75,
+        renderCell: (x) => {
+            return <>
+                {/* here respotCount is set making it look like history button */}
+                <SpotCommentsButton spotId={x.row.spotId} respotCount={x.row.count} />
+            </>
         }
     },
     {

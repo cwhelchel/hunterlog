@@ -29,7 +29,7 @@ class Spot(Base):
     grid6 = sa.Column(sa.String(6))
     latitude = sa.Column(sa.Float)
     longitude = sa.Column(sa.Float)
-    count = sa.Column(sa.Integer())
+    count = sa.Column(sa.Integer())  # re-spot count on pota.app
     expire = sa.Column(sa.Integer())
 
     # meta data regarding this "activation" (activator+park+utcday) as it
