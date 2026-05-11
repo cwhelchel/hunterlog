@@ -90,5 +90,9 @@
     "HBBOTA": {
         "country": "Switzerland",
         "continent": "EU"
+    },
+    "SMBOTA": {
+        "country": "Sweden",
+        "continent": "EU"
     }
 }
