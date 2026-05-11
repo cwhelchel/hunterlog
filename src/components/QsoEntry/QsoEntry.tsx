@@ -557,16 +557,18 @@ export default function QsoEntry() {
                     <>
                         <Grid item xs={4} lg={2}>
                             <TextField id="rstRecv" label="RST Recv"
+                                
                                 value={qso.rst_recv}
-                                inputProps={{ style: textFieldStyle }}
+                                inputProps={{ style: textFieldStyle, autoComplete: 'off'  }}
                                 onChange={(e) => {
                                     setQso({ ...qso, rst_recv: e.target.value });
                                 }} />
                         </Grid>
                         <Grid item xs={4} lg={2}>
                             <TextField id="rstSent" label="RST Sent"
+                                autoComplete="off"
                                 value={qso.rst_sent}
-                                inputProps={{ style: textFieldStyle }}
+                                inputProps={{ style: textFieldStyle, autoComplete: 'off' }}
                                 onChange={(e) => {
                                     setQso({ ...qso, rst_sent: e.target.value });
                                 }} />
