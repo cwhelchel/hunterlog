@@ -108,6 +108,11 @@ class Spot(Base):
             log.warning('error reading wwff freq', exc_info=ex)
             self.frequency = 0.0
         self.mode = str(json['MODE']).upper()
+
+        # often WWFF have no mode. default to SSB
+        if self.mode is None or self.mode == "":
+            self.mode = "SSB"
+
         self.reference = json['REF']
         # parkName isnt really used use it for activator from sota
         self.parkName = json['ACTIVATOR']
