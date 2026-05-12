@@ -32,6 +32,10 @@ class dxlabs(ICat):
             self.online = False
             logger.error("init_cat", exc_info=e)
 
+    @property
+    def is_online(self) -> bool:
+        return self.online
+
     def set_mode(self, mode: str) -> bool:
         """sets the radios mode using DxLabs API"""
 

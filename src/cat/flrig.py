@@ -22,7 +22,7 @@ class flrig(ICat):
         self.port = kwargs['port']
 
         target = f"http://{self.host}:{self.port}"
-        logger.debug("%s", target)
+        logger.debug("flrig url: %s", target)
 
         self.server = xmlrpc.client.ServerProxy(target)
         self.online = True
@@ -34,10 +34,13 @@ class flrig(ICat):
             self.server = None
             logger.warning("no flrig connection", exc_info=e)
 
+    @property
+    def is_online(self) -> bool:
+        return self.online
+
     def set_mode(self, mode: str) -> bool:
         """Sets the radios mode"""
         try:
-            self.online = True
             return self.server.rig.set_mode(mode)
         except ConnectionRefusedError as e:
             self.online = False
@@ -47,7 +50,6 @@ class flrig(ICat):
     def set_vfo(self, freq: str) -> bool:
         """Sets the radios vfo"""
         try:
-            self.online = True
             return self.server.rig.set_frequency(float(freq))
         except ConnectionRefusedError as e:
             self.online = False
@@ -57,10 +59,9 @@ class flrig(ICat):
     def get_ptt(self):
         """Returns ptt state via flrig"""
         try:
-            self.online = True
             res = self.server.rig.get_ptt()
             logger.debug(f'get_ptt -> {res}')
-            return res 
+            return res
         except ConnectionRefusedError as exception:
             self.online = False
             logger.debug("%s", exception)

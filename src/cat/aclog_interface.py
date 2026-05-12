@@ -31,6 +31,10 @@ class aclog(ICat):
             self.online = False
             logger.error("initializing aclog socket: %s", exception)
 
+    @property
+    def is_online(self) -> bool:
+        return self.online
+
     def set_mode(self, mode: str) -> bool:
         """sets the radios mode using AClog API"""
         self.aclog_new_mode = mode

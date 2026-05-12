@@ -16,6 +16,16 @@ class ICat(ABC):
         '''
         raise NotImplementedError
 
+    @property
+    @abstractmethod
+    def is_online(self) -> bool:
+        ''' 
+        Get status of CAT control object.
+
+        :returns: true if status good, online, and ready for use.
+        '''
+        raise NotImplementedError
+
     @abstractmethod
     def set_mode(self, mode: str) -> bool:
         '''
