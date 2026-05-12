@@ -24,6 +24,17 @@ class ParkQuery:
 
     def get_parks(self) -> list[Park]:
         return self.session.query(Park).all()
+    
+    def get_half_loaded_parks(self, limit: int) -> list[Park]:
+        try:
+            return self.session.query(Park) \
+                .filter(Park.name == None) \
+                .limit(limit)
+        except Exception as ex:
+            logging.warning(
+                "error in get_half_loaded_park. exception follows:",
+                exc_info=ex)
+            return None
 
     def insert_parks(self, parks: list[Park]):
         self.session.add_all(parks)

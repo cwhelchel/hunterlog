@@ -27,6 +27,9 @@ class NoProgram(Program):
                       pull_from_api: bool = True) -> Park:
         return None
 
+    def test_reference_str(self, ref: str) -> bool:
+        return True
+
     def update_spots(self, spots):
         return
 

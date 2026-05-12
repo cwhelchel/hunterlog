@@ -2,6 +2,7 @@ from collections import defaultdict
 import csv
 from datetime import datetime
 from io import StringIO
+import re
 from db.models.parks import Park
 from db.models.qsos import Qso
 from programs.apis.iapi import IApi
@@ -26,6 +27,11 @@ class WwbotaProgram(Program):
     def api(self) -> IApi:
         self.bunk_api = WwbotaApi() if self.bunk_api is None else self.bunk_api
         return self.bunk_api
+
+    def test_reference_str(self, ref: str) -> bool:
+        if re.match(r"B\/[A-Z0-9]+-[0-9]*", ref):
+            return True
+        return False
 
     def get_reference(self,
                       ref: str,

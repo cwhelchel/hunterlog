@@ -59,6 +59,15 @@ class Program(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def test_reference_str(self, ref: str) -> bool:
+        '''
+        Determine if a given reference string is a valid id for the program
+
+        :returns bool: true if valid
+        '''
+        raise NotImplementedError
+
+    @abstractmethod
     def get_reference(self,
                       ref: str,
                       pull_from_api: bool = True) -> Park:

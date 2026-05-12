@@ -26,6 +26,11 @@ class PotaProgram(Program):
     def api(self) -> IApi:
         self.pota_api = PotaApi() if self.pota_api is None else self.pota_api
         return self.pota_api
+    
+    def test_reference_str(self, ref: str) -> bool:
+        if re.match(r"^[A-Z0-9]+-[0-9]{4,}", ref):
+            return True
+        return False
 
     def get_reference(self,
                       ref: str,

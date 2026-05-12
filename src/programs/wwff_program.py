@@ -1,6 +1,7 @@
 from collections import defaultdict
 import csv
 from io import StringIO
+import re
 from db.models.parks import Park
 from db.models.qsos import Qso
 from programs.apis.iapi import IApi
@@ -27,6 +28,12 @@ class WwffProgram(Program):
     def api(self) -> IApi:
         self.wwff_api = WwffApi() if self.wwff_api is None else self.wwff_api
         return self.wwff_api
+
+    def test_reference_str(self, ref: str) -> bool:
+        if re.match(r"[a-zA-Z0-9]{1,2}FF-[0-9]{4}", ref):
+            return True
+        return False
+
 
     def get_reference(self,
                       ref: str,

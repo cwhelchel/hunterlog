@@ -14,7 +14,7 @@ from bands import get_band, get_name_of_band, bandNames
 from db.db import DataBase
 from db.models.activators import Activator, ActivatorSchema
 from db.models.alerts import AlertsSchema
-from db.models.parks import ParkSchema
+from db.models.parks import Park, ParkSchema
 from db.models.qsos import QsoSchema
 from db.models.spot_comments import SpotCommentSchema
 from db.models.spots import Spot, SpotSchema
@@ -857,6 +857,10 @@ class JsApi:
             self.programs["SOTA"].update_spots(spots["SOTA"])
             self.programs["WWFF"].update_spots(spots["WWFF"])
             self.programs["WWBOTA"].update_spots(spots["WWBOTA"])
+
+            # handle half-loaded parks from program imports
+            self._empty_park_updater()
+
             self.db.session.commit()
             logging.info("spots updated for programs")
             self.lock.release()
@@ -879,6 +883,22 @@ class JsApi:
         finally:
             if self.lock.locked():
                 self.lock.release()
+
+    def _empty_park_updater(self):
+        def get_park(park: Park):
+            logging.debug(f"empty park found: {park.reference}")
+
+            for p in self.programs.values():
+                b = p.test_reference_str(park.reference)
+                if b:
+                    logging.debug(f"empty park updater: using {p}")
+                    p.get_reference(park.reference)
+
+        needs_update = self.db.parks.get_half_loaded_parks(3)
+        logging.debug(f"empty park updater. list: {needs_update[:3]}...")
+
+        for park in needs_update[:3]:
+            get_park(park)
 
     def _update_all_parks(self) -> str:
         logging.info("updating all parks in db")
