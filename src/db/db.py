@@ -203,7 +203,6 @@ class DataBase:
 
     def get_activator(self, callsign: str) -> Activator:
         basecall = get_basecall(callsign)
-        logging.debug(f"get_activator() basecall {basecall}")
         return self.session.query(Activator) \
             .filter(Activator.callsign == basecall) \
             .first()

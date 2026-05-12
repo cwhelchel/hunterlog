@@ -140,17 +140,27 @@ export default function HandleSpotRowClick() {
     }
 
     useEffect(() => {
+        let timer: number | undefined;
+
         if (!isWorking) {
             // a cleared or logged qso changes spotId to 0
             if (contextData.spotId == 0)
                 return;
-            setIsWorking(true);
-            loadSpotData(contextData.spotId);
+
+            // wait <1 second before loading data. allow user to click rapidly
+            // without driving backend crazy
+            timer = setTimeout(() => {
+                setIsWorking(true);
+                loadSpotData(contextData.spotId);
+            }, 400);
+            
         } else {
             console.log('re-entry prevented on spot row click');
         }
         return () => {
             setIsWorking(false);
+            if (timer)
+                clearTimeout(timer);
         }
     }, [contextData.spotId]);
 

@@ -132,7 +132,10 @@ class JsApi:
         # if we cant get a lock return null
         logging.debug('getting lock for qso from spot')
         if not self.lock.acquire(timeout=4.00):
-            self.db.session.rollback()
+            # self.db.session.rollback()
+            # [cmw] when we get in this segment, HL doesn't recover without 
+            # refresh. maybe we add some way to fiddle w/ timeout value. idk
+            # remove rollback() for now as its probably a problem.
             logging.warning("timed out lock acquisition. session rollback")
             return self._response(False, "failed to get db lock. timed out.")
 
@@ -165,7 +168,7 @@ class JsApi:
         return self._response(True, "", qso=result)
 
     def get_activator_stats(self, callsign):
-        logging.debug("getting activator stats...")
+        # logging.debug("getting activator stats...")
         ac = self._get_activator(callsign)
         if ac is None:
             return self._response(
