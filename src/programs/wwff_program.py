@@ -34,7 +34,6 @@ class WwffProgram(Program):
             return True
         return False
 
-
     def get_reference(self,
                       ref: str,
                       pull_from_api: bool = True) -> Park:
@@ -83,6 +82,11 @@ class WwffProgram(Program):
 
             # this is wwff association code
             self.regions.append(wwff_to_add.locationDesc)
+
+            # locationDesc is the WWFF 'program'. should not be null
+            wwff_to_add.continent = self.continents.find_continent_wwff(
+                wwff_to_add.locationDesc
+            )
 
             statement = sa.select(Spot) \
                 .filter_by(activator=wwff_to_add.activator) \

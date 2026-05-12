@@ -37,6 +37,7 @@ class Continents():
 
         self._init_sota(root)
         self.wwbota: dict[str, Any] = None
+        self.wwff: dict[str, Any] = None
 
     def find_continent(self, ccode: str) -> str:
         if ccode not in self.pota.keys():
@@ -69,6 +70,23 @@ class Continents():
             logging.warning('find_continent_wwbota error', exc_info=ex)
 
         return result
+
+    def find_continent_wwff(self, program: str) -> str:
+        fn = Path(str(self.data_root), 'wwff_continents.json')
+
+        if self.wwff is None:
+            with open(file=fn, mode='r', encoding='utf-8') as f:
+                self.wwff = json.load(f)
+
+        result = ""
+        try:
+            logging.debug(f"wwff cont: {program} in {self.wwff}")
+            result = self.wwff[program]['continent'].upper()
+        except Exception as ex:
+            logging.warning('find_continent_wwff error', exc_info=ex)
+
+        return result
+
 
     def _init_sota(self, root: str):
         sota_f = Path(root, 'data/', 'sota_associations.json')

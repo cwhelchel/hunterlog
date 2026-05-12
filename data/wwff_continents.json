@@ -1,0 +1,762 @@
+{
+    "1SFF": {
+        "dxcc": "1S",
+        "continent": "AS"
+    },
+    "3AFF": {
+        "dxcc": "3A",
+        "continent": "EU"
+    },
+    "3BFF": {
+        "dxcc": "3B9",
+        "continent": "AF"
+    },
+    "3CFF": {
+        "dxcc": "3C",
+        "continent": "AF"
+    },
+    "3D2FF": {
+        "dxcc": "3D2/R",
+        "continent": "OC"
+    },
+    "3DAFF": {
+        "dxcc": "3DA",
+        "continent": "AF"
+    },
+    "3VFF": {
+        "dxcc": "3V",
+        "continent": "AF"
+    },
+    "3WFF": {
+        "dxcc": "3W",
+        "continent": "AS"
+    },
+    "3XFF": {
+        "dxcc": "3X",
+        "continent": "AF"
+    },
+    "4JFF": {
+        "dxcc": "4J",
+        "continent": "AS"
+    },
+    "4LFF": {
+        "dxcc": "4L",
+        "continent": "AS"
+    },
+    "4OFF": {
+        "dxcc": "4O",
+        "continent": "EU"
+    },
+    "4SFF": {
+        "dxcc": "4S",
+        "continent": "AS"
+    },
+    "4WFF": {
+        "dxcc": "4W",
+        "continent": "OC"
+    },
+    "4XFF": {
+        "dxcc": "4X",
+        "continent": "AS"
+    },
+    "5AFF": {
+        "dxcc": "5A",
+        "continent": "AF"
+    },
+    "5BFF": {
+        "dxcc": "5B",
+        "continent": "AS"
+    },
+    "5HFF": {
+        "dxcc": "5H",
+        "continent": "AF"
+    },
+    "5NFF": {
+        "dxcc": "5N",
+        "continent": "AF"
+    },
+    "5RFF": {
+        "dxcc": "5R",
+        "continent": "AF"
+    },
+    "5TFF": {
+        "dxcc": "5T",
+        "continent": "AF"
+    },
+    "5UFF": {
+        "dxcc": "5U",
+        "continent": "AF"
+    },
+    "5VFF": {
+        "dxcc": "5V",
+        "continent": "AF"
+    },
+    "5WFF": {
+        "dxcc": "5W",
+        "continent": "OC"
+    },
+    "5XFF": {
+        "dxcc": "5X",
+        "continent": "AF"
+    },
+    "5ZFF": {
+        "dxcc": "5Z",
+        "continent": "AF"
+    },
+    "6WFF": {
+        "dxcc": "6W",
+        "continent": "AF"
+    },
+    "6YFF": {
+        "dxcc": "6Y",
+        "continent": "NA"
+    },
+    "7OFF": {
+        "dxcc": "7O",
+        "continent": "AF"
+    },
+    "7PFF": {
+        "dxcc": "7P",
+        "continent": "AF"
+    },
+    "7QFF": {
+        "dxcc": "7Q",
+        "continent": "AF"
+    },
+    "7XFF": {
+        "dxcc": "7X",
+        "continent": "AF"
+    },
+    "8PFF": {
+        "dxcc": "8P",
+        "continent": "NA"
+    },
+    "8RFF": {
+        "dxcc": "8R",
+        "continent": "SA"
+    },
+    "9AFF": {
+        "dxcc": "9A",
+        "continent": "EU"
+    },
+    "9GFF": {
+        "dxcc": "9G",
+        "continent": "AF"
+    },
+    "9HFF": {
+        "dxcc": "9H",
+        "continent": "EU"
+    },
+    "9JFF": {
+        "dxcc": "9J",
+        "continent": "AF"
+    },
+    "9KFF": {
+        "dxcc": "9K",
+        "continent": "AS"
+    },
+    "9LFF": {
+        "dxcc": "9L",
+        "continent": "AF"
+    },
+    "9MFF": {
+        "dxcc": "9M2",
+        "continent": "AS"
+    },
+    "9NFF": {
+        "dxcc": "9N",
+        "continent": "AS"
+    },
+    "9QFF": {
+        "dxcc": "9Q",
+        "continent": "AF"
+    },
+    "9UFF": {
+        "dxcc": "9U",
+        "continent": "AF"
+    },
+    "9VFF": {
+        "dxcc": "9V",
+        "continent": "AS"
+    },
+    "9XFF": {
+        "dxcc": "9X",
+        "continent": "AF"
+    },
+    "A2FF": {
+        "dxcc": "A2",
+        "continent": "AF"
+    },
+    "A5FF": {
+        "dxcc": "A5",
+        "continent": "AS"
+    },
+    "A6FF": {
+        "dxcc": "A6",
+        "continent": "AS"
+    },
+    "ANFF": {
+        "dxcc": "AN",
+        "continent": "AN"
+    },
+    "APFF": {
+        "dxcc": "AP",
+        "continent": "AS"
+    },
+    "BVFF": {
+        "dxcc": "BV9",
+        "continent": "AS"
+    },
+    "BYFF": {
+        "dxcc": "BY",
+        "continent": "AS"
+    },
+    "C3FF": {
+        "dxcc": "C3",
+        "continent": "EU"
+    },
+    "C5FF": {
+        "dxcc": "C5",
+        "continent": "AF"
+    },
+    "C6FF": {
+        "dxcc": "C6",
+        "continent": "NA"
+    },
+    "C9FF": {
+        "dxcc": "C9",
+        "continent": "AF"
+    },
+    "CEFF": {
+        "dxcc": "CE",
+        "continent": "SA"
+    },
+    "CNFF": {
+        "dxcc": "CN",
+        "continent": "AF"
+    },
+    "COFF": {
+        "dxcc": "CO",
+        "continent": "NA"
+    },
+    "CPFF": {
+        "dxcc": "CP",
+        "continent": "SA"
+    },
+    "CTFF": {
+        "dxcc": "CT",
+        "continent": "EU"
+    },
+    "CUFF": {
+        "dxcc": "CU",
+        "continent": "EU"
+    },
+    "CXFF": {
+        "dxcc": "CX",
+        "continent": "SA"
+    },
+    "VEFF": {
+        "dxcc": "VE",
+        "continent": "NA"
+    },
+    "D2FF": {
+        "dxcc": "D2",
+        "continent": "AF"
+    },
+    "D4FF": {
+        "dxcc": "D4",
+        "continent": "AF"
+    },
+    "D6FF": {
+        "dxcc": "D6",
+        "continent": "AF"
+    },
+    "DLFF": {
+        "dxcc": "DL",
+        "continent": "EU"
+    },
+    "DUFF": {
+        "dxcc": "DU",
+        "continent": "OC"
+    },
+    "E3FF": {
+        "dxcc": "E3",
+        "continent": "AF"
+    },
+    "E5FF": {
+        "dxcc": "E5-S",
+        "continent": "OC"
+    },
+    "E7FF": {
+        "dxcc": "E7",
+        "continent": "EU"
+    },
+    "EAFF": {
+        "dxcc": "EA",
+        "continent": "EU"
+    },
+    "EIFF": {
+        "dxcc": "EI",
+        "continent": "EU"
+    },
+    "EKFF": {
+        "dxcc": "EK",
+        "continent": "AS"
+    },
+    "ELFF": {
+        "dxcc": "EL",
+        "continent": "AF"
+    },
+    "EPFF": {
+        "dxcc": "EP",
+        "continent": "AS"
+    },
+    "ERFF": {
+        "dxcc": "ER",
+        "continent": "EU"
+    },
+    "ESFF": {
+        "dxcc": "ES",
+        "continent": "EU"
+    },
+    "ETFF": {
+        "dxcc": "ET",
+        "continent": "AF"
+    },
+    "EWFF": {
+        "dxcc": "EW",
+        "continent": "EU"
+    },
+    "EXFF": {
+        "dxcc": "EX",
+        "continent": "AS"
+    },
+    "EYFF": {
+        "dxcc": "EY",
+        "continent": "AS"
+    },
+    "EZFF": {
+        "dxcc": "EZ",
+        "continent": "AS"
+    },
+    "FFF": {
+        "dxcc": "F",
+        "continent": "EU"
+    },
+    "GxFF": {
+        "dxcc": "VP8-Sh",
+        "continent": "AN"
+    },
+    "GXFF": {
+        "dxcc": "GI",
+        "continent": "EU"
+    },
+    "H4FF": {
+        "dxcc": "H4",
+        "continent": "OC"
+    },
+    "HAFF": {
+        "dxcc": "HA",
+        "continent": "EU"
+    },
+    "HBFF": {
+        "dxcc": "HB",
+        "continent": "EU"
+    },
+    "HCFF": {
+        "dxcc": "HC",
+        "continent": "SA"
+    },
+    "HHFF": {
+        "dxcc": "HH",
+        "continent": "NA"
+    },
+    "HIFF": {
+        "dxcc": "HI",
+        "continent": "NA"
+    },
+    "HKFF": {
+        "dxcc": "HK",
+        "continent": "SA"
+    },
+    "HLFF": {
+        "dxcc": "HL",
+        "continent": "AS"
+    },
+    "HPFF": {
+        "dxcc": "HP",
+        "continent": "NA"
+    },
+    "HRFF": {
+        "dxcc": "HR",
+        "continent": "NA"
+    },
+    "HSFF": {
+        "dxcc": "HS",
+        "continent": "AS"
+    },
+    "HZFF": {
+        "dxcc": "HZ",
+        "continent": "AS"
+    },
+    "IFF": {
+        "dxcc": "I",
+        "continent": "EU"
+    },
+    "J2FF": {
+        "dxcc": "J2",
+        "continent": "AF"
+    },
+    "J6FF": {
+        "dxcc": "J6",
+        "continent": "NA"
+    },
+    "J7FF": {
+        "dxcc": "J7",
+        "continent": "NA"
+    },
+    "JAFF": {
+        "dxcc": "JA",
+        "continent": "AS"
+    },
+    "JTFF": {
+        "dxcc": "JT",
+        "continent": "AS"
+    },
+    "JYFF": {
+        "dxcc": "JY",
+        "continent": "AS"
+    },
+    "KFF": {
+        "dxcc": "K",
+        "continent": "NA"
+    },
+    "LAFF": {
+        "dxcc": "LA",
+        "continent": "EU"
+    },
+    "LUFF": {
+        "dxcc": "LU",
+        "continent": "SA"
+    },
+    "LXFF": {
+        "dxcc": "LX",
+        "continent": "EU"
+    },
+    "LYFF": {
+        "dxcc": "LY",
+        "continent": "EU"
+    },
+    "LZFF": {
+        "dxcc": "LZ",
+        "continent": "EU"
+    },
+    "OAFF": {
+        "dxcc": "OA",
+        "continent": "SA"
+    },
+    "ODFF": {
+        "dxcc": "OD",
+        "continent": "AS"
+    },
+    "OEFF": {
+        "dxcc": "OE",
+        "continent": "EU"
+    },
+    "OHFF": {
+        "dxcc": "OH",
+        "continent": "EU"
+    },
+    "OKFF": {
+        "dxcc": "OK",
+        "continent": "EU"
+    },
+    "OMFF": {
+        "dxcc": "OM",
+        "continent": "EU"
+    },
+    "ONFF": {
+        "dxcc": "ON",
+        "continent": "EU"
+    },
+    "OZFF": {
+        "dxcc": "OZ",
+        "continent": "EU"
+    },
+    "P2FF": {
+        "dxcc": "P2",
+        "continent": "OC"
+    },
+    "P4FF": {
+        "dxcc": "P4",
+        "continent": "SA"
+    },
+    "P5FF": {
+        "dxcc": "P5",
+        "continent": "AS"
+    },
+    "PAFF": {
+        "dxcc": "PA",
+        "continent": "EU"
+    },
+    "PYFF": {
+        "dxcc": "PY",
+        "continent": "SA"
+    },
+    "PZFF": {
+        "dxcc": "PZ",
+        "continent": "SA"
+    },
+    "program": {
+        "dxcc": "dxcc",
+        "continent": ""
+    },
+    "RFF": {
+        "dxcc": "RA9",
+        "continent": "AS"
+    },
+    "S2FF": {
+        "dxcc": "S2",
+        "continent": "AS"
+    },
+    "S5FF": {
+        "dxcc": "S5",
+        "continent": "EU"
+    },
+    "S7FF": {
+        "dxcc": "S7",
+        "continent": "AF"
+    },
+    "S9FF": {
+        "dxcc": "S9",
+        "continent": "AF"
+    },
+    "ZLFF": {
+        "dxcc": "ZL",
+        "continent": "OC"
+    },
+    "SMFF": {
+        "dxcc": "SM",
+        "continent": "EU"
+    },
+    "SPFF": {
+        "dxcc": "SP",
+        "continent": "EU"
+    },
+    "STFF": {
+        "dxcc": "ST",
+        "continent": "AF"
+    },
+    "SUFF": {
+        "dxcc": "SU",
+        "continent": "AF"
+    },
+    "SVFF": {
+        "dxcc": "SV",
+        "continent": "EU"
+    },
+    "T2FF": {
+        "dxcc": "T2",
+        "continent": "OC"
+    },
+    "T3FF": {
+        "dxcc": "T30",
+        "continent": "OC"
+    },
+    "T5FF": {
+        "dxcc": "T5",
+        "continent": "AF"
+    },
+    "T8FF": {
+        "dxcc": "T8",
+        "continent": "OC"
+    },
+    "TAFF": {
+        "dxcc": "TA2",
+        "continent": "AS"
+    },
+    "TFFF": {
+        "dxcc": "TF",
+        "continent": "EU"
+    },
+    "TGFF": {
+        "dxcc": "TG",
+        "continent": "NA"
+    },
+    "TIFF": {
+        "dxcc": "TI",
+        "continent": "NA"
+    },
+    "TJFF": {
+        "dxcc": "TJ",
+        "continent": "AF"
+    },
+    "TLFF": {
+        "dxcc": "TL",
+        "continent": "AF"
+    },
+    "TNFF": {
+        "dxcc": "TN",
+        "continent": "AF"
+    },
+    "TRFF": {
+        "dxcc": "TR",
+        "continent": "AF"
+    },
+    "TTFF": {
+        "dxcc": "TT",
+        "continent": "AF"
+    },
+    "TUFF": {
+        "dxcc": "TU",
+        "continent": "AF"
+    },
+    "TYFF": {
+        "dxcc": "TY",
+        "continent": "AF"
+    },
+    "TZFF": {
+        "dxcc": "TZ",
+        "continent": "AF"
+    },
+    "UFFF": {
+        "dxcc": "UF",
+        "continent": "AS"
+    },
+    "UKFF": {
+        "dxcc": "UK",
+        "continent": "AS"
+    },
+    "UNFF": {
+        "dxcc": "UN",
+        "continent": "AS"
+    },
+    "URFF": {
+        "dxcc": "UR",
+        "continent": "EU"
+    },
+    "V2FF": {
+        "dxcc": "V2",
+        "continent": "NA"
+    },
+    "V3FF": {
+        "dxcc": "V3",
+        "continent": "NA"
+    },
+    "V4FF": {
+        "dxcc": "V4",
+        "continent": "NA"
+    },
+    "V5FF": {
+        "dxcc": "V5",
+        "continent": "AF"
+    },
+    "V6FF": {
+        "dxcc": "V6",
+        "continent": "OC"
+    },
+    "V7FF": {
+        "dxcc": "V7",
+        "continent": "OC"
+    },
+    "V8FF": {
+        "dxcc": "V8",
+        "continent": "OC"
+    },
+    "VKFF": {
+        "dxcc": "VK",
+        "continent": "OC"
+    },
+    "GxFF[BOT]": {
+        "dxcc": "ZF",
+        "continent": "NA"
+    },
+    "VRFF": {
+        "dxcc": "VR2",
+        "continent": "AS"
+    },
+    "VUFF": {
+        "dxcc": "VU7",
+        "continent": "AS"
+    },
+    "XEFF": {
+        "dxcc": "XE",
+        "continent": "NA"
+    },
+    "XTFF": {
+        "dxcc": "XT",
+        "continent": "AF"
+    },
+    "XUFF": {
+        "dxcc": "XU",
+        "continent": "AS"
+    },
+    "XWFF": {
+        "dxcc": "XW",
+        "continent": "AS"
+    },
+    "XYFF": {
+        "dxcc": "XZ",
+        "continent": "AS"
+    },
+    "YAFF": {
+        "dxcc": "YA",
+        "continent": "AS"
+    },
+    "YBFF": {
+        "dxcc": "YB",
+        "continent": "OC"
+    },
+    "YJFF": {
+        "dxcc": "YJ",
+        "continent": "OC"
+    },
+    "YKFF": {
+        "dxcc": "YK",
+        "continent": "AS"
+    },
+    "YLFF": {
+        "dxcc": "YL",
+        "continent": "EU"
+    },
+    "YNFF": {
+        "dxcc": "YN",
+        "continent": "NA"
+    },
+    "YOFF": {
+        "dxcc": "YO",
+        "continent": "EU"
+    },
+    "YSFF": {
+        "dxcc": "YS",
+        "continent": "NA"
+    },
+    "YUFF": {
+        "dxcc": "YU",
+        "continent": "EU"
+    },
+    "YVFF": {
+        "dxcc": "YV",
+        "continent": "SA"
+    },
+    "Z2FF": {
+        "dxcc": "Z2",
+        "continent": "AF"
+    },
+    "Z3FF": {
+        "dxcc": "Z3",
+        "continent": "EU"
+    },
+    "ZAFF": {
+        "dxcc": "ZA",
+        "continent": "EU"
+    },
+    "ZPFF": {
+        "dxcc": "ZP",
+        "continent": "SA"
+    },
+    "ZSFF": {
+        "dxcc": "ZS",
+        "continent": "AF"
+    }
+}
