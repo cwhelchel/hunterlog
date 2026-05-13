@@ -101,7 +101,7 @@ export default function QsoEntry() {
 
             if (!obj.success)
                 return false;
-            
+
             window.pywebview.api.refresh_spot(contextData.spotId, qso.call, qso.sig_info)
                 .then((x: string) => {
                     window.pywebview.state.getSpots();
@@ -144,8 +144,7 @@ export default function QsoEntry() {
                 const myPotaRef = checkForValidRefs(qso.sig_info, otherParks, checkReferenceForPota);
 
                 console.log('mypotaref', myPotaRef);
-                if (!myPotaRef.ok)
-                {
+                if (!myPotaRef.ok) {
                     showErrorToast("Bad POTA Ref in Other Parks", addMessage);
                 }
 
@@ -188,9 +187,9 @@ export default function QsoEntry() {
     async function handleLogQsoClick(
         event: React.MouseEvent<HTMLButtonElement, MouseEvent>
     ) {
-        setData({...contextData, loadingQsoData: true});
+        setData({ ...contextData, loadingQsoData: true });
         const success = await logQso();
-        setData({...contextData, loadingQsoData: false});
+        setData({ ...contextData, loadingQsoData: false });
         if (success)
             handleClearClick(event);
     }
@@ -198,11 +197,11 @@ export default function QsoEntry() {
     async function handleSpotAndLogClick(
         event: React.MouseEvent<HTMLButtonElement, MouseEvent>
     ) {
-        setData({...contextData, loadingQsoData: true});
+        setData({ ...contextData, loadingQsoData: true });
         const success = await logQso();
         if (!success)
             return;
-        setData({...contextData, loadingQsoData: false});
+        setData({ ...contextData, loadingQsoData: false });
         spotActivator();
         handleClearClick(event);
     };
@@ -217,9 +216,9 @@ export default function QsoEntry() {
     function handleClearClick(
         event: React.MouseEvent<HTMLButtonElement, MouseEvent> | null
     ) {
-        console.log("clearing qso...",  event, contextData);
+        console.log("clearing qso...", event, contextData);
         setQso(defaultQso);
-        const newCtx = {...contextData};
+        const newCtx = { ...contextData };
         newCtx.park = null;
         newCtx.qso = null;
         newCtx.otherOperators = '';
@@ -483,7 +482,14 @@ export default function QsoEntry() {
             setIsSwapped(true);
         else
             setIsSwapped(false);
-    }, [contextData.swapRstOrder])
+    }, [contextData.swapRstOrder]);
+
+    React.useEffect(() => {
+        const newFx = contextData.rigFreqRead;
+        if (newFx === "")
+            return;
+        setQso({ ...qso, freq: newFx, freq_rx: newFx });
+    }, [contextData.rigFreqRead]);
 
     React.useEffect(() => {
         function handleEscapeKey(event: KeyboardEvent) {
@@ -557,9 +563,9 @@ export default function QsoEntry() {
                     <>
                         <Grid item xs={4} lg={2}>
                             <TextField id="rstRecv" label="RST Recv"
-                                
+
                                 value={qso.rst_recv}
-                                inputProps={{ style: textFieldStyle, autoComplete: 'off'  }}
+                                inputProps={{ style: textFieldStyle, autoComplete: 'off' }}
                                 onChange={(e) => {
                                     setQso({ ...qso, rst_recv: e.target.value });
                                 }} />

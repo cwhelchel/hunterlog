@@ -28,6 +28,7 @@ export interface ContextData {
     loadingQsoData: boolean;
     swapRstOrder: boolean;
     showHiddenFilter: boolean;
+    rigFreqRead: string; // rx read from rig on timer
 }
 
 export interface AppContextType {

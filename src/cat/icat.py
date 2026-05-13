@@ -47,6 +47,15 @@ class ICat(ABC):
         returns True on success
         '''
         raise NotImplementedError
+    
+    @abstractmethod
+    def get_vfo(self) -> str:
+        '''
+        Gets the radio's VFO frequency value.
+
+        :returns: str: Frequency in hz 
+        '''
+        raise NotImplementedError
 
     @abstractmethod
     def get_ptt(self) -> bool:

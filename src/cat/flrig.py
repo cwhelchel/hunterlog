@@ -1,4 +1,5 @@
 import socket
+from typing import Optional
 import xmlrpc
 from cat.icat import ICat
 import logging as L
@@ -57,6 +58,21 @@ class flrig(ICat):
             self.online = False
             logger.warning("set_vfo", exc_info=e)
         return False
+
+    def get_vfo(self) -> str:
+        '''
+        Gets the radios vfo frequency in hz
+        
+        :returns: fx in hz or empty str on error
+        '''
+        try:
+            resp = self.server.rig.get_vfo()
+            logger.debug(f'get_vfo -> {resp}hz')
+            return resp
+        except ConnectionRefusedError as e:
+            self.online = False
+            logger.warning("get_vfo", exc_info=e)
+        return ""
 
     def get_ptt(self):
         """Returns ptt state via flrig"""

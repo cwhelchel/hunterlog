@@ -31,7 +31,8 @@ const defData: ContextData = {
     loadingQsoData: false,
     swapRstOrder: false,
     showHiddenFilter: false,
-    modeFilter: []
+    modeFilter: [],
+    rigFreqRead: ''
 };
 
 export const AppContext = React.createContext<AppContextType | null>(null);

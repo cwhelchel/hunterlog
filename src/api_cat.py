@@ -110,3 +110,23 @@ class CatApi:
             return _response(False, 'Error setting CW speed', transient=True)
 
         return _response(True, "")
+    
+    def get_freq(self) -> str:
+        '''
+        Use CAT control to read the freq from the radio
+
+        :returns: API response object. freq in fx kwarg
+        '''
+        if self.cat is None:
+            return _response(False, "CAT control failure.")
+
+        if not self.cat.is_online:
+            return _response(False, "CAT offline.", transient=True)
+        
+        fx_str = self.cat.get_vfo()
+
+        fx = float(fx_str)
+        fx = fx / 1000.0
+        
+        return _response(True, "", fx=fx)
+

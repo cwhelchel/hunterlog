@@ -42,6 +42,12 @@ export default function CwControl() {
         return () => document.removeEventListener('keydown', handlePageUpDown)
     }, [handlePageUpDown]);
 
+
+    const tinyButton = {
+        padding: '2px',    // Reduced padding
+        minWidth: 'auto',  // Allow to shrink
+    };
+
     return (
         <Box>
             <ButtonGroup
@@ -59,24 +65,24 @@ export default function CwControl() {
                 <IconButton
                     size="small"
                     color="primary"
+                    title="key speed +1"
                     onClick={() => modSpeed(1)}
-                    sx={{
-                        padding: '2px', // Reduced padding
-                        minWidth: 'auto',  // Allow to shrink
-                    }}>
+                    sx={tinyButton}>
                     <ArrowDropUp fontSize="small"></ArrowDropUp>
                 </IconButton>
-                <Button size="small" variant="text">
+                <Button
+                    size="small"
+                    variant="text"
+                    title="CW keyer speed"
+                    sx={{ height: '25px' }}>
                     {speed}
                 </Button>
                 <IconButton
                     size="small"
                     color="primary"
+                    title="key speed -1"
                     onClick={() => modSpeed(-1)}
-                    sx={{
-                        padding: '2px', // Reduced padding
-                        minWidth: 'auto',  // Allow to shrink
-                    }}>
+                    sx={tinyButton}>
                     <ArrowDropDown fontSize="small"></ArrowDropDown>
                 </IconButton>
             </ButtonGroup>
