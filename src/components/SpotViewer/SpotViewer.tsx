@@ -265,6 +265,7 @@ export default function SpotViewer() {
             const json = checkApiResponse2(x, addMessage);
             if (json.success) {
                 contextData.regions = json.seen_regions;
+                contextData.regions.sort();
                 setData(contextData);
             }
         });
