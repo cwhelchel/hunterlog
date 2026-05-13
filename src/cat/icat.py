@@ -51,3 +51,7 @@ class ICat(ABC):
     @abstractmethod
     def get_ptt(self) -> bool:
         raise NotImplementedError
+
+    @abstractmethod
+    def set_cw_speed(self, speed_wpm: int):
+        raise NotImplementedError

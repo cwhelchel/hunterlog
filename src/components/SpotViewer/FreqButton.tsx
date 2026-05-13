@@ -39,7 +39,7 @@ export default function FreqButton(props: IFreqButtonProps) {
     function onClick(e: string, m: string, id: string) {
         console.log("js qsy to...");
         console.log(`param ${e} ${m}`);
-        const p = window.pywebview.api.qsy_to(e, m);
+        const p = window.pywebview.api.cat.qsy_to(e, m);
         p.then((resp: string) => {
             checkApiResponse2(resp, addMessage);
             setLastQsyBtnId(id);

@@ -16,6 +16,7 @@ import { checkApiResponse2 } from '../Utilities/util';
 import HuntMapMenu from './MenuItems/Map/HuntMapMenu';
 import ConfigDropdownMenu from './MenuItems/ConfigDropdownMenu';
 import { useMessageQueue } from '../MessageContext';
+import CatArea from './CatArea/CatArea';
 
 
 
@@ -174,6 +175,9 @@ export default function AppMenu() {
                     {!alertHidden &&
                         <Alert variant="filled" severity={severity} onClose={() => { handleAlertClose() }} >{alertMsg}</Alert>
                     }
+
+                    <CatArea/>
+                    
                     <Tooltip title="Refresh">
                         <IconButton onClick={() => {
                             location.reload();

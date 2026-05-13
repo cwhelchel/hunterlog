@@ -7,6 +7,11 @@ logger = L.getLogger(__name__)
 
 
 class aclog(ICat):
+    '''
+    CAT control class for N3FJP Amateur Contact Log (AcLog) using its TCP API
+
+    see https://www.n3fjp.com/help/api.html
+    '''
 
     def init_cat(self, **kwargs):
         '''
@@ -54,7 +59,6 @@ class aclog(ICat):
 
         if self.aclog_sock:
             try:
-                self.online = True
                 self.aclog_sock.send(bytes(cmd, "utf-8"))
                 _ = self.aclog_sock.recv(1024).decode().strip()
                 # logger.debug("__setvfo_aclog: %s", _)
@@ -69,3 +73,15 @@ class aclog(ICat):
 
     def get_ptt(self) -> bool:
         raise NotImplementedError
+
+    def set_cw_speed(self, speed_wpm: int):
+        cmd = f'<CMD><CWSETSPEED><VALUE>{speed_wpm}</VALUE></CMD>'
+
+        if self.aclog_sock:
+            try:
+                self.aclog_sock.send(bytes(cmd, "utf-8"))
+                _ = self.aclog_sock.recv(1024).decode().strip()
+            except socket.error as exception:
+                self.online = False
+                logger.error("set_cw_speed: %s", exception)
+                self.aclog_sock = None

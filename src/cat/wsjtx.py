@@ -110,3 +110,7 @@ class wsjtx(ICat):
 
     def get_ptt(self) -> bool:
         raise NotImplementedError
+
+    def set_cw_speed(self, speed_wpm: int):
+        raise NotImplementedError
+

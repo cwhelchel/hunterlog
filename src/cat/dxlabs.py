@@ -7,6 +7,11 @@ logger = L.getLogger(__name__)
 
 
 class dxlabs(ICat):
+    '''
+    TCP/IP CAT control for DxLabs Commander. 
+    
+    See https://www.dxlabsuite.com/commander/Commander%20TCPIP%20Messages.pdf
+    '''
 
     def init_cat(self, **kwargs):
         '''
@@ -93,4 +98,8 @@ class dxlabs(ICat):
         return False
 
     def get_ptt(self) -> bool:
+        raise NotImplementedError
+
+    def set_cw_speed(self, speed_wpm: int):
+        # not supported in DxLabs API
         raise NotImplementedError

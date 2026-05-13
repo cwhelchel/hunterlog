@@ -39,7 +39,6 @@ class rigctld(ICat):
         """sets the radios mode"""
         if self.socket:
             try:
-                self.online = True
                 self.socket.send(bytes(f"M {mode} -1\n", "utf-8"))
                 _ = self.socket.recv(1024).decode().strip()
                 return True
@@ -56,7 +55,6 @@ class rigctld(ICat):
         """sets the radios vfo"""
         if self.socket:
             try:
-                self.online = True
                 self.socket.send(bytes(f"F {freq}\n", "utf-8"))
                 _ = self.socket.recv(1024).decode().strip()
                 return True
@@ -73,7 +71,6 @@ class rigctld(ICat):
         """Returns ptt state via rigctld"""
         if self.socket:
             try:
-                self.online = True
                 self.socket.send(b"t\n")
                 ptt = self.socket.recv(1024).decode()
                 logger.debug("%s", ptt)
@@ -83,5 +80,18 @@ class rigctld(ICat):
             except socket.error as exception:
                 self.online = False
                 logger.debug("%s", exception)
+                self.socket = None
+        return False
+
+    def set_cw_speed(self, speed_wpm: int):
+        if self.socket:
+            try:
+                payload = bytes(f"L KEYSPD {speed_wpm}\n", "utf-8")
+                logger.debug(f"cw speed cmd: {payload}")
+                self.socket.send(payload)
+                _ = self.socket.recv(1024).decode().strip()
+            except socket.error as exception:
+                self.online = False
+                logger.warning("set_cw_speed exception: %s", exception)
                 self.socket = None
         return False

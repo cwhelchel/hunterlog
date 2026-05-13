@@ -34,7 +34,7 @@ export default function ScanButton() {
             pttRef.current = setInterval(async () => {
                 if (window.pywebview?.api) {
                     try {
-                        const pttResp = await window.pywebview.api.get_ptt();
+                        const pttResp = await window.pywebview.api.cat.get_ptt();
                         const json = checkApiResponse2(pttResp, addMessage);
                         // console.log("PTT check - success:", json.success, "ptt value:", json.ptt, "type:", typeof json.ptt);
                         // loose equality check or string conversion to handle int/string return
@@ -98,7 +98,7 @@ export default function ScanButton() {
                         newCtxData.spotId = nextId as number;
                         setData(newCtxData);
 
-                        window.pywebview.api.qsy_to(row.frequency, row.mode);
+                        window.pywebview.api.cat.qsy_to(row.frequency, row.mode);
                     }
                 }
 

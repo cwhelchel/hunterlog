@@ -28,7 +28,9 @@ class flrig(ICat):
         self.online = True
         try:
             ver = self.server.main.get_version()
-            logger.debug(ver)
+            logger.info(f"flrig version: {ver}")
+            info = self.server.rig.get_info()
+            logger.debug(f"rig.get_info: {info}")
         except (ConnectionRefusedError, TimeoutError) as e:
             self.online = False
             self.server = None
@@ -66,3 +68,32 @@ class flrig(ICat):
             self.online = False
             logger.debug("%s", exception)
         return False
+
+    def set_cw_speed(self, speed_wpm: int):
+        if speed_wpm < 6 or speed_wpm > 48:
+            raise ValueError("CW speed outside of acceptable range")
+
+        try:
+            logger.debug(f"setting cw wpm: {speed_wpm}")
+            res = self.server.rig.cwio_set_wpm(speed_wpm)
+
+            # this CWIO shit sets the keyer UI for the cw text sending in FLRIG.
+            # useful but does not set the rigs keyer speed for normal CW
+
+            # this is for ftdx10
+            # todo: add config setting
+            cmd = f"KS0{speed_wpm:02};"
+            self.server.rig.cat_string(cmd)
+
+            # cmd for ICOM: FEFE00E0140C++++FD  bcd 0000=6 0255=48 wpm 
+            # presumably all icom's max here is 48???
+            # this is untested
+            temp = (speed_wpm - 6) * 6.071
+            x = int(abs(temp))
+            cmd = f"FEFE00E0140C{x:04d}FD"
+            logger.debug(f"setting cw wpm CI-V: {cmd}")
+            self.server.rig.cat_string(cmd)
+
+            return res
+        except Exception as e:
+            logger.error('error setting cw wpm', exc_info=e)

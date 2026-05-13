@@ -8,6 +8,7 @@ import threading
 from datetime import timedelta
 
 from api_callnotes import CallNotesApi
+from api_cat import CatApi
 from api_hidden_spots import HiddenSpotsApi
 from api_imports import ImportApi
 from bands import get_band, get_name_of_band, bandNames
@@ -25,8 +26,6 @@ from programs import Program, SotaProgram, WwffProgram, PotaProgram, WwbotaProgr
 from utils.distance import Distance
 from utils.adif import AdifLog
 from version import __version__
-
-from cat import CAT
 
 logging = L.getLogger(__name__)
 
@@ -65,12 +64,11 @@ class JsApi:
         logging.debug(f"got logger {self.adif_log}")
 
         try:
-            logging.debug("init CAT...")
+            logging.debug("getting CAT params")
             rig_if = self.db.config.get_value('rig_if_type')
             ip = self.db.config.get_value('flr_host')
             port = self.db.config.get_value('flr_port')
-            self.cat = CAT.get_interface(rig_if)
-            self.cat.init_cat(host=ip, port=port)
+            self.cat = CatApi(self.db, rig_if, ip, port)
         except Exception:
             logging.error("Error creating CAT object: ", exc_info=True)
             self.cat = None
@@ -570,6 +568,7 @@ class JsApi:
             self.db.config.get_value('adif_port'),
             self.db.config.get_value('wl_url'),
             self.db.config.get_value('wl_api_key'),
+            self.db.config.get_value('qrz_api_key'),
         )
         self.adif_log = LoggerInterface.get_logger(lp, __version__)
         logging.debug(f"updating logger {self.adif_log}")
@@ -631,47 +630,6 @@ class JsApi:
         else:
             logging.warning(f"activator callsign {callsign} not found")
             return -1
-
-    def qsy_to(self, freq, mode: str):
-        '''Use CAT control to QSY'''
-        logging.debug(f"qsy_to {freq} {mode}")
-
-        if self.cat is None:
-            logging.warn("CAT is None. not qsy-ing")
-            return self._response(False, "CAT control failure.")
-
-        hrz = float(freq) * 1000.0
-        logging.debug(f"adjusted freq {hrz}")
-        if mode == "SSB" and hrz >= 10000000:
-            mode = "USB"
-        elif mode == "SSB" and hrz < 10000000:
-            mode = "LSB"
-            if hrz > 5330000 and hrz < 5404000:  # 60m SSB is USB
-                mode = "USB"
-        elif mode == "CW":
-            mode = self.db.config.get_value('cw_mode')
-        elif mode.startswith("FT"):
-            mode = self.db.config.get_value('ftx_mode')
-        logging.debug(f"adjusted mode {mode}")
-        self.cat.set_mode(mode)
-        self.cat.set_vfo(hrz)
-
-        return self._response(True, "")
-
-    def get_ptt(self):
-        '''Returns the PTT state from CAT control'''
-        if self.cat is None:
-            return self._response(False, "CAT control failure.")
-
-        try:
-            ptt = self.cat.get_ptt()
-        except NotImplementedError as nie:
-            logging.error(
-                'get_ptt not available for this CAT mode',
-                exc_info=nie)
-            return self._response(False, '', not_implemented=True)
-
-        return self._response(True, "", ptt=ptt)
 
     def export_park_data(self) -> str:
         '''
