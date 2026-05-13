@@ -343,14 +343,34 @@
         "dxcc": "F",
         "continent": "EU"
     },
-    "GxFF": {
-        "dxcc": "VP8-Sh",
-        "continent": "AN"
+    "GDFF": {
+        "dxcc": "GD",
+        "continent": "EU"
     },
-    "GXFF": {
+    "GFF": {
+        "dxcc": "G",
+        "continent": "EU"
+    },    
+    "GIFF": {
         "dxcc": "GI",
         "continent": "EU"
     },
+    "GJFF": {
+        "dxcc": "GJ",
+        "continent": "EU"
+    },    
+    "GMFF": {
+        "dxcc": "GM",
+        "continent": "EU"
+    },  
+    "GUFF": {
+        "dxcc": "GU",
+        "continent": "EU"
+    },     
+    "GWFF": {
+        "dxcc": "GW",
+        "continent": "EU"
+    },   
     "H4FF": {
         "dxcc": "H4",
         "continent": "OC"

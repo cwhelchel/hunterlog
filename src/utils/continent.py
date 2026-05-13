@@ -80,7 +80,7 @@ class Continents():
 
         result = ""
         try:
-            logging.debug(f"wwff cont: {program} in {self.wwff}")
+            logging.debug(f"lookup continent for wwff program: {program}")
             result = self.wwff[program]['continent'].upper()
         except Exception as ex:
             logging.warning('find_continent_wwff error', exc_info=ex)
