@@ -9,7 +9,7 @@ logger = L.getLogger(__name__)
 class dxlabs(ICat):
     '''
     TCP/IP CAT control for DxLabs Commander. 
-    
+
     See https://www.dxlabsuite.com/commander/Commander%20TCPIP%20Messages.pdf
     '''
 
@@ -96,6 +96,30 @@ class dxlabs(ICat):
                 return False
 
         return False
+
+    def get_vfo(self) -> str:
+        cmd = '<command:10>CmdGetFreq<parameters:0>'
+
+        # response should be like <CmdFreq:10>14,010.500
+
+        if self.dxlabs_sock:
+            try:
+                # logger.debug("dxlabs sending to sock")
+                sent = self.dxlabs_sock.send(bytes(cmd, "utf-8"))
+                logger.debug(f"dxlabs sent # bytes: {sent} -- {cmd}")
+                resp = self.dxlabs_sock.recv(1024).decode().strip()
+                logger.debug("dxlabs recv: %s", resp)
+
+                x = resp.split('>')
+                if len(x) > 1:
+                    kHz = float(x[1].replace(',',''))
+                    return str(kHz * 1000.0)
+                return '0'
+            except socket.error as e:
+                self.online = False
+                logger.error("set_vfo", exc_info=e)
+                self.dxlabs_sock = None
+                return "0"
 
     def get_ptt(self) -> bool:
         raise NotImplementedError

@@ -58,6 +58,9 @@ class rigctld(ICat):
                 self.socket.send(bytes(f"F {freq}\n", "utf-8"))
                 _ = self.socket.recv(1024).decode().strip()
                 return True
+            except socket.timeout as timeout:
+                logger.warning("set_vfo timed out", exc_info=timeout)
+                return False
             except socket.error as e:
                 self.online = False
                 logger.debug("set_vfo", exc_info=e)
@@ -66,6 +69,24 @@ class rigctld(ICat):
 
         self.init_cat(host=self.host, port=self.port)
         return False
+
+    def get_vfo(self) -> str:
+        '''
+        Gets the radios vfo frequency in hz
+
+        :returns: fx in hz or empty str on error
+        '''
+        if self.socket:
+            try:
+                self.socket.send(bytes(f"f\n", "utf-8"))
+                fx = self.socket.recv(1024).decode().strip()
+                logger.debug(f"got freq {fx}")
+                return fx
+            except socket.error as e:
+                self.online = False
+                logger.debug("get_vfo", exc_info=e)
+                self.socket = None
+                return "0"
 
     def get_ptt(self):
         """Returns ptt state via rigctld"""

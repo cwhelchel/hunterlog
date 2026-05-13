@@ -108,6 +108,9 @@ class wsjtx(ICat):
 
         return False
 
+    def get_vfo(self) -> str:
+        raise NotImplementedError
+
     def get_ptt(self) -> bool:
         raise NotImplementedError
 

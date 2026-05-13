@@ -1,7 +1,7 @@
 import socket
 from cat.icat import ICat
 import logging as L
-
+import re
 
 logger = L.getLogger(__name__)
 
@@ -70,6 +70,29 @@ class aclog(ICat):
                 return False
 
         return False
+
+    def get_vfo(self, freq: str) -> str:
+        """gets the radios vfo"""        
+        cmd = '<CMD><READBMF></CMD>'
+        pat = r'<FREQ>(.*)<\/FREQ>'
+
+        if self.aclog_sock:
+            try:
+                self.aclog_sock.send(bytes(cmd, "utf-8"))
+                resp = self.aclog_sock.recv(1024).decode().strip()
+                logger.debug("get_vfo: %s", resp)
+
+                match = re.search(pat, resp)
+                if match:
+                    fx_str = match.group(0)
+                    fx = float(fx_str) * 1000000
+                    return fx
+                return '0'
+            except socket.error as exception:
+                self.online = False
+                logger.error("__setvfo_aclog: %s", exception)
+                self.aclog_sock = None
+                return '0'        
 
     def get_ptt(self) -> bool:
         raise NotImplementedError
