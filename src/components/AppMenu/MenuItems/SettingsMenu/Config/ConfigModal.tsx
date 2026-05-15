@@ -113,6 +113,9 @@ export default function ConfigModal() {
         config.wavelog_url = getVar(cfg2, 'wl_url');
         config.wavelog_api_key = getVar(cfg2, 'wl_api_key');
         config.qrz_api_key = getVar(cfg2, 'qrz_api_key');
+        config.use_cw_offset = Number(getVar(cfg2, 'use_cw_offset')) != 0;
+        config.cw_offset_min = Number(getVar(cfg2, 'cw_offset_min'));
+        config.cw_offset_max = Number(getVar(cfg2, 'cw_offset_max'));
         setConfig(config);
     }
 
@@ -136,6 +139,9 @@ export default function ConfigModal() {
         setVar(config2, "wl_url", config.wavelog_url);
         setVar(config2, "wl_api_key", config.wavelog_api_key);
         setVar(config2, "qrz_api_key", config.qrz_api_key);
+        setVar(config2, "use_cw_offset", config.use_cw_offset.toString());
+        setVar(config2, "cw_offset_min", config.cw_offset_min.toString());
+        setVar(config2, "cw_offset_max", config.cw_offset_max.toString());
         setConfig2(config2);
     }
 

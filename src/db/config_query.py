@@ -232,6 +232,33 @@ class ConfigQuery:
             'group': 'qrz',
             'enabled': 'True',
             'editable': 'True'
+        },
+        {
+            'key': 'use_cw_offset',
+            'val': '0',
+            'type': 'bool',
+            'description': 'Use simulated RIT for CW',
+            'group': 'cw',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'cw_offset_min',
+            'val': '10',
+            'type': 'int',
+            'description': 'For Simulated RIT. Min offset in HZ',
+            'group': 'cw',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'cw_offset_max',
+            'val': '100',
+            'type': 'int',
+            'description': 'For Simulated RIT. Max offset in HZ',
+            'group': 'cw',
+            'enabled': 'True',
+            'editable': 'True'
         }
     ]
 

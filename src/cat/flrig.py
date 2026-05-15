@@ -62,7 +62,7 @@ class flrig(ICat):
     def get_vfo(self) -> str:
         '''
         Gets the radios vfo frequency in hz
-        
+
         :returns: fx in hz or empty str on error
         '''
         try:
@@ -101,7 +101,7 @@ class flrig(ICat):
             cmd = f"KS0{speed_wpm:02};"
             self.server.rig.cat_string(cmd)
 
-            # cmd for ICOM: FEFE00E0140C++++FD  bcd 0000=6 0255=48 wpm 
+            # cmd for ICOM: FEFE00E0140C++++FD  bcd 0000=6 0255=48 wpm                                                                                             test
             # presumably all icom's max here is 48???
             # this is untested
             temp = (speed_wpm - 6) * 6.071

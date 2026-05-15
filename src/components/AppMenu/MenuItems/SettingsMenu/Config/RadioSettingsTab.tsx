@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { MenuItem, Select, Stack, TextField } from "@mui/material";
+import { Checkbox, FormControlLabel, MenuItem, Select, Stack, TextField } from "@mui/material";
 import { useConfigContext } from './ConfigContextProvider';
 
 export default function RadioSettingsTab() {
@@ -29,7 +29,7 @@ export default function RadioSettingsTab() {
                 and port number. If the CAT application is on the same computer as
                 Hunterlog, then the IP is 127.0.0.1, otherwise you need to get the
                 IP address of the computer. The port can usually be found by looking
-                at the CAT application's documents, but here are some common defaults:
+                at the CAT application&apos;s documents, but here are some common defaults:
                 <div>
                     <ul className="modal-ul-horiz">
                         <li>flrig: 12345</li>
@@ -69,6 +69,33 @@ export default function RadioSettingsTab() {
                     fullWidth
                     onChange={(e) => {
                         setConfig({ ...config, ftx_mode: e.target.value });
+                    }} />
+            </Stack>
+            <Stack direction={'row'} spacing={1}>
+                <FormControlLabel label="Enable CW RIT"
+                    style={{ width: "50%", marginLeft: 10 }}
+                    control={
+                        <Checkbox checked={config.use_cw_offset}
+                            inputProps={{ 'aria-label': 'controlled' }}
+                            onChange={(e) => {
+                                const val = Boolean(e.target.checked);
+                                setConfig({ ...config, use_cw_offset: val });
+                            }} />
+                    } />
+                <p className="modal-config-text">
+                    Add random offset when QSY-ing CW spots. Set min and max to same number to remove randomness.
+                </p>
+                <TextField id="cw_offset_min" label="CW RIT Min (HZ)"
+                    value={config?.cw_offset_min}
+                    fullWidth
+                    onChange={(e) => {
+                        setConfig({ ...config, cw_offset_min: Number(e.target.value) });
+                    }} />
+                <TextField id="cw_offset_max" label="CW RIT Max (HZ)"
+                    value={config?.cw_offset_max}
+                    fullWidth
+                    onChange={(e) => {
+                        setConfig({ ...config, cw_offset_max: Number(e.target.value) });
                     }} />
             </Stack>
         </div>

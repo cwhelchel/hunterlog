@@ -1,5 +1,6 @@
 
 import json
+import random
 from cat.cat_interface import CAT
 from db.db import DataBase
 import logging as L
@@ -38,8 +39,8 @@ class CatApi:
 
     def qsy_to(self, freq, mode: str):
         '''
-        Use CAT control to QSY. Will adjust mode based on freq and stored config
-        values.
+        Use CAT control to QSY. Will adjust mode based on freq and stored
+        config values.
 
         :param freq str: freq in kilohertz
         :param mode str: common mode string
@@ -55,6 +56,13 @@ class CatApi:
             return _response(False, "CAT offline.", transient=True)
 
         hrz = float(freq) * 1000.0
+
+        rit = self.db.config.get_value('use_cw_offset')
+
+        if rit and mode == "CW":
+            offset = self._get_rit_offset()
+            hrz = hrz + offset
+
         log.debug(f"adjusted freq {hrz}")
         if mode == "SSB" and hrz >= 10000000:
             mode = "USB"
@@ -104,13 +112,13 @@ class CatApi:
             log.warning(
                 'set_cw_speed not available for this CAT mode',
                 exc_info=nie)
-            return _response(False, 'set_cw_speed not available for this CAT mode', transient=True)
+            return _response(False, 'set_cw_speed not available for this CAT mode', transient=True)  # NOQA
         except Exception as ex:
-            log.error('error mod cw speed', exc_info=nie)
+            log.error('error mod cw speed', exc_info=ex)
             return _response(False, 'Error setting CW speed', transient=True)
 
         return _response(True, "")
-    
+
     def get_freq(self) -> str:
         '''
         Use CAT control to read the freq from the radio
@@ -122,11 +130,29 @@ class CatApi:
 
         if not self.cat.is_online:
             return _response(False, "CAT offline.", transient=True)
-        
+
         fx_str = self.cat.get_vfo()
 
         fx = float(fx_str)
         fx = fx / 1000.0
-        
+
         return _response(True, "", fx=fx)
 
+    def _get_rit_offset(self) -> int:
+        r_min = self.db.config.get_value('cw_offset_min')
+        r_max = self.db.config.get_value('cw_offset_max')
+
+        if r_min < 10:
+            r_min = 10
+        if r_max > 100:
+            r_max = 100
+
+        offset = random.randint(r_min, r_max)
+        neg = random.randint(0, 1)
+
+        if (neg == 1):
+            offset = offset * -1
+
+        log.debug(f'random HZ offset {offset}')
+
+        return offset
