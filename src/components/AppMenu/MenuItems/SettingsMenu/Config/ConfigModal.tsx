@@ -116,6 +116,7 @@ export default function ConfigModal() {
         config.use_cw_offset = Number(getVar(cfg2, 'use_cw_offset')) != 0;
         config.cw_offset_min = Number(getVar(cfg2, 'cw_offset_min'));
         config.cw_offset_max = Number(getVar(cfg2, 'cw_offset_max'));
+        config.scan_skip_modes = getVar(cfg2, 'scan_skip_modes');
         setConfig(config);
     }
 
@@ -142,6 +143,7 @@ export default function ConfigModal() {
         setVar(config2, "use_cw_offset", config.use_cw_offset.toString());
         setVar(config2, "cw_offset_min", config.cw_offset_min.toString());
         setVar(config2, "cw_offset_max", config.cw_offset_max.toString());
+        setVar(config2, "scan_skip_modes", config.scan_skip_modes);
         setConfig2(config2);
     }
 

@@ -24,6 +24,7 @@ export interface UserConfig {
     use_cw_offset: boolean,
     cw_offset_min: number,
     cw_offset_max: number,
+    scan_skip_modes: string,
 }
 
 export interface ConfigVer2 {

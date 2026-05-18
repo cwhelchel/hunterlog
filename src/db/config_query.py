@@ -259,7 +259,16 @@ class ConfigQuery:
             'group': 'cw',
             'enabled': 'True',
             'editable': 'True'
-        }
+        },
+        {
+            'key': 'scan_skip_modes',
+            'val': 'ft8,ft4',
+            'type': 'string',
+            'description': 'Comma separated list of modes to skip when scanning',  # NOQA
+            'group': 'scanning',
+            'enabled': 'True',
+            'editable': 'True'
+        },        
     ]
 
     def __init__(self, session: scoped_session):

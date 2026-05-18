@@ -20,7 +20,39 @@ export default function ScanButton() {
     const [scanIndex, setScanIndex] = React.useState(0);
     const pttRef = React.useRef<ReturnType<typeof setInterval> | null>();
 
-    const waitTime = (config.scan_wait_time || 5) * 1000;
+    const [waitTime, setWaitTime] = React.useState(5000); // 5 * 1000
+    const [skipModes, setSkipModes] = React.useState(['']);
+
+    React.useEffect(() => {
+        if (window.pywebview !== undefined && window.pywebview.api !== null)
+            initCfg();
+        else
+            window.addEventListener('pywebviewready', initCfg);
+
+        function initCfg() {
+            const x = window.pywebview.api.get_user_config_val('scan_wait_time');
+            x.then(async (r: string) => {
+                const x = checkApiResponse2(r, addMessage);
+                if (x.success) {
+                    const swt: number = x.val;
+                    setWaitTime(swt * 1000);
+                }
+            });
+
+            const y = window.pywebview.api.get_user_config_val('scan_skip_modes');
+            y.then(async (r: string) => {
+                const x = checkApiResponse2(r, addMessage);
+                if (x.success) {
+                    const modesStr = x.val;
+                    const skipModesStr = modesStr || '';
+                    const temp = skipModesStr.toUpperCase().split(',');
+                    setSkipModes(temp);
+                }
+            });
+        };
+
+
+    }, []);
 
     React.useEffect(() => {
         console.log("isScanning state changed to:", isScanning);
@@ -30,6 +62,8 @@ export default function ScanButton() {
         let scanInterval: number;
 
         if (isScanning) {
+            console.log('scan_wait_time', waitTime);
+
             // Fast PTT check every 250ms
             pttRef.current = setInterval(async () => {
                 if (window.pywebview?.api) {
@@ -72,13 +106,22 @@ export default function ScanButton() {
                     return;
                 }
 
+
+                // remove modes we dont want in scan list
+                console.log("skip modes:", skipModes);
+                const filteredRows = currentIds.filter(id => {
+                    const row = apiRef.current.getRow(id);
+                    return !skipModes.includes(row.mode.toUpperCase());
+                });
+                //console.log("filtered ids:", filteredRows);
+
                 let nextIndex = scanIndex + 1;
-                if (nextIndex >= currentIds.length) {
+                if (nextIndex >= filteredRows.length) {
                     nextIndex = 0;
                 }
                 setScanIndex(nextIndex);
 
-                const nextId = currentIds[nextIndex];
+                const nextId = filteredRows[nextIndex];
                 console.log("Scanning to row:", nextIndex, "ID:", nextId);
                 if (nextId) {
                     apiRef.current.setRowSelectionModel([nextId]);

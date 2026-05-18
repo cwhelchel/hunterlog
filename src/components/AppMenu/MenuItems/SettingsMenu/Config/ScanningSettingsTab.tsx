@@ -12,6 +12,13 @@ export default function ScanningSettingsTab() {
         }
     };
 
+    const handleSkipChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const val = event.target.value;
+        if (val !== undefined) {
+            setConfig({ ...config, scan_skip_modes: val });
+        }
+    };
+
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Typography variant="h6">Scanning Configuration</Typography>
@@ -22,6 +29,13 @@ export default function ScanningSettingsTab() {
                 onChange={handleChange}
                 helperText="Time to wait on each station before moving to the next."
                 inputProps={{ min: 1 }}
+            />
+             <TextField
+                label="Skip Modes "
+                type="string"
+                value={config.scan_skip_modes || ''}
+                onChange={handleSkipChange}
+                helperText="Comma separated list of modes to skip when scanning"
             />
         </Box>
     );
