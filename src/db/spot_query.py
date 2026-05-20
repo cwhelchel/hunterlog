@@ -2,6 +2,7 @@ import datetime
 import time
 import sqlalchemy as sa
 from sqlalchemy.orm import scoped_session
+from sqlalchemy import select
 import re
 import logging as L
 
@@ -63,6 +64,11 @@ class SpotQuery:
                 sa.and_(Spot.activator == activator,
                         Spot.reference == park)) \
             .first()
+
+    def get_wsjtx_spots(self) -> list[Spot]:
+        worst = ['FT8', 'FT4']
+        sql = select(Spot).where(Spot.mode.in_(worst))
+        return self.session.execute(sql).scalars().all()
 
     def insert_test_spot(self):
         # test data

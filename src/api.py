@@ -19,6 +19,7 @@ from db.models.parks import Park, ParkSchema
 from db.models.qsos import QsoSchema
 from db.models.spot_comments import SpotCommentSchema
 from db.models.spots import Spot, SpotSchema
+from integrations.wsjtx.integration import Integration
 from loggers import LoggerInterface
 from loggers.logger_interface import LoggerParams
 from programs.apis import PotaApi
@@ -73,6 +74,10 @@ class JsApi:
             logging.error("Error creating CAT object: ", exc_info=True)
             self.cat = None
         self.pw = None
+
+        logging.debug('starting wsjtx integration...')
+        self.wsjtx = Integration(log_handler=self._wsjtx_log_handle)
+        self.wsjtx.start()
 
     def get_spot(self, spot_id: int):
         logging.debug('py get_spot')
@@ -131,7 +136,7 @@ class JsApi:
         logging.debug('getting lock for qso from spot')
         if not self.lock.acquire(timeout=4.00):
             # self.db.session.rollback()
-            # [cmw] when we get in this segment, HL doesn't recover without 
+            # [cmw] when we get in this segment, HL doesn't recover without
             # refresh. maybe we add some way to fiddle w/ timeout value. idk
             # remove rollback() for now as its probably a problem.
             logging.warning("timed out lock acquisition. session rollback")
@@ -819,6 +824,9 @@ class JsApi:
             # handle half-loaded parks from program imports
             self._empty_park_updater()
 
+            # handle WSJT-X integration. use decoded CQs
+            self._handle_decodes()
+
             self.db.session.commit()
             logging.info("spots updated for programs")
             self.lock.release()
@@ -991,3 +999,21 @@ class JsApi:
                 """.format(obj=json.dumps(res))
             # logging.debug(f"alerting w this {js}")
             webview.windows[0].evaluate_js(js)
+
+    def _handle_decodes(self):
+        # update spot data with info from WSJTX (snr, calling cq)
+        # decodes = self.wsjtx.get_cq_decodes()
+        # for k, v in decodes.items():
+        #     print(k)
+        #     print(v)
+
+        # tell wsjtx-to highlight these calls
+        x = self.db.spots.get_wsjtx_spots()
+        for s in x:
+            # logging.debug(f"highlighting call {s.spotId} - {s.activator}")
+            self.wsjtx.highlight_call(s.activator, s.hunted)
+
+    def _wsjtx_log_handle(self, adif: str):
+        # take the adif from clicking log qso button on wsjtx and
+        # stuff it into hunterlog
+        logging.debug(f"got adif from wsjtx {adif}")

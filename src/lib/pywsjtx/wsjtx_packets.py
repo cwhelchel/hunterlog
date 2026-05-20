@@ -487,6 +487,10 @@ class LoggedADIFPacket(GenericWSJTXPacket):
     def __init__(self, addr_port, magic, schema, pkt_type, id, pkt):
         GenericWSJTXPacket.__init__(self, addr_port, magic, schema, pkt_type, id, pkt)
         # handle packet-specific stuff.
+        ps = PacketReader(pkt)
+        the_type = ps.QInt32()
+        self.wsjtx_id = ps.QString()
+        self.logged_adif = ps.QString()
 
     @classmethod
     def Builder(cls, to_wsjtx_id='WSJT-X', adif_text=""):
@@ -530,7 +534,8 @@ class WSJTXPacketClassFactory(GenericWSJTXPacket):
         ReplayPacket.TYPE_VALUE:    ReplayPacket,
         HaltTxPacket.TYPE_VALUE:    HaltTxPacket,
         FreeTextPacket.TYPE_VALUE:  FreeTextPacket,
-        WSPRDecodePacket.TYPE_VALUE: WSPRDecodePacket
+        WSPRDecodePacket.TYPE_VALUE: WSPRDecodePacket,
+        LoggedADIFPacket.TYPE_VALUE: LoggedADIFPacket
     }
     def __init__(self, addr_port, magic, schema, pkt_type, id, pkt):
         self.addr_port = addr_port
