@@ -70,6 +70,13 @@ class SpotQuery:
         sql = select(Spot).where(Spot.mode.in_(worst))
         return self.session.execute(sql).scalars().all()
 
+    def get_wsjtx_spot(self, callsign: str) -> Spot:
+        worst = ['FT8', 'FT4']
+        sql = select(Spot) \
+            .where(Spot.mode.in_(worst)) \
+            .where(Spot.activator == callsign)
+        return self.session.execute(sql).scalars().first()
+
     def insert_test_spot(self):
         # test data
         test = Spot()

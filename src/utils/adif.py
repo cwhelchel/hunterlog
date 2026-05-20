@@ -3,6 +3,7 @@ import datetime
 import logging as L
 import os
 import socket
+from typing import Any
 import bands
 import adif_io
 import re
@@ -53,6 +54,13 @@ class AdifLog():
     def write_adif_log(self, adif):
         with open(self.filename, "a", encoding='UTF-8') as file:
             file.write(adif + "\n")
+
+    @staticmethod
+    def adif_to_obj(adif: str) -> Any:
+        qsos, header = adif_io.read_from_string(adif)
+
+        if len(qsos) > 0:
+            return qsos[0]
 
     @staticmethod
     def import_from_log(file_name: str, the_db: DataBase):

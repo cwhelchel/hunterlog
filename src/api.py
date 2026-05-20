@@ -386,13 +386,7 @@ class JsApi:
 
         return self._response(True, '')
 
-    def log_qso(self, qso_data):
-        '''
-        Logs the QSO to the database, adif file, and updates stats. Will force
-        a reload of the currently displayed spots.
-
-        :param any qso_data: dict of qso data from the UI
-        '''
+    def _log_qso_internal(self, qso_data) -> tuple[bool, Any]:
         logging.info('acquiring lock to log qso')
         self.lock.acquire()
 
@@ -412,7 +406,7 @@ class JsApi:
             logging.error("Error logging QSO to db:")
             logging.exception(ex)
             self.lock.release()
-            return self._response(False, f"Error logging QSO: {ex}")
+            return False, self._response(False, f"Error logging QSO: {ex}")
 
         # get the data to log to the adif file and remote adif host
         qso = self.db.qsos.get_qso(id)
@@ -422,16 +416,78 @@ class JsApi:
         # db written so commit & release lock
         self.db.commit_session()
         self.lock.release()
+        return True, qso
 
+    def _log_qso_remote(self, qso) -> tuple[bool, str]:
         try:
-            # self.adif_log.log_qso_and_send(qso, cfg)
             self.adif_log.log_qso(qso)
-        except Exception as log_ex:
+        except Exception as ex:
             logging.exception(
                 msg="Error logging QSO to as adif (local/remote):",
-                exc_info=log_ex)
-            self.lock.release()
-            return self._response(False, f"Error logging as ADIF: {log_ex}")
+                exc_info=ex)
+            return False, self._response(False, f"Error logging as ADIF: {ex}")
+
+        return True, ''
+
+    def log_qso(self, qso_data):
+        '''
+        Logs the QSO to the database, adif file, and updates stats. Will force
+        a reload of the currently displayed spots.
+
+        :param any qso_data: dict of qso data from the UI
+        '''
+        # logging.info('acquiring lock to log qso')
+        # self.lock.acquire()
+
+        # def_pwr = self.db.config.get_value('default_pwr')
+
+        # try:
+        #     program = qso_data['sig']
+        #     ref = qso_data['sig_info']
+        #     pota_ref = qso_data['pota_ref'] if 'pota_ref' in qso_data else ''
+
+        #     self.programs[program].inc_ref_hunt(ref, pota_ref)
+
+        #     qso_data['tx_pwr'] = def_pwr
+        #     logging.debug(f"logging qso: {qso_data}")
+        #     id = self.db.qsos.insert_new_qso(qso_data)
+        # except Exception as ex:
+        #     logging.error("Error logging QSO to db:")
+        #     logging.exception(ex)
+        #     self.lock.release()
+        #     return self._response(False, f"Error logging QSO: {ex}")
+
+        # # get the data to log to the adif file and remote adif host
+        # qso = self.db.qsos.get_qso(id)
+        # act = self.db.get_activator_name(qso_data['call'])
+        # qso.name = act if act is not None else 'ERROR NO NAME'
+
+        # # db written so commit & release lock
+        # self.db.commit_session()
+        # self.lock.release()
+
+        success, resp = self._log_qso_internal(qso_data)
+
+        if not success:
+            # resp here is api error str
+            return resp
+
+        # here resp is qso obj
+        qso = resp
+
+        success, resp = self._log_qso_remote(qso)
+        if not success:
+            # resp here is api error str
+            return resp
+
+        # try:
+        #     self.adif_log.log_qso(qso)
+        # except Exception as log_ex:
+        #     logging.exception(
+        #         msg="Error logging QSO to as adif (local/remote):",
+        #         exc_info=log_ex)
+        #     self.lock.release()
+        #     return self._response(False, f"Error logging as ADIF: {log_ex}")
 
         return self._response(True, "QSO logged successfully")
 
@@ -1016,4 +1072,80 @@ class JsApi:
     def _wsjtx_log_handle(self, adif: str):
         # take the adif from clicking log qso button on wsjtx and
         # stuff it into hunterlog
-        logging.debug(f"got adif from wsjtx {adif}")
+        logging.debug(f"got adif to log from wsjtx {adif}")
+
+        self._call_js('setWorking')
+
+        # convert adif to qso_data dict. fill in SIG and references if there's
+        # a spot in HL
+        d = AdifLog.adif_to_obj(adif)
+
+        qso_data = {}
+        qso_data['sig'] = ''
+        qso_data['sig_info'] = ''
+
+        spot = self.db.spots.get_wsjtx_spot(callsign=d['CALL'])
+        if spot is not None:
+            logging.debug(f"spot found for wsjtx qso {spot.spotId} - {spot.spot_source}")  # NOQA
+            qso_data['sig'] = spot.spot_source
+            qso_data['sig_info'] = spot.reference
+            qso_data['pota_ref'] = spot.reference if spot.spot_source == 'POTA' else None  # NOQA
+            qso_data['sota_ref'] = spot.reference if spot.spot_source == 'SOTA' else None  # NOQA
+            qso_data['wwff_ref'] = spot.reference if spot.spot_source == 'WWFF' else None  # NOQA
+
+        qso_data['call'] = d['CALL']
+        qso_data['rst_sent'] = d['RST_SENT']
+        qso_data['rst_recv'] = d['RST_RCVD']  # opps i named it wrong
+        qso_data['mode'] = d['MODE']
+        qso_data['rx_pwr'] = ''
+        qso_data['state'] = ''
+        qso_data['distance'] = '0.0'
+        qso_data['bearing'] = '0.0'
+
+        # build timestamp for fromisoformat. user for date and timeon
+        qso_date = f"{d['QSO_DATE'][:4]}-{d['QSO_DATE'][4:6]}-{d['QSO_DATE'][6:]}"  # NOQA
+        qso_time = f"{d['TIME_ON'][:2]}:{d['TIME_ON'][2:4]}:{d['TIME_ON'][4:]}"  # NOQA
+        timestamp = f"{qso_date}T{qso_time}"
+        qso_data['qso_date'] = timestamp
+        qso_data['time_on'] = timestamp
+
+        # qso_data['time_off'] = d['TIME_OFF']
+        freqf = float(d['FREQ'])
+        freqf = freqf * 1000.0  # we log in kHz but we got MHz
+
+        qso_data['freq'] = str(freqf)
+        qso_data['freq_rx'] = str(freqf)
+        qso_data['band'] = d['BAND']
+        qso_data['gridsquare'] = d['GRIDSQUARE']
+        qso_data['comment'] = f"[{qso_data.get('sig', 'NOSIG')} {qso_data.get('sig_info', 'NOREF')} ]"
+
+        success, resp = self._log_qso_internal(qso_data)
+
+        if success:
+            qso = resp
+            # if config flag is true, log to configured logger
+            success, resp = self._log_qso_remote(qso)
+
+        self._call_js('getSpots')
+
+    def _call_js(self, method: str):
+        '''
+        Executes the JS method on the pywebview state object.
+
+        Method must take no parameters and the return is ignored.
+        '''
+        def get_js(m: str):
+            return """
+                if (window.pywebview.state !== undefined &&
+                    window.pywebview.state.{m} !== undefined) {{
+                    window.pywebview.state.{m}();
+                }}
+                """.format(m=method)
+
+        if len(webview.windows) > 0:
+            js = get_js(method)
+            logging.debug(f'calling {method} in frontend')
+            try:
+                webview.windows[0].evaluate_js(js)
+            except Exception as ex:
+                logging.error(f'error executing JS {js}', exc_info=ex)

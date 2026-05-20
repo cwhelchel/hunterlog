@@ -46,7 +46,7 @@ class WsjtxServer(threading.Thread):
         self.timeout = None
         self.verbose = kwargs.get("verbose", False)
         self.pkt_q = queue
-        self.return_port = 0
+        self.return_port = None
 
         if kwargs.get("timeout") is not None:
             self.timeout = kwargs.get("timeout")
@@ -121,4 +121,5 @@ class WsjtxServer(threading.Thread):
             foreground_color=foreground,
             highlight_last_only=False)
 
-        self.send_packet(self.return_port, x)
+        if self.return_port is not None:
+            self.send_packet(self.return_port, x)

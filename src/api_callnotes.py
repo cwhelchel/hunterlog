@@ -32,14 +32,6 @@ class CallNotesApi:
         self.programs = programs
         self.init_notes()
 
-    # def call_update_progress(self, x: float):
-    #     if len(webview.windows) > 0:
-    #         js = """if (window.pywebview.state !== undefined &&  window.pywebview.state.updateImportProgress !== undefined)  {{  // # noqa
-    #                         window.pywebview.state.updateImportProgress({obj}); // # noqa
-    #                 }}
-    #             """.format(obj=x)
-    #     webview.windows[0].evaluate_js(js)
-
     def init_notes(self):
         # this downloads files and sets last_download on the rows
         self._callnotes = CallsignNotes(self.db.callsign_notes.get_enabled())
