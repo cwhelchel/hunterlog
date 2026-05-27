@@ -75,9 +75,11 @@ class JsApi:
             self.cat = None
         self.pw = None
 
-        logging.debug('starting wsjtx integration...')
-        self.wsjtx = Integration(log_handler=self._wsjtx_log_handle)
-        self.wsjtx.start()
+        ws_int = self.db.config.get_value('enable_wsjtx_int')
+        if ws_int:
+            logging.debug('starting wsjtx integration...')
+            self.wsjtx = Integration(log_handler=self._wsjtx_log_handle)
+            self.wsjtx.start()
 
     def get_spot(self, spot_id: int):
         logging.debug('py get_spot')

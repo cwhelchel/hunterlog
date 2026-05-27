@@ -199,7 +199,9 @@ export default function ConfigModal() {
                 <CustomTabPanel value={value} index={4}>
                     <ScanningSettingsTab />
                 </CustomTabPanel>
-
+                <CustomTabPanel value={value} index={5}>
+                    <ScanningSettingsTab />
+                </CustomTabPanel>
                 <Divider aria-hidden="true" />
 
                 <Stack
