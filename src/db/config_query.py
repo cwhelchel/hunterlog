@@ -268,7 +268,25 @@ class ConfigQuery:
             'group': 'scanning',
             'enabled': 'True',
             'editable': 'True'
-        },        
+        },
+        {
+            'key': 'enable_wsjtx_int',
+            'val': '0',
+            'type': 'bool',
+            'description': 'True to enable advanced WSJTX integrations',
+            'group': 'wsjtx',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'wsjtx_highlight_calls',
+            'val': '1',
+            'type': 'bool',
+            'description': 'True to enable highlight Hunterlog seen calls in WSJTX',  # NOQA
+            'group': 'wsjtx',
+            'enabled': 'True',
+            'editable': 'True'
+        }
     ]
 
     def __init__(self, session: scoped_session):

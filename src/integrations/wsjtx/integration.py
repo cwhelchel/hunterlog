@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from integrations.wsjtx.packet_processor import PacketProcessor
 from integrations.wsjtx.wsjtx_server import WsjtxServer
 from lib import pywsjtx
@@ -9,6 +11,22 @@ log = logging.getLogger(__name__)
 black = pywsjtx.QCOLOR(pywsjtx.QCOLOR.SPEC_RGB, 200, 0, 0, 0)
 green = pywsjtx.QCOLOR(pywsjtx.QCOLOR.SPEC_RGB, 255, 0, 255, 0)
 blue_gray = pywsjtx.QCOLOR(pywsjtx.QCOLOR.SPEC_RGB, 200, 50, 100, 150)
+
+
+@dataclass
+class CallHighlightColor:
+    alpha: int
+    r: int
+    g: int
+    b: int
+
+
+@dataclass
+class ColorConfig:
+    hunted_fore: CallHighlightColor
+    hunted_back: CallHighlightColor
+    unhunted_fore: CallHighlightColor
+    unhunted_back: CallHighlightColor
 
 
 class Integration:
