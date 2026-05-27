@@ -141,6 +141,21 @@ class Spot(Base):
         self.is_qrt = False
         self.act_cmts = ''
 
+    def get_state_or_province(self) -> str:
+        '''
+        POTA spots only. Get state from locationDesc col
+
+        For multi-state refs it uses the first one in the csv list
+        '''
+        if self.source != 'POTA':
+            return ''
+
+        x: str = self.locationDesc
+        first = x.split(',')[0]
+        if (first.startswith('US') or first.startswith('CA')):
+            return first.split('-')[1]
+        return ''
+
 
 class SpotSchema(SQLAlchemyAutoSchema):
     class Meta:

@@ -12,7 +12,7 @@ import { ActivatorData } from '../../@types/ActivatorTypes';
 import { Alert, Avatar, Tooltip, AlertColor, Snackbar } from '@mui/material';
 import StatsDropdownMenu from './MenuItems/StatsDropdownMenu';
 import AlertsArea from './AlertsArea';
-import { checkApiResponse2 } from '../Utilities/util';
+import { checkApiResponse2, showSuccessToast } from '../Utilities/util';
 import HuntMapMenu from './MenuItems/Map/HuntMapMenu';
 import ConfigDropdownMenu from './MenuItems/ConfigDropdownMenu';
 import { useMessageQueue } from '../MessageContext';
@@ -94,14 +94,28 @@ export default function AppMenu() {
         });
     };
 
+
+    function showSuccessPopup(msg: string) {
+        showSuccessToast(msg, addMessage);
+    }
+
+    function initState() {
+        if (!window.pywebview.state) {
+            window.pywebview.state = {};
+        }
+        window.pywebview.state.showSuccessPopup = showSuccessPopup;
+    }
+
     React.useEffect(() => {
         console.log('hooking for user config');
 
         if (window.pywebview !== undefined && window.pywebview.api !== null) {
             getCfg();
+            initState();
         }
         else {
             window.addEventListener('pywebviewready', getCfg);
+            window.addEventListener('pywebviewready', initState);
         }
     }, []);
 
@@ -176,8 +190,8 @@ export default function AppMenu() {
                         <Alert variant="filled" severity={severity} onClose={() => { handleAlertClose() }} >{alertMsg}</Alert>
                     }
 
-                    <CatArea/>
-                    
+                    <CatArea />
+
                     <Tooltip title="Refresh">
                         <IconButton onClick={() => {
                             location.reload();
@@ -200,3 +214,4 @@ export default function AppMenu() {
         </Box>
     );
 }
+

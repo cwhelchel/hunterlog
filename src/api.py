@@ -16,7 +16,7 @@ from db.db import DataBase
 from db.models.activators import Activator, ActivatorSchema
 from db.models.alerts import AlertsSchema
 from db.models.parks import Park, ParkSchema
-from db.models.qsos import QsoSchema
+from db.models.qsos import Qso, QsoSchema
 from db.models.spot_comments import SpotCommentSchema
 from db.models.spots import Spot, SpotSchema
 from integrations.wsjtx.integration import Integration
@@ -1059,74 +1059,42 @@ class JsApi:
     def _handle_decodes(self):
         # update spot data with info from WSJTX (snr, calling cq)
         # decodes = self.wsjtx.get_cq_decodes()
-        # for k, v in decodes.items():
-        #     print(k)
-        #     print(v)
 
         # tell wsjtx-to highlight these calls
         x = self.db.spots.get_wsjtx_spots()
         for s in x:
-            # logging.debug(f"highlighting call {s.spotId} - {s.activator}")
             self.wsjtx.highlight_call(s.activator, s.hunted)
 
     def _wsjtx_log_handle(self, adif: str):
         # take the adif from clicking log qso button on wsjtx and
         # stuff it into hunterlog
-        logging.debug(f"got adif to log from wsjtx {adif}")
+        logging.info("got adif to log from wsjtx")
+        logging.debug(adif)
 
         self._call_js('setWorking')
 
-        # convert adif to qso_data dict. fill in SIG and references if there's
-        # a spot in HL
-        d = AdifLog.adif_to_obj(adif)
+        qso, spot = self._adif_to_enriched_qso(adif)
 
-        qso_data = {}
-        qso_data['sig'] = ''
-        qso_data['sig_info'] = ''
+        with self.lock:
+            program = qso.sig
+            if program != '':
+                ref = qso.sig_info
+                # known deficiency: logs from wsjtx dont have multi-ref info bc
+                # that is pulled in from front end
+                self.programs[program].inc_ref_hunt(ref, None)
 
-        spot = self.db.spots.get_wsjtx_spot(callsign=d['CALL'])
-        if spot is not None:
-            logging.debug(f"spot found for wsjtx qso {spot.spotId} - {spot.spot_source}")  # NOQA
-            qso_data['sig'] = spot.spot_source
-            qso_data['sig_info'] = spot.reference
-            qso_data['pota_ref'] = spot.reference if spot.spot_source == 'POTA' else None  # NOQA
-            qso_data['sota_ref'] = spot.reference if spot.spot_source == 'SOTA' else None  # NOQA
-            qso_data['wwff_ref'] = spot.reference if spot.spot_source == 'WWFF' else None  # NOQA
+            self.db.qsos.insert_qso(qso, delay_commit=False)
 
-        qso_data['call'] = d['CALL']
-        qso_data['rst_sent'] = d['RST_SENT']
-        qso_data['rst_recv'] = d['RST_RCVD']  # opps i named it wrong
-        qso_data['mode'] = d['MODE']
-        qso_data['rx_pwr'] = ''
-        qso_data['state'] = ''
-        qso_data['distance'] = '0.0'
-        qso_data['bearing'] = '0.0'
+            if spot:
+                self.refresh_spot(spot.spotId, qso.call, qso.sig_info)
 
-        # build timestamp for fromisoformat. user for date and timeon
-        qso_date = f"{d['QSO_DATE'][:4]}-{d['QSO_DATE'][4:6]}-{d['QSO_DATE'][6:]}"  # NOQA
-        qso_time = f"{d['TIME_ON'][:2]}:{d['TIME_ON'][2:4]}:{d['TIME_ON'][4:]}"  # NOQA
-        timestamp = f"{qso_date}T{qso_time}"
-        qso_data['qso_date'] = timestamp
-        qso_data['time_on'] = timestamp
-
-        # qso_data['time_off'] = d['TIME_OFF']
-        freqf = float(d['FREQ'])
-        freqf = freqf * 1000.0  # we log in kHz but we got MHz
-
-        qso_data['freq'] = str(freqf)
-        qso_data['freq_rx'] = str(freqf)
-        qso_data['band'] = d['BAND']
-        qso_data['gridsquare'] = d['GRIDSQUARE']
-        qso_data['comment'] = f"[{qso_data.get('sig', 'NOSIG')} {qso_data.get('sig_info', 'NOREF')} ]"
-
-        success, resp = self._log_qso_internal(qso_data)
-
-        if success:
-            qso = resp
-            # if config flag is true, log to configured logger
-            success, resp = self._log_qso_remote(qso)
+        # if config flag is true, log to configured logger
+        success, resp = self._log_qso_remote(qso)
+        if not success:
+            logging.error(f"error sending WSJT-X QSO to logger: {resp}")
 
         self._call_js('getSpots')
+        self._call_js_param('showSuccessPopup', 'WSJT-X QSO Logged')
 
     def _call_js(self, method: str):
         '''
@@ -1149,3 +1117,57 @@ class JsApi:
                 webview.windows[0].evaluate_js(js)
             except Exception as ex:
                 logging.error(f'error executing JS {js}', exc_info=ex)
+
+    def _call_js_param(self, method: str, param):
+        '''
+        Executes the JS method on the pywebview state object.
+
+        Target js method must take 1 parameter. Passed in param Will be
+        json.dumps'd
+        '''
+        def get_js(m: str):
+            return """
+                if (window.pywebview.state !== undefined &&
+                    window.pywebview.state.{m} !== undefined) {{
+                    window.pywebview.state.{m}({p});
+                }}
+                """.format(m=method, p=json.dumps(param))
+
+        if len(webview.windows) > 0:
+            js = get_js(method)
+            logging.debug(f'calling {method} in frontend')
+            try:
+                webview.windows[0].evaluate_js(js)
+            except Exception as ex:
+                logging.error(f'error executing JS {js}', exc_info=ex)
+
+    def _adif_to_enriched_qso(self, adif: str) -> tuple[Qso, Spot]:
+        '''
+        Take the given adif string and return enriched QSO data for Hunterlog
+        '''
+
+        adif_obj = AdifLog.adif_to_obj(adif)
+        q = Qso()
+        q.init_from_adif(adif_obj)
+
+        q.sig = ''
+        q.sig_info = ''
+
+        # find a spot in current spots to enrich the qso data
+        spot = self.db.spots.get_wsjtx_spot(callsign=q.call)
+        if spot is not None:
+            logging.debug(f"spot found to enrich wsjtx qso {spot.spotId}")
+            sig = spot.spot_source
+            sig_info = spot.reference
+            q.sig = sig
+            q.sig_info = sig_info
+            q.pota_ref = sig_info if sig == 'POTA' else ''  # NOQA
+            q.sota_ref = sig_info if sig == 'SOTA' else ''  # NOQA
+            q.wwff_ref = sig_info if sig == 'WWFF' else ''  # NOQA
+            q.comment = f"[{sig} {sig_info}]"  # NOQA
+
+            q.state = spot.get_state_or_province()
+
+        q.name = self.db.get_activator_name(q.call)
+
+        return q, spot
