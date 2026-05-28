@@ -1,3 +1,5 @@
+import json
+
 import requests
 import logging
 from datetime import datetime
@@ -80,6 +82,13 @@ def send_adif(url: str, api_key: str, adif: str):
         # Create resource response 201
         if response.status_code == 201:
             log.debug("Request successful! Response %s", response)
+        elif response.status_code == 400:
+            log.warning(
+                f"Error logging to wavelog \
+                    code: {response.status_code} \
+                    text: {response.text}")
+            obj = json.loads(response.text)
+            raise Exception('.'.join(obj['messages']))
         else:
             log.warning(
                 f"Request failed with status \

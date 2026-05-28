@@ -14,6 +14,7 @@ import { showErrorAlert } from '../../../../Utilities/util';
 import { useMessageQueue } from '../../../../MessageContext';
 import ProgramSettingsTab from './ProgramSettingsTab';
 import HlModal2 from '../../../../Common/HlModal';
+import WsjtxSettingsTab from './WsjtxSettingsTab';
 
 
 const def2: ConfigVer2[] = [];
@@ -117,6 +118,14 @@ export default function ConfigModal() {
         config.cw_offset_min = Number(getVar(cfg2, 'cw_offset_min'));
         config.cw_offset_max = Number(getVar(cfg2, 'cw_offset_max'));
         config.scan_skip_modes = getVar(cfg2, 'scan_skip_modes');
+        config.enable_wsjtx_int = Number(getVar(cfg2, 'enable_wsjtx_int')) != 0;
+        config.wsjtx_highlight_calls = Number(getVar(cfg2, 'wsjtx_highlight_calls')) != 0;
+        config.wsjtx_hunted_bg = getVar(cfg2, 'wsjtx_hunted_bg');
+        config.wsjtx_hunted_fg = getVar(cfg2, 'wsjtx_hunted_fg');
+        config.wsjtx_spot_bg = getVar(cfg2, 'wsjtx_spot_bg');
+        config.wsjtx_spot_fg = getVar(cfg2, 'wsjtx_spot_fg');
+        config.wsjtx_new_ref_fg = getVar(cfg2, 'wsjtx_new_ref_fg');
+        config.wsjtx_new_ref_bg = getVar(cfg2, 'wsjtx_new_ref_bg');
         setConfig(config);
     }
 
@@ -144,6 +153,14 @@ export default function ConfigModal() {
         setVar(config2, "cw_offset_min", config.cw_offset_min.toString());
         setVar(config2, "cw_offset_max", config.cw_offset_max.toString());
         setVar(config2, "scan_skip_modes", config.scan_skip_modes);
+        setVar(config2, "enable_wsjtx_int", config.enable_wsjtx_int.toString());
+        setVar(config2, "wsjtx_highlight_calls", config.wsjtx_highlight_calls.toString());
+        setVar(config2, "wsjtx_hunted_bg", config.wsjtx_hunted_bg);
+        setVar(config2, "wsjtx_hunted_fg", config.wsjtx_hunted_fg);
+        setVar(config2, "wsjtx_spot_bg", config.wsjtx_spot_bg);
+        setVar(config2, "wsjtx_spot_fg", config.wsjtx_spot_fg);
+        setVar(config2, "wsjtx_new_ref_fg", config.wsjtx_new_ref_fg);
+        setVar(config2, "wsjtx_new_ref_bg", config.wsjtx_new_ref_bg);
         setConfig2(config2);
     }
 
@@ -182,6 +199,7 @@ export default function ConfigModal() {
                     <Tab label={'Logging'} {...a11yProps(2)} />
                     <Tab label={'Programs'} {...a11yProps(3)} />
                     <Tab label={'Scanning'} {...a11yProps(4)} />
+                    <Tab label={'WSJT-X'} {...a11yProps(5)} />
                 </Tabs>
 
                 <CustomTabPanel value={value} index={0}>
@@ -200,7 +218,7 @@ export default function ConfigModal() {
                     <ScanningSettingsTab />
                 </CustomTabPanel>
                 <CustomTabPanel value={value} index={5}>
-                    <ScanningSettingsTab />
+                    <WsjtxSettingsTab />
                 </CustomTabPanel>
                 <Divider aria-hidden="true" />
 

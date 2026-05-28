@@ -12,7 +12,7 @@ import { ActivatorData } from '../../@types/ActivatorTypes';
 import { Alert, Avatar, Tooltip, AlertColor, Snackbar } from '@mui/material';
 import StatsDropdownMenu from './MenuItems/StatsDropdownMenu';
 import AlertsArea from './AlertsArea';
-import { checkApiResponse2, showSuccessToast } from '../Utilities/util';
+import { checkApiResponse2, showErrorToast, showSuccessToast } from '../Utilities/util';
 import HuntMapMenu from './MenuItems/Map/HuntMapMenu';
 import ConfigDropdownMenu from './MenuItems/ConfigDropdownMenu';
 import { useMessageQueue } from '../MessageContext';
@@ -99,11 +99,16 @@ export default function AppMenu() {
         showSuccessToast(msg, addMessage);
     }
 
+    function showFailurePopup(msg: string) {
+        showErrorToast(msg, addMessage);
+    }
+
     function initState() {
         if (!window.pywebview.state) {
             window.pywebview.state = {};
         }
         window.pywebview.state.showSuccessPopup = showSuccessPopup;
+        window.pywebview.state.showFailurePopup = showFailurePopup;
     }
 
     React.useEffect(() => {

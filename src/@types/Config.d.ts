@@ -25,6 +25,14 @@ export interface UserConfig {
     cw_offset_min: number,
     cw_offset_max: number,
     scan_skip_modes: string,
+    enable_wsjtx_int: boolean,
+    wsjtx_highlight_calls: boolean,
+    wsjtx_hunted_fg: string,
+    wsjtx_hunted_bg: string,
+    wsjtx_spot_fg: string,
+    wsjtx_spot_bg: string,
+    wsjtx_new_ref_fg: string,
+    wsjtx_new_ref_bg: string
 }
 
 export interface ConfigVer2 {

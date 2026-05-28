@@ -286,6 +286,60 @@ class ConfigQuery:
             'group': 'wsjtx',
             'enabled': 'True',
             'editable': 'True'
+        },
+        {
+            'key': 'wsjtx_hunted_fg',
+            'val': '#00ff00cc',
+            'type': 'string',
+            'description': 'WSJT-X hunted highlight foreground color',
+            'group': 'wsjtx',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'wsjtx_hunted_bg',
+            'val': '#326496d9',
+            'type': 'string',
+            'description': 'WSJT-X hunted highlight background color',
+            'group': 'wsjtx',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'wsjtx_spot_fg',
+            'val': '#00ff00cc',
+            'type': 'string',
+            'description': 'WSJT-X highlight foreground color',
+            'group': 'wsjtx',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'wsjtx_spot_bg',
+            'val': '#000000ff',
+            'type': 'string',
+            'description': 'WSJT-X highlight background color',
+            'group': 'wsjtx',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'wsjtx_new_ref_fg',
+            'val': "#ffffffff",
+            'type': 'string',
+            'description': 'WSJT-X highlight foreground color',
+            'group': 'wsjtx',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'wsjtx_new_ref_bg',
+            'val': "#8a0067ff",
+            'type': 'string',
+            'description': 'WSJT-X highlight background color',
+            'group': 'wsjtx',
+            'enabled': 'True',
+            'editable': 'True'
         }
     ]
 

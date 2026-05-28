@@ -19,7 +19,7 @@ from db.models.parks import Park, ParkSchema
 from db.models.qsos import Qso, QsoSchema
 from db.models.spot_comments import SpotCommentSchema
 from db.models.spots import Spot, SpotSchema
-from integrations.wsjtx.integration import Integration
+from integrations.wsjtx.integration import ColorConfig, Integration
 from loggers import LoggerInterface
 from loggers.logger_interface import LoggerParams
 from programs.apis import PotaApi
@@ -80,6 +80,8 @@ class JsApi:
             logging.debug('starting wsjtx integration...')
             self.wsjtx = Integration(log_handler=self._wsjtx_log_handle)
             self.wsjtx.start()
+        else:
+            self.wsjtx = None
 
     def get_spot(self, spot_id: int):
         logging.debug('py get_spot')
@@ -883,7 +885,7 @@ class JsApi:
             self._empty_park_updater()
 
             # handle WSJT-X integration. use decoded CQs
-            self._handle_decodes()
+            self._handle_wsjtx()
 
             self.db.session.commit()
             logging.info("spots updated for programs")
@@ -1058,14 +1060,24 @@ class JsApi:
             # logging.debug(f"alerting w this {js}")
             webview.windows[0].evaluate_js(js)
 
-    def _handle_decodes(self):
-        # update spot data with info from WSJTX (snr, calling cq)
-        # decodes = self.wsjtx.get_cq_decodes()
+    def _handle_wsjtx(self):
+        if self.wsjtx is None:
+            return
+
+        colors = ColorConfig(
+            self.db.config.get_value('wsjtx_hunted_fg'),
+            self.db.config.get_value('wsjtx_hunted_bg'),
+            self.db.config.get_value('wsjtx_spot_fg'),
+            self.db.config.get_value('wsjtx_spot_bg'),
+            self.db.config.get_value('wsjtx_new_ref_fg'),
+            self.db.config.get_value('wsjtx_new_ref_bg')
+        )
 
         # tell wsjtx-to highlight these calls
         x = self.db.spots.get_wsjtx_spots()
         for s in x:
-            self.wsjtx.highlight_call(s.activator, s.hunted)
+            self.wsjtx.highlight_call(
+                s.activator, s.hunted, s.park_hunts == 0, colors)
 
     def _wsjtx_log_handle(self, adif: str):
         # take the adif from clicking log qso button on wsjtx and
@@ -1094,9 +1106,12 @@ class JsApi:
         success, resp = self._log_qso_remote(qso)
         if not success:
             logging.error(f"error sending WSJT-X QSO to logger: {resp}")
+            self._call_js_param('showFailurePopup', f'Logging error: {resp}')
+            self._call_js('getSpots')
+            return
 
-        self._call_js('getSpots')
         self._call_js_param('showSuccessPopup', 'WSJT-X QSO Logged')
+        self._call_js('getSpots')
 
     def _call_js(self, method: str):
         '''

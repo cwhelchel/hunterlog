@@ -9,8 +9,10 @@ import logging
 log = logging.getLogger(__name__)
 
 black = pywsjtx.QCOLOR(pywsjtx.QCOLOR.SPEC_RGB, 200, 0, 0, 0)
+purple = pywsjtx.QCOLOR(pywsjtx.QCOLOR.SPEC_RGB, 255, 138, 0, 103)
 green = pywsjtx.QCOLOR(pywsjtx.QCOLOR.SPEC_RGB, 255, 0, 255, 0)
 blue_gray = pywsjtx.QCOLOR(pywsjtx.QCOLOR.SPEC_RGB, 200, 50, 100, 150)
+white = pywsjtx.QCOLOR.White
 
 
 @dataclass
@@ -20,13 +22,31 @@ class CallHighlightColor:
     g: int
     b: int
 
+    def to_qcolor(self):
+        return pywsjtx.QCOLOR(pywsjtx.QCOLOR.SPEC_RGB, self.alpha, self.r, self.g, self.b)  # NOQA
+
+    @staticmethod
+    def from_string(d: str):
+        try:
+            d = d.removeprefix('#')
+            r = int(d[:2], base=16)
+            g = int(d[2:4], base=16)
+            b = int(d[4:6], base=16)
+            a = int(d[6:], base=16)
+            return pywsjtx.QCOLOR(pywsjtx.QCOLOR.SPEC_RGB, a, r, g, b)
+        except Exception as ex:
+            log.warning("from_string exception", exc_info=ex)
+            return None
+
 
 @dataclass
 class ColorConfig:
-    hunted_fore: CallHighlightColor
-    hunted_back: CallHighlightColor
-    unhunted_fore: CallHighlightColor
-    unhunted_back: CallHighlightColor
+    hunted_fore: str
+    hunted_back: str
+    spotted_fore: str
+    spotted_back: str
+    new_fore: str
+    new_back: str
 
 
 class Integration:
@@ -45,13 +65,41 @@ class Integration:
     def get_cq_decodes(self):
         return self._cq
 
-    def highlight_call(self, callsign: str, is_hunted: bool):
+    def highlight_call(
+            self,
+            callsign: str,
+            is_hunted: bool,
+            new_park: bool,
+            colors: ColorConfig):
+
+        hunted_bg = CallHighlightColor.from_string(
+            colors.hunted_back) or blue_gray
+        hunted_fg = CallHighlightColor.from_string(colors.hunted_fore) or green
+        spotted_bg = CallHighlightColor.from_string(
+            colors.spotted_back) or black
+        spotted_fg = CallHighlightColor.from_string(
+            colors.spotted_fore) or green
+
+        new_bg = CallHighlightColor.from_string(
+            colors.new_back) or purple
+        new_fg = CallHighlightColor.from_string(
+            colors.new_fore) or white
+
         if is_hunted:
             self.server.send_highlight_pkt(
-                callsign, background=blue_gray, foreground=green)
+                callsign,
+                background=hunted_bg,
+                foreground=hunted_fg)
+        elif new_park:
+            self.server.send_highlight_pkt(
+                callsign,
+                background=new_bg,
+                foreground=new_fg)
         else:
             self.server.send_highlight_pkt(
-                callsign,  background=black, foreground=green)
+                callsign,
+                background=spotted_bg,
+                foreground=spotted_fg)
 
     def logged_packet(self, packet: LoggedADIFPacket):
         log.debug(f"got logged_packet {packet}")

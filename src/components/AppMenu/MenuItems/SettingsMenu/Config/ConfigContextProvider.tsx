@@ -27,7 +27,15 @@ const defData: UserConfig = {
     use_cw_offset: false,
     cw_offset_min: 0,
     cw_offset_max: 0,
-    scan_skip_modes: ''
+    scan_skip_modes: '',
+    enable_wsjtx_int: false,
+    wsjtx_highlight_calls: false,
+    wsjtx_hunted_fg: '',
+    wsjtx_hunted_bg: '',
+    wsjtx_spot_fg: '',
+    wsjtx_spot_bg: '',
+    wsjtx_new_ref_fg: '',
+    wsjtx_new_ref_bg: ''
 };
 
 export interface ConfigContextType {
