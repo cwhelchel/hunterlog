@@ -35,7 +35,9 @@ const defData: UserConfig = {
     wsjtx_spot_fg: '',
     wsjtx_spot_bg: '',
     wsjtx_new_ref_fg: '',
-    wsjtx_new_ref_bg: ''
+    wsjtx_new_ref_bg: '',
+    wsjtx_ip_addr: '',
+    wsjtx_udp_port: 0
 };
 
 export interface ConfigContextType {

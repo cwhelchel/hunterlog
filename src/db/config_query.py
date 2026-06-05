@@ -340,6 +340,24 @@ class ConfigQuery:
             'group': 'wsjtx',
             'enabled': 'True',
             'editable': 'True'
+        },
+        {
+            'key': 'wsjtx_ip_addr',
+            'val': "127.0.0.1",
+            'type': 'string',
+            'description': 'WSJT-X server ip address to bind to',
+            'group': 'wsjtx',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'wsjtx_udp_port',
+            'val': "2237",
+            'type': 'int',
+            'description': 'WSJT-X server port to bind to',
+            'group': 'wsjtx',
+            'enabled': 'True',
+            'editable': 'True'
         }
     ]
 

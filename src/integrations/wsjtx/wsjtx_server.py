@@ -60,16 +60,22 @@ class WsjtxServer(threading.Thread):
             self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
             self.sock.bind((ip_address, int(udp_port)))
         else:
+            self.logger.debug(f'set up for multicast {the_address}:{udp_port}')
             self.multicast_setup(ip_address, udp_port)
+            self.logger.debug(f'set up {self.sock}')
 
         if self.timeout is not None:
             self.sock.settimeout(self.timeout)
 
     def multicast_setup(self, group, port=''):
+        self.logger.debug(f'mcast setup {group}:{port}')
         self.sock = socket.socket(
             socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.sock.bind(('', port))
+
+        # windows this must be '0.0.0.0'... not empty str or group
+        # TODO test on other OS
+        self.sock.bind(('0.0.0.0', port))
         mreq = struct.pack("4sl", socket.inet_aton(group), socket.INADDR_ANY)
         self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
@@ -77,6 +83,8 @@ class WsjtxServer(threading.Thread):
         try:
             pkt, addr_port = self.sock.recvfrom(
                 self.MAX_BUFFER_SIZE)  # buffer size is 1024 bytes
+            if self.verbose:
+                logging.debug(f"rx_packet:{pkt}")
             return (pkt, addr_port)
         except socket.timeout:
             if self.verbose:
@@ -103,6 +111,9 @@ class WsjtxServer(threading.Thread):
             if pkt is not None:
                 the_packet = pywsjtx.WSJTXPacketClassFactory.from_udp_packet(
                     addr_port, pkt)
+
+                if self.verbose:
+                    self.logger.debug("decoded pkt {} ".format(the_packet))
 
                 self.return_port = addr_port
 

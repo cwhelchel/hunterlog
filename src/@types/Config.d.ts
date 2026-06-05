@@ -32,7 +32,9 @@ export interface UserConfig {
     wsjtx_spot_fg: string,
     wsjtx_spot_bg: string,
     wsjtx_new_ref_fg: string,
-    wsjtx_new_ref_bg: string
+    wsjtx_new_ref_bg: string,
+    wsjtx_ip_addr: string,
+    wsjtx_udp_port: number,
 }
 
 export interface ConfigVer2 {

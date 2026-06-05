@@ -50,11 +50,11 @@ class ColorConfig:
 
 
 class Integration:
-    def __init__(self, log_handler):
+    def __init__(self, log_handler, ip='127.0.0.1', port=2237):
         self.pkt_q = PacketProcessor()
         self.pkt_q.subscribe('logged_adif_pkt', self.logged_packet)
         self.pkt_q.subscribe('decode_pkt', self.decode_packet)
-        self.server = WsjtxServer(queue=self.pkt_q)
+        self.server = WsjtxServer(ip_address=ip, port=port, queue=self.pkt_q)
         self._lhandler = log_handler
         self._cq = {}
 

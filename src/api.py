@@ -78,7 +78,14 @@ class JsApi:
         ws_int = self.db.config.get_value('enable_wsjtx_int')
         if ws_int:
             logging.debug('starting wsjtx integration...')
-            self.wsjtx = Integration(log_handler=self._wsjtx_log_handle)
+            ip = self.db.config.get_value('wsjtx_ip_addr')
+            port = self.db.config.get_value('wsjtx_udp_port')
+            self.db.config.get_value('enable_wsjtx_int')
+            self.wsjtx = Integration(
+                log_handler=self._wsjtx_log_handle,
+                ip=ip,
+                port=port
+            )
             self.wsjtx.start()
         else:
             self.wsjtx = None
@@ -1166,9 +1173,12 @@ class JsApi:
         adif_obj = AdifLog.adif_to_obj(adif)
         q = Qso()
         q.init_from_adif(adif_obj)
+        def_pwr = self.db.config.get_value('default_pwr')
 
         q.sig = ''
         q.sig_info = ''
+        q.tx_pwr = def_pwr
+        q.rx_pwr = def_pwr
 
         # find a spot in current spots to enrich the qso data
         spot = self.db.spots.get_wsjtx_spot(callsign=q.call)

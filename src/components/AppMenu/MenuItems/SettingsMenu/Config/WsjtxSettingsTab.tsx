@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Checkbox, Divider, FormControlLabel, Stack } from '@mui/material';
+import { Checkbox, Divider, FormControlLabel, Stack, TextField } from '@mui/material';
 import { useConfigContext } from './ConfigContextProvider';
 import { MuiColorInput } from 'mui-color-input';
 
@@ -99,6 +99,32 @@ export default function WsjtxSettingsTab() {
                             setConfig({ ...config, wsjtx_new_ref_fg: val });
                         }}></MuiColorInput>
                     } />
+            </Stack>
+
+            <Divider aria-hidden="true" />
+
+            <Stack marginTop={"5px"} gap={2}>
+                <p className="modal-config-text" style={{ margin: '5px' }}>
+                    The WSJT-X IP and port can be left default unless you have configured
+                    WSJT-X to use different ports or multicast. To enable multicast,
+                    change IP address to the multicast address.
+                </p>
+                <Stack gap={2} direction={'row'}>
+                    <TextField
+                        sx={{ flex: 1 }}
+                        label="WSJT-X Server IP address"
+                        value={config.wsjtx_ip_addr} onChange={(e) => {
+                            const val = e.target.value;
+                            setConfig({ ...config, wsjtx_ip_addr: val });
+                        }} />
+                    <TextField
+                        sx={{ flex: 1 }}
+                        label="WSJT-X Server UDP port"
+                        value={config.wsjtx_udp_port} onChange={(e) => {
+                            const val = Number(e.target.value);
+                            setConfig({ ...config, wsjtx_udp_port: val });
+                        }} />
+                </Stack>
             </Stack>
         </Stack>
     );
