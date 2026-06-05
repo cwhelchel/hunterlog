@@ -8,6 +8,7 @@ import logging
 import socket
 import xmlrpc.client
 
+from cat.flex import flex
 from cat.icat import ICat
 from cat.aclog_interface import aclog
 from cat.dxlabs import dxlabs
@@ -51,6 +52,8 @@ class CAT:
             return dxlabs()
         elif interface == "wsjtx":
             return wsjtx()
+        elif interface == "flex":
+            return flex()
 
         return None
     

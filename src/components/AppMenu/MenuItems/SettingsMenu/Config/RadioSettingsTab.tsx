@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Checkbox, FormControlLabel, MenuItem, Select, Stack, TextField } from "@mui/material";
+import { Checkbox, Divider, FormControlLabel, MenuItem, Select, Stack, TextField } from "@mui/material";
 import { useConfigContext } from './ConfigContextProvider';
 
 export default function RadioSettingsTab() {
@@ -22,6 +22,7 @@ export default function RadioSettingsTab() {
                 <MenuItem value={"aclog"}>ACLOG</MenuItem>
                 <MenuItem value={"dxlabs"}>DXLABS</MenuItem>
                 <MenuItem value={"wsjtx"}>WSJT-X (MacLoggerDX)</MenuItem>
+                <MenuItem value={"flex"}>Flex SmartSDR</MenuItem>
             </Select>
 
             <p className="modal-config-text">
@@ -39,6 +40,14 @@ export default function RadioSettingsTab() {
                     </ul>
                 </div>
             </p>
+
+            {config.rig_if_type == "flex" && (
+                <p className="modal-config-text">
+                    For Flex CAT, setup a TCP CAT port in SmartSDR CAT program
+                    and use the port here with the 127.0.0.1 as the IP host. 
+                    SmartSDR should be running on the same computer.
+                </p>
+            )}
             <Stack direction={'row'} spacing={1}>
                 <TextField id="flr_host" label="Host (IPv4 string)"
                     fullWidth
@@ -53,6 +62,9 @@ export default function RadioSettingsTab() {
                         setConfig({ ...config, flr_port: Number.parseInt(e.target.value) });
                     }} />
             </Stack>
+
+            <Divider aria-hidden="true" />
+            
             <p className="modal-config-text">
                 Mode strings used to specify a custom mode for RIG control
                 (CW may need to be CW-R or CW-L if that is what your rig expects)
