@@ -71,7 +71,10 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
                 if (spot.act_cmts) {
                     const comments = spot.act_cmts.split('|')
                     setActComments(comments);
+                } else {
+                    setActComments([]);
                 }
+
                 setCwSpeed(spot.cw_wpm);
             }
         });
@@ -90,6 +93,7 @@ export const ActivatorInfo = (props: IActivatorInfoProps) => {
                     dummy.callsign = actCall;
                     dummy.qth = 'No POTA account'
                     setActivator(dummy);
+                    setActComments([]);
                     return;
                 }
 
