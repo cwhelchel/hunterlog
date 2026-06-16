@@ -63,7 +63,7 @@ class CallsignNotes():
                     log.debug(f'expiration date {dt}')
                     if datetime.now(timezone.utc) > dt:
                         self._download_file(row)
-
+            self._check_file(row.name, row)
             self._load_file(row.name)
 
     def _get_app_global_path(self):
@@ -90,6 +90,13 @@ class CallsignNotes():
             log.error('error downloading callsign note file', exc_info=ex)
         finally:
             row.last_download = datetime.now(timezone.utc)
+
+    def _check_file(self, name: str, row: CallsignNote):
+        # we may get in a strang spot where the notes are configures but the
+        # file needed doesn't exist. try to download it.
+        fn = Path(self.notes_root, name + ".txt")
+        if not fn.exists():
+            self._download_file(row)
 
     def _load_file(self, name: str):
         fn = Path(self.notes_root, name + ".txt")
