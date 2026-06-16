@@ -136,7 +136,7 @@ class CatApi:
         fx = float(fx_str)
         fx = fx / 1000.0
 
-        return _response(True, "", fx=fx)
+        return _response(True, "", fx=str(fx))
 
     def _get_rit_offset(self) -> int:
         r_min = self.db.config.get_value('cw_offset_min')
