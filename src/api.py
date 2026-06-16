@@ -81,14 +81,14 @@ class JsApi:
             ip = self.db.config.get_value('wsjtx_ip_addr')
             port = self.db.config.get_value('wsjtx_udp_port')
             self.db.config.get_value('enable_wsjtx_int')
-            self.wsjtx = Integration(
+            self._wsjtx = Integration(
                 log_handler=self._wsjtx_log_handle,
                 ip=ip,
                 port=port
             )
-            self.wsjtx.start()
+            self._wsjtx.start()
         else:
-            self.wsjtx = None
+            self._wsjtx = None
 
     def get_spot(self, spot_id: int):
         logging.debug('py get_spot')
@@ -1068,7 +1068,7 @@ class JsApi:
             webview.windows[0].evaluate_js(js)
 
     def _handle_wsjtx(self):
-        if self.wsjtx is None:
+        if self._wsjtx is None:
             return
 
         colors = ColorConfig(
@@ -1083,7 +1083,7 @@ class JsApi:
         # tell wsjtx-to highlight these calls
         x = self.db.spots.get_wsjtx_spots()
         for s in x:
-            self.wsjtx.highlight_call(
+            self._wsjtx.highlight_call(
                 s.activator, s.hunted, s.park_hunts == 0, colors)
 
     def _wsjtx_log_handle(self, adif: str):

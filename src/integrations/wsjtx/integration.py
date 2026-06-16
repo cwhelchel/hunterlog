@@ -50,6 +50,8 @@ class ColorConfig:
 
 
 class Integration:
+    _serializable = False  # marked so JS API doesnt serialize for frontend (need update pywebview for this to work)
+
     def __init__(self, log_handler, ip='127.0.0.1', port=2237):
         self.pkt_q = PacketProcessor()
         self.pkt_q.subscribe('logged_adif_pkt', self.logged_packet)
