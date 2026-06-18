@@ -17,10 +17,13 @@ import HuntMapMenu from './MenuItems/Map/HuntMapMenu';
 import ConfigDropdownMenu from './MenuItems/ConfigDropdownMenu';
 import { useMessageQueue } from '../MessageContext';
 import CatArea from './CatArea/CatArea';
+import CondxArea from './CondxArea/CondxArea';
 
 
 
 export default function AppMenu() {
+
+    const currentVal = window.localStorage.getItem('SHOW_BAND_CONDX') || '1';
 
     const { contextData } = useAppContext();
     const [callsign, setCallsign] = React.useState('');
@@ -32,6 +35,7 @@ export default function AppMenu() {
     const [alertHidden, setAlertHidden] = React.useState(true);
     const [alertMsg, setAlertMsg] = React.useState('');
     const [severity, setSeverity] = React.useState<AlertColor>('info');
+    const [showBandCondx, setShowBandCondx] = React.useState(parseInt(currentVal) == 1 ? true : false);
 
     const { messages, removeMessage, addMessage } = useMessageQueue();
 
@@ -109,6 +113,9 @@ export default function AppMenu() {
         }
         window.pywebview.state.showSuccessPopup = showSuccessPopup;
         window.pywebview.state.showFailurePopup = showFailurePopup;
+
+        const val = window.localStorage.getItem('SHOW_BAND_CONDX') || '1';
+        setShowBandCondx(parseInt(val) == 1 ? true : false);
     }
 
     React.useEffect(() => {
@@ -131,6 +138,13 @@ export default function AppMenu() {
             // using primary on light makes it green on green
             setRefreshBtnColor('#c599d3')
     }, [contextData.themeMode]);
+
+    React.useEffect(() => {
+        if (contextData.showBandCondx)
+            setShowBandCondx(true);
+        else
+            setShowBandCondx(false);
+    }, [contextData.showBandCondx]);
 
     function getGravatarUrl(md5: string) {
         //console.log(md5);
@@ -195,6 +209,9 @@ export default function AppMenu() {
                         <Alert variant="filled" severity={severity} onClose={() => { handleAlertClose() }} >{alertMsg}</Alert>
                     }
 
+                    {showBandCondx &&
+                        <CondxArea />
+                    }
                     <CatArea />
 
                     <Tooltip title="Refresh">

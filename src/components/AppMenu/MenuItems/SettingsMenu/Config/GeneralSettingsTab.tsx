@@ -3,6 +3,7 @@ import { Checkbox, FormControlLabel, Grid, Stack, TextField, Tooltip } from "@mu
 import { useConfigContext } from './ConfigContextProvider';
 import { useAppContext } from '../../../../AppContext';
 import ToggleSwitch from './ToggleSwitch';
+import StoredTextInput from './StoredTextInput';
 
 export default function GeneralSettingsTab() {
 
@@ -25,6 +26,12 @@ export default function GeneralSettingsTab() {
     const toggleSwapRst = (newVal: boolean) => {
         const newCtx = { ...contextData };
         newCtx.swapRstOrder = newVal;
+        setData(newCtx);
+    };
+    
+    const toggleShowBandCondx = (newVal: boolean) => {
+        const newCtx = { ...contextData };
+        newCtx.showBandCondx = newVal;
         setData(newCtx);
     };
 
@@ -63,6 +70,10 @@ export default function GeneralSettingsTab() {
             <Stack direction={'row'} spacing={1} marginTop={3} sx={{ flexWrap: 'wrap' }}>
                 <ToggleSwitch storageKey={'HIGHLIGHT_NEW_REF'} initialState={true} label='Highlight New' longTrueText='Highlight new references' longFalseText='No highlighting' />
                 <ToggleSwitch storageKey={'SWAP_RST_ORDER'} initialState={false} label='Swap RST Order' longTrueText='Recv RST first' longFalseText='Sent RST first' onChange={toggleSwapRst} />
+            </Stack>
+            <Stack direction={'row'} spacing={1} marginTop={3} sx={{ flexWrap: 'nowrap', width: '100%' }}>
+                <ToggleSwitch storageKey={'SHOW_BAND_CONDX'} initialState={true} label='Band CONDX' longTrueText='Show Band Condx Area' longFalseText='Hide Band Condx Area' onChange={toggleShowBandCondx} />
+                <StoredTextInput sx={{flexGrow: 1}} storageKey={'BAND_CONDX_HAMQSL_URL'} initialVal={'https://www.hamqsl.com/solar101pic.php'} label='HamQSL URL' extraDescription='Full URL to <a target="_blank" rel="noopener noreferrer" href="https://www.hamqsl.com/">hamqsl.com</a> embedded condx images' />
             </Stack>
             <Stack spacing={2} marginTop={3}>
                 <p className="modal-config-text">

@@ -32,7 +32,8 @@ const defData: ContextData = {
     swapRstOrder: false,
     showHiddenFilter: false,
     modeFilter: [],
-    rigFreqRead: ''
+    rigFreqRead: '',
+    showBandCondx: false
 };
 
 export const AppContext = React.createContext<AppContextType | null>(null);

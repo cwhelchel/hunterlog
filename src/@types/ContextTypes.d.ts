@@ -29,6 +29,7 @@ export interface ContextData {
     swapRstOrder: boolean;
     showHiddenFilter: boolean;
     rigFreqRead: string; // rx read from rig on timer
+    showBandCondx: boolean;
 }
 
 export interface AppContextType {
