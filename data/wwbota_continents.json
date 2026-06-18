@@ -94,5 +94,9 @@
     "SMBOTA": {
         "country": "Sweden",
         "continent": "EU"
+    },
+    "LXBOTA": {
+        "country": "Luxembourg",
+        "continent": "EU"
     }
 }
