@@ -12,6 +12,10 @@ import { styled } from '@mui/material/styles';
 import { useAppContext } from '../AppContext';
 
 import './FilterBar.scss'
+import HiddenFilterButton from './HiddenFilterButton';
+import OnlyNewFilterButton from './OnlyNewFilterButton';
+import HuntedFilterButton from './HuntedFilterButton';
+import QrtFilterButton from './QrtFilterButton';
 
 // https://mui.com/material-ui/react-table/
 
@@ -28,10 +32,6 @@ export const FilterBar = (props: IFilterBarPros) => {
     const [continent, setContinent] = React.useState<string[]>([]);
     const [loc, setLocation] = React.useState('');
     const [sig, setSig] = React.useState('');
-    const [qrt, setQrt] = React.useState(true);
-    const [hunted, setHunted] = React.useState(false);
-    const [onlyNew, setOnlyNew] = React.useState(false);
-    const [showHidden, setShowHidden] = React.useState(false);
 
     const { contextData, setData } = useAppContext();
 
@@ -64,15 +64,6 @@ export const FilterBar = (props: IFilterBarPros) => {
             const cf = window.localStorage.getItem("CONTINENT_FILTER") || '';
             setContinentFilter(cf.split(","));
 
-            const qrtF = window.localStorage.getItem("QRT_FILTER");
-            setQrtFilter((qrtF === "true"));
-            const hf = window.localStorage.getItem("HUNTED_FILTER");
-            setHuntedFilter((hf === "true"));
-            const on = window.localStorage.getItem("ATNO_FILTER");
-            setOnlyNewFilter((on === "true"));
-            const hidden = window.localStorage.getItem("SHOW_HIDDEN_FLT");
-            const bHidden = (hidden === "true")
-            setDbShowHiddenFilter(bHidden);
             // NOTE: there's an issue with these on first load and refresh 
             // where the first two prints will be true (if show hidden is on)
             // but the stuff in the state and context will be false. and when
@@ -181,9 +172,6 @@ export const FilterBar = (props: IFilterBarPros) => {
         setRegion([]);
         setContinent([]);
         setLocation("");
-        setQrt(true);
-        setHunted(false);
-        setOnlyNew(false);
         setSig("");
 
         window.localStorage.setItem("BAND_FILTER", '0');
@@ -194,6 +182,7 @@ export const FilterBar = (props: IFilterBarPros) => {
         window.localStorage.setItem("QRT_FILTER", 'true');
         window.localStorage.setItem("HUNTED_FILTER", 'false');
         window.localStorage.setItem("ATNO_FILTER", 'false');
+        window.localStorage.setItem("SHOW_HIDDEN_FLT", 'false');
         window.localStorage.setItem("SIG_FILTER", '');
 
         const next = {
@@ -211,53 +200,6 @@ export const FilterBar = (props: IFilterBarPros) => {
 
         location.reload();
     };
-
-    function handleQrtSwitch(event: any, checked: boolean): void {
-        setQrtFilter(checked);
-        window.localStorage.setItem("QRT_FILTER", checked.toString());
-    }
-
-    function handleHuntedSwitch(event: any, checked: boolean): void {
-        setHuntedFilter(checked);
-        window.localStorage.setItem("HUNTED_FILTER", checked.toString());
-    }
-
-    function handleOnlyNewSwitch(event: any, checked: boolean): void {
-        setOnlyNewFilter(checked);
-        window.localStorage.setItem("ATNO_FILTER", checked.toString());
-    }
-
-    function handleShowHiddenSwitch(event: any, checked: boolean): void {
-        setDbShowHiddenFilter(checked);
-        window.localStorage.setItem("SHOW_HIDDEN_FLT", checked.toString());
-    }
-
-    function setQrtFilter(checked: boolean) {
-        console.log("changing qrt filter to: " + checked);
-        window.pywebview.api.set_qrt_filter(checked);
-
-        const next = { ...contextData, qrtFilter: checked };
-        setData(next);
-        setQrt(checked);
-    }
-
-    function setHuntedFilter(checked: boolean) {
-        console.log("changing hunted filter to: " + checked);
-        window.pywebview.api.set_hunted_filter(checked);
-
-        const next = { ...contextData, huntedFilter: checked };
-        setData(next);
-        setHunted(checked);
-    }
-
-    function setOnlyNewFilter(checked: boolean) {
-        console.log("changing onlynew filter to: " + checked);
-        window.pywebview.api.set_only_new_filter(checked);
-
-        const next = { ...contextData, onlyNewFilter: checked };
-        setData(next);
-        setOnlyNew(checked);
-    }
 
     function setModeFilter(m: string[]) {
         window.pywebview.api.set_mode_filter(m);
@@ -310,29 +252,6 @@ export const FilterBar = (props: IFilterBarPros) => {
         setSig(sig);
     }
 
-    function setDbShowHiddenFilter(checked: boolean) {
-        console.log("changing showhidden filter to: " + checked);
-        window.pywebview.api.set_hidden_filter(checked);
-
-        setShowHidden(checked);
-
-        const next = { ...contextData, showHiddenFilter: checked };
-        console.log(next);
-        setData(next);
-    }
-
-
-    const StyledTypoGraphy = styled(Typography)(({ theme }) =>
-        theme.unstable_sx({
-            fontSize: {
-                lg: 14,
-                md: 14,
-                sm: 12,
-                xs: 10
-            }
-        }),
-    );
-
     const StyledInputLabel = styled(InputLabel)(({ theme }) =>
         theme.unstable_sx({
             fontSize: {
@@ -359,20 +278,12 @@ export const FilterBar = (props: IFilterBarPros) => {
         <Box className='filter-bar' sx={{ borderTop: 1, borderColor: 'grey.800', paddingTop: 2, paddingBottom: 1 }}>
             <Stack
                 direction='row'
-                spacing={{ md: 1, sm: 0, lg: 1.25 }}
+                spacing={{ sm: 0, md: 0.75, lg: 1 }}
             >
-                <FormControlLabel
-                    control={<Switch onChange={handleQrtSwitch} checked={qrt} />}
-                    label={<StyledTypoGraphy>Hide QRT</StyledTypoGraphy>} />
-                <FormControlLabel
-                    control={<Switch onChange={handleHuntedSwitch} checked={hunted} />}
-                    label={<StyledTypoGraphy>Hide Hunted</StyledTypoGraphy>} />
-                <FormControlLabel
-                    control={<Switch onChange={handleOnlyNewSwitch} checked={onlyNew} />}
-                    label={<StyledTypoGraphy>Only New</StyledTypoGraphy>} />
-                <FormControlLabel
-                    control={<Switch onChange={handleShowHiddenSwitch} checked={showHidden} />}
-                    label={<StyledTypoGraphy>Show Hidden</StyledTypoGraphy>} />
+                <QrtFilterButton />
+                <HuntedFilterButton />
+                <OnlyNewFilterButton />
+                <HiddenFilterButton />
                 <FormControl size='small'>
                     <StyledInputLabel id="band-label">Band</StyledInputLabel>
                     <Select
