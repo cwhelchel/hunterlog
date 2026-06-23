@@ -917,6 +917,9 @@ class JsApi:
             if self.lock.locked():
                 self.lock.release()
 
+            # trigger front end to know the main update method is over.
+            self._call_js('workingDone')
+
     def _empty_park_updater(self):
         def get_park(park: Park):
             logging.debug(f"empty park found: {park.reference}")

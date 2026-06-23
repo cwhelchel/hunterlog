@@ -4,12 +4,11 @@ import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import CloseIcon from '@mui/icons-material/Close';
 
 import { useAppContext } from '../AppContext';
 import { ActivatorData } from '../../@types/ActivatorTypes';
-import { Alert, Avatar, Tooltip, AlertColor, Snackbar } from '@mui/material';
+import { Alert, Avatar, AlertColor, Snackbar } from '@mui/material';
 import StatsDropdownMenu from './MenuItems/StatsDropdownMenu';
 import AlertsArea from './AlertsArea';
 import { checkApiResponse2, showErrorToast, showSuccessToast } from '../Utilities/util';
@@ -18,6 +17,7 @@ import ConfigDropdownMenu from './MenuItems/ConfigDropdownMenu';
 import { useMessageQueue } from '../MessageContext';
 import CatArea from './CatArea/CatArea';
 import CondxArea from './CondxArea/CondxArea';
+import RefreshButton from './RefreshButton';
 
 
 
@@ -28,7 +28,6 @@ export default function AppMenu() {
     const { contextData } = useAppContext();
     const [callsign, setCallsign] = React.useState('');
     const [gravatar, setGravatar] = React.useState('');
-    const [refreshBtnColor, setRefreshBtnColor] = React.useState('#008C2C');
 
     const [snackOpen, setSnackOpen] = React.useState(false);
     const [snackMsg, setSnackMsg] = React.useState('');
@@ -132,14 +131,6 @@ export default function AppMenu() {
     }, []);
 
     React.useEffect(() => {
-        if (contextData.themeMode == 'dark')
-            setRefreshBtnColor('#008C2C')
-        else if (contextData.themeMode == 'light')
-            // using primary on light makes it green on green
-            setRefreshBtnColor('#c599d3')
-    }, [contextData.themeMode]);
-
-    React.useEffect(() => {
         if (contextData.showBandCondx)
             setShowBandCondx(true);
         else
@@ -214,13 +205,7 @@ export default function AppMenu() {
                     }
                     <CatArea />
 
-                    <Tooltip title="Refresh">
-                        <IconButton onClick={() => {
-                            location.reload();
-                        }}>
-                            <RefreshIcon sx={{ color: refreshBtnColor }} />
-                        </IconButton>
-                    </Tooltip>
+                    <RefreshButton />
                 </Toolbar>
             </AppBar>
 
