@@ -178,6 +178,8 @@ class WwbotaProgram(Program):
 
     def parse_ref_data(self, api_data) -> Park:
         s = Park()
+        if api_data is None:
+            return None
         s.reference = api_data['reference']
         s.name = api_data['name']
         s.grid4 = api_data['locator'][:4]

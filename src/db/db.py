@@ -80,6 +80,20 @@ class InitQuery:
             if (db_ver != VER_FROM_ALEMBIC):
                 upgrades.do_upgrade()
 
+    def check_park_refs(self):
+        # count num of parks with leading or trailing whitespace
+        sql = "select count(reference) from parks where parks.reference like '% ' or parks.reference like ' %' or parks.reference like ' % ';"  # NOQA E501
+        res = self.session.execute(sa.text(sql))
+        count = res.scalar()
+        logging.debug(f"number of trim-able park refs: {count}")
+        if count > 0:
+            logging.info("trimming parks.reference column")
+            t = r"update parks set reference = trim(reference) where " \
+                "parks.reference like '% ' " \
+                "or parks.reference like ' %' " \
+                "or parks.reference like ' % ';"
+            self.session.execute(sa.text(t))
+
     def _check_for_table(self):
         sql = """SELECT name FROM sqlite_master WHERE type='table' AND name='alembic_version';"""  # noqa E501
         r = self.session.execute(sa.text(sql))
@@ -105,6 +119,7 @@ class DataBase:
 
         # do this FIRST. will upgrade the db to latest schema
         self._iq.init_alembic_ver()
+        self._iq.check_park_refs()
 
         self._sq.delete_all_spots()
         self._hsq.delete_stale_hidden_spots()

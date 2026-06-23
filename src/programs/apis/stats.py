@@ -98,7 +98,7 @@ class PotaStats:
                     skip_headers = False
                     continue
                 else:
-                    park = row['Reference']
+                    park = row['Reference'].strip()
                     location = row["HASC"]
                     self._inc_hunts(location)
                     self.hunted_parks.append(park)

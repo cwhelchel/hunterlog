@@ -922,15 +922,18 @@ class JsApi:
             logging.debug(f"empty park found: {park.reference}")
 
             for p in self.programs.values():
-                b = p.test_reference_str(park.reference)
+                x = str(park.reference).strip()
+                b = p.test_reference_str(x)
                 if b:
                     logging.debug(f"empty park updater: using {p}")
-                    p.get_reference(park.reference)
+                    p.get_reference(x)
+                    break
 
-        needs_update = self.db.parks.get_half_loaded_parks(3)
+        limit = 10
+        needs_update = self.db.parks.get_half_loaded_parks(limit)
         logging.debug(f"empty park updater. list: {needs_update[:3]}...")
 
-        for park in needs_update[:3]:
+        for park in needs_update:
             get_park(park)
 
     def _update_all_parks(self) -> str:

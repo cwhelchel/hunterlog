@@ -142,6 +142,8 @@ class SotaProgram(Program):
 
     def parse_ref_data(self, summit) -> Park:
         s = Park()
+        if summit is None:
+            return None
         s.reference = summit['summitCode']
         s.name = summit['name']
         s.grid4 = summit['locator'][:4]

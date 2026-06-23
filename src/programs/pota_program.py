@@ -28,7 +28,7 @@ class PotaProgram(Program):
         return self.pota_api
     
     def test_reference_str(self, ref: str) -> bool:
-        if re.match(r"^[A-Z0-9]+-[0-9]{4,}", ref):
+        if re.match(r"^[A-Z0-9]{2}-[0-9]{4,}", ref):
             return True
         return False
 

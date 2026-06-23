@@ -150,6 +150,8 @@ class WwffProgram(Program):
 
     def parse_ref_data(self, wwff) -> Park:
         r = Park()
+        if (wwff is None):
+            return None
         r.reference = wwff['ref']
         r.name = wwff['name']
         r.grid4 = wwff['locator'][:4]

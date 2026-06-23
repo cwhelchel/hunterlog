@@ -67,7 +67,7 @@ class ImportApi:
             x = 0.0
 
             for ref, hunt_count in hunts.items():
-                j = {'reference': ref}
+                j = {'reference': ref.strip()}
                 self.db.parks.update_park_hunts(j, hunt_count)
                 x += 1.0
                 per = (x / total) * 100.0
@@ -114,7 +114,7 @@ class ImportApi:
 
             for park in hunts:
                 count = stats.get_park_hunt_count(park)
-                j = {'reference': park, 'hunts': count}
+                j = {'reference': park.strip(), 'hunts': count}
                 self.db.parks.update_park_hunts(j, count)
                 x += 1.0
                 per = (x / total) * 100.0
