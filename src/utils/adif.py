@@ -84,13 +84,28 @@ class AdifLog():
         logging.debug(f"adif hdr {header}")
 
         sigs = ['POTA', 'SOTA', 'WWFF']
+
+        # adjust lists so that qsos with only the xOTA_REF set get tagged
+        for x in qsos:
+            if ('POTA_REF' in x.keys()):
+                x['SIG'] = 'POTA'
+                x['SIG_INFO'] = x['POTA_REF'].split(',')[0]
+            if ('SOTA_REF' in x.keys()):
+                x['SIG'] = 'SOTA'
+                x['SIG_INFO'] = x['SOTA_REF'].split(',')[0]
+            if ('WWFF_REF' in x.keys()):
+                x['SIG'] = 'WWFF'
+                x['SIG_INFO'] = x['WWFF_REF'].split(',')[0]
+
+        logging.debug(f"{len(qsos)} {str(qsos[0])}")
+
         filtered = [q for q in qsos if 'SIG' in q and q['SIG'] in sigs]
+
+        logging.debug(f"{len(filtered)} {repr(filtered)}")
 
         for qso in filtered:
             q = Qso()
-            if 'SIG_INFO' not in qso:
-                logging.warning('no sig_info ' + str(qso))
-                continue
+            logging.debug(f"adif to import {str(qso)}")
 
             if qso["SIG"] == 'POTA' or qso["SIG"] == 'WWFF':
                 sig_info_check = re.match(pota_pat, qso["SIG_INFO"])

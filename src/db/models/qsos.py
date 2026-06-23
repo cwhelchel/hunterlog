@@ -116,6 +116,9 @@ class Qso(Base):
         # go ahead and fix it (the checks look for valid pota park format in)
         self.sig = adif['SIG'] if 'SIG' in adif.keys() else 'POTA'
         self.tx_pwr = adif['TX_PWR'] if 'TX_PWR' in adif.keys() else ''
+        self.pota_ref = adif['POTA_REF'] if 'POTA_REF' in adif.keys() else ''
+        self.sota_ref = adif['SOTA_REF'] if 'SOTA_REF' in adif.keys() else ''
+        self.wwff_ref = adif['WWFF_REF'] if 'WWFF_REF' in adif.keys() else ''
 
         self.from_app = False
         self.cnfm_hunt = True
