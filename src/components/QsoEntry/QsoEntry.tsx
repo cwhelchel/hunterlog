@@ -280,6 +280,8 @@ export default function QsoEntry() {
         if (entry === null || entry === '')
             return;
 
+        entry = entry.toUpperCase();
+
         setQso({ ...qso, call: entry });
 
         const newCtxData = { ...contextData };
@@ -392,6 +394,8 @@ export default function QsoEntry() {
             updateQsoData('', '', '', '');
             return;
         }
+
+        park = park.toUpperCase();
 
         if (newCtxData.park === null) {
             getRefInfo();
@@ -697,7 +701,7 @@ export default function QsoEntry() {
                             }}
                             inputProps={{ style: otherOpsStyle }}
                             onChange={(e) => {
-                                setOtherOps(e.target.value);
+                                setOtherOps(e.target.value.toUpperCase());
                             }} />
                     )}
 
@@ -716,7 +720,7 @@ export default function QsoEntry() {
                             }}
                             inputProps={{ style: otherOpsStyle }}
                             onChange={(e) => {
-                                setOtherParks(e.target.value);
+                                setOtherParks(e.target.value.toUpperCase());
                             }} />
                     )}
                 </Box>
