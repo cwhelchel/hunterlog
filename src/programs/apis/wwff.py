@@ -8,8 +8,13 @@ from programs.apis.iapi import IApi
 
 logging = L.getLogger(__name__)
 
+# CQGMA.org now needs API key for wwff spots. So hosted a API that caches calls
+# and retrieves latest every 90 seconds
 # -1 gets last hour of spots
-SPOT_URL = "https://www.cqgma.org/api/spots/wwff/"
+# SPOT_URL = "https://www.cqgma.org/api/spots/wwff/"
+SPOT_URL = "https://hunterlog.us/v1/wwff/spots"
+
+# CQGMA.org does not have same api key and call req for the info endpoint
 WWFF_INFO__URL = "https://www.cqgma.org/api/wwff/?"
 
 

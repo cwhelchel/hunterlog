@@ -1,7 +1,24 @@
 import * as React from 'react';
-import { Box, CircularProgress, IconButton, Tooltip } from "@mui/material";
+import { Box, CircularProgress, IconButton, Tooltip, keyframes } from "@mui/material";
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { useAppContext } from '../AppContext';
+
+const highlightLimit = 20;
+
+const pulseGlow = keyframes`
+    0% {
+        opacity: 0.0;
+        filter: brightness(1) drop-shadow(0 0 0px rgba(255, 255, 255, 0));
+    }
+    50% {
+        opacity: 1.0;
+        filter: brightness(1.75) drop-shadow(0 0 5px rgba(255, 230, 0, 1.0));
+    }
+    100% {
+        opacity: 0.0;
+        filter: brightness(1) drop-shadow(0 0 0px rgba(255, 255, 255, 0));
+    }
+`
 
 export default function RefreshButton() {
 
@@ -64,9 +81,14 @@ export default function RefreshButton() {
             <IconButton onClick={() => {
                 location.reload();
             }}>
+                <Box sx={{
+                    position: 'relative',
+                    animation: progress < highlightLimit ? `${pulseGlow} 0.5s ease-in-out infinite` : 'none',
 
-                <Box sx={{ position: 'relative' }}>
-                    <RefreshIcon sx={{ color: refreshBtnColor }} />
+                }}>
+                    <RefreshIcon sx={{
+                        color: progress < highlightLimit ? 'rgb(255, 230, 0)' : refreshBtnColor,
+                    }} />
                     <CircularProgress
                         size={28}
                         sx={{
@@ -76,7 +98,7 @@ export default function RefreshButton() {
                             marginTop: '-17px',
                             marginLeft: '-14px',
                             opacity: '0.5',
-                            color: refreshBtnColor
+                            color: progress < highlightLimit ? 'rgb(255, 230, 0)' : refreshBtnColor,
                         }}
                         thickness={3.0}
                         variant="determinate"

@@ -63,9 +63,12 @@ class aclog(ICat):
                 _ = self.aclog_sock.recv(1024).decode().strip()
                 # logger.debug("__setvfo_aclog: %s", _)
                 return True
+            except socket.timeout as timeout:
+                logger.warning("set_vfo timed out", exc_info=timeout)
+                return False
             except socket.error as exception:
                 self.online = False
-                logger.error("__setvfo_aclog: %s", exception)
+                logger.error("set_vfo: %s", exception)
                 self.aclog_sock = None
                 return False
 
@@ -88,9 +91,12 @@ class aclog(ICat):
                     fx = float(fx_str) * 1000000
                     return fx
                 return '0'
+            except socket.timeout as timeout:
+                logger.warning("get_vfo timed out", exc_info=timeout)
+                return '0'
             except socket.error as exception:
                 self.online = False
-                logger.error("__setvfo_aclog: %s", exception)
+                logger.error("get_vfo: %s", exception)
                 self.aclog_sock = None
                 return '0'        
 
@@ -104,6 +110,8 @@ class aclog(ICat):
             try:
                 self.aclog_sock.send(bytes(cmd, "utf-8"))
                 _ = self.aclog_sock.recv(1024).decode().strip()
+            except socket.timeout as timeout:
+                logger.warning("set_cw_speed timed out", exc_info=timeout)
             except socket.error as exception:
                 self.online = False
                 logger.error("set_cw_speed: %s", exception)
