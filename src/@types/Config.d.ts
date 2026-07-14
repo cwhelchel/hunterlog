@@ -20,6 +20,7 @@ export interface UserConfig {
     stage_qsos: boolean,
     wavelog_url: string,
     wavelog_api_key: string,
+    wavelog_station_id: string,
     qrz_api_key: string,
     use_cw_offset: boolean,
     cw_offset_min: number,

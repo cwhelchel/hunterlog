@@ -1,9 +1,64 @@
 import * as React from 'react';
-import { Checkbox, Divider, FormControlLabel, MenuItem, Select, Stack, TextField } from "@mui/material";
+import { Checkbox, CircularProgress, Divider, FormControl, FormControlLabel, FormHelperText, IconButton, InputLabel, MenuItem, Select, Stack, TextField, Tooltip } from "@mui/material";
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { useConfigContext } from './ConfigContextProvider';
+
+interface WavelogStation {
+    station_id: string,
+    station_profile_name: string,
+    station_callsign: string,
+    station_active: string | null,
+}
 
 export default function LoggerSettingsTab() {
     const { config, setConfig } = useConfigContext();
+
+    const [stations, setStations] = React.useState<WavelogStation[]>([]);
+    const [loadingStations, setLoadingStations] = React.useState(false);
+    const [stationError, setStationError] = React.useState('');
+
+    const getStations = React.useCallback(async () => {
+        if (window.pywebview === undefined) return;
+
+        setLoadingStations(true);
+        setStationError('');
+
+        try {
+            const r = await window.pywebview.api.get_wavelog_stations(
+                config?.wavelog_url, config?.wavelog_api_key);
+            const result = JSON.parse(r);
+
+            if (result.error) {
+                setStations([]);
+                setStationError(result.error);
+                return;
+            }
+
+            const list = result.stations as WavelogStation[];
+            setStations(list);
+
+        } catch (e) {
+            setStations([]);
+            setStationError(`Could not read stations from Wavelog: ${e}`);
+        } finally {
+            setLoadingStations(false);
+        }
+    }, [config, setConfig]);
+
+    // fetch the station list when Wavelog becomes the selected logger and we
+    // already have something to authenticate with. deliberately not keyed on
+    // the url or key fields, or we would hit the API on every keystroke.
+    React.useEffect(() => {
+        if (config?.logger_type != 5) return;
+        if (!config?.wavelog_url || !config?.wavelog_api_key) return;
+
+        getStations();
+    }, [config?.logger_type]);
+
+    // keep a saved profile id selectable even before the list has loaded, so
+    // opening the config dialog offline does not silently blank the setting.
+    const savedId = config?.wavelog_station_id ?? '';
+    const isSavedIdKnown = stations.some(s => s.station_id === savedId);
 
     return (
         <div style={{ 'display': 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
@@ -78,6 +133,12 @@ export default function LoggerSettingsTab() {
                     to send data to the Wavelog instance. You can find this
                     in the Wavelog menus named &apos;API Keys&apos;
                 </p>
+                <p>
+                    Wavelog requires QSOs to name the station profile they belong to.
+                    Fill in the URL and API key, then press the refresh button to read
+                    your station profiles from Wavelog and pick the one you are
+                    operating from.
+                </p>
             </div>
 
             <div hidden={config?.logger_type != 6} className="modal-config-text">
@@ -102,19 +163,66 @@ export default function LoggerSettingsTab() {
             }
 
             {config?.logger_type == 5 &&
-                <Stack direction={'row'} spacing={1}>
-                    <TextField id="wl_url" label="Wavelog instance URL"
-                        value={config?.wavelog_url}
-                        fullWidth
-                        onChange={(e) => {
-                            setConfig({ ...config, wavelog_url: e.target.value });
-                        }} />
-                    <TextField id="wl_api_key" label="Wavelog API key"
-                        value={config?.wavelog_api_key}
-                        fullWidth
-                        onChange={(e) => {
-                            setConfig({ ...config, wavelog_api_key: e.target.value });
-                        }} />
+                <Stack direction={'column'} spacing={2}>
+                    <Stack direction={'row'} spacing={1}>
+                        <TextField id="wl_url" label="Wavelog instance URL"
+                            value={config?.wavelog_url}
+                            fullWidth
+                            onChange={(e) => {
+                                setConfig({ ...config, wavelog_url: e.target.value });
+                            }} />
+                        <TextField id="wl_api_key" label="Wavelog API key"
+                            value={config?.wavelog_api_key}
+                            fullWidth
+                            onChange={(e) => {
+                                setConfig({ ...config, wavelog_api_key: e.target.value });
+                            }} />
+                    </Stack>
+
+                    <Stack direction={'row'} spacing={1} alignItems={'center'}>
+                        <FormControl fullWidth error={stationError != ''}>
+                            <InputLabel id="wl-station-label">Wavelog station profile</InputLabel>
+                            <Select
+                                labelId="wl-station-label"
+                                id="wl_station_id"
+                                label="Wavelog station profile"
+                                value={savedId}
+                                onChange={(e) => {
+                                    setConfig({ ...config, wavelog_station_id: e.target.value.toString() });
+                                }}>
+                                {savedId != '' && !isSavedIdKnown &&
+                                    <MenuItem value={savedId}>
+                                        {`Profile ${savedId}`}
+                                    </MenuItem>
+                                }
+                                {stations.map((s) => (
+                                    <MenuItem key={s.station_id} value={s.station_id}>
+                                        {`${s.station_id}: ${s.station_profile_name} (${s.station_callsign})`}
+                                        {s.station_active === '1' ? ' - active in Wavelog' : ''}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                            <FormHelperText>
+                                {stationError != ''
+                                    ? stationError
+                                    : 'QSOs are logged against this station profile.'}
+                            </FormHelperText>
+                        </FormControl>
+
+                        {loadingStations
+                            ? <CircularProgress size={24} />
+                            : <Tooltip title="Read station profiles from Wavelog">
+                                <span>
+                                    <IconButton
+                                        aria-label="refresh wavelog stations"
+                                        disabled={!config?.wavelog_url || !config?.wavelog_api_key}
+                                        onClick={getStations}>
+                                        <RefreshIcon />
+                                    </IconButton>
+                                </span>
+                            </Tooltip>
+                        }
+                    </Stack>
                 </Stack>
             }
 

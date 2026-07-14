@@ -30,6 +30,7 @@ class LoggerParams:
     adif_port: int
     wl_url: str
     wl_api_key: str
+    wl_station_id: str
     qrz_api_key: str
 
 
@@ -82,6 +83,7 @@ class LoggerInterface:
             port=config.adif_port,
             wl_url=config.wl_url,
             wl_api_key=config.wl_api_key,
+            wl_station_id=config.wl_station_id,
             qrz_api_key=config.qrz_api_key
         )
 
