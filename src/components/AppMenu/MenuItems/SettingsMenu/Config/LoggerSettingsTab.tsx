@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Checkbox, CircularProgress, Divider, FormControl, FormControlLabel, FormHelperText, IconButton, InputLabel, MenuItem, Select, Stack, TextField, Tooltip } from "@mui/material";
+import { Checkbox, CircularProgress, Divider, FormControl, FormControlLabel, FormHelperText, IconButton, InputLabel, MenuItem, Select, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { useConfigContext } from './ConfigContextProvider';
 
@@ -35,6 +35,7 @@ export default function LoggerSettingsTab() {
             }
 
             const list = result.stations as WavelogStation[];
+            list.sort((x, y) => Number.parseInt(x.station_id) - Number.parseInt(y.station_id));
             setStations(list);
 
         } catch (e) {
@@ -133,12 +134,6 @@ export default function LoggerSettingsTab() {
                     to send data to the Wavelog instance. You can find this
                     in the Wavelog menus named &apos;API Keys&apos;
                 </p>
-                <p>
-                    Wavelog requires QSOs to name the station profile they belong to.
-                    Fill in the URL and API key, then press the refresh button to read
-                    your station profiles from Wavelog and pick the one you are
-                    operating from.
-                </p>
             </div>
 
             <div hidden={config?.logger_type != 6} className="modal-config-text">
@@ -178,6 +173,23 @@ export default function LoggerSettingsTab() {
                                 setConfig({ ...config, wavelog_api_key: e.target.value });
                             }} />
                     </Stack>
+
+                    <p className='modal-config-text' style={{ marginTop: '8px', marginBottom: '4px' }}>
+                        Wavelog API requires a station profile for logged QSOs.
+                        You can configure many station profiles in wavelog, so you must select one here for Hunterlog to use.
+                        <br />
+                        Fill in the URL and API key, then press the refresh button to read
+                        your station profiles from Wavelog and then pick the one you are
+                        operating from.
+                        <br />
+                        <Typography 
+                            lineHeight={'inherit'}
+                            fontSize={'inherit'}
+                            fontWeight={'inherit'}
+                            color={'primary'}>
+                            Note: Your &apos;My Gridsquare&apos; setting must match the target wavelog station&apos;s gridsquare
+                        </Typography>
+                    </p>
 
                     <Stack direction={'row'} spacing={1} alignItems={'center'}>
                         <FormControl fullWidth error={stationError != ''}>
