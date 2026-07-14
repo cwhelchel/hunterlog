@@ -225,6 +225,15 @@ class ConfigQuery:
             'editable': 'True'
         },
         {
+            'key': 'wl_station_id',
+            'val': '1',
+            'type': 'string',
+            'description': 'Wavelog station profile id to log QSOs against',
+            'group': 'wavelog',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
             'key': 'qrz_api_key',
             'val': '',
             'type': 'string',

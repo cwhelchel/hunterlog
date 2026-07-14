@@ -26,6 +26,7 @@ from programs.apis import PotaApi
 from programs import Program, SotaProgram, WwffProgram, PotaProgram, WwbotaProgram, NoProgram  # NOQA
 from utils.distance import Distance
 from utils.adif import AdifLog
+from utils.wavelog import get_stations
 from version import __version__
 
 logging = L.getLogger(__name__)
@@ -59,6 +60,7 @@ class JsApi:
             self.db.config.get_value('adif_port'),
             self.db.config.get_value('wl_url'),
             self.db.config.get_value('wl_api_key'),
+            self.db.config.get_value('wl_station_id'),
             self.db.config.get_value('qrz_api_key')
         )
         self.adif_log = LoggerInterface.get_logger(lp, __version__)
@@ -640,10 +642,34 @@ class JsApi:
             self.db.config.get_value('adif_port'),
             self.db.config.get_value('wl_url'),
             self.db.config.get_value('wl_api_key'),
+            self.db.config.get_value('wl_station_id'),
             self.db.config.get_value('qrz_api_key'),
         )
         self.adif_log = LoggerInterface.get_logger(lp, __version__)
         logging.debug(f"updating logger {self.adif_log}")
+
+    def get_wavelog_stations(self, url: str, api_key: str) -> str:
+        '''
+        Gets the list of station profiles from a Wavelog instance, so the
+        config UI can offer them in a drop down.
+
+        The url and api key are passed in from the UI rather than read from
+        the config, so the user can populate the drop down before saving.
+
+        :param str url: url of Wavelog instance (without endpoints appended)
+        :param str api_key: generated api key for wavelog API access
+
+        :returns str: json with either a `stations` list or an `error` string
+        '''
+        logging.debug(f"getting wavelog stations from {url}")
+
+        try:
+            stations = get_stations(url, api_key)
+        except Exception as ex:
+            logging.warning(f"error getting wavelog stations: {ex}")
+            return json.dumps({"error": str(ex)})
+
+        return json.dumps({"stations": stations})
 
     def set_mode_filter(self, modes: list[str]):
         logging.debug(f"api setting modes filter to: {modes}")

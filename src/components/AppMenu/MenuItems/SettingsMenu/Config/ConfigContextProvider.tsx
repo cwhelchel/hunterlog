@@ -23,6 +23,7 @@ const defData: UserConfig = {
     stage_qsos: true,
     wavelog_url: '',
     wavelog_api_key: '',
+    wavelog_station_id: '',
     qrz_api_key: '',
     use_cw_offset: false,
     cw_offset_min: 0,
