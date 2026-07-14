@@ -2,7 +2,7 @@ from threading import Thread, Event
 from queue import Queue
 import logging
 
-from lib.pywsjtx.wsjtx_packets import DecodePacket, InvalidPacket, LoggedADIFPacket  # NOQA
+from lib.pywsjtx.wsjtx_packets import DecodePacket, HeartBeatPacket, InvalidPacket, LoggedADIFPacket  # NOQA
 
 log = logging.getLogger(__name__)
 
@@ -37,6 +37,9 @@ class PacketProcessor():
             elif isinstance(pkt, LoggedADIFPacket):
                 logged: LoggedADIFPacket = pkt
                 self._process_logged_adif(logged)
+            elif isinstance(pkt, HeartBeatPacket):
+                hb: HeartBeatPacket = pkt
+                self._process_hb_pkt(hb)
 
             if self.stop_event.wait(0.01):
                 break
@@ -55,6 +58,9 @@ class PacketProcessor():
 
     def _process_logged_adif(self, pkt: LoggedADIFPacket):
         self._emit('logged_adif_pkt', pkt)
+
+    def _process_hb_pkt(self, pkt: HeartBeatPacket):
+        self._emit('heartbeat_pkt', pkt)
 
     def _emit(self, event_name, packet):
         if event_name in self._handlers:

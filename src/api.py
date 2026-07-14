@@ -85,6 +85,7 @@ class JsApi:
             self.db.config.get_value('enable_wsjtx_int')
             self._wsjtx = Integration(
                 log_handler=self._wsjtx_log_handle,
+                status_handler=self._wsjtx_status_handler,
                 ip=ip,
                 port=port
             )
@@ -1103,6 +1104,13 @@ class JsApi:
         if self._wsjtx is None:
             return
 
+        if self._wsjtx.is_wsjtx_alive() > 1:
+            logging.error("WSJTX is offline. Missed heartbeat packets")
+            self._call_js_param('set_wsjtx_status', 0)
+            return
+
+        self._call_js_param('set_wsjtx_status', 1)
+
         colors = ColorConfig(
             self.db.config.get_value('wsjtx_hunted_fg'),
             self.db.config.get_value('wsjtx_hunted_bg'),
@@ -1114,6 +1122,7 @@ class JsApi:
 
         # tell wsjtx-to highlight these calls
         x = self.db.spots.get_wsjtx_spots()
+        logging.debug(f"highlighting wsjtx #{len(x)} spots")
         for s in x:
             self._wsjtx.highlight_call(
                 s.activator, s.hunted, s.park_hunts == 0, colors)
@@ -1126,6 +1135,7 @@ class JsApi:
 
         self._call_js('setWorking')
 
+        enriched = False
         qso, spot = self._adif_to_enriched_qso(adif)
 
         with self.lock:
@@ -1139,6 +1149,7 @@ class JsApi:
             self.db.qsos.insert_qso(qso, delay_commit=False)
 
             if spot:
+                enriched = True
                 self.refresh_spot(spot.spotId, qso.call, qso.sig_info)
 
         # if config flag is true, log to configured logger
@@ -1149,8 +1160,16 @@ class JsApi:
             self._call_js('getSpots')
             return
 
-        self._call_js_param('showSuccessPopup', 'WSJT-X QSO Logged')
+        msg = 'WSJT-X QSO (e) Logged' if enriched else 'WSJT-X QSO Logged'
+        self._call_js_param('showSuccessPopup', msg)
         self._call_js('getSpots')
+
+    def _wsjtx_status_handler(self, status: int):
+        if status == 2:
+            # wsjtx most likely offline. prob set a value in api
+            logging.warning("wsjtx down")
+
+        self._call_js_param('set_wsjtx_status', status)
 
     def _call_js(self, method: str):
         '''

@@ -1,9 +1,11 @@
 from dataclasses import dataclass
+from threading import Event, Thread
+import time
 
 from integrations.wsjtx.packet_processor import PacketProcessor
 from integrations.wsjtx.wsjtx_server import WsjtxServer
 from lib import pywsjtx
-from lib.pywsjtx.wsjtx_packets import DecodePacket, LoggedADIFPacket
+from lib.pywsjtx.wsjtx_packets import DecodePacket, HeartBeatPacket, LoggedADIFPacket  # NOQA
 import logging
 
 log = logging.getLogger(__name__)
@@ -50,19 +52,29 @@ class ColorConfig:
 
 
 class Integration:
-    _serializable = False  # marked so JS API doesnt serialize for frontend (need update pywebview for this to work)
+    # marked so JS API doesnt serialize for frontend
+    #  - not for our pinned ver of pywebview. update for this to work
+    _serializable = False
 
-    def __init__(self, log_handler, ip='127.0.0.1', port=2237):
+    def __init__(self, log_handler, status_handler, ip='127.0.0.1', port=2237):  # NOQA
         self.pkt_q = PacketProcessor()
         self.pkt_q.subscribe('logged_adif_pkt', self.logged_packet)
+        self.pkt_q.subscribe('heartbeat_pkt', self.heartbeat_packet)
         self.pkt_q.subscribe('decode_pkt', self.decode_packet)
         self.server = WsjtxServer(ip_address=ip, port=port, queue=self.pkt_q)
         self._lhandler = log_handler
+        self._shandler = status_handler
         self._cq = {}
+        self._last_hb_time = 0
+        self.stop_event = Event()
 
     def start(self):
         self.server.start()
         self.pkt_q.start_processing()
+
+        t = Thread(target=self._status_check_thread)
+        t.daemon = True
+        t.start()
 
     def get_cq_decodes(self):
         return self._cq
@@ -103,11 +115,33 @@ class Integration:
                 background=spotted_bg,
                 foreground=spotted_fg)
 
+    def is_wsjtx_alive(self) -> int:
+        '''
+        Returns status enum: 0 = wsjtx heartbeat packets received.
+        1 = last packet > 15 sec ago
+        2 = last hb packet > 45 sec. wsjtx most likely down
+        '''
+        last = self._last_hb_time
+        now = time.time()
+        if (now - last) > 45:
+            log.warning("too many missed wsjtx hb packet")
+            return 2
+        elif (now - last) > 15:
+            log.warning("missed wsjtx hb packet")
+            return 1
+
+        return 0
+
     def logged_packet(self, packet: LoggedADIFPacket):
         log.debug(f"got logged_packet {packet}")
         adif = packet.logged_adif
         if self._lhandler:
             self._lhandler(adif)
+
+    def heartbeat_packet(self, packet: HeartBeatPacket):
+        log.debug(f"got heartbeat pkt {packet}")
+        now = time.time()
+        self._last_hb_time = now
 
     def decode_packet(self, decode: DecodePacket):
         if decode.new_decode:
@@ -128,3 +162,14 @@ class Integration:
     def _flush_cqs(self):
         for decode in self._cq:
             pass
+
+    def _status_check_thread(self):
+        while True:
+            # check status here
+            status = self.is_wsjtx_alive()
+
+            if self._shandler:
+                self._shandler(status)
+
+            if self.stop_event.wait(10.0):
+                break

@@ -90,6 +90,9 @@ class WsjtxServer(threading.Thread):
             if self.verbose:
                 logging.debug("rx_packet: socket.timeout")
             return (None, None)
+        except Exception as ex:
+            logging.warning("exception in rx_packet", exc_info=ex)
+            return (None, None)
 
     def send_packet(self, addr_port, pkt):
         bytes_sent = self.sock.sendto(pkt, addr_port)
@@ -134,3 +137,5 @@ class WsjtxServer(threading.Thread):
 
         if self.return_port is not None:
             self.send_packet(self.return_port, x)
+        else:
+            self.logger.warning("return_port is null. cant send highlight pkt")

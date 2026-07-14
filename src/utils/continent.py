@@ -80,13 +80,12 @@ class Continents():
 
         result = ""
         try:
-            logging.debug(f"lookup continent for wwff program: {program}")
+            # logging.debug(f"lookup continent for wwff program: {program}")
             result = self.wwff[program]['continent'].upper()
         except Exception as ex:
             logging.warning('find_continent_wwff error', exc_info=ex)
 
         return result
-
 
     def _init_sota(self, root: str):
         sota_f = Path(root, 'data/', 'sota_associations.json')

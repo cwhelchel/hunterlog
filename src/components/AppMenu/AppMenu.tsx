@@ -18,6 +18,8 @@ import { useMessageQueue } from '../MessageContext';
 import CatArea from './CatArea/CatArea';
 import CondxArea from './CondxArea/CondxArea';
 import RefreshButton from './RefreshButton';
+import WsjtxArea from './WsjtxArea/WsjtxArea';
+import RightArea from './RightArea';
 
 
 
@@ -200,10 +202,7 @@ export default function AppMenu() {
                         <Alert variant="filled" severity={severity} onClose={() => { handleAlertClose() }} >{alertMsg}</Alert>
                     }
 
-                    {showBandCondx &&
-                        <CondxArea />
-                    }
-                    <CatArea />
+                    <RightArea />
 
                     <RefreshButton />
                 </Toolbar>
