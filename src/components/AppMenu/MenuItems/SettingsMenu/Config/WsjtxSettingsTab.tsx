@@ -20,7 +20,7 @@ export default function WsjtxSettingsTab() {
                 } />
             <p className="modal-config-text">
                 If enabled, Hunterlog will monitor WSJT-X UDP packets and log QSOs that it sees. If they are spots from
-                a program Hunterlog knows, it will park the spot as hunted. If this is false all WSJT-X integrations are disabled.
+                a program Hunterlog knows, it will mark the spot as hunted. If this is false, all WSJT-X integrations are disabled.
             </p>
 
             <Divider aria-hidden="true" />
@@ -125,6 +125,28 @@ export default function WsjtxSettingsTab() {
                             setConfig({ ...config, wsjtx_udp_port: val });
                         }} />
                 </Stack>
+
+                <Divider aria-hidden="true" />
+
+                <FormControlLabel
+                    label="Forward to Remote Logger"
+                    style={{ width: "100%", marginLeft: '10px' }}
+                    control={
+                        <Checkbox checked={config.wsjtx_fwd_remote_logger}
+                            inputProps={{ 'aria-label': 'controlled' }}
+                            onChange={(e) => {
+                                const val = Boolean(e.target.checked);
+                                setConfig({ ...config, wsjtx_fwd_remote_logger: val });
+                            }} />
+
+                    } />
+                <p className="modal-config-text">
+                    If &apos;Forward to Remote Logger&apos; is true, then the user
+                    configured logger will be sent the QSO that Hunterlog received from
+                    WSJT-X. If false, it will not send the QSO to logger AND it will not 
+                    write it to the local hunter.adi file.
+                    However, the QSO will always be saved within the spots.db file.
+                </p>
             </Stack>
         </Stack>
     );

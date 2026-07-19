@@ -118,7 +118,7 @@ class Integration:
     def is_wsjtx_alive(self) -> int:
         '''
         Returns status enum: 0 = wsjtx heartbeat packets received.
-        1 = last packet > 15 sec ago
+        1 = last packet > 30 sec ago
         2 = last hb packet > 45 sec. wsjtx most likely down
         '''
         last = self._last_hb_time
@@ -126,7 +126,7 @@ class Integration:
         if (now - last) > 45:
             log.warning("too many missed wsjtx hb packet")
             return 2
-        elif (now - last) > 15:
+        elif (now - last) > 30:
             log.warning("missed wsjtx hb packet")
             return 1
 

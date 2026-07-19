@@ -38,7 +38,8 @@ const defData: UserConfig = {
     wsjtx_new_ref_fg: '',
     wsjtx_new_ref_bg: '',
     wsjtx_ip_addr: '',
-    wsjtx_udp_port: 0
+    wsjtx_udp_port: 0,
+    wsjtx_fwd_remote_logger: false
 };
 
 export interface ConfigContextType {

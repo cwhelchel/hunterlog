@@ -129,6 +129,7 @@ export default function ConfigModal() {
         config.wsjtx_new_ref_bg = getVar(cfg2, 'wsjtx_new_ref_bg');
         config.wsjtx_ip_addr = getVar(cfg2, 'wsjtx_ip_addr');
         config.wsjtx_udp_port = Number(getVar(cfg2, 'wsjtx_udp_port'));
+        config.wsjtx_fwd_remote_logger = Number(getVar(cfg2, 'wsjtx_fwd_remote_logger')) != 0;
         setConfig(config);
     }
 
@@ -167,6 +168,7 @@ export default function ConfigModal() {
         setVar(config2, "wsjtx_new_ref_bg", config.wsjtx_new_ref_bg);
         setVar(config2, "wsjtx_ip_addr", config.wsjtx_ip_addr);
         setVar(config2, "wsjtx_udp_port", config.wsjtx_udp_port.toString());
+        setVar(config2, "wsjtx_fwd_remote_logger", config.wsjtx_fwd_remote_logger.toString());
         setConfig2(config2);
     }
 

@@ -367,6 +367,15 @@ class ConfigQuery:
             'group': 'wsjtx',
             'enabled': 'True',
             'editable': 'True'
+        },
+        {
+            'key': 'wsjtx_fwd_remote_logger',
+            'val': "1",
+            'type': 'bool',
+            'description': 'True for HL to forward logged WSJT-X qsos to HLs remote logger',  # noqa: E501
+            'group': 'wsjtx',
+            'enabled': 'True',
+            'editable': 'True'
         }
     ]
 

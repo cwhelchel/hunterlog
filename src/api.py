@@ -1153,12 +1153,16 @@ class JsApi:
                 self.refresh_spot(spot.spotId, qso.call, qso.sig_info)
 
         # if config flag is true, log to configured logger
-        success, resp = self._log_qso_remote(qso)
-        if not success:
-            logging.error(f"error sending WSJT-X QSO to logger: {resp}")
-            self._call_js_param('showFailurePopup', f'Logging error: {resp}')
-            self._call_js('getSpots')
-            return
+
+        log_remote: bool = self.db.config.get_value('wsjtx_fwd_remote_logger')
+
+        if log_remote:
+            success, resp = self._log_qso_remote(qso)
+            if not success:
+                logging.error(f"error sending WSJT-X QSO to logger: {resp}")
+                self._call_js_param('showFailurePopup', f'Logging error: {resp}')  # noqa: E501
+                self._call_js('getSpots')
+                return
 
         msg = 'WSJT-X QSO (e) Logged' if enriched else 'WSJT-X QSO Logged'
         self._call_js_param('showSuccessPopup', msg)

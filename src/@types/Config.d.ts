@@ -36,6 +36,7 @@ export interface UserConfig {
     wsjtx_new_ref_bg: string,
     wsjtx_ip_addr: string,
     wsjtx_udp_port: number,
+    wsjtx_fwd_remote_logger: boolean,
 }
 
 export interface ConfigVer2 {
