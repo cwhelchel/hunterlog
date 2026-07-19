@@ -84,9 +84,10 @@ def get_band_name(freq: str) -> str:
         for band, lmt in bandLimits.items():
             if (f >= lmt[0] and f <= lmt[1]):
                 return bandNames[band.value]
+        return bandNames[Bands.NOBAND.value]
     except ValueError:
         logging.error("invalid str to float conv in get_band_name(freq)")
-        return bandNames[Bands.NOBAND]
+        return bandNames[Bands.NOBAND.value]
 
 
 def get_name_of_band(band: Bands) -> str:

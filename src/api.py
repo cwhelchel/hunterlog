@@ -608,6 +608,10 @@ class JsApi:
             dt = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
             log = AdifLog(filename=f"{dt}_export.adi")
             for q in qs:
+                if (q.freq == ''):
+                    logging.warning('exporting: no freq in qso, skipping')
+                    continue
+
                 log.log_qso(q, my_call, my_grid6)
 
             return self._response(True, "QSOs exported successfully")

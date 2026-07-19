@@ -155,10 +155,21 @@ class AdifLog():
             logging.error("_send_msg exception:", err)
 
     def _get_adif_field(self, field_name: str, field_data: str) -> str:
+        if (field_data is None):
+            logging.warning(f"null value in _get_adif_field {field_name}")
+            return ''
+
         return f"<{field_name.upper()}:{len(field_data)}>{field_data}\n"
 
     def _get_adif(self, qso: Qso, my_call: str, my_grid6: str) -> str:
         band_name = bands.get_band_name(qso.freq)
+
+        # the NOBAND string is NA which isn't a valid band name. If we dont
+        # have a good band name dont add this field.
+        if band_name != 'NA':
+            band_adif = self._get_adif_field("band", band_name)
+        else:
+            band_adif = ''
 
         # todo:
         # self._get_adif_field("distance", qso.sig_info) +
@@ -173,9 +184,9 @@ class AdifLog():
 
         adif = \
             self._get_adif_field("call", qso.call) + \
-            self._get_adif_field("band", band_name) + \
+            band_adif + \
             self._get_adif_field("name", qso.name if qso.name else '') + \
-            self._get_adif_field("comment", qso.comment) + \
+            self._get_adif_field("comment", qso.comment if qso.comment else '') + \
             self._get_adif_field("sig", qso.sig) + \
             self._get_adif_field("sig_info", qso.sig_info) + \
             self._get_adif_field("gridsquare", qso.gridsquare) + \
@@ -191,6 +202,6 @@ class AdifLog():
             self._get_adif_field("qso_date", q_date) + \
             self._get_adif_field("time_on", q_time_on) + \
             self._get_adif_field("my_gridsquare", my_grid6) + \
-            "<EOR>\n"
+            "<EOR>\n"  # noqa: E501
 
         return adif
