@@ -64,6 +64,10 @@ class CatApi:
             hrz = hrz + offset
 
         log.debug(f"adjusted freq {hrz}")
+
+        # default to SSB if no mode is given
+        # mode = 'SSB' if mode is None or mode == '' else mode
+
         if mode == "SSB" and hrz >= 10000000:
             mode = "USB"
         elif mode == "SSB" and hrz < 10000000:
