@@ -102,6 +102,11 @@ class Spot(Base):
         try:
             f = str(json['QRG']).replace(',', '.')  # locale fix
 
+            # hunterlog.us re-hosted WWFF spots api sometimes has crazy crap
+            # in freq: ':   7003.0'
+            if f.startswith(":"):
+                f = f[1:].strip()
+
             # TODO SHOULD BE IN kHz convert MHz to kHz if freq string is good
             self.frequency = 0.0 if f == '' else float(f)
         except Exception as ex:
