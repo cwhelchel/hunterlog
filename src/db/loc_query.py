@@ -41,13 +41,20 @@ class LocationQuery:
     def get_location(self, locationId: int) -> Location:
         return self.session.query(Location).get(locationId)
 
-    def get_location_by_desc(self, descriptor: str) -> Location:
+    def get_location_by_desc(self, descriptor: str) -> any:
         '''
         Given the Location descriptor ("US-AK", "CA-MB"), return a location
+
+        Readonly, dehydrated result. Only has Location.parks
         '''
-        return self.session.query(Location) \
-            .filter(Location.descriptor == descriptor) \
-            .first()
+        # optimized to only return location.parks
+        sql = sa.select(Location.parks) \
+            .where(Location.descriptor == descriptor)
+
+        return self.session.execute(sql).first()
+        # return self.session.query(Location) \
+        #     .filter(Location.descriptor == descriptor) \
+        #     .first()
 
     def get_location_hunts(self, descriptor: str) -> tuple[int, int]:
         '''
@@ -62,10 +69,17 @@ class LocationQuery:
             return (0, 0)
 
         total = loc.parks
-        hunts = self.session.query(Park.reference).distinct() \
+
+        sql = sa.select(sa.func.count()) \
             .where(Park.hunts > 0) \
-            .where(Park.locationDesc == descriptor) \
-            .count()
+            .where(Park.locationDesc == descriptor)
+
+        hunts = self.session.scalar(sql)
+        
+        # hunts = self.session.query(Park.reference).distinct() \
+        #     .where(Park.hunts > 0) \
+        #     .where(Park.locationDesc == descriptor) \
+        #     .count()
 
         # this query here was causing a large bottle neck when called for each
         # pota spot. use the above query which is quicker

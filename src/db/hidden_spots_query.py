@@ -43,16 +43,26 @@ class HiddenSpotsQuery:
     def get_spot(self, id: int) -> HiddenSpot:
         return self.session.query(HiddenSpot).get(id)
 
-    def get_spot_by_actx(self, activator: str, park: str) -> HiddenSpot:
+    def get_spot_by_actx(self, activator: str, park: str) -> any:
         return self.session.query(HiddenSpot) \
             .filter(
                 sa.and_(HiddenSpot.activator == activator,
                         HiddenSpot.reference == park)) \
             .first()
 
+    def get_spot_by_actx_readonly(self, activator: str, park: str) -> any:
+        # test optimization. return dehydrated ORM object
+        sql = sa.select(HiddenSpot.activator,
+                        HiddenSpot.reference,
+                        HiddenSpot.enabled,
+                        HiddenSpot.expires_on) \
+            .where(HiddenSpot.activator == activator) \
+            .where(HiddenSpot.reference == park)
+
+        return self.session.execute(sql).first()
+
     def is_hidden(self, activator, reference: str, time: datetime) -> bool:
-        row = self.get_spot_by_actx(activator, reference)
-        # log.debug(f"hide spot row {row}")
+        row = self.get_spot_by_actx_readonly(activator, reference)
 
         if row is None or row.enabled is False:
             return False

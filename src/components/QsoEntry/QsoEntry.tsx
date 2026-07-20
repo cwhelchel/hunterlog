@@ -110,7 +110,7 @@ export default function QsoEntry() {
             return true;
         } else {
             // log a single operator
-            const res = await window.pywebview.api.log_qso(qso);
+            const res = await window.pywebview.api.log_qso(qso, contextData.spotId);
 
             console.log('log_qso', res);
             const test = checkApiResponse2(res, addMessage);

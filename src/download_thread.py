@@ -1,22 +1,28 @@
 
 import threading
 import logging as L
+from typing import Callable
 from programs.apis import SotaApi, PotaApi, WwffApi, WwbotaApi
 
 logging = L.getLogger(__name__)
 
 
 class DownloadThread(threading.Thread):
-    def __init__(self, event: threading.Event, progs: any):
+    def __init__(self, event: threading.Event,
+                 progs: any,
+                 post_callback: Callable[[dict[str, any]], None]):
         '''
         Creates a new instance of DownloadThread
 
         :param threading.Event event: the stopper event.
         :param any progs: the configured list of enabled programs. stored in db
+        :param Callable post_callback: a function thats called after download
+            of spots. Signature: callback_func(x : dict[str,any]) -> None
         '''
         threading.Thread.__init__(self, daemon=True)
         self.lock = threading.Lock()
         self.stopped = event
+        self.post_callback = post_callback
 
         self.config = {}
 
@@ -45,6 +51,9 @@ class DownloadThread(threading.Thread):
         while True:
             with self.lock:
                 self.download()
+
+            if self.post_callback:
+                self.post_callback(self.spots)
 
             if self.stopped.wait(45.0):
                 break

@@ -24,12 +24,12 @@ class ParkQuery:
 
     def get_parks(self) -> list[Park]:
         return self.session.query(Park).all()
-    
+
     def get_half_loaded_parks(self, limit: int) -> list[Park]:
         try:
             return self.session.query(Park) \
                 .filter(Park.name == None) \
-                .limit(limit)
+                .limit(limit)  # noqa: E711
         except Exception as ex:
             logging.warning(
                 "error in get_half_loaded_park. exception follows:",
@@ -164,3 +164,16 @@ class ParkQuery:
             .where(Park.locationDesc.contains(location))
         result = self.session.execute(sql)
         return result.scalars().all()
+
+    def get_park_hunts(self, park: str) -> int:
+        '''
+        Return hunt count for given reference identifier.
+        '''
+        sql = sa.select(Park.hunts) \
+            .where(Park.reference == park)
+
+        row = self.session.execute(sql).first()
+        if row:
+            return row.hunts
+        else:
+            return 0

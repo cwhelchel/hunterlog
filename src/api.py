@@ -26,6 +26,7 @@ from programs.apis import PotaApi
 from programs import Program, SotaProgram, WwffProgram, PotaProgram, WwbotaProgram, NoProgram  # NOQA
 from utils.distance import Distance
 from utils.adif import AdifLog
+from utils.metadata import Metadata
 from utils.wavelog import get_stations
 from version import __version__
 
@@ -45,6 +46,7 @@ class JsApi:
             '': NoProgram(self.db)
         }
         self.seen_regions = [""]
+        self._metadata = Metadata(self.db)
 
         # refactored APIs for js use
         self.imports = ImportApi(self.db, self.programs)
@@ -443,12 +445,13 @@ class JsApi:
 
         return True, ''
 
-    def log_qso(self, qso_data):
+    def log_qso(self, qso_data, spot_id: int):
         '''
         Logs the QSO to the database, adif file, and updates stats. Will force
         a reload of the currently displayed spots.
 
         :param any qso_data: dict of qso data from the UI
+        :param any spot_id: spot id of the spot QSO was generated from.
         '''
         # logging.info('acquiring lock to log qso')
         # self.lock.acquire()
@@ -488,6 +491,14 @@ class JsApi:
 
         # here resp is qso obj
         qso = resp
+
+        if qso.sig_info != "":
+            logging.debug(f"updating metadata for {spot_id} logged spot")
+            self._metadata.update_metadata(
+                spot_id,
+                qso.call,
+                qso.freq,
+                qso.sig_info)
 
         success, resp = self._log_qso_remote(qso)
         if not success:
@@ -891,6 +902,48 @@ class JsApi:
             logging.error('Error getting QSOs', exc_info=ex)
             return self._response(False, 'Error getting QSOs')
 
+    def do_background_update(self):
+        '''
+        Secondary update method to make the spot updates quicker for user
+        '''
+        logging.debug('starting background updates...')
+        self.seen_regions.clear()
+
+        for p in self.programs.values():
+            unique_reg = list(set(p.seen_regions))
+            self.seen_regions += unique_reg
+
+        self.lock.acquire()
+        self._handle_alerts()
+
+        # handle half-loaded parks from program imports
+        self._empty_park_updater()
+
+        # handle WSJT-X integration.
+        self._handle_wsjtx()
+
+        if self.lock.locked():
+            self.lock.release()
+
+        logging.debug('background updates finished')
+
+    def update_metadata(self, spots: dict[str, any]):
+        # This is called by download thread that pulls in spot JSON objs
+
+        cfg = self._get_program_cfg()
+
+        # if the main do_update is happening we need to wait
+        try:
+            with self.lock:
+                self._metadata.clear_metadata()
+                for program in spots.keys():
+                    p = self.programs[program]
+                    if cfg[program]:
+                        logging.debug(f'getting metadata for {program}')
+                        self._metadata.add_spots(program, p, spots[program])
+        except Exception as ex:
+            logging.error("exception updating metadata", exc_info=ex)
+
     def _do_update(self, spots: dict[any]):
         '''
         The main update method. Called on a timer
@@ -903,40 +956,37 @@ class JsApi:
         :param dict wwff: the dict from the wwff api. wwff['RCD']
         '''
         logging.debug('updating db')
+        start = time.perf_counter()
 
         try:
-            # json = self.pota.get_spots()
-            # sota = self.sota.get_spots()
-            # wwff = self.wwff.get_spots()
-
             logging.info("acquiring lock for update")
             if not self.lock.acquire(timeout=4.0):
                 logging.error('no lock aquired')
                 return
             self.db.delete_spots()
-            self.programs["POTA"].update_spots(spots["POTA"])
-            self.programs["SOTA"].update_spots(spots["SOTA"])
-            self.programs["WWFF"].update_spots(spots["WWFF"])
-            self.programs["WWBOTA"].update_spots(spots["WWBOTA"])
+            self.programs["POTA"].update_spots(spots["POTA"], self._metadata)
+            self.programs["SOTA"].update_spots(spots["SOTA"], self._metadata)
+            self.programs["WWFF"].update_spots(spots["WWFF"], self._metadata)
+            self.programs["WWBOTA"].update_spots(spots["WWBOTA"], self._metadata)  # noqa: E501
 
             # handle half-loaded parks from program imports
-            self._empty_park_updater()
+            # self._empty_park_updater()
 
             # handle WSJT-X integration. use decoded CQs
-            self._handle_wsjtx()
+            # self._handle_wsjtx()
 
             self.db.session.commit()
             logging.info("spots updated for programs")
             self.lock.release()
             logging.info("update lock released")
 
-            self.seen_regions.clear()
+            # self.seen_regions.clear()
 
-            for p in self.programs.values():
-                unique_reg = list(set(p.seen_regions))
-                self.seen_regions += unique_reg
+            # for p in self.programs.values():
+            #     unique_reg = list(set(p.seen_regions))
+            #     self.seen_regions += unique_reg
 
-            self._handle_alerts()
+            # self._handle_alerts()
         except ConnectionError as con_ex:
             logging.warning("Connection error in do_update: ")
             logging.exception(con_ex)
@@ -948,6 +998,9 @@ class JsApi:
             if self.lock.locked():
                 self.lock.release()
 
+            end = time.perf_counter()
+            elapsed_time = end - start
+            logging.debug(f"do_update Elapsed time: {elapsed_time:.6f} secs")
             # trigger front end to know the main update method is over.
             self._call_js('workingDone')
 

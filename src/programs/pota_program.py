@@ -9,6 +9,8 @@ import re
 import logging as L
 import time
 
+from utils.metadata import Metadata
+
 log = L.getLogger(__name__)
 
 
@@ -26,7 +28,7 @@ class PotaProgram(Program):
     def api(self) -> IApi:
         self.pota_api = PotaApi() if self.pota_api is None else self.pota_api
         return self.pota_api
-    
+
     def test_reference_str(self, ref: str) -> bool:
         if re.match(r"^[A-Z0-9]{2}-[0-9]{4,}", ref):
             return True
@@ -66,7 +68,7 @@ class PotaProgram(Program):
 
         return park
 
-    def update_spots(self, spots):
+    def update_spots(self, spots, metadata: Metadata):
         if spots is None:
             log.warning('POTA spots object is Null')
             return
@@ -87,8 +89,20 @@ class PotaProgram(Program):
 
             self.db.session.add(s)
 
+            # TODO: optimizations needed in this call
             # get meta data for this spot
-            self.update_spot_metadata(s)
+            # self.update_spot_metadata(s)
+
+            # metadata is generated done at end of spot download and before
+            # this spot update. the spot ids should match to query this data
+            meta = metadata.get_metadata(s.spotId)
+            if meta:
+                s.park_hunts = meta.park_hunts
+                s.op_hunts = meta.op_hunt
+                s.hunted = meta.hunted_flag
+                s.hunted_bands = meta.hunted_bands
+            else:
+                log.warning(f"cache miss {s.spotId}")
 
             # sometimes locationDesc can be None. see GR-0071
             if s.locationDesc is not None \
@@ -131,6 +145,11 @@ class PotaProgram(Program):
         schema = ParkSchema()
         p: Park = schema.load(park, transient=True)
         return p
+
+    def parse_spots_data(self, spot_data) -> list[Spot]:
+        schema = SpotSchema()
+        spot: list[Spot] = schema.load(spot_data, transient=True, many=True)
+        return spot
 
     def download_reference_data(self, ref_code: str) -> any:
         return PotaApi().get_park(ref_code)

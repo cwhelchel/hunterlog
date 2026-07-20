@@ -12,6 +12,7 @@ import logging as L
 import time
 
 from programs.apis import WwffApi
+from utils.metadata import Metadata
 
 log = L.getLogger(__name__)
 
@@ -64,7 +65,7 @@ class WwffProgram(Program):
 
         return wwff
 
-    def update_spots(self, spots):
+    def update_spots(self, spots, metadata: Metadata):
         self.regions = list[str]()
         start_time = time.perf_counter()
 
@@ -121,7 +122,15 @@ class WwffProgram(Program):
             else:
                 self.db.session.add(wwff_to_add)
 
-            self.update_spot_metadata(wwff_to_add)
+            # self.update_spot_metadata(wwff_to_add)
+            meta = metadata.get_metadata(wwff_to_add.spotId)
+            if meta:
+                wwff_to_add.park_hunts = meta.park_hunts
+                wwff_to_add.op_hunts = meta.op_hunt
+                wwff_to_add.hunted = meta.hunted_flag
+                wwff_to_add.hunted_bands = meta.hunted_bands
+            else:
+                log.warning(f"cache miss {wwff_to_add.spotId}")
 
         end_time = time.perf_counter()
         elapsed_time = end_time - start_time
@@ -180,6 +189,17 @@ class WwffProgram(Program):
         r.firstActivationDate = ''
         r.website = wwff['wikipedia']
         return r
+
+    def parse_spots_data(self, spot_data) -> list[Spot]:
+        res: list[Spot] = []
+        id = 0
+        for wwff in spot_data['RCD']:
+            id = id + 1
+            spot = Spot()
+            spot.init_from_wwff(wwff, id)
+            res.append(spot)
+
+        return res
 
     def parse_hunt_data(self, data) -> dict[str, int]:
         # data here is a raw string csv from front end

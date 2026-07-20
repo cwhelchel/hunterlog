@@ -13,6 +13,7 @@ import logging as L
 import time
 
 from programs.apis import WwbotaApi
+from utils.metadata import Metadata
 
 log = L.getLogger(__name__)
 
@@ -55,7 +56,7 @@ class WwbotaProgram(Program):
 
         return row
 
-    def update_spots(self, spots):
+    def update_spots(self, spots, metadata: Metadata):
         self.regions = list[str]()
 
         start_time = time.perf_counter()
@@ -140,7 +141,15 @@ class WwbotaProgram(Program):
 
                 self.db.insert_spot_comments(act, ref, cmts)
 
-            self.update_spot_metadata(to_add)
+            # self.update_spot_metadata(to_add)
+            meta = metadata.get_metadata(to_add.spotId)
+            if meta:
+                to_add.park_hunts = meta.park_hunts
+                to_add.op_hunts = meta.op_hunt
+                to_add.hunted = meta.hunted_flag
+                to_add.hunted_bands = meta.hunted_bands
+            else:
+                log.warning(f"cache miss {to_add.spotId}")
 
         end_time = time.perf_counter()
         elapsed_time = end_time - start_time
@@ -207,6 +216,25 @@ class WwbotaProgram(Program):
         s.firstActivationDate = ''
         s.website = ''
         return s
+
+    def parse_spots_data(self, spot_data) -> list[Spot]:
+        if spot_data is None:
+            return None
+
+        id: int = 1000
+        spots: list[Spot] = []
+
+        for bunker in spot_data:
+            to_add = Spot()
+            try:
+                self._init_spot(to_add, bunker, id)
+            except Exception as ex:
+                log.warning(f'bad wwbota spot {bunker}', exc_info=ex)
+                continue
+            id = id + 1
+            spots.append(to_add)
+
+        return spots
 
     def _add_ref_to_db(self, ref):
         api_res = WwbotaApi().get_bunker(ref)

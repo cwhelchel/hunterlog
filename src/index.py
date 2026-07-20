@@ -1,6 +1,8 @@
 import os
 import sys
 import threading
+import time
+import traceback
 import webview
 import logging
 import logging.config
@@ -12,6 +14,7 @@ from pathlib import Path
 from api import JsApi
 from download_thread import DownloadThread
 from utils.entrypoint import get_entrypoint, set_interval
+from utils.streamlogger import StreamToLogger
 from version import __version__
 
 
@@ -41,9 +44,14 @@ def configure_logging():
 
 configure_logging()
 
-logging.info(f"!!!!!!!!!!!! Starting Hunterlog {__version__}")
+log = logging.getLogger("root")
+sys.stdout = StreamToLogger(log, logging.INFO)
+sys.stderr = StreamToLogger(log, logging.INFO)
+
+log.info(f"!!!!!!!!!!!! Starting Hunterlog {__version__}")
 
 the_api = JsApi()
+started = False
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-w", "--reset-win", action="store_true",
@@ -51,7 +59,7 @@ parser.add_argument("-w", "--reset-win", action="store_true",
 
 
 def do_update(spots: dict):
-    logging.debug('updating db')
+    log.debug('updating db')
     the_api._do_update(spots)
 
 
@@ -64,11 +72,11 @@ def show_frontend_work():
                 window.pywebview.state.setWorking();
             }
             """
-            logging.debug('setWorking called in frontend')
+            log.debug('setWorking called in frontend')
             webview.windows[0].evaluate_js(js)
     except Exception as ex:
-        logging.error("error in setWorking")
-        logging.exception(ex)
+        log.error("error in setWorking")
+        log.exception(ex)
         raise
 
 
@@ -81,29 +89,47 @@ def refresh_frontend():
                 window.pywebview.state.getSpots();
             }
             """
-            logging.debug('refreshing spots in frontend')
+            log.debug('refreshing spots in frontend')
             webview.windows[0].evaluate_js(js)
     except Exception as ex:
-        logging.error("error in refresh_frontend")
-        logging.exception(ex)
+        log.error("error in refresh_frontend")
+        log.exception(ex)
         raise
 
 
 @set_interval(60)
 def update_ticker(t: DownloadThread):
-    logging.info("thread heartbeat")
+    '''
+    This is the main update thread. It handles the critical main update task 
+    where the database is updated with the latests spots.
+    '''
+    log.debug("thread heartbeat")
 
     spot_arr = t.get_spots()
     show_frontend_work()
     do_update(spot_arr)
     refresh_frontend()
 
+    global started
+    if not started:
+        # this has to be kicked once to start the thread. And it needs to be
+        # run after the main update
+        background_update_ticker()
+        started = True
+
+
+@set_interval(60)
+def background_update_ticker():
+
+    log.debug("background update heartbeat")
+    the_api.do_background_update()
+
 
 def on_closing():
     # this crashes on linux
     sz = (window.width, window.height)
     pos = (window.x, window.y)
-    logging.debug(f"close: saving winow data: {sz}")
+    log.debug(f"close: saving window data: {sz}")
     the_api._store_win_size(sz)
     the_api._store_win_pos(pos)
 
@@ -116,6 +142,63 @@ def on_restore():
     the_api._store_win_maxi(False)
 
 
+def dl_callback(spots: dict[str, any]):
+    the_api.update_metadata(spots)
+
+
+def global_exception_handler(exctype, value, tb):
+    '''
+    This global exception handler catches all uncaught exceptions in the
+    Python process and logs them.
+    '''
+    x = "UNHANDLED GLOBAL EXCEPTION CAUGHT"
+
+    error_msg = "".join(traceback.format_exception(exctype, value, tb))
+
+    print(f"{x}:\n{error_msg}", file=sys.stderr)
+
+    # Optional: Pop up a native error dialog before closing
+    try:
+        log.error(f"{x}:\n{error_msg}")
+        webview.windows[0].create_confirmation_dialog(
+            "Application Error",
+            "An unexpected error occurred. Check index.log")
+    except Exception:
+        pass
+
+    # Exit or handle recovery
+    # sys.exit(1)
+
+
+def threading_exception_handler(args):
+    '''
+    This global exception handler catches all uncaught exceptions in spawned
+    Python threads.
+    '''
+    error_msg = "".join(
+        traceback.format_exception(args.exc_type,
+                                   args.exc_value,
+                                   args.exc_traceback)
+    )
+
+    x = "UNHANDLED THREADING EXCEPTION CAUGHT"
+    print(f"{x}:\n{error_msg}", file=sys.stderr)
+
+    # Optional: Pop up a native error dialog before closing
+    try:
+        log.error(f"{x}:\n{error_msg}")
+        webview.windows[0].create_confirmation_dialog(
+            "Application Thread Error",
+            "An unhandled error occurred in a thread. Check index.log")
+    except Exception:
+        pass
+
+
+# Assign the hook to the system execution hook before anything else happens
+log.debug("setting global exception handler")
+sys.excepthook = global_exception_handler
+threading.excepthook = threading_exception_handler
+
 if __name__ == '__main__':
     args = parser.parse_args()
 
@@ -127,11 +210,11 @@ if __name__ == '__main__':
     progs = the_api._get_program_cfg()
 
     if args.reset_win:
-        logging.info('resetting window size and position to defaults')
+        log.info('resetting window size and position to defaults')
         (width, height) = (800, 600)
         (x, y) = (0, 0)
 
-    logging.debug(f"load window data: {width} x {height} - {maxi}")
+    log.debug(f"load window data: {width} x {height} - {maxi}")
 
     webview.settings = {
         'ALLOW_DOWNLOADS': False,  # Allow file downloads
@@ -167,10 +250,13 @@ if __name__ == '__main__':
         window.events.maximized += on_maximized
         window.events.restored += on_restore
 
-    logging.debug('starting dl thread')
+    log.debug('starting dl thread')
     stopFlag = threading.Event()
-    dl = DownloadThread(event=stopFlag, progs=progs)
+    dl = DownloadThread(event=stopFlag, progs=progs, post_callback=dl_callback)
     dl.start()
+
+    # test first run. download and parse metadata before starting
+    time.sleep(5.5)
 
     if the_system == "Linux":
         webview.start(update_ticker, args=dl, private_mode=False, debug=True, gui="gtk")  # noqa E501

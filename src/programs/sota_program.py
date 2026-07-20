@@ -12,6 +12,7 @@ import logging as L
 import time
 
 from programs.apis import SotaApi
+from utils.metadata import Metadata
 
 log = L.getLogger(__name__)
 
@@ -26,7 +27,7 @@ class SotaProgram(Program):
     def api(self) -> IApi:
         self.sota_api = SotaApi() if self.sota_api is None else self.sota_api
         return self.sota_api
-    
+
     def test_reference_str(self, ref: str) -> bool:
         if re.match(r"[a-zA-Z0-9]{2,3}\/[a-zA-Z0-9]{2}-[0-9]{3}", ref):
             return True
@@ -58,7 +59,7 @@ class SotaProgram(Program):
 
         return summit
 
-    def update_spots(self, spots):
+    def update_spots(self, spots, metadata: Metadata):
         self.regions = list[str]()
         start_time = time.perf_counter()
 
@@ -114,7 +115,16 @@ class SotaProgram(Program):
             else:
                 self.db.session.add(sota_to_add)
 
-            self.update_spot_metadata(sota_to_add)
+            meta = metadata.get_metadata(sota_to_add.spotId)
+            if meta:
+                sota_to_add.park_hunts = meta.park_hunts
+                sota_to_add.op_hunts = meta.op_hunt
+                sota_to_add.hunted = meta.hunted_flag
+                sota_to_add.hunted_bands = meta.hunted_bands
+            else:
+                log.warning(f"cache miss {sota_to_add.spotId}")
+
+            # self.update_spot_metadata(sota_to_add)
 
         end_time = time.perf_counter()
         elapsed_time = end_time - start_time
@@ -171,6 +181,14 @@ class SotaProgram(Program):
         s.firstActivationDate = ''
         s.website = f"https://www.sotadata.org.uk/en/summit/{summit['summitCode']}"  # noqa E501
         return s
+
+    def parse_spots_data(self, spot_data) -> list[Spot]:
+        res: list[Spot] = []
+        for sota in spot_data:
+            s = Spot()
+            s.init_from_sota(sota)
+            res.append(s)
+        return res
 
     def parse_hunt_data(self, data) -> dict[str, int]:
         # data here is a raw string csv from the sota chaser complete log

@@ -52,9 +52,26 @@ class Program(ABC):
         The program logic for converting the the API provided data for a
         reference into the Hunterlog specific Park row
 
-        :param ref str: a singular reference identifier
-        :param ota_ref str: possible comma separated list of references
-        :returns bool: False if a ref row not in db
+        :param ref_data any: json from api
+        :returns Park: Detached Park object
+        '''
+        raise NotImplementedError
+
+    @abstractmethod
+    def parse_spots_data(self, spots) -> list[Spot]:
+        '''
+        The program logic for converting the the API provided data for a
+        spot into the Hunterlog specific Spot row. This ORM object is not
+        attached to the session.
+
+        This should do basically the same processing as update_spots except it
+        doesn't modify any storage. This to facilitate programs that have an ID
+        set via the update_spots method. This method needs to return the same
+        IDs because we'll key future reads of this methods returned list via
+        the ID.
+
+        :param spots any: json from api
+        :returns Spot: Detached Spot object
         '''
         raise NotImplementedError
 
@@ -83,13 +100,14 @@ class Program(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def update_spots(self, spots):
+    def update_spots(self, spots, metadata):
         '''
         Updates all the spots in the database for the program.
 
         Read the given spots and update the db with any meta-data.
 
         :param: spots any: json the dict from the api
+        :param: metadata utils.metadata.Metadata: metadata obj
         '''
         raise NotImplementedError
 
@@ -152,18 +170,15 @@ class Program(ABC):
 
         :param to_add: spot object to update
         '''
-        park = self.db.parks.get_park(to_add.reference)
-
-        if park is not None:
-            to_add.park_hunts = park.hunts
-        else:
-            to_add.park_hunts = 0
+        park_hunts = self.db.parks.get_park_hunts(to_add.reference)
+        to_add.park_hunts = park_hunts
 
         count = self.db.qsos.get_op_qso_count(to_add.activator)
         to_add.op_hunts = count
 
         hunted = self.db.qsos.get_spot_hunted_flag(
             to_add.activator, to_add.frequency, to_add.reference)
+
         bands = self.db.qsos.get_spot_hunted_bands(
             to_add.activator, to_add.reference)
 
@@ -172,7 +187,6 @@ class Program(ABC):
 
         is_hidden = self.db.hidden_spots.is_hidden(
             to_add.activator, to_add.reference, to_add.spotTime)
-        # log.debug(f"spot hidden: {to_add.activator} = {is_hidden}")
         to_add.is_hidden = is_hidden
 
     def update_qso_dist_bearing(self, q: Qso):

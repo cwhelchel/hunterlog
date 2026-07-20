@@ -103,9 +103,10 @@ class QsoQuery:
         return q.qso_id
 
     def get_op_qso_count(self, call: str) -> int:
-        return self.session.query(Qso) \
-            .filter(Qso.call == call) \
-            .count()
+        sql = sa.select(sa.func.count()) \
+            .where(Qso.call == call)
+
+        return self.session.scalar(sql)
 
     def get_activator_hunts(self, callsign: str) -> int:
         return self.session.query(Qso) \
@@ -174,7 +175,7 @@ class QsoQuery:
         :param str ref: the park reference (ex K-7465)
         :returns true if the spot has already been hunted
         '''
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         band = get_band(freq)
         # logging.debug(f"using band {band} for freq {freq}")
 
@@ -183,12 +184,14 @@ class QsoQuery:
         else:
             terms = [1 == 1]
 
-        flag = self.session.query(Qso) \
-            .filter(Qso.call == activator,
-                    Qso.time_on > now.date(),
-                    Qso.sig_info == ref,
-                    sa.and_(*terms)) \
-            .count() > 0
+        sql = sa.select(sa.func.count()) \
+            .where(Qso.call == activator) \
+            .where(Qso.sig_info == ref) \
+            .where(Qso.time_on > now.date()) \
+            .where(sa.and_(*terms))
+
+        flag = self.session.scalar(sql) > 0
+
         return flag
 
     def get_spot_hunted_bands(self, activator: str, ref: str) -> str:
@@ -199,20 +202,28 @@ class QsoQuery:
         :param str ref: park reference
         :returns list of hunted bands for today
         '''
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         result = ""
         hunted_b = []
 
-        qsos = self.session.query(Qso) \
-            .filter(Qso.call == activator,
-                    Qso.sig_info == ref,
-                    Qso.time_on > now.date()) \
-            .all()
+        sql = sa.select(Qso.call, Qso.sig_info, Qso.time_on, Qso.freq) \
+            .where(Qso.call == activator) \
+            .where(Qso.sig_info == ref) \
+            .where(Qso.time_on > now.date())
+
+        qsos = self.session.execute(sql).all()
+
+        # optimized away
+        # qsos = self.session.query(Qso) \
+        #     .filter(Qso.call == activator,
+        #             Qso.sig_info == ref,
+        #             Qso.time_on > now.date()) \
+        #     .all()
 
         for q in qsos:
             band = get_band(q.freq)
             if band is None:
-                logging.warn(f"unknown band for freq {q.freq}")
+                logging.warning(f"unknown band for freq {q.freq}")
             else:
                 hunted_b.append(bandNames[band.value])
 
