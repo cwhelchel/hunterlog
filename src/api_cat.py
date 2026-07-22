@@ -66,7 +66,7 @@ class CatApi:
         log.debug(f"adjusted freq {hrz}")
 
         # default to SSB if no mode is given
-        # mode = 'SSB' if mode is None or mode == '' else mode
+        mode = 'SSB' if mode is None or mode == '' else mode
 
         if mode == "SSB" and hrz >= 10000000:
             mode = "USB"
