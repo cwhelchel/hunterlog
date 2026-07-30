@@ -176,11 +176,14 @@ class Program(ABC):
         count = self.db.qsos.get_op_qso_count(to_add.activator)
         to_add.op_hunts = count
 
+        use_basecall = self.db.config.get_value('hunted_use_basecall')
+
         hunted = self.db.qsos.get_spot_hunted_flag(
-            to_add.activator, to_add.frequency, to_add.reference)
+            to_add.activator, to_add.frequency, to_add.reference,
+            use_basecall)
 
         bands = self.db.qsos.get_spot_hunted_bands(
-            to_add.activator, to_add.reference)
+            to_add.activator, to_add.reference, use_basecall)
 
         to_add.hunted = hunted
         to_add.hunted_bands = bands

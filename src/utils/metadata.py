@@ -37,16 +37,20 @@ class Metadata:
 
         spots_parsed = program.parse_spots_data(spots)
 
+        # read once for the whole batch, not per spot, to keep this loop
+        # down to the queries it already makes
+        use_basecall = self._db.config.get_value('hunted_use_basecall')
+
         for s in spots_parsed:
             # log.debug(f"parsed spot for metadata {s}")
 
             hunt_count = self._db.parks.get_park_hunts(s.reference)
             op_count = self._db.qsos.get_op_qso_count(s.activator)
             hunted = self._db.qsos.get_spot_hunted_flag(
-                s.activator, s.frequency, s.reference)
+                s.activator, s.frequency, s.reference, use_basecall)
 
             bands = self._db.qsos.get_spot_hunted_bands(
-                s.activator, s.reference)
+                s.activator, s.reference, use_basecall)
 
             is_hidden = self._db.hidden_spots.is_hidden(
                 s.activator, s.reference, s.spotTime)
@@ -83,12 +87,14 @@ class Metadata:
                 f"no metadata to update for: {spot_id} {call} {reference}")
             return
 
+        use_basecall = self._db.config.get_value('hunted_use_basecall')
+
         meta.park_hunts = self._db.parks.get_park_hunts(reference)
         meta.op_hunt = self._db.qsos.get_op_qso_count(call)
         meta.hunted_flag = self._db.qsos.get_spot_hunted_flag(
-            call, freq, reference)
+            call, freq, reference, use_basecall)
         meta.hunted_bands = self._db.qsos.get_spot_hunted_bands(
-            call, reference)
+            call, reference, use_basecall)
 
     def update_hidden(self, spot_id: int, is_hidden: bool):
         meta = self._data.get(spot_id)

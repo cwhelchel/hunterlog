@@ -18,6 +18,7 @@ const defData: UserConfig = {
     qth_string: '',
     rig_if_type: '',
     include_rst: false,
+    hunted_use_basecall: false,
     enabled_progs: '',
     scan_wait_time: 5,
     stage_qsos: true,
