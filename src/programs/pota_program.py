@@ -101,6 +101,7 @@ class PotaProgram(Program):
                 s.op_hunts = meta.op_hunt
                 s.hunted = meta.hunted_flag
                 s.hunted_bands = meta.hunted_bands
+                s.is_hidden = meta.is_hidden
             else:
                 log.warning(f"cache miss {s.spotId}")
 

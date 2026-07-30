@@ -121,6 +121,7 @@ class SotaProgram(Program):
                 sota_to_add.op_hunts = meta.op_hunt
                 sota_to_add.hunted = meta.hunted_flag
                 sota_to_add.hunted_bands = meta.hunted_bands
+                sota_to_add.is_hidden = meta.is_hidden
             else:
                 log.warning(f"cache miss {sota_to_add.spotId}")
 

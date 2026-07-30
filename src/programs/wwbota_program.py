@@ -148,6 +148,7 @@ class WwbotaProgram(Program):
                 to_add.op_hunts = meta.op_hunt
                 to_add.hunted = meta.hunted_flag
                 to_add.hunted_bands = meta.hunted_bands
+                to_add.is_hidden = meta.is_hidden
             else:
                 log.warning(f"cache miss {to_add.spotId}")
 

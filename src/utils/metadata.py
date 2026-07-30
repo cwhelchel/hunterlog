@@ -19,6 +19,7 @@ class MetaDatum:
     hunted_bands: str
     activator: str
     reference: str
+    is_hidden: bool
 
 
 class Metadata:
@@ -47,7 +48,10 @@ class Metadata:
             bands = self._db.qsos.get_spot_hunted_bands(
                 s.activator, s.reference)
 
-            meta = MetaDatum(hunt_count, op_count, hunted, bands, s.activator, s.reference)  # noqa: E501
+            is_hidden = self._db.hidden_spots.is_hidden(
+                s.activator, s.reference, s.spotTime)
+
+            meta = MetaDatum(hunt_count, op_count, hunted, bands, s.activator, s.reference, is_hidden)  # noqa: E501
             self._data[s.spotId] = meta
 
         log.debug(f"{self._data}")
@@ -85,3 +89,13 @@ class Metadata:
             call, freq, reference)
         meta.hunted_bands = self._db.qsos.get_spot_hunted_bands(
             call, reference)
+
+    def update_hidden(self, spot_id: int, is_hidden: bool):
+        meta = self._data.get(spot_id)
+
+        if meta is None:
+            log.warning(
+                f"no metadata to update for: {spot_id} in update_hidden")
+            return
+
+        meta.is_hidden = is_hidden

@@ -129,6 +129,7 @@ class WwffProgram(Program):
                 wwff_to_add.op_hunts = meta.op_hunt
                 wwff_to_add.hunted = meta.hunted_flag
                 wwff_to_add.hunted_bands = meta.hunted_bands
+                wwff_to_add.is_hidden = meta.is_hidden
             else:
                 log.warning(f"cache miss {wwff_to_add.spotId}")
 

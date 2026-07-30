@@ -50,7 +50,8 @@ class JsApi:
 
         # refactored APIs for js use
         self.imports = ImportApi(self.db, self.programs)
-        self.hidden_spots = HiddenSpotsApi(self.db, self.programs)
+        self.hidden_spots = HiddenSpotsApi(
+            self.db, self.programs, self._metadata)
         self.callsign_notes = CallNotesApi(self.db, self.programs)
 
         logging.debug("init logger...")

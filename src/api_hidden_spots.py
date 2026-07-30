@@ -4,6 +4,8 @@ from db.db import DataBase
 from programs.program import Program
 import logging as L
 
+from utils.metadata import Metadata
+
 
 log = L.getLogger(__name__)
 
@@ -24,9 +26,10 @@ def _response(success: bool, message: str, **kwargs) -> str:
 
 
 class HiddenSpotsApi:
-    def __init__(self, db: DataBase, programs: dict[str, Program]):
+    def __init__(self, db: DataBase, programs: dict[str, Program], metadata: Metadata):  # noqa: E501
         self.db = db
         self.programs = programs
+        self._metadata = metadata
 
     def hide_spot(self, spot_id):
         log.debug(f'hiding spot id: {spot_id}')
@@ -35,7 +38,7 @@ class HiddenSpotsApi:
             actx = spot.activator
             ref = spot.reference
             self.db.hidden_spots.add_or_update(actx, ref)
-
+            self._metadata.update_hidden(spot_id, True)
             spot.is_hidden = True
             self.db.commit_session()
             return _response(True, '')
@@ -50,7 +53,7 @@ class HiddenSpotsApi:
             actx = spot.activator
             ref = spot.reference
             self.db.hidden_spots.update(actx, ref, False)
-
+            self._metadata.update_hidden(spot_id, False)
             spot.is_hidden = False
             self.db.commit_session()
             return _response(True, '')
