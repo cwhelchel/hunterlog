@@ -98,6 +98,22 @@ export default function GeneralSettingsTab() {
                                 }} />
                         } />
                 </Stack>
+                <p>
+                    When matching hunted spots, ignore portable suffixes and
+                    country prefixes, so SM6KZW and SM6KZW/P count as the same
+                    station, as do SM6KZW and LA/SM6KZW.
+                </p>
+                <Stack direction={'row'}>
+                    <FormControlLabel label="Match hunted on base callsign"
+                        control={
+                            <Checkbox checked={config.hunted_use_basecall}
+                                inputProps={{ 'aria-label': 'controlled' }}
+                                onChange={(e) => {
+                                    const val = Boolean(e.target.checked);
+                                    setConfig({ ...config, hunted_use_basecall: val });
+                                }} />
+                        } />
+                </Stack>
             </Stack>
         </>
     )

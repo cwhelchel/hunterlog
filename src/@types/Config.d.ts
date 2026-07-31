@@ -15,6 +15,7 @@ export interface UserConfig {
     qth_string: string,
     rig_if_type: string,
     include_rst: boolean,
+    hunted_use_basecall: boolean,
     enabled_progs: string
     scan_wait_time: number,
     stage_qsos: boolean,

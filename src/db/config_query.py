@@ -376,6 +376,15 @@ class ConfigQuery:
             'group': 'wsjtx',
             'enabled': 'True',
             'editable': 'True'
+        },
+        {
+            'key': 'hunted_use_basecall',
+            'val': '0',
+            'type': 'bool',
+            'description': 'Match hunted spots on base callsign, ignoring portable suffixes and country prefixes',  # noqa: E501
+            'group': 'general',
+            'enabled': 'True',
+            'editable': 'True'
         }
     ]
 

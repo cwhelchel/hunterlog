@@ -8,6 +8,7 @@ from sqlalchemy.orm import scoped_session
 
 from db.models.qsos import Qso, QsoSchema
 from bands import Bands, get_band, bandLimits, bandNames
+from utils.callsigns import get_basecall
 
 log = logging.getLogger(__name__)
 
@@ -166,61 +167,93 @@ class QsoQuery:
     def get_spot_hunted_flag(self,
                              activator: str,
                              freq: str,
-                             ref: str) -> bool:
+                             ref: str,
+                             use_basecall: bool = False) -> bool:
         '''
-        Gets the flag indicating if a given spot has been hunted already today
+        Determine whether this activator has already been worked at this
+        reference, on this band, today.
 
-        :param str activator: activators callsign
-        :param str freq: frequency in MHz
-        :param str ref: the park reference (ex K-7465)
-        :returns true if the spot has already been hunted
+        :param str activator: the spotted callsign
+        :param str freq: spot frequency, used to derive the band
+        :param str ref: the park or summit reference
+        :param bool use_basecall: when True, compare base callsigns so that
+            portable suffixes and country prefixes do not create duplicates,
+            eg. SM6KZW and SM6KZW/P, or SM6KZW and LA/SM6KZW
         '''
         now = datetime.now(timezone.utc)
         band = get_band(freq)
-        # logging.debug(f"using band {band} for freq {freq}")
 
         if band is not None:
             terms = QsoQuery.get_band_lmt_terms(band, Qso.freq)
         else:
             terms = [1 == 1]
 
-        sql = sa.select(sa.func.count()) \
-            .where(Qso.call == activator) \
+        if not use_basecall:
+            sql = sa.select(sa.func.count()) \
+                .where(Qso.call == activator) \
+                .where(Qso.sig_info == ref) \
+                .where(Qso.time_on > now.date()) \
+                .where(sa.and_(*terms))
+
+            return self.session.scalar(sql) > 0
+
+        # Base call equality cannot be expressed in SQL here, so narrow the
+        # query as far as possible and finish the comparison in Python.
+        # get_basecall() always returns either the whole callsign or one of
+        # its slash separated segments, so every callsign that normalises to
+        # basecall must contain it as a substring. The LIKE below is
+        # therefore a safe superset and cannot produce false negatives.
+        basecall = get_basecall(activator)
+
+        sql = sa.select(Qso.call) \
+            .where(Qso.call.contains(basecall)) \
             .where(Qso.sig_info == ref) \
             .where(Qso.time_on > now.date()) \
             .where(sa.and_(*terms))
 
-        flag = self.session.scalar(sql) > 0
+        for row in self.session.execute(sql).all():
+            if get_basecall(row.call) == basecall:
+                return True
 
-        return flag
+        return False
 
-    def get_spot_hunted_bands(self, activator: str, ref: str) -> str:
+    def get_spot_hunted_bands(self,
+                              activator: str,
+                              ref: str,
+                              use_basecall: bool = False) -> str:
         '''
-        Gets the string of all hunted bands, this spot has been hunted today
+        Return a comma separated list of the bands on which this activator
+        has been worked at this reference today.
 
-        :param str activator: activators callsign
-        :param str ref: park reference
-        :returns list of hunted bands for today
+        :param str activator: the spotted callsign
+        :param str ref: the park or summit reference
+        :param bool use_basecall: when True, compare base callsigns so that
+            portable suffixes and country prefixes do not create duplicates
         '''
         now = datetime.now(timezone.utc)
         result = ""
         hunted_b = []
 
+        basecall = get_basecall(activator)
+
+        if use_basecall:
+            # See get_spot_hunted_flag: this LIKE is a superset of the base
+            # call match and is narrowed exactly in the loop below.
+            call_term = Qso.call.contains(basecall)
+        else:
+            call_term = Qso.call == activator
+
         sql = sa.select(Qso.call, Qso.sig_info, Qso.time_on, Qso.freq) \
-            .where(Qso.call == activator) \
+            .where(call_term) \
             .where(Qso.sig_info == ref) \
             .where(Qso.time_on > now.date())
 
         qsos = self.session.execute(sql).all()
 
-        # optimized away
-        # qsos = self.session.query(Qso) \
-        #     .filter(Qso.call == activator,
-        #             Qso.sig_info == ref,
-        #             Qso.time_on > now.date()) \
-        #     .all()
-
         for q in qsos:
+            if use_basecall and get_basecall(q.call) != basecall:
+                continue
+
             band = get_band(q.freq)
             if band is None:
                 logging.warning(f"unknown band for freq {q.freq}")
