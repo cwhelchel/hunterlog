@@ -38,6 +38,7 @@ export interface UserConfig {
     wsjtx_ip_addr: string,
     wsjtx_udp_port: number,
     wsjtx_fwd_remote_logger: boolean,
+    max_spot_age: number;
 }
 
 export interface ConfigVer2 {

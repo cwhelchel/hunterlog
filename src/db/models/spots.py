@@ -57,7 +57,7 @@ class Spot(Base):
     is_hidden = sa.Column(sa.Boolean, default=False)
 
     def __repr__(self):
-        return "<spot(id={self.spotId!r})>".format(self=self)
+        return "<spot(id={self.spotId!r},call={self.activator!r},src={self.spot_source})>".format(self=self)  # NOQA: E501
 
     def init_from_sota(self, json: any):
         self.spotId = json['id']

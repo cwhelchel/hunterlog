@@ -1,39 +1,10 @@
 import * as React from 'react';
-import { Checkbox, FormControlLabel, Grid, Stack, TextField, Tooltip } from "@mui/material";
+import { Checkbox, Divider, FormControlLabel, Grid, Stack, TextField, Tooltip } from "@mui/material";
 import { useConfigContext } from './ConfigContextProvider';
-import { useAppContext } from '../../../../AppContext';
-import ToggleSwitch from './ToggleSwitch';
-import StoredTextInput from './StoredTextInput';
 
 export default function GeneralSettingsTab() {
 
-    const { contextData, setData } = useAppContext();
     const { config, setConfig } = useConfigContext();
-
-    // function to toggle the dark mode as true or false
-    const toggleDarkTheme = (newVal: boolean) => {
-        const newMode = newVal;
-
-        const newCtx = { ...contextData };
-        if (newMode)
-            newCtx.themeMode = 'dark';
-        else
-            newCtx.themeMode = 'light';
-
-        setData(newCtx);
-    };
-
-    const toggleSwapRst = (newVal: boolean) => {
-        const newCtx = { ...contextData };
-        newCtx.swapRstOrder = newVal;
-        setData(newCtx);
-    };
-    
-    const toggleShowBandCondx = (newVal: boolean) => {
-        const newCtx = { ...contextData };
-        newCtx.showBandCondx = newVal;
-        setData(newCtx);
-    };
 
     return (
         <>
@@ -61,20 +32,17 @@ export default function GeneralSettingsTab() {
                             }} />
                     </Tooltip>
                 </Grid>
+                <Grid item xs={4}>
+                    <Tooltip title="Maximum spot age in minutes. Spots older than this are removed.">
+                        <TextField id="max_spot_age" label="Max spot age"
+                            value={config?.max_spot_age}
+                            onChange={(e) => {
+                                setConfig({ ...config, max_spot_age: Number.parseInt(e.target.value) });
+                            }} />
+                    </Tooltip>
+                </Grid>
             </Grid>
-            <Stack direction={'row'} spacing={1} marginTop={3} sx={{ flexWrap: 'wrap' }}>
-                <ToggleSwitch storageKey={'USE_DARK_MODE'} initialState={true} label='Dark Mode' onChange={toggleDarkTheme} />
-                <ToggleSwitch storageKey={'USE_FREEDOM_UNITS'} initialState={true} label='Display Imperial Units' longTrueText='Display distance in miles' longFalseText='Display distance in kilometers' />
-                <ToggleSwitch storageKey={'SHOW_SPOT_AGE'} initialState={true} label='Show Spot Age' longTrueText='Shows spot age as minutes past' longFalseText='Shows spot timestamps' />
-            </Stack>
-            <Stack direction={'row'} spacing={1} marginTop={3} sx={{ flexWrap: 'wrap' }}>
-                <ToggleSwitch storageKey={'HIGHLIGHT_NEW_REF'} initialState={true} label='Highlight New' longTrueText='Highlight new references' longFalseText='No highlighting' />
-                <ToggleSwitch storageKey={'SWAP_RST_ORDER'} initialState={false} label='Swap RST Order' longTrueText='Recv RST first' longFalseText='Sent RST first' onChange={toggleSwapRst} />
-            </Stack>
-            <Stack direction={'row'} spacing={1} marginTop={3} sx={{ flexWrap: 'nowrap', width: '100%' }}>
-                <ToggleSwitch storageKey={'SHOW_BAND_CONDX'} initialState={true} label='Band CONDX' longTrueText='Show Band Condx Area' longFalseText='Hide Band Condx Area' onChange={toggleShowBandCondx} />
-                <StoredTextInput sx={{flexGrow: 1}} storageKey={'BAND_CONDX_HAMQSL_URL'} initialVal={'https://www.hamqsl.com/solar101pic.php'} label='HamQSL URL' extraDescription='Full URL to <a target="_blank" rel="noopener noreferrer" href="https://www.hamqsl.com/">hamqsl.com</a> embedded condx images' />
-            </Stack>
+
             <Stack spacing={2} marginTop={3}>
                 <p className="modal-config-text">
                     QTH string is inserted when posting spots to POTA.app ex: &apos;mid GA&apos;

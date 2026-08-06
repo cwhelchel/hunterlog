@@ -385,6 +385,15 @@ class ConfigQuery:
             'group': 'general',
             'enabled': 'True',
             'editable': 'True'
+        },
+        {
+            'key': 'max_spot_age',
+            'val': '30',
+            'type': 'int',
+            'description': 'Maximum spot age in minutes',
+            'group': 'general',
+            'enabled': 'True',
+            'editable': 'True'
         }
     ]
 

@@ -15,6 +15,7 @@ import { useMessageQueue } from '../../../../MessageContext';
 import ProgramSettingsTab from './ProgramSettingsTab';
 import HlModal2 from '../../../../Common/HlModal';
 import WsjtxSettingsTab from './WsjtxSettingsTab';
+import DisplaySettingsTab from './DisplaySettingsTab';
 
 
 const def2: ConfigVer2[] = [];
@@ -131,6 +132,7 @@ export default function ConfigModal() {
         config.wsjtx_ip_addr = getVar(cfg2, 'wsjtx_ip_addr');
         config.wsjtx_udp_port = Number(getVar(cfg2, 'wsjtx_udp_port'));
         config.wsjtx_fwd_remote_logger = Number(getVar(cfg2, 'wsjtx_fwd_remote_logger')) != 0;
+        config.max_spot_age = Number(getVar(cfg2, 'max_spot_age'));
         setConfig(config);
     }
 
@@ -171,6 +173,7 @@ export default function ConfigModal() {
         setVar(config2, "wsjtx_ip_addr", config.wsjtx_ip_addr);
         setVar(config2, "wsjtx_udp_port", config.wsjtx_udp_port.toString());
         setVar(config2, "wsjtx_fwd_remote_logger", config.wsjtx_fwd_remote_logger.toString());
+        setVar(config2, "max_spot_age", config.max_spot_age.toString());
         setConfig2(config2);
     }
 
@@ -205,31 +208,36 @@ export default function ConfigModal() {
                     aria-label="cfg-tags"
                 >
                     <Tab label={'General'} {...a11yProps(0)} />
-                    <Tab label={'CAT'} {...a11yProps(1)} />
-                    <Tab label={'Logging'} {...a11yProps(2)} />
-                    <Tab label={'Programs'} {...a11yProps(3)} />
-                    <Tab label={'Scanning'} {...a11yProps(4)} />
-                    <Tab label={'WSJT-X'} {...a11yProps(5)} />
+                    <Tab label={'Display'} {...a11yProps(1)} />
+                    <Tab label={'CAT'} {...a11yProps(2)} />
+                    <Tab label={'Logging'} {...a11yProps(3)} />
+                    <Tab label={'Programs'} {...a11yProps(4)} />
+                    <Tab label={'Scanning'} {...a11yProps(5)} />
+                    <Tab label={'WSJT-X'} {...a11yProps(6)} />
                 </Tabs>
 
                 <CustomTabPanel value={value} index={0}>
                     <GeneralSettingsTab />
                 </CustomTabPanel>
                 <CustomTabPanel value={value} index={1}>
-                    <RadioSettingsTab />
+                    <DisplaySettingsTab />
                 </CustomTabPanel>
                 <CustomTabPanel value={value} index={2}>
-                    <LoggerSettingsTab />
+                    <RadioSettingsTab />
                 </CustomTabPanel>
                 <CustomTabPanel value={value} index={3}>
-                    <ProgramSettingsTab />
+                    <LoggerSettingsTab />
                 </CustomTabPanel>
                 <CustomTabPanel value={value} index={4}>
-                    <ScanningSettingsTab />
+                    <ProgramSettingsTab />
                 </CustomTabPanel>
                 <CustomTabPanel value={value} index={5}>
+                    <ScanningSettingsTab />
+                </CustomTabPanel>
+                <CustomTabPanel value={value} index={6}>
                     <WsjtxSettingsTab />
                 </CustomTabPanel>
+
                 <Divider aria-hidden="true" />
 
                 <Stack

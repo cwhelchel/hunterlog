@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timedelta, timezone
 import time
 import sqlalchemy as sa
 from sqlalchemy.orm import scoped_session
@@ -76,6 +76,30 @@ class SpotQuery:
             .where(Spot.mode.in_(worst)) \
             .where(Spot.activator == callsign)
         return self.session.execute(sql).scalars().first()
+
+    def get_stale_spots(self, max_age_minutes: int) -> list[Spot]:
+        now = datetime.now(timezone.utc)
+        dt = now - timedelta(minutes=max_age_minutes)
+
+        res = self.session.query(Spot) \
+            .filter(Spot.spotTime < dt) \
+            .all()
+
+        return res
+
+    def delete_stale_spots(self, max_age_minutes: int):
+        '''
+        Remove or expunge old spots.
+
+        :param int max_age_minutes: positive int
+        '''
+        stale = self.get_stale_spots(max_age_minutes)
+        logging.debug(f'expunging stale spots {stale}')
+
+        for spot in stale:
+            logging.debug(f'stale: {spot}')
+            self.session.expunge(spot)
+            self.session.delete(spot)
 
     def insert_test_spot(self):
         # test data

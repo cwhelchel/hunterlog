@@ -7,6 +7,7 @@ interface ToggleSwitchProps {
     label: string;
     longTrueText?: string;
     longFalseText?: string;
+    alignItems?: string;
     onChange?: (newVal: boolean) => void;
 }
 
@@ -21,7 +22,7 @@ export default function ToggleSwitch(props: ToggleSwitchProps) {
     }, [])
 
     return (
-        <Stack alignItems={'center'}>
+        <Stack alignItems={props.alignItems ?? 'left'}>
             <FormControlLabel
                 control={
                     <Switch
@@ -31,7 +32,7 @@ export default function ToggleSwitch(props: ToggleSwitchProps) {
                 label={props.label}
                 sx={{height: '100%'}} />
             {props.longTrueText && props.longFalseText &&
-                <Typography textAlign='center' variant='caption'>
+                <Typography sx={{textAlign: props.alignItems ?? 'left'}} variant='caption'>
                     {value ? props.longTrueText : props.longFalseText}
                 </Typography>
             }

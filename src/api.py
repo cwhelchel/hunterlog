@@ -950,14 +950,15 @@ class JsApi:
         The main update method. Called on a timer
 
         First will delete all previous spots, then read the ones passed in
-        and perform the logic to update meta info about the spots
+        and update the database. The metadata calculations are performed at end
+        of download thread.
 
-        :param dict pota: the dict from the pota api
-        :param dict sota: the dict from the sota api
-        :param dict wwff: the dict from the wwff api. wwff['RCD']
+        :param dict spots: a dict of spot json data keyed by program name
         '''
         logging.debug('updating db')
         start = time.perf_counter()
+
+        max_age: int = self.db.config.get_value("max_spot_age")
 
         try:
             logging.info("acquiring lock for update")
@@ -970,24 +971,15 @@ class JsApi:
             self.programs["WWFF"].update_spots(spots["WWFF"], self._metadata)
             self.programs["WWBOTA"].update_spots(spots["WWBOTA"], self._metadata)  # noqa: E501
 
-            # handle half-loaded parks from program imports
-            # self._empty_park_updater()
+            # remove any super old spots
+            self.db.spots.delete_stale_spots(max_age)
 
-            # handle WSJT-X integration. use decoded CQs
-            # self._handle_wsjtx()
-
+            # commit all spot changes from programs
             self.db.session.commit()
+
             logging.info("spots updated for programs")
             self.lock.release()
             logging.info("update lock released")
-
-            # self.seen_regions.clear()
-
-            # for p in self.programs.values():
-            #     unique_reg = list(set(p.seen_regions))
-            #     self.seen_regions += unique_reg
-
-            # self._handle_alerts()
         except ConnectionError as con_ex:
             logging.warning("Connection error in do_update: ")
             logging.exception(con_ex)
