@@ -46,28 +46,6 @@ export const AppContextProvider = ( {children}: any ) => {
     const setData = (ctx: ContextData) => {
         const newContext: ContextData = {
             ...ctx
-            // qso: ctx.qso,
-            // filter: ctx.filter,
-            // bandFilter: ctx.bandFilter,
-            // regions: ctx.regions,
-            // regionFilter: ctx.regionFilter,
-            // park: ctx.park,
-            // locationFilter: ctx.locationFilter,
-            // qrtFilter: ctx.qrtFilter,
-            // locations: ctx.locations,
-            // huntedFilter: ctx.huntedFilter,
-            // spotId: ctx.spotId,
-            // errorMsg: ctx.errorMsg,
-            // errorSeverity: ctx.errorSeverity,
-            // themeMode: ctx.themeMode,
-            // onlyNewFilter: ctx.onlyNewFilter,
-            // otherOperators: ctx.otherOperators,
-            // summit: ctx.summit,
-            // sigFilter: ctx.sigFilter,
-            // otherParks: ctx.otherParks,
-            // continentFilter: ctx.continentFilter,
-            // loadingQsoData: ctx.loadingQsoData,
-            // swapRstOrder: ctx.swapRstOrder
         }
         setContextData(newContext);
     };

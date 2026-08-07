@@ -316,6 +316,16 @@ class JsApi:
             app_ver=__version__,
             db_ver=db_ver)
 
+    def get_enabled_programs(self) -> str:
+        cfg = self._get_program_cfg()
+        logging.debug(f'get_enabled_programs {cfg}')
+
+        return self._response(
+            True,
+            "",
+            enabled_progs=cfg
+        )
+
     def spot_activator(self, qso_data, park: str) -> str:
         '''
         Spots the activator at the given park. The QSO data needs to be filled

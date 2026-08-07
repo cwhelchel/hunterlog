@@ -5,9 +5,7 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Switch from '@mui/material/Switch';
-import { Box, Stack, Typography } from '@mui/material';
+import { Box, Stack } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useAppContext } from '../AppContext';
 
@@ -16,6 +14,8 @@ import HiddenFilterButton from './HiddenFilterButton';
 import OnlyNewFilterButton from './OnlyNewFilterButton';
 import HuntedFilterButton from './HuntedFilterButton';
 import QrtFilterButton from './QrtFilterButton';
+import { checkApiResponse2 } from '../Utilities/util';
+import { useMessageQueue } from '../MessageContext';
 
 // https://mui.com/material-ui/react-table/
 
@@ -32,6 +32,8 @@ export const FilterBar = (props: IFilterBarPros) => {
     const [continent, setContinent] = React.useState<string[]>([]);
     const [loc, setLocation] = React.useState('');
     const [sig, setSig] = React.useState('');
+    const [enabledPrograms, setEnabledPrograms] = React.useState<string[]>([]);
+    const { addMessage } = useMessageQueue();
 
     const { contextData, setData } = useAppContext();
 
@@ -39,11 +41,11 @@ export const FilterBar = (props: IFilterBarPros) => {
     // API is ready
     React.useEffect(() => {
         if (window.pywebview !== undefined && window.pywebview.api !== null)
-            initFilters();
+            init();
         else
-            window.addEventListener('pywebviewready', initFilters);
+            window.addEventListener('pywebviewready', init);
 
-        function initFilters() {
+        function init() {
             const bf = window.localStorage.getItem("BAND_FILTER") || '0';
             const bf_a = bf.split(',');
             if (bf_a.length == 1 && bf_a[0] == '')
@@ -77,6 +79,29 @@ export const FilterBar = (props: IFilterBarPros) => {
 
             const sf = window.localStorage.getItem("SIG_FILTER") || '';
             setSigFilter(sf);
+
+            // get enabled programs
+            const res = window.pywebview.api.get_enabled_programs();
+
+            res.then((cfgStr: string) => {
+                const obj = checkApiResponse2(cfgStr, addMessage);
+
+                console.log(obj);
+                if (!obj.success)
+                    return;
+
+                const progs: string[] = [];
+                const temp = obj.enabled_progs;
+                const keys = Object.keys(temp);
+                keys.forEach((k)=> {
+                     const enabled = temp[k];
+
+                     if (enabled)
+                        progs.push(k);
+                });
+
+                setEnabledPrograms(progs);
+            });
         };
     }, []);
 
@@ -401,10 +426,11 @@ export const FilterBar = (props: IFilterBarPros) => {
                         onChange={handleSigChange}
                     >
                         <StyledMenuItem value=""><em>None</em></StyledMenuItem>
-                        <StyledMenuItem value='POTA'>POTA</StyledMenuItem>
-                        <StyledMenuItem value='SOTA'>SOTA</StyledMenuItem>
-                        <StyledMenuItem value='WWFF'>WWFF</StyledMenuItem>
-                        <StyledMenuItem value='WWBOTA'>WWBOTA</StyledMenuItem>
+                        {enabledPrograms.map((loc) => (
+                            <StyledMenuItem key={loc} value={loc}>
+                                {loc}
+                            </StyledMenuItem>
+                        ))}
                     </Select>
                 </FormControl>
                 <Button onClick={handleClear} variant="outlined"
@@ -416,5 +442,3 @@ export const FilterBar = (props: IFilterBarPros) => {
 
     );
 }
-
-
