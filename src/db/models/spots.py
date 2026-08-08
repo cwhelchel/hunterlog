@@ -63,28 +63,43 @@ class Spot(Base):
         self.spotId = json['id']
         self.activator = json['activatorCallsign']
         try:
-            f = str(json['frequency']).replace(',', '.')  # locale fix
+            # new api freq is not string. float in MHz. but can be null
+            # for qrt spots
+            f = json['frequency']
+            if f is not None:
+                fx = round((f * 1000.0), 2)
+                self.frequency = str(fx)
+            else:
+                self.frequency = "0.0"
 
             # convert MHz to kHz if freq string is good
-            self.frequency = 0.0 if f == '' else float(f) * 1000
+            # self.frequency = 0.0 if f == '' else float(f) * 1000
         except Exception as ex:
             log.warning('error reading sota freq', exc_info=ex)
             self.frequency = 0.0
         self.mode = str(json['mode']).upper()
-        self.reference = f"{json['associationCode']}/{json['summitCode']}"
+
+        # self.reference = f"{json['associationCode']}/{json['summitCode']}"
+        # move to api-db2 host. dont need to build summit code
+        self.reference = json['summitCode']
+
         # parkName isnt really used use it for activator from sota
         self.parkName = json['activatorName']
         try:
-            temp = datetime.strptime(json['timeStamp'], "%Y-%m-%dT%H:%M:%S.%f")
+            # temp = datetime.fromisoformat(json['timeStamp'])
+            # new for api-db2
+            temp = datetime.strptime(json['timeStamp'], "%Y-%m-%dT%H:%M:%S.%f%z")  # noqa: E501
+            temp = temp.replace(tzinfo=None)
         except ValueError:
-            temp = datetime.strptime(json['timeStamp'], "%Y-%m-%dT%H:%M:%S")
+            temp = datetime.strptime(json['timeStamp'], "%Y-%m-%dT%H:%M:%S%z")
+            temp = temp.replace(tzinfo=None)
         self.spotTime = temp
         self.spotter = json['callsign']
         self.comments = json['comments']
         self.source = json['callsign']
         self.invalid = False
-        self.name = json['summitDetails']
-        self.locationDesc = json['associationCode']
+        self.name = json['summitName']
+        self.locationDesc = json['summitCode'].split('/')[0]
         self.grid4 = ''
         self.grid6 = ''
         self.latitude = 0.0
@@ -93,7 +108,8 @@ class Spot(Base):
         self.expire = 0
         self.spot_source = 'SOTA'
         self.hunted_bands = ""
-        self.is_qrt = False
+        spot_type = json['type']
+        self.is_qrt = False if spot_type != 'QRT' else True
         self.act_cmts = ''
 
     def init_from_wwff(self, json: any, id):

@@ -7,9 +7,10 @@ from cachetools.func import ttl_cache
 logging = L.getLogger(__name__)
 
 # -1 gets last hour of spots
-SPOT_URL = "https://api2.sota.org.uk/api/spots/-1/all"
-SUMMIT_URL = "https://api2.sota.org.uk/api/summits/"
-ASSOC_URL = "https://api2.sota.org.uk/api/associations/"
+# SPOT_URL = "https://api2.sota.org.uk/api/spots/-1/all"
+SPOT_URL = "https://api-db2.sota.org.uk/api/spots/-1/all/all"
+SUMMIT_URL = "https://api-db2.sota.org.uk/api/summits/"
+ASSOC_URL = "https://api-db2.sota.org.uk/api/associations/"
 
 
 class SotaApi():
@@ -27,9 +28,14 @@ class SotaApi():
     def get_summit(self, summit_ref: str):
         '''Return all current spots from POTA API'''
         response = requests.get(SUMMIT_URL + summit_ref)
+        logging.debug(response.status_code)
         if response.status_code == 200:
             json = response.json()
             return json
+        elif response.status_code == 400:
+            # api-db2 returns this code when given bad summits
+            # ex: summits/W6/SC-XXX
+            return None
 
     @ttl_cache(ttl=24*60*60)  # 24 hours of cache
     def get_association(self, assoc_code: str):

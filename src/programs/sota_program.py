@@ -136,10 +136,19 @@ class SotaProgram(Program):
         if spot.grid4 == '':
             sota_api = SotaApi()
             summit = sota_api.get_summit(spot.reference)
-            spot.grid4 = summit['locator'][:4]
-            spot.grid6 = summit['locator']
-            spot.latitude = summit['latitude']
-            spot.longitude = summit['longitude']
+            if (summit is not None):
+                m = f"summit data not found for {spot.reference}. " \
+                    + "setting lat/lon of spot to (0,0)"
+                log.warning(m)
+                spot.grid4 = 'JJ00'
+                spot.grid6 = 'JJ00aa'
+                spot.latitude = '0.0'
+                spot.longitude = '0.0'
+            else:
+                spot.grid4 = summit['locator'][:4]
+                spot.grid6 = summit['locator']
+                spot.latitude = summit['latitude']
+                spot.longitude = summit['longitude']
             self.db.session.commit()
 
         q = Qso()
@@ -184,7 +193,11 @@ class SotaProgram(Program):
         return s
 
     def parse_spots_data(self, spot_data) -> list[Spot]:
+        if spot_data is None:
+            return []
+
         res: list[Spot] = []
+
         for sota in spot_data:
             s = Spot()
             s.init_from_sota(sota)
