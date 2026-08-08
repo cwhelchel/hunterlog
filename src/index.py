@@ -14,6 +14,7 @@ from pathlib import Path
 from api import JsApi
 from download_thread import DownloadThread
 from utils.entrypoint import get_entrypoint, set_interval
+from utils.hl_files import HunterlogFiles
 from utils.streamlogger import StreamToLogger
 from version import __version__
 
@@ -249,6 +250,9 @@ if __name__ == '__main__':
         window.events.closing += on_closing
         window.events.maximized += on_maximized
         window.events.restored += on_restore
+
+    log.info('checking for file downloads...')
+    hl_files = HunterlogFiles()
 
     log.debug('starting dl thread')
     stopFlag = threading.Event()
