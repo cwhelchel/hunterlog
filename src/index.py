@@ -143,6 +143,35 @@ def on_restore():
     the_api._store_win_maxi(False)
 
 
+# saving window positions on linux. root cause, cant
+# access window.width height, x, y etc in the closing or 
+# closed callbacks. we store the changes and save those
+win_sz = (800,600)
+win_pos = (0,0)
+
+
+def on_resized_linux(width, height):
+    global win_sz
+    # log.debug(f"resized {width} {height}")
+    win_sz = (width, height)
+
+
+def on_moved_linux(x, y):
+    global win_pos
+    win_pos = (x, y)
+
+
+def on_closing_linux():
+    try:
+        sz = win_sz
+        pos = win_pos
+        log.debug(f"close: saving window data: {sz}")
+        the_api._store_win_size(sz)
+        the_api._store_win_pos(pos)
+    except Exception as ex:
+        log.error("linux close handler", exc_info=ex)
+
+
 def dl_callback(spots: dict[str, any]):
     the_api.update_metadata(spots)
 
@@ -251,9 +280,15 @@ if __name__ == '__main__':
         window.events.maximized += on_maximized
         window.events.restored += on_restore
 
+    if the_system == "Linux":
+        logging.debug('setup linux close handlers')
+        window.events.closed += on_closing_linux
+        window.events.resized += on_resized_linux
+        window.events.moved += on_moved_linux
+
     log.info('checking for file downloads...')
     hl_files = HunterlogFiles()
-
+    
     log.debug('starting dl thread')
     stopFlag = threading.Event()
     dl = DownloadThread(event=stopFlag, progs=progs, post_callback=dl_callback)
