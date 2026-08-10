@@ -175,7 +175,7 @@ export default function AppMenu() {
 
     return (
         <Box sx={{ flexGrow: 1 }}>
-            <AppBar position="static">
+            <AppBar position="static" sx={{maxHeight: 85}}>
                 <Toolbar>
                     <Avatar src={gravatar} >
                     </Avatar>
