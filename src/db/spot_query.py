@@ -94,10 +94,11 @@ class SpotQuery:
         :param int max_age_minutes: positive int
         '''
         stale = self.get_stale_spots(max_age_minutes)
-        logging.debug(f'expunging stale spots {stale}')
+
+        logging.debug(f'expunging #{len(stale)} stale spots')
 
         for spot in stale:
-            logging.debug(f'stale: {spot}')
+            # logging.debug(f'stale: {spot}')
             self.session.expunge(spot)
             self.session.delete(spot)
 

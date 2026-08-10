@@ -19,7 +19,7 @@ export default function WsjtxArea() {
     const [tooltipText, setTooltipText] = useState('Unknown');
 
     function set_wsjtx_status(status: number) {
-        console.log('wsjtx status', status);
+        // console.log('wsjtx status', status);
         if (status === 1) {
             setColor('warning');
             setTooltipText("WSJTX: marginal")

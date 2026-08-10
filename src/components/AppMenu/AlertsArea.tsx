@@ -85,7 +85,7 @@ export default function AlertsArea() {
         const currAlerts = [...alerts];
 
         const k = Object.keys(data);
-        console.log(k);
+        // console.log(k);
 
         k.forEach((key) => {
             const spots = data[key];

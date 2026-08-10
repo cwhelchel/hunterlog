@@ -58,7 +58,7 @@ class Metadata:
             meta = MetaDatum(hunt_count, op_count, hunted, bands, s.activator, s.reference, is_hidden)  # noqa: E501
             self._data[s.spotId] = meta
 
-        log.debug(f"{self._data}")
+        # log.debug(f"{self._data}")
         end_time = time.perf_counter()
         elapsed_time = end_time - start_time
 
