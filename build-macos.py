@@ -41,4 +41,9 @@ setup(
     name='Hunterlog',
     options={'py2app': OPTIONS},
     setup_requires=['py2app'],
+    #  GH action error. cant code sign these libs so exclude them (testing)
+    dylib_excludes=[
+        "/Library/Frameworks/Python.framework/Versions/3.14/Frameworks/Tcl.framework",
+        "/Library/Frameworks/Python.framework/Versions/3.14/Frameworks/Tk.framework",
+    ],
 )
