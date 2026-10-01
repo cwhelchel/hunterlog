@@ -4,7 +4,9 @@ import { Park } from "../../@types/Parks";
 import { Qso } from "../../@types/QsoTypes";
 import { SpotComments } from "../../@types/SpotComments";
 import { useAppContext } from "../AppContext";
-import { checkApiResponse } from '../../util';
+import { checkApiResponse2 } from '../Utilities/util';
+import { getMultiParkString, testForNfer } from '../Utilities/nferUtils';
+import { useMessageQueue } from '../MessageContext';
 
 interface MultiData {
     otherOps: string;
@@ -23,21 +25,29 @@ interface MultiData {
 export default function HandleSpotRowClick() {
 
     const { contextData, setData } = useAppContext();
+    const { addMessage } = useMessageQueue();
     const [isWorking, setIsWorking] = useState(false);
 
     async function getOtherData(spotId: number): Promise<MultiData> {
         const r = await window.pywebview.api.get_spot_comments(spotId);
 
-        let t = JSON.parse(r) as SpotComments[];
-        let filtered = t.filter(function (el) {
+        const t = JSON.parse(r) as SpotComments[];
+
+        // wwbota spots will use {With: } syntax bc its set from backend
+        // wwbota provides multi-ref info in spot api
+        const filtered = t.filter(function (el) {
             return el.comments.includes('{With:');
         });
 
-        let filtered2 = t.filter(function (el) {
-            return el.comments.includes('{Also:');
+        // for parsing of POTA comments that the activator posted
+        const nferComments = t.filter(function (el) {
+            if (el.spotter === el.activator)
+                return testForNfer(el.comments);
+            return false;
         });
 
-        //console.log(filtered2);
+        // console.log('nferComments');
+        // console.log(nferComments);
 
         function getMultiOps(ops: SpotComments[]): string {
             if (ops.length > 0) {
@@ -52,23 +62,9 @@ export default function HandleSpotRowClick() {
             return '';
         }
 
-        function getMultiParks(p: SpotComments[]): string {
-            if (p.length > 0) {
-                const str = p[0].comments;
-                // get the raw list of other comma sep parks
-                const re = new RegExp("{Also:([^}]*)}");
-                const m = str.match(re);
-
-                if (m) {
-                    return m[1];
-                }
-            }
-            return '';
-        }
-
-        let result: MultiData = {
+        const result: MultiData = {
             otherOps: getMultiOps(filtered),
-            otherParks: getMultiParks(filtered2)
+            otherParks: getMultiParkString(nferComments)
         };
 
         return result;
@@ -78,30 +74,32 @@ export default function HandleSpotRowClick() {
         // use the spot to generate qso data (unsaved)
         const q = window.pywebview.api.get_qso_from_spot(id);
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         q.then((r: any) => {
-            let result = checkApiResponse(r, contextData, setData);
+            const result = checkApiResponse2(r, addMessage);
 
             if (!result.success) {
                 console.log("get_qso_from_spot failed: " + result.message);
+                setIsWorking(false);
                 return;
             }
 
-            var x = JSON.parse(result.qso) as Qso;
+            const x = JSON.parse(result.qso) as Qso;
 
             window.pywebview.api.get_reference(x.sig, x.sig_info)
                 .then((r: string) => {
-                    let result = checkApiResponse(r, contextData, setData);
+                    const result = checkApiResponse2(r, addMessage);
                     if (!result.success) {
                         console.log("get_qso_from_spot failed: " + result.message);
                         setIsWorking(false);
                         return;
                     }
-                    let p = JSON.parse(result.park_data) as Park;
+                    const p = JSON.parse(result.park_data) as Park;
                     const newCtxData = { ...contextData };
                     newCtxData.qso = x;
                     newCtxData.park = p;
                     newCtxData.summit = null;
-                    if (x.sig == 'POTA') {
+                    if (x.sig == 'POTA' || x.sig == 'WWBOTA') {
                         getOtherData(id).then((oo) => {
                             newCtxData.otherOperators = oo.otherOps;
                             newCtxData.otherParks = oo.otherParks;
@@ -112,6 +110,9 @@ export default function HandleSpotRowClick() {
                     }
 
                     setIsWorking(false);
+
+                    // this is ignored if the logger doesn't support staging
+                    window.pywebview.api.stage_qso(JSON.stringify(x));
                 });
         });
     }
@@ -120,15 +121,16 @@ export default function HandleSpotRowClick() {
         if (window.pywebview === undefined || window.pywebview === null)
             return;
 
-        //console.log('loadingSpotData ' + spotId);
-
+        // clearing via escape key making spot be reloaded here.
+        if (spotId == 0)
+            return;
 
         const newCtxData = { ...contextData };
         contextData.loadingQsoData = true;
         setData(newCtxData);
 
         // load the spot's comments into the db
-        let x = window.pywebview.api.insert_spot_comments(spotId);
+        const x = window.pywebview.api.insert_spot_comments(spotId);
 
         //getQsoData(spotId);
 
@@ -142,17 +144,28 @@ export default function HandleSpotRowClick() {
         });
     }
 
-
-
     useEffect(() => {
+        let timer: number | undefined;
+
         if (!isWorking) {
-            setIsWorking(true);
-            loadSpotData(contextData.spotId);
+            // a cleared or logged qso changes spotId to 0
+            if (contextData.spotId == 0)
+                return;
+
+            // wait <1 second before loading data. allow user to click rapidly
+            // without driving backend crazy
+            timer = setTimeout(() => {
+                setIsWorking(true);
+                loadSpotData(contextData.spotId);
+            }, 100);
+
         } else {
             console.log('re-entry prevented on spot row click');
         }
         return () => {
             setIsWorking(false);
+            if (timer)
+                clearTimeout(timer);
         }
     }, [contextData.spotId]);
 

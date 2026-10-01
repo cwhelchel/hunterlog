@@ -4,57 +4,84 @@ import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import CloseIcon from '@mui/icons-material/Close';
 
 import { useAppContext } from '../AppContext';
-import ConfigModal from '../Config/ConfigModal';
-import { ConfigVer2, UserConfig } from '../../@types/Config';
 import { ActivatorData } from '../../@types/ActivatorTypes';
-import { Alert, Avatar, Tooltip, AlertColor, Snackbar } from '@mui/material';
-import StatsMenu from './StatsMenu';
+import { Alert, Avatar, AlertColor, Snackbar } from '@mui/material';
+import StatsDropdownMenu from './MenuItems/StatsDropdownMenu';
 import AlertsArea from './AlertsArea';
-import AlertsMenu from './AlertsMenu';
-import { checkApiResponse } from '../../util';
-import { ConfigContextProvider } from '../Config/ConfigContextProvider';
+import { checkApiResponse2, showErrorToast, showSuccessToast } from '../Utilities/util';
+import HuntMapMenu from './MenuItems/Map/HuntMapMenu';
+import ConfigDropdownMenu from './MenuItems/ConfigDropdownMenu';
+import { useMessageQueue } from '../MessageContext';
+import CatArea from './CatArea/CatArea';
+import CondxArea from './CondxArea/CondxArea';
+import RefreshButton from './RefreshButton';
+import WsjtxArea from './WsjtxArea/WsjtxArea';
+import RightArea from './RightArea';
+
+
 
 export default function AppMenu() {
 
-    const { contextData, setData } = useAppContext();
+    const currentVal = window.localStorage.getItem('SHOW_BAND_CONDX') || '1';
+
+    const { contextData } = useAppContext();
     const [callsign, setCallsign] = React.useState('');
     const [gravatar, setGravatar] = React.useState('');
+
     const [snackOpen, setSnackOpen] = React.useState(false);
-    const [errorMsg, setErrorMsg] = React.useState('');
-    const [errorSeverity, seterrorSeverity] = React.useState<AlertColor>('info');
+    const [snackMsg, setSnackMsg] = React.useState('');
     const [alertHidden, setAlertHidden] = React.useState(true);
-    const [refreshBtnColor, setRefreshBtnColor] = React.useState("primary");
+    const [alertMsg, setAlertMsg] = React.useState('');
+    const [severity, setSeverity] = React.useState<AlertColor>('info');
+    const [showBandCondx, setShowBandCondx] = React.useState(parseInt(currentVal) == 1 ? true : false);
+
+    const { messages, removeMessage, addMessage } = useMessageQueue();
+
+    // Logic to auto-remove messages after a duration (e.g., 3 seconds)
+    React.useEffect(() => {
+        if (messages.length > 0) {
+            // console.log('messages queue updated', messages);
+
+            if (messages[0].type == 1) {
+                showSnackMsg(messages[0]);
+            }
+            else if (messages[0].type == 0) {
+                showAlertMsg(messages[0]);
+            }
+
+            const timer = setTimeout(() => {
+                removeMessage(messages[0].id); // Remove the oldest message
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [messages, removeMessage]);
+
+
+    function showSnackMsg(msg: MessageType) {
+        setSeverity(msg.color as AlertColor);
+        setSnackMsg(msg.message);
+        setSnackOpen(true);
+    }
+
+    function showAlertMsg(msg: MessageType) {
+        setAlertMsg(msg.message);
+        setSeverity(msg.color as AlertColor);
+        setAlertHidden(false);
+    }
 
 
     function getCfg() {
         // pywebview is ready so api can be called here:
         console.log('getting user config');
-        // let x = window.pywebview.api.get_user_config();
 
-        // x.then((cfgStr: string) => {
-        //     console.log('got user confg: ' + cfgStr);
-
-        //     let obj: UserConfig = JSON.parse(cfgStr) as UserConfig;
-
-        //     setCallsign(obj.my_call);
-
-        //     let y = window.pywebview.api.get_activator_stats(obj.my_call);
-        //     y.then((actStr: string) => {
-        //         let actObj: ActivatorData = JSON.parse(actStr) as ActivatorData;
-        //         let url = getGravatarUrl(actObj.gravatar);
-        //         setGravatar(url);
-        //     });
-        // })
-
-        let y = window.pywebview.api.get_user_config_val('my_call');
+        const y = window.pywebview.api.get_user_config_val('my_call');
 
         y.then((cfgStr: string) => {
-            let obj = checkApiResponse(cfgStr, contextData, setData);
-            
+            const obj = checkApiResponse2(cfgStr, addMessage);
+
             if (!obj.success)
                 return;
 
@@ -63,58 +90,54 @@ export default function AppMenu() {
                 return;
             setCallsign(call);
 
-            let y = window.pywebview.api.get_activator_stats(call);
+            const y = window.pywebview.api.get_activator_stats(call);
             y.then((actStr: string) => {
-                let actObj: ActivatorData = JSON.parse(actStr) as ActivatorData;
-                let url = getGravatarUrl(actObj.gravatar);
+                const actObj: ActivatorData = JSON.parse(actStr) as ActivatorData;
+                const url = getGravatarUrl(actObj.gravatar);
                 setGravatar(url);
             });
         });
     };
+
+
+    function showSuccessPopup(msg: string) {
+        showSuccessToast(msg, addMessage);
+    }
+
+    function showFailurePopup(msg: string) {
+        showErrorToast(msg, addMessage);
+    }
+
+    function initState() {
+        if (!window.pywebview.state) {
+            window.pywebview.state = {};
+        }
+        window.pywebview.state.showSuccessPopup = showSuccessPopup;
+        window.pywebview.state.showFailurePopup = showFailurePopup;
+
+        const val = window.localStorage.getItem('SHOW_BAND_CONDX') || '1';
+        setShowBandCondx(parseInt(val) == 1 ? true : false);
+    }
 
     React.useEffect(() => {
         console.log('hooking for user config');
 
         if (window.pywebview !== undefined && window.pywebview.api !== null) {
             getCfg();
+            initState();
         }
         else {
             window.addEventListener('pywebviewready', getCfg);
+            window.addEventListener('pywebviewready', initState);
         }
     }, []);
 
-
-    function fn() {
-        console.log("errorMsg Changed: " + contextData.errorMsg);
-
-        if (contextData.errorMsg !== '') {
-            if (["error", "warning", "info"].includes(contextData.errorSeverity)) {
-                setAlertHidden(false);
-                seterrorSeverity(contextData.errorSeverity as AlertColor);
-                setErrorMsg(contextData.errorMsg);
-            } else if (["success"].includes(contextData.errorSeverity)) {
-                setSnackOpen(true);
-            }
-        }
-        else if (errorMsg === '') {
-            // dont hide if there's still a message
-            setAlertHidden(true);
-            seterrorSeverity('info');
-        }
-    };
-
     React.useEffect(() => {
-        fn();
-    }, [contextData.errorMsg]);
-
-
-    React.useEffect(() => {
-        if (contextData.themeMode == 'dark')
-            setRefreshBtnColor('primary')
-        else if (contextData.themeMode == 'light')
-            // using primary on light makes it green on green
-            setRefreshBtnColor('secondary')
-    }, [contextData.themeMode]);
+        if (contextData.showBandCondx)
+            setShowBandCondx(true);
+        else
+            setShowBandCondx(false);
+    }, [contextData.showBandCondx]);
 
     function getGravatarUrl(md5: string) {
         //console.log(md5);
@@ -122,14 +145,10 @@ export default function AppMenu() {
     }
 
     function handleAlertClose() {
-        const x = { ...contextData };
-        x.errorMsg = '';
-        setData(x);
         // this indicates user has cleared the message
-        setErrorMsg('');
+        setAlertMsg('');
         setAlertHidden(true);
     }
-
 
     const handleSnackClose = (event: React.SyntheticEvent | Event, reason?: string) => {
         if (reason === 'clickaway') {
@@ -156,7 +175,7 @@ export default function AppMenu() {
 
     return (
         <Box sx={{ flexGrow: 1 }}>
-            <AppBar position="static">
+            <AppBar position="static" sx={{maxHeight: 85}}>
                 <Toolbar>
                     <Avatar src={gravatar} >
                     </Avatar>
@@ -164,12 +183,14 @@ export default function AppMenu() {
                         component="div" ml={1} mr={1}>
                         {callsign}
                     </Typography>
-                    <ConfigContextProvider>
-                        <ConfigModal />
-                    </ConfigContextProvider>
-                    <StatsMenu />
-                    <AlertsMenu />
+                    <ConfigDropdownMenu />
+                    <StatsDropdownMenu />
+                    <HuntMapMenu />
+                    {/* <Button onClick={() => checkApiResponse2('{ "success": false, "message": "Test msg" }', addMessage)}>
+                        Test
+                    </Button> */}
 
+                    {/* user configured alerts (new parks, callsigns, etc) */}
                     <AlertsArea />
 
                     {/* this Typography contains nothing but it fills space to push our alert to right */}
@@ -178,27 +199,25 @@ export default function AppMenu() {
                     </Typography>
 
                     {!alertHidden &&
-                        <Alert variant="filled" severity={errorSeverity} onClose={() => { handleAlertClose() }} >{errorMsg}</Alert>
+                        <Alert variant="filled" severity={severity} onClose={() => { handleAlertClose() }} >{alertMsg}</Alert>
                     }
-                    <Tooltip title="Refresh">
-                        <IconButton onClick={() => {
-                            location.reload();
-                        }}>
-                            <RefreshIcon color={refreshBtnColor} />
-                        </IconButton>
-                    </Tooltip>
+
+                    <RightArea />
+
+                    <RefreshButton />
                 </Toolbar>
             </AppBar>
-
-
 
             <Snackbar
                 open={snackOpen}
                 autoHideDuration={6000}
                 onClose={handleSnackClose}
-                message={contextData.errorMsg}
-                action={action}
-            />
+                action={action}>
+                <Alert onClose={handleSnackClose} variant='filled' severity={severity} sx={{ width: '100%' }}>
+                    {snackMsg}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 }
+

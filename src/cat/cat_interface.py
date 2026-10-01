@@ -8,11 +8,13 @@ import logging
 import socket
 import xmlrpc.client
 
+from cat.flex import flex
 from cat.icat import ICat
 from cat.aclog_interface import aclog
 from cat.dxlabs import dxlabs
 from cat.flrig import flrig
 from cat.rigctld import rigctld
+from cat.wsjtx import wsjtx
 
 if __name__ == "__main__":
     print("I'm not the program you are looking for.")
@@ -48,6 +50,10 @@ class CAT:
             return aclog()
         elif interface == "dxlabs":
             return dxlabs()
+        elif interface == "wsjtx":
+            return wsjtx()
+        elif interface == "flex":
+            return flex()
 
         return None
     

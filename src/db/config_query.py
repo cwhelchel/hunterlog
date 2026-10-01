@@ -109,7 +109,7 @@ class ConfigQuery:
         },
         {
             'key': 'is_max',
-            'val': 'False',
+            'val': '0',
             'type': 'bool',
             'description': '',
             'group': '',
@@ -169,6 +169,231 @@ class ConfigQuery:
             'group': '',
             'enabled': 'True',
             'editable': 'False'
+        },
+        {
+            'key': 'include_rst',
+            'val': '1',
+            'type': 'bool',
+            'description': 'Include RST portion in POTA spot comment',
+            'group': 'general',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'enabled_programs',
+            'val': json.dumps({"POTA": True, "SOTA": True, 'WWFF': True, 'WWBOTA': True}),  # NOQA E501
+            'type': 'json',
+            'description': 'List of programs that are enabled',
+            'group': 'general',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'scan_wait_time',
+            'val': '5',
+            'type': 'int',
+            'description': 'Time in seconds to wait on each station during scanning',  # NOQA E501
+            'group': 'scanning',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'stage_qsos',
+            'val': '1',
+            'type': 'bool',
+            'description': 'Enable or disable staging QSOs to logger',
+            'group': 'logger',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'wl_url',
+            'val': '',
+            'type': 'string',
+            'description': 'URL of Wavelog instance. http://yada.com/',
+            'group': 'wavelog',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'wl_api_key',
+            'val': '',
+            'type': 'string',
+            'description': 'API key for Wavelog access',
+            'group': 'wavelog',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'wl_station_id',
+            'val': '1',
+            'type': 'string',
+            'description': 'Wavelog station profile id to log QSOs against',
+            'group': 'wavelog',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'qrz_api_key',
+            'val': '',
+            'type': 'string',
+            'description': 'API key for QRZ access',
+            'group': 'qrz',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'use_cw_offset',
+            'val': '0',
+            'type': 'bool',
+            'description': 'Use simulated RIT for CW',
+            'group': 'cw',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'cw_offset_min',
+            'val': '10',
+            'type': 'int',
+            'description': 'For Simulated RIT. Min offset in HZ',
+            'group': 'cw',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'cw_offset_max',
+            'val': '100',
+            'type': 'int',
+            'description': 'For Simulated RIT. Max offset in HZ',
+            'group': 'cw',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'scan_skip_modes',
+            'val': 'ft8,ft4',
+            'type': 'string',
+            'description': 'Comma separated list of modes to skip when scanning',  # NOQA
+            'group': 'scanning',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'enable_wsjtx_int',
+            'val': '0',
+            'type': 'bool',
+            'description': 'True to enable advanced WSJTX integrations',
+            'group': 'wsjtx',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'wsjtx_highlight_calls',
+            'val': '1',
+            'type': 'bool',
+            'description': 'True to enable highlight Hunterlog seen calls in WSJTX',  # NOQA
+            'group': 'wsjtx',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'wsjtx_hunted_fg',
+            'val': '#00ff00cc',
+            'type': 'string',
+            'description': 'WSJT-X hunted highlight foreground color',
+            'group': 'wsjtx',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'wsjtx_hunted_bg',
+            'val': '#326496d9',
+            'type': 'string',
+            'description': 'WSJT-X hunted highlight background color',
+            'group': 'wsjtx',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'wsjtx_spot_fg',
+            'val': '#00ff00cc',
+            'type': 'string',
+            'description': 'WSJT-X highlight foreground color',
+            'group': 'wsjtx',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'wsjtx_spot_bg',
+            'val': '#000000ff',
+            'type': 'string',
+            'description': 'WSJT-X highlight background color',
+            'group': 'wsjtx',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'wsjtx_new_ref_fg',
+            'val': "#ffffffff",
+            'type': 'string',
+            'description': 'WSJT-X highlight foreground color',
+            'group': 'wsjtx',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'wsjtx_new_ref_bg',
+            'val': "#8a0067ff",
+            'type': 'string',
+            'description': 'WSJT-X highlight background color',
+            'group': 'wsjtx',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'wsjtx_ip_addr',
+            'val': "127.0.0.1",
+            'type': 'string',
+            'description': 'WSJT-X server ip address to bind to',
+            'group': 'wsjtx',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'wsjtx_udp_port',
+            'val': "2237",
+            'type': 'int',
+            'description': 'WSJT-X server port to bind to',
+            'group': 'wsjtx',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'wsjtx_fwd_remote_logger',
+            'val': "1",
+            'type': 'bool',
+            'description': 'True for HL to forward logged WSJT-X qsos to HLs remote logger',  # noqa: E501
+            'group': 'wsjtx',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'hunted_use_basecall',
+            'val': '0',
+            'type': 'bool',
+            'description': 'Match hunted spots on base callsign, ignoring portable suffixes and country prefixes',  # noqa: E501
+            'group': 'general',
+            'enabled': 'True',
+            'editable': 'True'
+        },
+        {
+            'key': 'max_spot_age',
+            'val': '30',
+            'type': 'int',
+            'description': 'Maximum spot age in minutes',
+            'group': 'general',
+            'enabled': 'True',
+            'editable': 'True'
         }
     ]
 
@@ -181,18 +406,6 @@ class ConfigQuery:
             .first()
 
     def get_value(self, k: str) -> Any:
-        def str_to_bool(s):
-            """
-            Converts a string to boolean based on common truthy/falsy values.
-            """
-            s_lower = s.lower()
-            if s_lower in ('true', '1', 't', 'y', 'yes'):
-                return True
-            elif s_lower in ('false', '0', 'f', 'n', 'no'):
-                return False
-            else:
-                raise ValueError(f"Invalid boolean string: '{s}'")
-
         x = self.get_config(k)
 
         if x is None:
@@ -203,7 +416,11 @@ class ConfigQuery:
         elif x.type == "string":
             return str(x.val)
         elif x.type == "bool":
-            return str_to_bool(x.val)
+            return self._str_to_bool(x.val)
+        elif x.type == 'json':
+            yyy = json.loads(x.val)
+            logging.debug(yyy)
+            return yyy
         else:
             logging.warning(f"unknown type: {x.type} for key {k}")
             return str(x.val)
@@ -219,7 +436,15 @@ class ConfigQuery:
         elif x.type == "string":
             x.val = str(val)
         elif x.type == "bool":
-            x.val = True if (val) else False
+            x.val = True if self._str_to_bool(val) else False
+        elif x.type == 'json':
+            # x.val = json.dumps(val)
+            # we DONT want to dumps here. the exchange of data b/w frontend and
+            # back end will already encodes the string once. if we do it again
+            # here it just turns it into an encoded string and not an obj.
+            # NOTE: any direct calls of set_value with a json type will have
+            # to account for this
+            x.val = str(val)
         else:
             logging.warning(f"unknown type: {x.type} for key {k}")
             x.val = val
@@ -260,6 +485,7 @@ class ConfigQuery:
         for y in x:
             row: ConfigVer2 = y
             if row.editable:
+                logging.debug(f"setting {row.key} to {row.val}")
                 self.set_value(row.key, row.val)
 
         self.session.commit()
@@ -319,14 +545,29 @@ class ConfigQuery:
                 self.DEFAULTS, session=self.session, many=True)
             self.session.add_all(default_config)
             self.session.commit()
-        elif x < len(self.DEFAULTS):
-            assert (x > 0)
+        else:
+            logging.debug("checking cfg v2 rows against defaults...")
 
-            logging.info("adding new default cfg rows...")
+            current = self.get_all()
+            current_keys = [str(cfg.key) for cfg in current]
 
-            # already has new cfg rows, but defaults there's new stuff at end
-            num_missing = len(self.DEFAULTS) - x
-            for i in range(x, x+num_missing):
-                add = cs.load(self.DEFAULTS[i], session=self.session)
-                self.session.add(add)
+            for def_val in self.DEFAULTS:
+                if def_val['key'] not in current_keys:
+                    logging.warning(f"missing key, adding default {def_val}")
+
+                    add = cs.load(def_val, session=self.session)
+                    self.session.add(add)
+
             self.session.commit()
+
+    def _str_to_bool(self, s):
+        """
+        Converts a string to boolean based on common truthy/falsy values.
+        """
+        s_lower = str(s).lower()
+        if s_lower in ('true', '1', 't', 'y', 'yes'):
+            return True
+        elif s_lower in ('false', '0', 'f', 'n', 'no'):
+            return False
+        else:
+            raise ValueError(f"Invalid boolean string: '{s}'")

@@ -1,8 +1,11 @@
 from db.models.parks import Park
 from db.models.qsos import Qso
+from programs.apis.iapi import IApi
 from programs.program import Program
 from db.models.spots import Spot
 import logging as L
+
+from utils.metadata import Metadata
 
 log = L.getLogger(__name__)
 
@@ -17,22 +20,35 @@ class NoProgram(Program):
     def seen_regions(self) -> list[str]:
         return []
 
+    @property
+    def api(self) -> IApi:
+        return None
+
     def get_reference(self,
                       ref: str,
                       pull_from_api: bool = True) -> Park:
         return None
 
-    def update_spots(self, spots):
+    def test_reference_str(self, ref: str) -> bool:
+        return True
+
+    def update_spots(self, spots, metadata: Metadata):
         return
 
     def build_qso(self, spot: Spot) -> Qso:
         return Qso()
 
-    def inc_ref_hunt(self, ref, pota_ref):
-        return
-
     def parse_ref_data(self, park) -> Park:
         return None
 
+    def parse_spots_data(self, spot_data) -> list[Spot]:
+        return []
+
     def get_state(self, locationDesc: str) -> str:
         return ''
+
+    def download_reference_data(self, ref_code: str) -> any:
+        return None
+
+    def parse_hunt_data(self, data) -> dict[str, int]:
+        return {}

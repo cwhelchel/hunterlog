@@ -25,6 +25,17 @@ class ParkQuery:
     def get_parks(self) -> list[Park]:
         return self.session.query(Park).all()
 
+    def get_half_loaded_parks(self, limit: int) -> list[Park]:
+        try:
+            return self.session.query(Park) \
+                .filter(Park.name == None) \
+                .limit(limit)  # noqa: E711
+        except Exception as ex:
+            logging.warning(
+                "error in get_half_loaded_park. exception follows:",
+                exc_info=ex)
+            return None
+
     def insert_parks(self, parks: list[Park]):
         self.session.add_all(parks)
         self.session.commit()
@@ -106,7 +117,7 @@ class ParkQuery:
         return True
 
     def update_park_hunts(self, park: any, hunts: int,
-                          delay_commit: bool = True):
+                          delay_commit: bool = True) -> str:
         '''
         Update the hunts field of a park in the db with the given hunt. Will
         create a park row if none exists
@@ -114,9 +125,12 @@ class ParkQuery:
         :param any park: park json/dic
         :param int hunts: new hunts value
         :param bool delay_commit: if true will not call session.commit
+        :returns str: returns the ref id if no ref was found and a stripped
+                      down park was inserted
         '''
         schema = ParkSchema()
         obj = self.get_park(park['reference'])
+        res = None
 
         if obj is None:
             # logging.debug(f"adding new park row for {park}")
@@ -127,6 +141,7 @@ class ParkQuery:
             # logging.debug(to_add)
             self.session.add(to_add)
             obj = to_add
+            res = to_add.reference
         else:
             # logging.debug(f"increment hunts for park {obj.reference}")
             # if this was hunted in the app and the the stats are imported
@@ -136,6 +151,8 @@ class ParkQuery:
 
         if not delay_commit:
             self.session.commit()
+
+        return res
 
     def get_hunted_parks(self, location: str) -> list[str]:
         '''
@@ -147,3 +164,16 @@ class ParkQuery:
             .where(Park.locationDesc.contains(location))
         result = self.session.execute(sql)
         return result.scalars().all()
+
+    def get_park_hunts(self, park: str) -> int:
+        '''
+        Return hunt count for given reference identifier.
+        '''
+        sql = sa.select(Park.hunts) \
+            .where(Park.reference == park)
+
+        row = self.session.execute(sql).first()
+        if row:
+            return row.hunts
+        else:
+            return 0

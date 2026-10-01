@@ -14,6 +14,31 @@ export interface UserConfig {
     ftx_mode: string,
     qth_string: string,
     rig_if_type: string,
+    include_rst: boolean,
+    hunted_use_basecall: boolean,
+    enabled_progs: string
+    scan_wait_time: number,
+    stage_qsos: boolean,
+    wavelog_url: string,
+    wavelog_api_key: string,
+    wavelog_station_id: string,
+    qrz_api_key: string,
+    use_cw_offset: boolean,
+    cw_offset_min: number,
+    cw_offset_max: number,
+    scan_skip_modes: string,
+    enable_wsjtx_int: boolean,
+    wsjtx_highlight_calls: boolean,
+    wsjtx_hunted_fg: string,
+    wsjtx_hunted_bg: string,
+    wsjtx_spot_fg: string,
+    wsjtx_spot_bg: string,
+    wsjtx_new_ref_fg: string,
+    wsjtx_new_ref_bg: string,
+    wsjtx_ip_addr: string,
+    wsjtx_udp_port: number,
+    wsjtx_fwd_remote_logger: boolean,
+    max_spot_age: number;
 }
 
 export interface ConfigVer2 {

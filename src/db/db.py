@@ -5,6 +5,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 
+from db.callnotes_query import CallNotesQuery
 from db.filters import Filters
 from db.models.activators import Activator, ActivatorSchema
 from db.models.spot_comments import SpotComment, SpotCommentSchema
@@ -15,6 +16,7 @@ from db.loc_query import LocationQuery
 from db.spot_query import SpotQuery
 from db.alerts_query import AlertsQuery
 from db.config_query import ConfigQuery
+from db.hidden_spots_query import HiddenSpotsQuery
 from utils.callsigns import get_basecall
 import upgrades
 
@@ -26,7 +28,7 @@ logging = L.getLogger(__name__)
 # L.getLogger('sqlalchemy.engine').setLevel(L.INFO)
 
 
-VER_FROM_ALEMBIC = '164284e1be4e'
+VER_FROM_ALEMBIC = 'cff2b51192d0'
 '''
 This value indicates the version of the DB scheme the app is made for.
 
@@ -78,6 +80,20 @@ class InitQuery:
             if (db_ver != VER_FROM_ALEMBIC):
                 upgrades.do_upgrade()
 
+    def check_park_refs(self):
+        # count num of parks with leading or trailing whitespace
+        sql = "select count(reference) from parks where parks.reference like '% ' or parks.reference like ' %' or parks.reference like ' % ';"  # NOQA E501
+        res = self.session.execute(sa.text(sql))
+        count = res.scalar()
+        logging.debug(f"number of trim-able park refs: {count}")
+        if count > 0:
+            logging.info("trimming parks.reference column")
+            t = r"update parks set reference = trim(reference) where " \
+                "parks.reference like '% ' " \
+                "or parks.reference like ' %' " \
+                "or parks.reference like ' % ';"
+            self.session.execute(sa.text(t))
+
     def _check_for_table(self):
         sql = """SELECT name FROM sqlite_master WHERE type='table' AND name='alembic_version';"""  # noqa E501
         r = self.session.execute(sa.text(sql))
@@ -97,15 +113,22 @@ class DataBase:
         self._pq = ParkQuery(self.session)
         self._sq = SpotQuery(self.session, self.filters)
         self._aq = AlertsQuery(self.session)
+        self._cnq = CallNotesQuery(self.session)
         self._cq1 = ConfigQuery(self.session)
+        self._hsq = HiddenSpotsQuery(self.session)
 
         # do this FIRST. will upgrade the db to latest schema
         self._iq.init_alembic_ver()
+        self._iq.check_park_refs()
 
         self._sq.delete_all_spots()
+        self._hsq.delete_stale_hidden_spots()
+
         # self._iq.init_config()
         self._cq1.init_config()
         self._cq1.init_config_v2()
+
+        # self._hsq._add_test()
 
     def commit_session(self):
         '''
@@ -149,6 +172,14 @@ class DataBase:
     def alerts(self) -> AlertsQuery:
         return self._aq
 
+    @property
+    def hidden_spots(self) -> HiddenSpotsQuery:
+        return self._hsq
+
+    @property
+    def callsign_notes(self) -> CallNotesQuery:
+        return self._cnq
+
     def delete_spots(self):
         '''
         Deletes all spots and spot comments from db
@@ -187,7 +218,6 @@ class DataBase:
 
     def get_activator(self, callsign: str) -> Activator:
         basecall = get_basecall(callsign)
-        logging.debug(f"get_activator() basecall {basecall}")
         return self.session.query(Activator) \
             .filter(Activator.callsign == basecall) \
             .first()

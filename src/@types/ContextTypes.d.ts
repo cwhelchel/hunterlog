@@ -1,6 +1,5 @@
 import { GridFilterModel } from "@mui/x-data-grid/models";
 import { Qso } from "./QsoTypes";
-import { ParkInfo } from "./PotaTypes";
 import { Park } from "./Parks";
 import { Summit } from "./Summit";
 
@@ -10,15 +9,16 @@ export interface ContextData {
     park: Park | null;
     summit: Summit | null;
     filter: GridFilterModel;
-    bandFilter: number;
+    bandFilter: number[];
+    modeFilter: string[];
     regions: string[];
     regionFilter: string;
     locations: string[];
     locationFilter: string;
     qrtFilter: boolean; // true to filter out QRT spots
     huntedFilter: boolean; // true to filter out already hunted spots
-    errorMsg: string; // when set to a value, an alert is displayed in AppMenu
-    errorSeverity: string;
+    // errorMsg: string; // when set to a value, an alert is displayed in AppMenu
+    // errorSeverity: string;
     themeMode: string;
     onlyNewFilter: boolean;
     sigFilter: string;
@@ -26,9 +26,13 @@ export interface ContextData {
     otherParks: string;
     continentFilter: string;
     loadingQsoData: boolean;
+    swapRstOrder: boolean;
+    showHiddenFilter: boolean;
+    rigFreqRead: string; // rx read from rig on timer
+    showBandCondx: boolean;
 }
 
-export  interface AppContextType {
+export interface AppContextType {
     contextData: ContextData;
     qsyButtonId: string;
     setData: (d: ContextData) => void;

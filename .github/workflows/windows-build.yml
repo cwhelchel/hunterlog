@@ -30,7 +30,19 @@ jobs:
       run: npm run init
     - name: Build Output
       run: npm run build
+
+    - name: Sign windows output
+      uses: dlemstra/code-sign-action@v1
+      with:
+        certificate: '${{ secrets.CERTIFICATE }}'
+        password: '${{ secrets.PASSWORD }}'
+        folder: 'dist'
+        recursive: true
+        
     - uses: actions/upload-artifact@v4
       with:
         name: hunterlog
         path: dist
+        runs-on: windows-latest
+        
+

@@ -1,21 +1,39 @@
+from collections import defaultdict
+import csv
+from io import StringIO
+import re
 from db.models.parks import Park
 from db.models.qsos import Qso
+from programs.apis.iapi import IApi
 from programs.program import Program
 from db.models.spots import Spot
 import sqlalchemy as sa
 import logging as L
 import time
 
-from wwff.wwff import WwffApi
+from programs.apis import WwffApi
+from utils.metadata import Metadata
 
 log = L.getLogger(__name__)
 
 
 class WwffProgram(Program):
 
+    wwff_api = None
+
     @property
     def seen_regions(self) -> list[str]:
         return self.regions
+
+    @property
+    def api(self) -> IApi:
+        self.wwff_api = WwffApi() if self.wwff_api is None else self.wwff_api
+        return self.wwff_api
+
+    def test_reference_str(self, ref: str) -> bool:
+        if re.match(r"[a-zA-Z0-9]{1,2}FF-[0-9]{4}", ref):
+            return True
+        return False
 
     def get_reference(self,
                       ref: str,
@@ -30,17 +48,24 @@ class WwffProgram(Program):
 
         if wwff is None and pull_from_api:
             log.info(f"wwff not found in db {ref}")
-            api_res = WwffApi().get_wwff_info(ref)
+            api_res = WwffApi().get_reference(ref)
             log.debug(f"wwff data from api {api_res}")
             to_add = self.parse_ref_data(api_res)
             if to_add:
                 self.db.session.add(to_add)
                 self.db.session.commit()
             wwff = self.db.parks.get_park(ref)
+        elif wwff.name is None and pull_from_api:
+            log.info('wwff ref is half-loaded pulling rest of data')
+
+            api_res = self.api.get_reference(ref)
+            new_ref = self.parse_ref_data(api_res)
+            self.update_half_loaded_ref(wwff, new_ref)
+            self.db.commit_session()
 
         return wwff
 
-    def update_spots(self, spots):
+    def update_spots(self, spots, metadata: Metadata):
         self.regions = list[str]()
         start_time = time.perf_counter()
 
@@ -58,6 +83,11 @@ class WwffProgram(Program):
 
             # this is wwff association code
             self.regions.append(wwff_to_add.locationDesc)
+
+            # locationDesc is the WWFF 'program'. should not be null
+            wwff_to_add.continent = self.continents.find_continent_wwff(
+                wwff_to_add.locationDesc
+            )
 
             statement = sa.select(Spot) \
                 .filter_by(activator=wwff_to_add.activator) \
@@ -92,7 +122,16 @@ class WwffProgram(Program):
             else:
                 self.db.session.add(wwff_to_add)
 
-            self.update_spot_metadata(wwff_to_add)
+            # self.update_spot_metadata(wwff_to_add)
+            meta = metadata.get_metadata(wwff_to_add.spotId)
+            if meta:
+                wwff_to_add.park_hunts = meta.park_hunts
+                wwff_to_add.op_hunts = meta.op_hunt
+                wwff_to_add.hunted = meta.hunted_flag
+                wwff_to_add.hunted_bands = meta.hunted_bands
+                wwff_to_add.is_hidden = meta.is_hidden
+            else:
+                log.warning(f"cache miss {wwff_to_add.spotId}")
 
         end_time = time.perf_counter()
         elapsed_time = end_time - start_time
@@ -103,7 +142,7 @@ class WwffProgram(Program):
         name = spot.name
         if spot.grid4 == '':
             wwff_api = WwffApi()
-            wwff = wwff_api.get_wwff_info(spot.reference)
+            wwff = wwff_api.get_reference(spot.reference)
             spot.grid4 = wwff['locator'][:4]
             spot.grid6 = wwff['locator']
             spot.latitude = wwff['latitude']
@@ -116,19 +155,13 @@ class WwffProgram(Program):
         self.update_qso_dist_bearing(q)
         return q
 
-    def inc_ref_hunt(self, ref: str, ota_ref: str):
-        wwff_code = ref
-        ok = self.db.parks.inc_ref_hunt(wwff_code)
-        if not ok:
-            api_res = WwffApi().get_wwff_info(wwff_code)
-            to_add = self.parse_ref_data(api_res)
-            if to_add:
-                self.db.session.add(to_add)
-                self.db.session.commit()
-            self.db.parks.inc_ref_hunt(wwff_code)
+    def download_reference_data(self, ref_code: str) -> any:
+        return WwffApi().get_reference(ref_code)
 
     def parse_ref_data(self, wwff) -> Park:
         r = Park()
+        if (wwff is None):
+            return None
         r.reference = wwff['ref']
         r.name = wwff['name']
         r.grid4 = wwff['locator'][:4]
@@ -157,3 +190,36 @@ class WwffProgram(Program):
         r.firstActivationDate = ''
         r.website = wwff['wikipedia']
         return r
+
+    def parse_spots_data(self, spot_data) -> list[Spot]:
+        res: list[Spot] = []
+        id = 0
+        for wwff in spot_data['RCD']:
+            id = id + 1
+            spot = Spot()
+            spot.init_from_wwff(wwff, id)
+            res.append(spot)
+
+        return res
+
+    def parse_hunt_data(self, data) -> dict[str, int]:
+        # data here is a raw string csv from front end
+
+        csv_file = StringIO(data)
+        csv_reader = csv.DictReader(csv_file, delimiter=',')
+
+        result = defaultdict(int)
+
+        skip_headers = True
+        for row in csv_reader:
+            if skip_headers:
+                skip_headers = False
+                continue
+            else:
+                # log.debug(row)
+                # not exactly sure what 'Status' is, but lets use it
+                if row['Status'] == 'valid':
+                    k = row['Reference']
+                    result[k] += 1
+
+        return result

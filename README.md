@@ -1,4 +1,5 @@
-# Hunterlog 
+# Hunterlog
+
 [![GitHub Release](https://img.shields.io/badge/download-windows-green)](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.9/hunterlog_0.0.9.zip)
 [![GitHub Release](https://img.shields.io/badge/download-linux-green)](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.9/hunterlog-ubuntu_0.0.9-hotfix.zip)
 [![GitHub Release](https://img.shields.io/badge/download-mac-green)](https://github.com/cwhelchel/hunterlog/releases/download/v0.0.6/hunterlog-macos_0.0.6.zip)
@@ -33,6 +34,15 @@ If you're not comfortable using Github to submit issues and enhancement requests
 [Discord Invite Link](https://discord.gg/DfqMVMuMnG)
 
 If you'd like some video style walk-throughs of setting up Hunterlog check out my [YouTube channel](https://www.youtube.com/@cainan-n9fz)
+
+## Bug Reporting and Support 🔍🐜
+
+This app is in continual development. Please report bugs and feature requests here
+on Github issues. In your report, please include both the app version number and 
+the db version number. Both are displayed at the very bottom of Hunterlog.
+
+For simple questions please use the Github Discussions area, join the Discord,
+or email me.
 
 # Installation and Setup
 
@@ -131,12 +141,56 @@ you can see what parks you need to hunt.
 >*STATISTICAL DATA SHOWN IN THIS APP IS NOT AUTHORITATIVE* The authoritative data
 of record is your data in https://pota.app
 
-# Logging QSOs
+# Using Hunterlog
 
 Click a spot to load the QSO info into the top portion of the screen. Click green frequency button to QSY with CAT control. Click Log QSO after you've had the contact. The app will update stats and send the QSO data (with any modifications you do to the input) to your main logger. 
 
 *It also will store a copy locally in hunter.adi as well as in the database.* This
 is for your convenience and I'd hate for anyone to lose a QSO.
+
+## Scanning Feature
+
+The Scanning feature allows you to automatically cycle through filtered POTA/SOTA spots, tuning your radio to each station for a configurable amount of time. This is useful for monitoring multiple activations or hunting for new parks.
+
+### How to Use Scanning
+
+1. **Filter Your Spots** - Use the filter bar to narrow down the spots you want to scan (e.g., specific mode, band, or region)
+2. **Configure Scan Settings** (Optional)
+   - Click **CONFIGURATION**
+   - Go to the **Scanning** tab
+   - Set **Scan Wait Time** (default: 5 seconds) - how long to stay on each station
+   - Click **Save**
+3. **Start Scanning**
+   - Click the **Scan** button in the spot viewer toolbar
+   - The button will change to **Stop Scanning** with a different color
+   - Your radio will automatically tune to each filtered station
+   
+### Scanning Behavior
+
+- **Visual Indicators**: As scanning progresses:
+  - The selected row will be highlighted
+  - The frequency button will change from green to yellow for the current station
+  - The top info panel will update with park/activator details
+  
+- **Automatic Stop Conditions**:
+  - Pressing your PTT (Push-To-Talk) will immediately stop scanning
+  - Clicking **Stop Scanning** button
+  - If filters reduce the list to 1 or 0 stations
+  
+- **Requirements**:
+  - At least 2 filtered spots must be visible
+  - The Scan button will be disabled if there are 0 or 1 spots
+  
+- **Scanning Cycle**: The scanner will continuously loop through all filtered spots until stopped
+
+> [!TIP]
+> Use filters effectively to scan only the spots you're interested in. For example:
+> - Filter by SSB mode to scan only phone activations
+> - Filter by 20m band to scan a specific band
+> - Filter by region to scan only US or specific states
+
+> [!NOTE]
+> The PTT check runs every 250ms, so scanning will stop almost immediately when you press PTT to make a contact.
 
 ## Spotting
 
@@ -161,11 +215,6 @@ connection between HunterLog and your main logger. Your QSOs are here still.
 The app also requires a few data files but they will be packaged with the release.
 It may also download new files as you use it.
 
-# Bug reporting
-
-This app is currently under pre-release. Please report bugs here on Github 
-issues. In your report, please include both the app version number and the db
-version number. Both are displayed at the very bottom of Hunterlog.
 
 
 *Happy hunting and hpe to CUL 🍻 es 73*

@@ -1,33 +1,39 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from 'react';
 import Button from '@mui/material/Button';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Switch from '@mui/material/Switch';
-import { Box, Stack, Typography, createStyles, useTheme } from '@mui/material';
+import { Box, Stack } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { createEqualityFilter, useAppContext } from '../AppContext';
+import { useAppContext } from '../AppContext';
 
 import './FilterBar.scss'
+import HiddenFilterButton from './HiddenFilterButton';
+import OnlyNewFilterButton from './OnlyNewFilterButton';
+import HuntedFilterButton from './HuntedFilterButton';
+import QrtFilterButton from './QrtFilterButton';
+import { checkApiResponse2 } from '../Utilities/util';
+import { useMessageQueue } from '../MessageContext';
 
 // https://mui.com/material-ui/react-table/
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface IFilterBarPros {
 }
 
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const FilterBar = (props: IFilterBarPros) => {
-    const [mode, setMode] = React.useState('');
-    const [band, setBand] = React.useState('');
+    const [mode, setMode] = React.useState<string[]>([]);
+    const [band, setBand] = React.useState<string[]>([]);
     const [region, setRegion] = React.useState<string[]>([]);
     const [continent, setContinent] = React.useState<string[]>([]);
     const [loc, setLocation] = React.useState('');
     const [sig, setSig] = React.useState('');
-    const [qrt, setQrt] = React.useState(true);
-    const [hunted, setHunted] = React.useState(false);
-    const [onlyNew, setOnlyNew] = React.useState(false);
+    const [enabledPrograms, setEnabledPrograms] = React.useState<string[]>([]);
+    const { addMessage } = useMessageQueue();
 
     const { contextData, setData } = useAppContext();
 
@@ -35,47 +41,90 @@ export const FilterBar = (props: IFilterBarPros) => {
     // API is ready
     React.useEffect(() => {
         if (window.pywebview !== undefined && window.pywebview.api !== null)
-            initFilters();
+            init();
         else
-            window.addEventListener('pywebviewready', initFilters);
+            window.addEventListener('pywebviewready', init);
 
-        function initFilters() {
-            let bf = window.localStorage.getItem("BAND_FILTER") || '0';
-            setBandFilter(bf);
-            let rf = window.localStorage.getItem("REGION_FILTER") || '';
+        function init() {
+            const bf = window.localStorage.getItem("BAND_FILTER") || '0';
+            const bf_a = bf.split(',');
+            if (bf_a.length == 1 && bf_a[0] == '')
+                setBandFilter([]);
+            else
+                setBandFilter(bf_a);
+
+            const rf = window.localStorage.getItem("REGION_FILTER") || '';
             setRegionFilter(rf.split(","));
-            let mf = window.localStorage.getItem("MODE_FILTER") || '';
-            setModeFilter(mf);
-            let lf = window.localStorage.getItem("LOCATION_FILTER") || '';
+            const mf = window.localStorage.getItem("MODE_FILTER") || '';
+            const mf_a = mf.split(",");
+            if (mf_a.length == 1 && mf_a[0] == '')
+                setModeFilter([]);
+            else
+                setModeFilter(mf_a);
+            const lf = window.localStorage.getItem("LOCATION_FILTER") || '';
             setLocationFilter(lf);
-            let cf = window.localStorage.getItem("CONTINENT_FILTER") || '';
+            const cf = window.localStorage.getItem("CONTINENT_FILTER") || '';
             setContinentFilter(cf.split(","));
 
-            let qrtF = window.localStorage.getItem("QRT_FILTER");
-            setQrtFilter((qrtF === "true"));
-            let hf = window.localStorage.getItem("HUNTED_FILTER");
-            setHuntedFilter((hf === "true"));
-            let on = window.localStorage.getItem("ATNO_FILTER");
-            setOnlyNewFilter((on === "true"));
+            // NOTE: there's an issue with these on first load and refresh 
+            // where the first two prints will be true (if show hidden is on)
+            // but the stuff in the state and context will be false. and when
+            // the switch is toggled it doesn't register a change until toggled
+            // several times
+            // This issue affects the other filters too
+            // console.log(hidden);
+            // console.log(bHidden);
+            // console.log(showHidden);
+            // console.log(contextData.showHiddenFilter);
 
-            let sf = window.localStorage.getItem("SIG_FILTER") || '';
+            const sf = window.localStorage.getItem("SIG_FILTER") || '';
             setSigFilter(sf);
+
+            // get enabled programs
+            const res = window.pywebview.api.get_enabled_programs();
+
+            res.then((cfgStr: string) => {
+                const obj = checkApiResponse2(cfgStr, addMessage);
+
+                console.log(obj);
+                if (!obj.success)
+                    return;
+
+                const progs: string[] = [];
+                const temp = obj.enabled_progs;
+                const keys = Object.keys(temp);
+                keys.forEach((k)=> {
+                     const enabled = temp[k];
+
+                     if (enabled)
+                        progs.push(k);
+                });
+
+                setEnabledPrograms(progs);
+            });
         };
     }, []);
 
-    const handleChange = (event: SelectChangeEvent) => {
-        let m = event.target.value as string
+    const handleModeChange = (event: SelectChangeEvent<string[]>) => {
+        let m = typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value;
+
+        if (m.includes("")) {
+            m = [];
+        }
         setModeFilter(m);
-        window.localStorage.setItem("MODE_FILTER", m);
+        window.localStorage.setItem("MODE_FILTER", m.join(","));
     };
 
-    const handleBandChange = (event: SelectChangeEvent) => {
-        let m = event.target.value as string;
+    const handleBandChange = (event: SelectChangeEvent<string[]>) => {
+        let m = typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value;
+        if (m.includes("0")) {
+            m = [];
+        }
         setBandFilter(m);
-        window.localStorage.setItem("BAND_FILTER", m);
+        window.localStorage.setItem("BAND_FILTER", m.join(","));
     }
 
-    const handleContinentChange = (event: SelectChangeEvent) => {
+    const handleContinentChange = (event: SelectChangeEvent<string[]>) => {
         let c = typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value;
 
         console.log(c);
@@ -86,16 +135,17 @@ export const FilterBar = (props: IFilterBarPros) => {
         window.localStorage.setItem("CONTINENT_FILTER", c.join(","));
     };
 
-    const handleRegionChange = (event: SelectChangeEvent) => {
+    const handleRegionChange = (event: SelectChangeEvent<string[]>) => {
         let r = typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value;
 
         // the compiler complains that shiftKey isn't there. but it is.
         // if no regions are selected and the user holds shift while clicking
         // their selection, we invert the selection. helpful for those who dont
         // want to see US spots.
-        if (event.shiftKey) {
-            let curr = { ...contextData };
-            let current = curr.regions;
+        // TODO: continents replaces the need for this. need to remove.
+        if ((event as any).shiftKey) {
+            const curr = { ...contextData };
+            const current = curr.regions;
             let filterBy = "";
             if (r.length > 1 && r[0] === "") {
                 // the very first time it's clicked there's an empty string in
@@ -104,7 +154,7 @@ export const FilterBar = (props: IFilterBarPros) => {
             } else {
                 filterBy = r[0];
             }
-            let inv = current.filter((x) => x != filterBy);
+            const inv = current.filter((x) => x != filterBy);
             setRegionFilter(inv);
             window.localStorage.setItem("REGION_FILTER", inv.join(","));
             return;
@@ -118,37 +168,35 @@ export const FilterBar = (props: IFilterBarPros) => {
     }
 
     const handleLocationChange = (event: SelectChangeEvent) => {
-        let l = event.target.value as string;
+        const l = event.target.value as string;
         setLocationFilter(l);
         window.localStorage.setItem("LOCATION_FILTER", l);
     }
 
     const handleSigChange = (event: SelectChangeEvent) => {
-        let sig = event.target.value as string;
+        const sig = event.target.value as string;
         setSigFilter(sig);
         window.localStorage.setItem("SIG_FILTER", sig);
     }
 
     const handleClear = () => {
-        setMode("");
-        setBand("0");
+        setMode([]);
+        setBand([]);
         contextData.filter.items = [];
-        contextData.filter.items.push(
-            createEqualityFilter('mode', '')
-        );
-        window.pywebview.api.set_band_filter(0);
+        // contextData.filter.items.push(
+        //     createEqualityFilter('mode', '')
+        // );
+        window.pywebview.api.set_band_filter([]);
         window.pywebview.api.set_region_filter([]);
         window.pywebview.api.set_continent_filter([]);
         window.pywebview.api.set_qrt_filter(true);
+        window.pywebview.api.set_hidden_filter(false);
         window.pywebview.api.set_hunted_filter(false);
         window.pywebview.api.set_only_new_filter(false);
         window.pywebview.api.set_sig_filter("");
         setRegion([]);
         setContinent([]);
         setLocation("");
-        setQrt(true);
-        setHunted(false);
-        setOnlyNew(false);
         setSig("");
 
         window.localStorage.setItem("BAND_FILTER", '0');
@@ -159,82 +207,38 @@ export const FilterBar = (props: IFilterBarPros) => {
         window.localStorage.setItem("QRT_FILTER", 'true');
         window.localStorage.setItem("HUNTED_FILTER", 'false');
         window.localStorage.setItem("ATNO_FILTER", 'false');
+        window.localStorage.setItem("SHOW_HIDDEN_FLT", 'false');
         window.localStorage.setItem("SIG_FILTER", '');
 
         const next = {
             ...contextData,
-            bandFilter: 0,
+            bandFilter: [],
             regionFilter: "",
             locationFilter: "",
             qrtFilter: true,
             huntedFilter: false,
             onlyNew: false,
-            sigFilter: ''
+            sigFilter: '',
+            showHiddenFilter: false
         };
         setData(next);
 
         location.reload();
     };
 
-    function handleQrtSwitch(event: any, checked: boolean): void {
-        setQrtFilter(checked);
-        window.localStorage.setItem("QRT_FILTER", checked.toString());
-    }
-
-    function handleHuntedSwitch(event: any, checked: boolean): void {
-        setHuntedFilter(checked);
-        window.localStorage.setItem("HUNTED_FILTER", checked.toString());
-    }
-
-    function handleOnlyNewSwitch(event: any, checked: boolean): void {
-        setOnlyNewFilter(checked);
-        window.localStorage.setItem("ATNO_FILTER", checked.toString());
-    }
-
-    function setQrtFilter(checked: boolean) {
-        console.log("changing qrt filter to: " + checked);
-        window.pywebview.api.set_qrt_filter(checked);
-
-        let next = { ...contextData, qrtFilter: checked };
+    function setModeFilter(m: string[]) {
+        window.pywebview.api.set_mode_filter(m);
+        setMode(m);
+        const next = { ...contextData, modeFilter: m };
         setData(next);
-        setQrt(checked);
     }
 
-    function setHuntedFilter(checked: boolean) {
-        console.log("changing hunted filter to: " + checked);
-        window.pywebview.api.set_hunted_filter(checked);
-
-        let next = { ...contextData, huntedFilter: checked };
-        setData(next);
-        setHunted(checked);
-    }
-
-    function setOnlyNewFilter(checked: boolean) {
-        console.log("changing onlynew filter to: " + checked);
-        window.pywebview.api.set_only_new_filter(checked);
-
-        let next = { ...contextData, onlyNewFilter: checked };
-        setData(next);
-        setOnlyNew(checked);
-    }
-
-    function setModeFilter(m: string) {
-        setMode(m); // it doesn't work without this?????
-
-        contextData.filter.items = [];
-        contextData.filter.items.push(
-            createEqualityFilter('mode', m)
-        );
-
-        setData(contextData);
-    }
-
-    function setBandFilter(m: string) {
-        let x = parseInt(m);
-        console.log("changing band to: " + m);
+    function setBandFilter(m: string[]) {
+        const x = m.map((x) => parseInt(x));
+        console.log("changing band to: " + x);
         window.pywebview.api.set_band_filter(x);
 
-        let next = { ...contextData, bandFilter: x };
+        const next = { ...contextData, bandFilter: x };
         setData(next);
         setBand(m);
     }
@@ -243,14 +247,14 @@ export const FilterBar = (props: IFilterBarPros) => {
         console.log("changing region to: " + r);
         window.pywebview.api.set_region_filter(r);
 
-        let next = { ...contextData, regionFilter: r.join(",") };
+        const next = { ...contextData, regionFilter: r.join(",") };
         setData(next);
         setRegion(r);
     }
 
     function setContinentFilter(r: string[]) {
         window.pywebview.api.set_continent_filter(r);
-        let next = { ...contextData, continentFilter: r.join(",") };
+        const next = { ...contextData, continentFilter: r.join(",") };
         setData(next);
         setContinent(r);
     }
@@ -259,7 +263,7 @@ export const FilterBar = (props: IFilterBarPros) => {
         console.log("changing location to: " + l);
         window.pywebview.api.set_location_filter(l);
 
-        let next = { ...contextData, locationFilter: l };
+        const next = { ...contextData, locationFilter: l };
         setData(next);
         setLocation(l);
     }
@@ -268,28 +272,27 @@ export const FilterBar = (props: IFilterBarPros) => {
         console.log("changing sig filt to: " + sig);
         window.pywebview.api.set_sig_filter(sig);
 
-        let next = { ...contextData, locationFilter: sig };
+        const next = { ...contextData, locationFilter: sig };
         setData(next);
         setSig(sig);
     }
 
-
-    const StyledTypoGraphy = styled(Typography)(({ theme }) =>
+    const StyledInputLabel = styled(InputLabel)(({ theme }) =>
         theme.unstable_sx({
             fontSize: {
-                lg: 16,
-                md: 16,
+                lg: 14,
+                md: 14,
                 sm: 12,
                 xs: 10
             }
         }),
     );
 
-    const StyledInputLabel = styled(InputLabel)(({ theme }) =>
+    const StyledMenuItem = styled(MenuItem)(({ theme }) =>
         theme.unstable_sx({
             fontSize: {
-                lg: 16,
-                md: 16,
+                lg: 14,
+                md: 14,
                 sm: 12,
                 xs: 10
             }
@@ -300,99 +303,97 @@ export const FilterBar = (props: IFilterBarPros) => {
         <Box className='filter-bar' sx={{ borderTop: 1, borderColor: 'grey.800', paddingTop: 2, paddingBottom: 1 }}>
             <Stack
                 direction='row'
-                spacing={{ md: 1, sm: 0, lg: 1.25 }}
+                spacing={{ sm: 0, md: 0.75, lg: 1 }}
             >
-                <FormControlLabel
-                    control={<Switch onChange={handleQrtSwitch} checked={qrt} />}
-                    label={<StyledTypoGraphy>Hide QRT</StyledTypoGraphy>} />
-                <FormControlLabel
-                    control={<Switch onChange={handleHuntedSwitch} checked={hunted} />}
-                    label={<StyledTypoGraphy>Hide Hunted</StyledTypoGraphy>} />
-                <FormControlLabel
-                    control={<Switch onChange={handleOnlyNewSwitch} checked={onlyNew} />}
-                    label={<StyledTypoGraphy>Only New</StyledTypoGraphy>} />
+                <QrtFilterButton />
+                <HuntedFilterButton />
+                <OnlyNewFilterButton />
+                <HiddenFilterButton />
                 <FormControl size='small'>
                     <StyledInputLabel id="band-label">Band</StyledInputLabel>
                     <Select
                         labelId="band-label"
-                        id="band"
+                        id="band-select"
                         value={band}
                         variant='standard'
                         onChange={handleBandChange}
+                        multiple
+                        sx={{ minWidth: 75, maxWidth: 110, textOverflow: 'ellipsis', fontSize: '14px' }}
                     >
                         {/* use style={{ display: "none" }} to hide these later */}
-                        <MenuItem value="0"><em>None</em></MenuItem>
-                        <MenuItem value="1">160</MenuItem>
-                        <MenuItem value="2">80</MenuItem>
-                        <MenuItem value="3">60</MenuItem>
-                        <MenuItem value="4">40</MenuItem>
-                        <MenuItem value="5">30</MenuItem>
-                        <MenuItem value="6">20</MenuItem>
-                        <MenuItem value="7">17</MenuItem>
-                        <MenuItem value="8">15</MenuItem>
-                        <MenuItem value="9">12</MenuItem>
-                        <MenuItem value="10">10</MenuItem>
-                        <MenuItem value="11">6</MenuItem>
-                        <MenuItem value="12">2</MenuItem>
-                        <MenuItem value="14">70cm</MenuItem>
+                        <StyledMenuItem value="0"><em>None</em></StyledMenuItem>
+                        <StyledMenuItem value="1">160</StyledMenuItem>
+                        <StyledMenuItem value="2">80</StyledMenuItem>
+                        <StyledMenuItem value="3">60</StyledMenuItem>
+                        <StyledMenuItem value="4">40</StyledMenuItem>
+                        <StyledMenuItem value="5">30</StyledMenuItem>
+                        <StyledMenuItem value="6">20</StyledMenuItem>
+                        <StyledMenuItem value="7">17</StyledMenuItem>
+                        <StyledMenuItem value="8">15</StyledMenuItem>
+                        <StyledMenuItem value="9">12</StyledMenuItem>
+                        <StyledMenuItem value="10">10</StyledMenuItem>
+                        <StyledMenuItem value="11">6</StyledMenuItem>
+                        <StyledMenuItem value="12">2</StyledMenuItem>
+                        <StyledMenuItem value="14">70cm</StyledMenuItem>
                     </Select>
                 </FormControl>
                 <FormControl size='small'>
-                    <StyledInputLabel id="demo-simple-select-label">Mode</StyledInputLabel>
+                    <StyledInputLabel id="mode-label">Mode</StyledInputLabel>
                     <Select
-                        labelId="demo-simple-select-label"
-                        id="demo-simple-select"
+                        labelId="mode-label"
+                        id="mode-select"
                         value={mode}
                         variant='standard'
-                        sx={{ minWidth: 75 }}
-                        onChange={handleChange}
+                        sx={{ minWidth: 75, maxWidth: 110, textOverflow: 'ellipsis', fontSize: '14px' }}
+                        onChange={handleModeChange}
+                        multiple
                     >
-                        <MenuItem value=""><em>None</em></MenuItem>
-                        <MenuItem value='CW'>CW</MenuItem>
-                        <MenuItem value='SSB'>SSB</MenuItem>
-                        <MenuItem value='AM'>AM</MenuItem>
-                        <MenuItem value='FM'>FM</MenuItem>
-                        <MenuItem value='FT8'>FT8</MenuItem>
-                        <MenuItem value='FT4'>FT4</MenuItem>
+                        <StyledMenuItem value=""><em>None</em></StyledMenuItem>
+                        <StyledMenuItem value='CW'>CW</StyledMenuItem>
+                        <StyledMenuItem value='SSB'>SSB</StyledMenuItem>
+                        <StyledMenuItem value='AM'>AM</StyledMenuItem>
+                        <StyledMenuItem value='FM'>FM</StyledMenuItem>
+                        <StyledMenuItem value='FT8'>FT8</StyledMenuItem>
+                        <StyledMenuItem value='FT4'>FT4</StyledMenuItem>
                     </Select>
                 </FormControl>
                 <FormControl size='small'>
-                    <StyledInputLabel id="demo-simple-select-label">Continent</StyledInputLabel>
+                    <StyledInputLabel id="continent-label">Continent</StyledInputLabel>
                     <Select
-                        labelId="demo-simple-select-label"
-                        id="demo-simple-select"
+                        labelId="continent-label"
+                        id="continent-select"
                         value={continent}
                         multiple
                         variant='standard'
-                        sx={{ minWidth: 75 }}
+                        sx={{ minWidth: 120, maxWidth: 120, textOverflow: 'ellipsis', fontSize: '14px' }}
                         onChange={handleContinentChange}
                     >
-                        <MenuItem value="NONE"><em>None</em></MenuItem>
-                        <MenuItem value='AF'>Africa</MenuItem>
-                        <MenuItem value='AN'>Antarctica</MenuItem>
-                        <MenuItem value='AS'>Asia</MenuItem>
-                        <MenuItem value='EU'>Europe</MenuItem>
-                        <MenuItem value='NA'>North America</MenuItem>
-                        <MenuItem value='OC'>Oceania</MenuItem>
-                        <MenuItem value='SA'>South America</MenuItem>
+                        <StyledMenuItem value="NONE"><em>None</em></StyledMenuItem>
+                        <StyledMenuItem value='AF'>Africa</StyledMenuItem>
+                        <StyledMenuItem value='AN'>Antarctica</StyledMenuItem>
+                        <StyledMenuItem value='AS'>Asia</StyledMenuItem>
+                        <StyledMenuItem value='EU'>Europe</StyledMenuItem>
+                        <StyledMenuItem value='NA'>North America</StyledMenuItem>
+                        <StyledMenuItem value='OC'>Oceania</StyledMenuItem>
+                        <StyledMenuItem value='SA'>South America</StyledMenuItem>
                     </Select>
                 </FormControl>
                 <FormControl size='small'>
-                    <StyledInputLabel id="region-lbl">Region (m)</StyledInputLabel>
+                    <StyledInputLabel id="region-lbl">Region</StyledInputLabel>
                     <Select
                         labelId="region-lbl"
-                        id="region"
+                        id="region-select"
                         multiple
                         value={region}
                         variant='standard'
-                        sx={{ minWidth: 100 }}
+                        sx={{ minWidth: 100, maxWidth: 120, textOverflow: 'ellipsis', fontSize: '14px' }}
                         onChange={handleRegionChange}
                     >
-                        <MenuItem value="NONE"><em>None</em></MenuItem>
+                        <StyledMenuItem value="NONE"><em>None</em></StyledMenuItem>
                         {contextData.regions.map((region) => (
-                            <MenuItem key={region} value={region}>
+                            <StyledMenuItem key={region} value={region}>
                                 {region}
-                            </MenuItem>
+                            </StyledMenuItem>
                         ))}
                     </Select>
                 </FormControl>
@@ -403,14 +404,14 @@ export const FilterBar = (props: IFilterBarPros) => {
                         id="location"
                         value={loc}
                         variant='standard'
-                        sx={{ minWidth: 100 }}
+                        sx={{ minWidth: 100, maxWidth: 120, textOverflow: 'ellipsis', fontSize: '14px' }}
                         onChange={handleLocationChange}
                     >
-                        <MenuItem value=""><em>None</em></MenuItem>
+                        <StyledMenuItem value=""><em>None</em></StyledMenuItem>
                         {contextData.locations.map((loc) => (
-                            <MenuItem key={loc} value={loc}>
+                            <StyledMenuItem key={loc} value={loc}>
                                 {loc}
-                            </MenuItem>
+                            </StyledMenuItem>
                         ))}
                     </Select>
                 </FormControl>
@@ -421,13 +422,15 @@ export const FilterBar = (props: IFilterBarPros) => {
                         id="sig"
                         value={sig}
                         variant='standard'
-                        sx={{ minWidth: 100 }}
+                        sx={{ minWidth: 100, maxWidth: 120, textOverflow: 'ellipsis', fontSize: '14px' }}
                         onChange={handleSigChange}
                     >
-                        <MenuItem value=""><em>None</em></MenuItem>
-                        <MenuItem value='POTA'>POTA</MenuItem>
-                        <MenuItem value='SOTA'>SOTA</MenuItem>
-                        <MenuItem value='WWFF'>WWFF</MenuItem>
+                        <StyledMenuItem value=""><em>None</em></StyledMenuItem>
+                        {enabledPrograms.map((loc) => (
+                            <StyledMenuItem key={loc} value={loc}>
+                                {loc}
+                            </StyledMenuItem>
+                        ))}
                     </Select>
                 </FormControl>
                 <Button onClick={handleClear} variant="outlined"
@@ -439,5 +442,3 @@ export const FilterBar = (props: IFilterBarPros) => {
 
     );
 }
-
-

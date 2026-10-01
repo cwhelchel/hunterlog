@@ -1,7 +1,10 @@
 import * as React from 'react';
-import { Button, Tooltip } from '@mui/material';
-import { checkApiResponse } from '../../util';
+import { Button } from '@mui/material';
+import { checkApiResponse2 } from '../Utilities/util';
 import { useAppContext } from '../AppContext';
+import { useMessageQueue } from '../MessageContext';
+
+import debounce from 'lodash/debounce';
 
 // Update the Button's color options to include an alert option
 declare module '@mui/material/Button' {
@@ -28,31 +31,39 @@ interface IFreqButtonProps {
 
 
 export default function FreqButton(props: IFreqButtonProps) {
-    const { contextData, setData, qsyButtonId, setLastQsyBtnId } = useAppContext();
+    const { qsyButtonId, setLastQsyBtnId } = useAppContext();
+    const { addMessage } = useMessageQueue();
     const [buttonColor, setButtonColor] = React.useState<ColorVariants | undefined>(undefined);
 
     const actId = [props.activator, props.frequency, props.mode].join("|");
     const id = actId + '==' + React.useId();
 
+    // Protect the debounced function from being recreated on re-renders
+    const debouncedOnClick = React.useCallback(
+        debounce((e: string, m: string, id: string) => {
+            console.log("js qsy to...");
+            console.log(`param ${e} ${m}`);
+            const p = window.pywebview.api.cat.qsy_to(e, m);
+            p.then((resp: string) => {
+                checkApiResponse2(resp, addMessage);
+                setLastQsyBtnId(id);
+            });
+        }, 250),
+        [] // Empty dependency array ensures it's created only once
+    );
+
     function onClick(e: string, m: string, id: string) {
-        console.log("js qsy to...");
-        console.log(`param ${e} ${m}`);
-        let p = window.pywebview.api.qsy_to(e, m);
-        p.then((resp: string) => {
-            checkApiResponse(resp, contextData, setData);
-            setLastQsyBtnId(id);
-            //console.log(`freqbtn qsy resp. spotId: ${id}`);
-        });
+        debouncedOnClick(e, m, id);
     };
 
-    function checkQsyId(btnId: string) : boolean {
+    function checkQsyId(btnId: string): boolean {
         const x = btnId.split('==');
         const actId = x[0];
         const y = actId.split('|');
 
         return (
-            y[0] === props.activator && 
-            y[1] === props.frequency && 
+            y[0] === props.activator &&
+            y[1] === props.frequency &&
             y[2] === props.mode
         );
     }
@@ -83,7 +94,7 @@ export default function FreqButton(props: IFreqButtonProps) {
             onClick={(event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
                 // console.log(event.currentTarget.id);
                 // bevent.stopPropagation();
-                let x = event.currentTarget.id;
+                const x = event.currentTarget.id;
                 // console.log(event.currentTarget.className);
                 onClick(props.frequency, props.mode, x);
             }

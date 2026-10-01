@@ -1,15 +1,14 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import * as React from 'react';
-import Button from '@mui/material/Button';
-import { Backdrop, Badge, CircularProgress, styled } from '@mui/material';
-import { DataGrid, GridColDef, GridValueGetterParams, GridValueFormatterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams, GridRowClassNameParams, GridToolbar, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarColumnsButton, GridToolbarQuickFilter, GridPaginationModel } from '@mui/x-data-grid';
+import { Backdrop, Badge, CircularProgress } from '@mui/material';
+import { DataGrid, GridColDef, GridValueGetterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams, GridRowClassNameParams, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarColumnsButton, GridToolbarQuickFilter, GridPaginationModel, GridActionsCell, GridActionsCellItem, GridInputRowSelectionModel, GridDensity, GridState, GridRowId, GridRowParams } from '@mui/x-data-grid';
 import { GridEventListener } from '@mui/x-data-grid';
-import LandscapeIcon from '@mui/icons-material/Landscape';
-import ParkIcon from '@mui/icons-material/Park';
-import Brightness3Icon from '@mui/icons-material/Brightness3';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import HistoryIcon from '@mui/icons-material/History';
 
 import { useAppContext } from '../AppContext';
 
-import { Qso } from '../../@types/QsoTypes';
 import CallToolTip from './CallTooltip';
 import { SpotRow } from '../../@types/Spots';
 
@@ -17,16 +16,29 @@ import './SpotViewer.scss'
 import HuntedCheckbox from './HuntedCheckbox';
 import FreqButton from './FreqButton';
 import SpotCommentsButton from './SpotComments';
-import { Park } from '../../@types/Parks';
 import SpotTimeCell from './SpotTime';
-import { SpotComments } from '../../@types/SpotComments';
-import { getSummitInfo } from '../../pota';
-import { Summit } from '../../@types/Summit';
-import { checkApiResponse } from '../../util';
+import { checkApiResponse2 } from '../Utilities/util';
 import HandleSpotRowClick from './HandleSpotRowClick';
+import ProgramIcon from '../Icons/ProgramIcon';
+import ScanButton from './ScanButton';
+import { useMessageQueue } from '../MessageContext';
 
-// https://mui.com/material-ui/react-table/
+import debounce from 'lodash/debounce';
 
+
+// this needs to be moved outside of the grid's rendering function (e.g. SpotViewer())
+// to fix the quick filter losing focus bug and to have the new ScanButton work
+// properly
+function CustomToolbar() {
+    return (
+        <GridToolbarContainer>
+            <GridToolbarColumnsButton />
+            <GridToolbarDensitySelector />
+            <GridToolbarQuickFilter />
+            <ScanButton />
+        </GridToolbarContainer>
+    );
+}
 
 const columns: GridColDef[] = [
     // { field: 'spotId', headerName: 'ID', width: 70 },
@@ -105,15 +117,21 @@ const columns: GridColDef[] = [
         }
     },
     {
-        field: 'spotOrig', headerName: 'Spot', width: 400,
-        // valueGetter: (params: GridValueGetterParams) => {
-        //     return `${params.row.spotter || ''}: ${params.row.comments || ''}`;
-        // },
+        field: 'spotOrig', headerName: 'Spot', width: 370,
         // do this to have a popup for all spots comments
         renderCell: (x) => {
             return (
                 <SpotCommentsButton spotId={x.row.spotId} spotter={x.row.spotter} comments={x.row.comments} />
             )
+        }
+    },
+    {
+        field: 'count', headerName: '', width: 75,
+        renderCell: (x) => {
+            return <>
+                {/* here respotCount is set making it look like history button */}
+                <SpotCommentsButton spotId={x.row.spotId} respotCount={x.row.count} />
+            </>
         }
     },
     {
@@ -128,16 +146,7 @@ const columns: GridColDef[] = [
         field: 'sig', headerName: 'SIG', width: 100,
         renderCell: (x) => {
             return <>
-                {x.row.spot_source == 'SOTA' && (
-                    <LandscapeIcon color='secondary' />
-                )}
-                {x.row.spot_source == 'POTA' && (
-                    <ParkIcon color='primary' />
-                )}
-                {x.row.spot_source == 'WWFF' && (
-                    <Brightness3Icon color='success' />
-                )}
-
+                <ProgramIcon sig={x.row.spot_source} />
                 <span id="sig">{x.row.spot_source}</span>
             </>
         }
@@ -148,15 +157,36 @@ const columns: GridColDef[] = [
 const rows: SpotRow[] = [];
 
 
-var currentSortFilter = { field: 'spotTime', sort: 'desc' as GridSortDirection };
-var currentPageFilter = { pageSize: 25, page: 0, };
+const currentSortFilter = { field: 'spotTime', sort: 'desc' as GridSortDirection };
+const currentPageFilter = { pageSize: 25, page: 0, };
 
 export default function SpotViewer() {
     const [spots, setSpots] = React.useState(rows)
     const [sortModel, setSortModel] = React.useState<GridSortModel>([currentSortFilter]);
     const [pageModel, setPaginationModel] = React.useState<GridPaginationModel>(currentPageFilter);
+    const [rowSelectionModel, setRowSelectionModel] = React.useState<GridInputRowSelectionModel>([]);
     const [backdropOpen, setBackdropOpen] = React.useState(false);
-    const { contextData, setData, qsyButtonId, setLastQsyBtnId } = useAppContext();
+    const { contextData, setData } = useAppContext();
+    const { addMessage } = useMessageQueue();
+    const [density, setDensity] = React.useState<GridDensity>(() => {
+        const storedDensity = localStorage.getItem('DATA_GRID_DENSITY') as GridDensity;
+        return storedDensity || 'standard';
+    });
+
+    // Stack of rows clicked since the last flush
+    const stackRef = React.useRef<SpotRow[]>([]);
+
+    const handleStateChange = (state: GridState) => {
+        // console.log('Grid state changed:', state);
+
+        // in newer versions of datagrid there's a onDensityChange. we dont 
+        // have that here so this will be called on any state change and we have
+        // to check for density
+        if (state && state.density?.value != density) {
+            setDensity(state.density.value);
+            localStorage.setItem('DATA_GRID_DENSITY', state.density.value);
+        }
+    }
 
     function getSpots() {
         // get the spots from the db
@@ -165,11 +195,53 @@ export default function SpotViewer() {
         setBackdropOpen(true);
         const spots = window.pywebview.api.get_spots()
         spots.then((r: string) => {
-            var x = JSON.parse(r);
+            const x = JSON.parse(r);
             setSpots(x);
             setBackdropOpen(false);
         });
     }
+
+    function hideSpot(spotId: number, isHidden: boolean): React.MouseEventHandler<HTMLButtonElement> | undefined {
+        console.log(spotId);
+
+        if (window.pywebview.api !== undefined) {
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let p: any;
+
+            if (isHidden)
+                p = window.pywebview.api.hidden_spots.unhide_spot(spotId);
+            else
+                p = window.pywebview.api.hidden_spots.hide_spot(spotId);
+            p.then((r: string) => {
+                const x = checkApiResponse2(r, addMessage);
+
+                if (x.success) {
+                    getSpots();
+                }
+            });
+        }
+        return;
+    }
+
+    function getVisIcon(is_hidden: boolean) {
+        if (is_hidden)
+            return <VisibilityOffIcon />
+        else
+            return <VisibilityIcon />
+    };
+
+    // add the actions column here so we can have a callback func
+    columns.push(
+        {
+            field: 'actions', width: 80, type: 'actions', cellClassName: "actions-cell",
+            getActions: (params) => {
+                return [
+                    <GridActionsCellItem key='action-hide' icon={getVisIcon(params.row.is_hidden)} onClick={() => hideSpot(params.row.spotId, params.row.is_hidden)} label='Hide' />
+                ]
+            }
+        }
+    );
 
 
     function setWorking() {
@@ -195,9 +267,10 @@ export default function SpotViewer() {
 
         const p = window.pywebview.api.get_seen_regions();
         p.then((x: string) => {
-            let json = checkApiResponse(x, contextData, setData);
+            const json = checkApiResponse2(x, addMessage);
             if (json.success) {
                 contextData.regions = json.seen_regions;
+                contextData.regions.sort();
                 setData(contextData);
             }
         });
@@ -209,7 +282,7 @@ export default function SpotViewer() {
             if (spot === null)
                 return;
             if (spot.spot_source == 'POTA') {
-                let location = spot.locationDesc.substring(0, 5);
+                const location = spot.locationDesc.substring(0, 5);
                 if (!contextData.locations.includes(location))
                     contextData.locations.push(location);
             }
@@ -236,16 +309,16 @@ export default function SpotViewer() {
         }
 
         try {
-            let j = window.localStorage.getItem("SORT_MODEL") || '';
-            let sm = JSON.parse(j) as GridSortModel;
+            const j = window.localStorage.getItem("SORT_MODEL") || '';
+            const sm = JSON.parse(j) as GridSortModel;
             setSortModel(sm);
         } catch {
             console.log("ignored error loading sortmodel. using default");
         }
 
         try {
-            let j = window.localStorage.getItem("PAGE_MODEL") || '';
-            let pm = JSON.parse(j) as GridPaginationModel;
+            const j = window.localStorage.getItem("PAGE_MODEL") || '';
+            const pm = JSON.parse(j) as GridPaginationModel;
             console.log(`pagemodel ${j} ${pm}`)
             setPaginationModel(pm);
         } catch {
@@ -262,30 +335,86 @@ export default function SpotViewer() {
         [contextData.bandFilter, contextData.regionFilter,
         contextData.qrtFilter, contextData.locationFilter,
         contextData.huntedFilter, contextData.onlyNewFilter,
-        contextData.continentFilter]
+        contextData.continentFilter, contextData.showHiddenFilter,
+        contextData.modeFilter]
     );
 
     // return the correct PK id for our rows
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     function getRowId(row: { spotId: any; }) {
         return row.spotId;
     }
 
-    const handleRowClick: GridEventListener<'rowClick'> = (
-        params,  // GridRowParams
-        event,   // MuiEvent<React.MouseEvent<HTMLElement>>
-        details, // GridCallbackDetails
-    ) => {
+    // Protect the debounced function from being recreated on re-renders
+    // const debouncedRowClick = React.useCallback(
+    //     debounce((spotId: number) => {
+    //         // setting spotId in ctx is connected to HandleSpotRowClick
+    //         const newCtxData = { ...contextData };
+    //         // console.log('setting spot to ' + params.row.spotId);
+    //         newCtxData.spotId = spotId;
+    //         setData(newCtxData);
+
+    //         // Also update visual selection to highlight the clicked row
+    //         setRowSelectionModel([spotId]);
+    //     }, 250),
+    //     [] // Empty dependency array ensures it's created only once
+    // );
+
+    const setStateForRowClick = React.useCallback((clickedRows: SpotRow[]) => {
+        const lastRow = clickedRows[clickedRows.length - 1];
+
         // setting spotId in ctx is connected to HandleSpotRowClick
         const newCtxData = { ...contextData };
+        newCtxData.spotId = lastRow.spotId;
+
         // console.log('setting spot to ' + params.row.spotId);
-        newCtxData.spotId = params.row.spotId;
         setData(newCtxData);
+
+        // Also update visual selection to highlight the clicked row
+        setRowSelectionModel([lastRow.spotId]);
+    }, []);
+
+    // Debounced flush - stable across renders via useMemo
+    const debouncedFlush = React.useMemo(
+        () =>
+            debounce(() => {
+                const rowsToFlush = stackRef.current;
+                stackRef.current = [];
+                setStateForRowClick(rowsToFlush);
+            }, 
+            1000, 
+            { trailing: true }
+        ),
+        [setStateForRowClick]
+    );
+
+    // Cancel any pending debounce on unmount to avoid calling into an unmounted component
+    React.useEffect(() => {
+        return () => {
+            debouncedFlush.cancel();
+        };
+    }, [debouncedFlush]);
+
+    const handleRowClick = (params: GridRowParams<SpotRow>) => {
+        if (rowSelectionModel[0] != params.row.spotId) {
+            console.log('pushing', params.row.spotId, params.row.activator);
+            stackRef.current.push(params.row);
+            debouncedFlush();
+        }
     };
 
-    function setFilterModel(e: GridFilterModel) {
-        contextData.filter = e;
-        setData(contextData);
-    };
+
+    // const handleRowClick: GridEventListener<'rowClick'> = (
+    //     params,  // GridRowParams
+    //     event,   // MuiEvent<React.MouseEvent<HTMLElement>>
+    //     details, // GridCallbackDetails
+    // ) => {
+    //     // console.log('new spotid', params.row.spotId);
+    //     // console.log(rowSelectionModel);
+
+    //     if (rowSelectionModel[0] != params.row.spotId)
+    //         debouncedRowClick(params.row.spotId);
+    // };
 
     function setSortModelAndSave(newModel: GridSortModel) {
         setSortModel(newModel);
@@ -298,26 +427,16 @@ export default function SpotViewer() {
     }
 
     function getClassName(params: GridRowClassNameParams<SpotRow>) {
-        let highlightNewStr = window.localStorage.getItem("HIGHLIGHT_NEW_REF") || '1';
-        let highlightNew = parseInt(highlightNewStr);
+        const highlightNewStr = window.localStorage.getItem("HIGHLIGHT_NEW_REF") || '1';
+        const highlightNew = parseInt(highlightNewStr);
 
-        if (params.row.is_qrt)
+        if (params.row.is_qrt || params.row.is_hidden)
             return 'spotviewer-row-qrt';
         else if (params.row.park_hunts === 0 && highlightNew)
             return 'spotviewer-row-new';
         else
             return 'spotviewer-row';
     };
-
-    function CustomToolbar() {
-        return (
-            <GridToolbarContainer>
-                <GridToolbarColumnsButton />
-                <GridToolbarDensitySelector />
-                <GridToolbarQuickFilter />
-            </GridToolbarContainer>
-        );
-    }
 
     return (
         <div className='spots-container'>
@@ -347,14 +466,16 @@ export default function SpotViewer() {
                     },
                 }}
                 pageSizeOptions={[5, 10, 25, 100]}
-                filterModel={contextData.filter}
-                onFilterModelChange={(v) => setFilterModel(v)}
                 onRowClick={handleRowClick}
                 sortModel={sortModel}
                 paginationModel={pageModel}
+                density={density}
+                onStateChange={handleStateChange}
                 onSortModelChange={(e) => setSortModelAndSave(e)}
                 onPaginationModelChange={(e) => setPaginationModelAndSave(e)}
                 getRowClassName={getClassName}
+                rowSelectionModel={rowSelectionModel}
+                onRowSelectionModelChange={(newSelection) => setRowSelectionModel(newSelection)}
             />
             <HandleSpotRowClick />
         </div>

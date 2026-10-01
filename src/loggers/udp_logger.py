@@ -17,3 +17,9 @@ class UdpLogger(GenericFileLogger):
         send_udp_msg(adif, self.host, self.port)
 
         return adif
+
+    def stage_qso(self, qso: any) -> str:
+        pass
+
+    def clear_staged(self):
+        pass

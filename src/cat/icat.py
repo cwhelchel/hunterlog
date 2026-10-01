@@ -16,6 +16,16 @@ class ICat(ABC):
         '''
         raise NotImplementedError
 
+    @property
+    @abstractmethod
+    def is_online(self) -> bool:
+        ''' 
+        Get status of CAT control object.
+
+        :returns: true if status good, online, and ready for use.
+        '''
+        raise NotImplementedError
+
     @abstractmethod
     def set_mode(self, mode: str) -> bool:
         '''
@@ -36,4 +46,21 @@ class ICat(ABC):
 
         returns True on success
         '''
+        raise NotImplementedError
+    
+    @abstractmethod
+    def get_vfo(self) -> str:
+        '''
+        Gets the radio's VFO frequency value.
+
+        :returns: str: Frequency in hz 
+        '''
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_ptt(self) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def set_cw_speed(self, speed_wpm: int):
         raise NotImplementedError

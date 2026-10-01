@@ -4,9 +4,10 @@ import shutil
 
 from distutils.core import setup
 
+
 def tree(src):
     return [(root, map(lambda f: os.path.join(root, f), files))
-        for (root, dirs, files) in os.walk(os.path.normpath(src))]
+            for (root, dirs, files) in os.walk(os.path.normpath(src))]
 
 
 if os.path.exists('build'):
@@ -17,22 +18,33 @@ if os.path.exists('dist/index.app'):
 
 ENTRY_POINT = ['src/index.py']
 
+# pull all the files from data/ dir. really only need continents.json,
+# sota_associations.json, wwbota_continents.json [cmw]
+HL_DATA = [('', ['data'])]
+
 DATA_FILES = tree('gui')
 OPTIONS = {
     'argv_emulation': False,
     'strip': False,
     'iconfile': 'src/assets/logo.icns',
     'includes': ['charset_normalizer.md__mypyc'],
-    'packages': ['WebKit', 'Foundation', 'webview'],
+    'excludes': ['setuptools'],
+    'packages': ['WebKit', 'Foundation', 'webview', 'objc'],
     'plist': {
         'NSRequiresAquaSystemAppearance': False
     },
-    'resources': DATA_FILES
+    'resources': DATA_FILES,
+    #  GH action error. cant code sign these libs so exclude them (testing)
+    'dylib_excludes': [
+        "/Library/Frameworks/Python.framework/Versions/3.14/Frameworks/Tcl.framework",
+        "/Library/Frameworks/Python.framework/Versions/3.14/Frameworks/Tk.framework",
+    ],
 }
 
 setup(
     app=ENTRY_POINT,
+    data_files=HL_DATA,
     name='Hunterlog',
     options={'py2app': OPTIONS},
-    setup_requires=['py2app'],
+    setup_requires=['py2app']
 )

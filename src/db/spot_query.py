@@ -1,7 +1,8 @@
-import datetime
+from datetime import datetime, timedelta, timezone
 import time
 import sqlalchemy as sa
 from sqlalchemy.orm import scoped_session
+from sqlalchemy import select
 import re
 import logging as L
 
@@ -37,15 +38,22 @@ class SpotQuery:
         and_flts = []
         or_flts = []
         and_flts = self._flts.get_and_filters()
+        mode_flts = self._flts._get_mode_filters()
+        band_flts = self._flts._get_band_filters()
         or_flts = self._flts.get_or_filters()
 
         # logging.debug(f"get_spots filter {and_flts} {or_flts}")
 
         x = self.session.query(Spot) \
             .filter(sa.and_(*and_flts)) \
-            .filter(sa.or_(*or_flts)) \
-            .all()
-        return x
+            .filter(sa.or_(*mode_flts)) \
+            .filter(sa.or_(*or_flts))
+
+        bfs = []
+        for bf in band_flts:
+            bfs.append(sa.and_(*bf))
+        x = x.filter(sa.or_(*bfs))
+        return x.all()
 
     def get_spot(self, id: int) -> Spot:
         return self.session.query(Spot).get(id)
@@ -56,6 +64,43 @@ class SpotQuery:
                 sa.and_(Spot.activator == activator,
                         Spot.reference == park)) \
             .first()
+
+    def get_wsjtx_spots(self) -> list[Spot]:
+        worst = ['FT8', 'FT4']
+        sql = select(Spot).where(Spot.mode.in_(worst))
+        return self.session.execute(sql).scalars().all()
+
+    def get_wsjtx_spot(self, callsign: str) -> Spot:
+        worst = ['FT8', 'FT4']
+        sql = select(Spot) \
+            .where(Spot.mode.in_(worst)) \
+            .where(Spot.activator == callsign)
+        return self.session.execute(sql).scalars().first()
+
+    def get_stale_spots(self, max_age_minutes: int) -> list[Spot]:
+        now = datetime.now(timezone.utc)
+        dt = now - timedelta(minutes=max_age_minutes)
+
+        res = self.session.query(Spot) \
+            .filter(Spot.spotTime < dt) \
+            .all()
+
+        return res
+
+    def delete_stale_spots(self, max_age_minutes: int):
+        '''
+        Remove or expunge old spots.
+
+        :param int max_age_minutes: positive int
+        '''
+        stale = self.get_stale_spots(max_age_minutes)
+
+        logging.debug(f'expunging #{len(stale)} stale spots')
+
+        for spot in stale:
+            # logging.debug(f'stale: {spot}')
+            self.session.expunge(spot)
+            self.session.delete(spot)
 
     def insert_test_spot(self):
         # test data
@@ -89,7 +134,7 @@ class SpotQuery:
         test_cmt.frequency = '7200'
         test_cmt.mode = 'CW'
         test_cmt.park = 'K-TEST'
-        test_cmt.comments = "{this is a test} {With: N0CALL,W1AW} {Also: US-9798}"  # NOQA
+        test_cmt.comments = "{this is a test} {With: N0CALL,W1AW} {Also: US-9798,US-1234}"  # NOQA
         test_cmt.source = "test"
         test_cmt.band = "40m"
         test_cmt.spotTime = datetime.datetime.now()

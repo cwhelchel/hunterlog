@@ -4,10 +4,13 @@ from datetime import timedelta
 from sqlalchemy.orm import scoped_session
 import sqlalchemy as sa
 
+from bands import Bands, freq_is_gt, freq_is_lt, get_band_from_name
 from db.models.alerts import Alerts
 from db.models.spots import Spot
 
 import logging as L
+
+from utils.callsigns import get_basecall
 
 logging = L.getLogger(__name__)
 
@@ -35,16 +38,30 @@ class AlertsQuery:
             .all()
 
     def check_spots(self) -> dict[str, list[Spot]]:
+        def basecall_match(call1: str, call2: str) -> bool:
+            call1 = call1.strip().upper()
+            call2 = call2.strip().upper()
+            return get_basecall(call1) == call2
+
         alerts = self.get_current_alerts()
         found = dict[str, Spot]()
 
         for a in alerts:
             terms: list[sa.ColumnElement[bool]] = []
-            terms.append(Spot.locationDesc.startswith(a.loc_search))
             terms.append(Spot.is_qrt.is_(False))
+
+            if a.loc_search:
+                terms.append(Spot.locationDesc.startswith(a.loc_search))
+
+            if a.call_search:
+                # for now this simple thing is good enough
+                # perhaps we post process afterwards
+                call = str(a.call_search).upper().strip()
+                terms.append(Spot.activator.icontains(call))
 
             if a.new_only:
                 terms.append(Spot.park_hunts == 0)
+
             if a.exclude_modes:
                 modes: str = a.exclude_modes
                 list_to_exclude = map(str.strip, modes.split(','))
@@ -57,6 +74,25 @@ class AlertsQuery:
             s = self.session.query(Spot) \
                 .filter(sa.and_(*terms)) \
                 .all()
+
+            # post-process to filter out results that may have matched using
+            # contains but dont match when using get_basecall
+            if a.call_search:
+                call = str(a.call_search)
+                s = [row for row in s if basecall_match(row.activator, call)]
+
+            if a.excl_band_above:
+                band = get_band_from_name(a.excl_band_above)
+                logging.debug(f"above band {band}")
+                if band != Bands.NOBAND:
+                    s = [row for row in s if freq_is_lt(row.frequency, band)]
+
+            if a.excl_band_below:
+                band = get_band_from_name(a.excl_band_below)
+                logging.debug(f"below band {band}")
+                if band != Bands.NOBAND:
+                    s = [row for row in s if freq_is_gt(row.frequency, band)]
+
             found[f"{a.name}+{a.id}"] = s
 
             if (s is not None):

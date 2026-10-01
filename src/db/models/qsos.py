@@ -24,8 +24,8 @@ class Qso(Base):
     comment = sa.Column(sa.String)
     qso_date = sa.Column(sa.Date)
     time_on = sa.Column(sa.TIMESTAMP, server_default=utcnow())
-    tx_pwr = sa.Column(sa.Integer)
-    rx_pwr = sa.Column(sa.Integer)
+    tx_pwr = sa.Column(sa.Integer, default=100)
+    rx_pwr = sa.Column(sa.Integer, default=100)
     gridsquare = sa.Column(sa.String(6))
     distance = sa.Column(sa.Float, nullable=True)
     bearing = sa.Column(sa.Float, nullable=True)
@@ -37,6 +37,7 @@ class Qso(Base):
     # 👆 true confirmed from hunter.csv
     pota_ref = sa.Column(sa.String)
     sota_ref = sa.Column(sa.String)
+    wwff_ref = sa.Column(sa.String)
 
     def init_from_spot(self, spot: Spot, name: str):
         rst = self.get_default_rst(spot.mode)
@@ -52,6 +53,7 @@ class Qso(Base):
         self.sig_info = spot.reference
         self.pota_ref = None
         self.sota_ref = None
+        self.wwff_ref = None
         self.state = ''
 
         # program specific logic done in /src/programs/
@@ -114,6 +116,9 @@ class Qso(Base):
         # go ahead and fix it (the checks look for valid pota park format in)
         self.sig = adif['SIG'] if 'SIG' in adif.keys() else 'POTA'
         self.tx_pwr = adif['TX_PWR'] if 'TX_PWR' in adif.keys() else ''
+        self.pota_ref = adif['POTA_REF'] if 'POTA_REF' in adif.keys() else ''
+        self.sota_ref = adif['SOTA_REF'] if 'SOTA_REF' in adif.keys() else ''
+        self.wwff_ref = adif['WWFF_REF'] if 'WWFF_REF' in adif.keys() else ''
 
         self.from_app = False
         self.cnfm_hunt = True

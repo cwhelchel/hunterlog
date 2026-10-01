@@ -1,25 +1,29 @@
 import * as React from 'react';
 import LeafMap from './Map'
 import { useAppContext } from '../AppContext';
-import { getParkStats } from '../../pota';
+import { getParkStats } from '../Utilities/pota';
 import { ParkStats } from '../../@types/PotaTypes';
 
 import './ParkInfo.scss'
-import { checkApiResponse } from '../../util';
+import { checkApiResponse2 } from '../Utilities/util';
+import ProgramIcon from '../Icons/ProgramIcon';
+import { useMessageQueue } from '../MessageContext';
+
 
 export default function ParkInfo() {
-    const { contextData, setData } = useAppContext();
+    const { contextData } = useAppContext();
     const [stats, setStats] = React.useState<ParkStats | null>(null);
     const [hunts, setHunts] = React.useState(0);
     const [newBand, setNewBand] = React.useState(false);
     const [bandsText, setBandsText] = React.useState("");
+    const { addMessage } = useMessageQueue();
 
     function onParkChange() {
-        let park = contextData?.park?.reference || '';
+        const park = contextData?.park?.reference || '';
         if (park === null || park === '')
             return;
 
-        let freq = contextData?.qso?.freq;
+        const freq = contextData?.qso?.freq;
 
         if (contextData?.park?.parktypeId != 0) {
             getParkStats(park).then((x: ParkStats) => {
@@ -28,16 +32,16 @@ export default function ParkInfo() {
         }
 
         window.pywebview.api.get_park_hunts(park).then((j: string) => {
-            let o = checkApiResponse(j, contextData, setData);
-            let hunts = parseInt(o.count);
+            const o = checkApiResponse2(j, addMessage);
+            const hunts = parseInt(o.count);
             setHunts(hunts);
         });
 
         if (freq !== null || freq !== '') {
             window.pywebview.api.get_park_hunted_bands(freq, park).then((j: string) => {
-                let o = checkApiResponse(j, contextData, setData);
-                let bandTxt = o.bands;
-                let nb = o.new_band;
+                const o = checkApiResponse2(j, addMessage);
+                const bandTxt = o.bands;
+                const nb = o.new_band;
                 setNewBand(nb);
                 setBandsText("Hunted on: " + bandTxt);
             });
@@ -60,6 +64,10 @@ export default function ParkInfo() {
                 {contextData && contextData?.park?.parktypeDesc == 'WWFF LOCATION' && (
                     wwffTitle()
                 )}
+                {contextData && contextData?.park?.parktypeDesc == 'WWBOTA REF' && (
+                    bunkerTitle()
+                )}
+
                 <hr role='separator' className='sep' />
             </div>
             <LeafMap />
@@ -84,17 +92,28 @@ export default function ParkInfo() {
                         {parkHunts()}
                     </>
                 )}
+
+                {contextData && contextData?.park?.parktypeDesc == 'WWBOTA REF' && (
+                    <>
+                        {bunkerInfo()} <br />
+                        {parkHunts()}
+                    </>
+                )}
             </div>
         </div>
     );
 
-    function parkTitle(): any {
+    function parkTitle(): React.ReactNode {
         const url = `https://pota.app/#/park/${contextData?.park?.reference}`;
         const text = `${contextData?.park?.reference} - ${contextData?.park?.name} ${contextData?.park?.parktypeDesc}`;
 
-        return <span id="parkTitle" onClick={() => {
-            window.open(url);
-        }}>{text}</span>;
+        return <>
+            <ProgramIcon sig="POTA" />
+            <span id="parkTitle" onClick={() => {
+                window.open(url);
+            }}>{text}</span>
+        </>;
+
     }
 
     function parkStats(): React.ReactNode {
@@ -115,11 +134,8 @@ export default function ParkInfo() {
         }
         return <>
             <span className={getClassName(hunts)}>You have {hunts} QSOs for {contextData?.park?.reference} </span>
-            {(hunts == 0 && contextData?.park?.parktypeDesc == 'SOTA SUMMIT' ) && (
-                <span className="label label-danger">NEW SUMMIT</span>
-            )}
-            {(hunts == 0 && contextData?.park?.parktypeDesc != 'SOTA SUMMIT' ) && (
-                <span className="label label-danger">NEW PARK</span>
+            {hunts == 0 && (
+                <span className="label label-danger">NEW REF</span>
             )}
             {newBand && (
                 <span className="label label-warning" title={bandsText}>NEW BAND</span>
@@ -127,13 +143,16 @@ export default function ParkInfo() {
         </>;
     }
 
-    function summitTitle(): any {
+    function summitTitle(): React.ReactNode {
         const url = `${contextData?.park?.website}`;
-        const text = `🗻 ${contextData?.park?.reference} - ${contextData?.park?.name}`;
+        const text = `${contextData?.park?.reference} - ${contextData?.park?.name}`;
 
-        return <span id="parkTitle" onClick={() => {
-            window.open(url);
-        }}>{text}</span>;
+        return <>
+            <ProgramIcon sig='SOTA' />
+            <span id="parkTitle" onClick={() => {
+                window.open(url);
+            }}>{text}</span>
+        </>;
     }
 
     function summitInfo(): React.ReactNode {
@@ -146,20 +165,38 @@ export default function ParkInfo() {
         </>;
     }
 
-    function wwffTitle(): any {
+    function wwffTitle(): React.ReactNode {
         const url = `${contextData?.park?.website}`;
-        const text = `🌙 ${contextData?.park?.reference} - ${contextData?.park?.name}`;
+        const text = `${contextData?.park?.reference} - ${contextData?.park?.name}`;
 
-        return <span id="parkTitle" onClick={() => {
-            console.log(url);
-            window.open(url);
-        }}>{text}</span>;
+        return <>
+            <ProgramIcon sig='WWFF' />
+            <span id="parkTitle" onClick={() => {
+                console.log(url);
+                window.open(url);
+            }}>{text}</span>
+        </>;
     }
 
     function wwffInfo(): React.ReactNode {
         // for random summit info we hijack some of the not-displayed pieces of park info
         return <>
             <span>dxcc: {contextData?.park?.locationDesc}</span> <br />
+        </>;
+    }
+
+    function bunkerTitle(): React.ReactNode {
+        const text = `${contextData?.park?.reference} - ${contextData?.park?.name}`;
+        return <>
+            <ProgramIcon sig="WWBOTA" />
+            <span id="parkTitle">{text}</span>
+        </>;
+    }
+
+    function bunkerInfo(): React.ReactNode {
+        return <>
+            <span>scheme: {contextData?.park?.locationDesc}</span> <br />
+            <span>type: {contextData?.park?.locationName}</span> <br />
         </>;
     }
 

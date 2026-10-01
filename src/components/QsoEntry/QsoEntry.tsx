@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import * as React from 'react';
-import { Button, TextField, Grid, Stack, Tooltip, Box, Backdrop, CircularProgress } from '@mui/material';
+import { Button, TextField, Grid, Stack, Tooltip, Box } from '@mui/material';
 import { useAppContext } from '../AppContext';
 import { Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
@@ -10,15 +11,17 @@ import utc from 'dayjs/plugin/utc';
 import './QsoEntry.scss'
 import QsoTimeEntry from './QsoTimeEntry';
 import { Qso } from '../../@types/QsoTypes';
-import { checkApiResponse, checkReferenceForPota, checkReferenceForSota, checkReferenceForWwff, setToastMsg } from '../../util';
-import { getParkInfo, getStateFromLocDesc } from '../../pota';
+import { checkApiResponse2, showErrorToast } from '../Utilities/util';
+import { checkReferenceForPota, checkReferenceForSota, checkReferenceForWwbota, checkReferenceForWwff, checkForValidRefs, sigCheckers } from '../Utilities/referenceUtils';
+import { getStateFromLocDesc } from '../Utilities/pota';
 import { Park } from '../../@types/Parks';
-import { ParkInfo } from '../../@types/PotaTypes';
+import { getModeDefaultRst } from '../Utilities/defaultRst';
+import { useMessageQueue } from '../MessageContext';
 
 dayjs.extend(utc);
 
 
-let defaultQso: Qso = {
+const defaultQso: Qso = {
     call: "",
     rst_sent: "",
     rst_recv: "",
@@ -38,7 +41,8 @@ let defaultQso: Qso = {
     name: '',
     state: '',
     pota_ref: undefined,
-    sota_ref: undefined
+    sota_ref: undefined,
+    wwff_ref: undefined
 }
 
 
@@ -51,102 +55,118 @@ export default function QsoEntry() {
     const [qsoTime, setQsoTime] = React.useState<Dayjs>(dayjs('2022-04-17T15:30'));
     const { contextData, setData } = useAppContext();
     const [spinnerOpen, setSpinnerOpen] = React.useState(false);
+    const [isSwapped, setIsSwapped] = React.useState(false);
+    const { addMessage } = useMessageQueue();
 
-    function logQso() {
+    async function logQso() {
         const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
         console.log(`logging qso at ${contextData.park?.name}`);
 
         if (qso.sig_info !== undefined && qso.sig_info !== "") {
             // NOTE: compress this for multi location parks like PotaPlus?
-            let loc = contextData.park?.locationDesc;
-            let cmt = qso.comment ?? '';
-            let name = `${contextData.park?.name} ${contextData.park?.parktypeDesc}`;
+            const loc = contextData.park?.locationDesc;
+            const cmt = qso.comment ?? '';
+            const name = `${contextData.park?.name} ${contextData.park?.parktypeDesc}`;
             qso.comment = `[${qso.sig} ${qso.sig_info} ${loc} ${qso.gridsquare} ${name}] ` + cmt;
         }
 
         qso.time_on = (qsoTime) ? qsoTime.toISOString() : dayjs().toISOString();
         qso.qso_date = qso.time_on;
-        if (qso.sig == "SOTA")
-            qso.sota_ref = qso.sig_info;
 
-        if (otherParks) {
-            const myPotaRef = getPotaRef();
+        const wasHandled = getCustomRefs();
 
-            if (!myPotaRef.ok)
-                setToastMsg("Bad POTA Ref in Other Parks", contextData, setData);
-
-            qso.pota_ref = myPotaRef.pota_ref;
-            qso.comment += ` {Also: ${myPotaRef.otherParks}}`;
+        // all other sigs that can be multi-reference handled here by stuffing
+        // the csv refs into sig_info
+        if (otherParks && !wasHandled) {
+            const othersRef = checkForValidRefs(qso.sig_info, otherParks, sigCheckers[qso.sig]);
+            if (!othersRef.ok)
+                showErrorToast("Bad Ref in Others list", addMessage);
+            else {
+                // sig info can be a comma separated list. 
+                qso.sig_info = othersRef.xota_ref ? othersRef.xota_ref : qso.sig_info;
+                qso.comment += ` {Also: ${othersRef.otherRefs}}`;
+            }
         }
 
-        let multiOps = otherOps;
+        const multiOps = otherOps;
 
         if (multiOps !== null && multiOps != '') {
-            let ops = multiOps.split(',');
+            const ops = multiOps.split(',');
 
             // log main window first then loop thru multiops
-            window.pywebview.api.log_qso(qso).then((x: string) => {
-                checkApiResponse(x, contextData, setData);
 
-                ops.forEach(async function (call) {
-                    console.log(`logging multiop QSO: ${call}`);
-                    await sleep(100);
-                    let newQso = { ...qso };
-                    newQso.call = call.trim();
-                    window.pywebview.api.log_qso(newQso).then((x: string) => {
-                        checkApiResponse(x, contextData, setData);
-                    });
+            const res = await window.pywebview.api.log_mulitop_qso(qso, ops);
+            const obj = checkApiResponse2(res, addMessage);
+
+            if (!obj.success)
+                return false;
+
+            window.pywebview.api.refresh_spot(contextData.spotId, qso.call, qso.sig_info)
+                .then((x: string) => {
+                    window.pywebview.state.getSpots();
                 });
-            });
+
+            return true;
         } else {
             // log a single operator
-            window.pywebview.api.log_qso(qso).then((x: string) => {
-                let json = checkApiResponse(x, contextData, setData);
+            const res = await window.pywebview.api.log_qso(qso, contextData.spotId);
 
-                window.pywebview.api.refresh_spot(contextData.spotId, qso.call, qso.sig_info)
-                    .then((x: string) => {
-                        window.pywebview.state.getSpots();
-                    });
-            });
+            console.log('log_qso', res);
+            const test = checkApiResponse2(res, addMessage);
+
+            if (!test.success)
+                return false;
+
+            window.pywebview.api.refresh_spot(contextData.spotId, qso.call, qso.sig_info)
+                .then((x: string) => {
+                    window.pywebview.state.getSpots();
+                });
+
+            return true;
         }
     }
 
-    interface IGetPotaRef {
-        pota_ref: string | undefined;
-        otherParks: string | undefined;
-        ok: boolean;
-    }
+    function getCustomRefs() {
+        if (qso.sig == "SOTA") {
+            qso.sota_ref = qso.sig_info;
+            return true;
+        }
 
-    function getPotaRef(): IGetPotaRef {
-        let res = otherParks;
-        const currentPark = qso.sig_info;
-        let arr = res.split(',');
+        if (qso.sig == "WWFF") {
+            qso.wwff_ref = qso.sig_info;
+            return true;
+        }
 
-        arr.forEach((x) => {
-            const isPota = checkReferenceForPota(x);
-            // console.log(x);
-            if (!isPota) {
-                // setToastMsg("Bad POTA Ref in Other Parks", contextData, setData);
-                return { ok: false };
+        if (qso.sig == "POTA") {
+            if (otherParks) {
+                console.log('checking other parks', otherParks);
+                const myPotaRef = checkForValidRefs(qso.sig_info, otherParks, checkReferenceForPota);
+
+                console.log('mypotaref', myPotaRef);
+                if (!myPotaRef.ok) {
+                    showErrorToast("Bad POTA Ref in Other Parks", addMessage);
+                }
+
+                qso.pota_ref = myPotaRef.xota_ref;
+                qso.comment += ` {Also: ${myPotaRef.otherRefs}}`;
+            } else {
+                qso.pota_ref = qso.sig_info;
             }
-        })
+            return true;
+        }
 
-        arr.push(currentPark);
-        return {
-            ok: true,
-            pota_ref: arr.join(','),
-            otherParks: res
-        };
+        return false;
     }
+
 
     function spotActivator() {
         if (qso.sig != 'POTA')
             return;
         console.log(`spotting activator at ${contextData.park?.name}`);
-        let park = qso.sig_info;
+        const park = qso.sig_info;
 
-        let multiOps = otherOps;
+        const multiOps = otherOps;
         if (multiOps !== null && multiOps != '') {
             const ops = multiOps.split(',');
             const x = ops.filter(e => e !== contextData.qso?.call);
@@ -160,21 +180,28 @@ export default function QsoEntry() {
         }
 
         window.pywebview.api.spot_activator(qso, park).then((r: string) => {
-            checkApiResponse(r, contextData, setData);
+            checkApiResponse2(r, addMessage);
         });
     }
 
-    function handleLogQsoClick(
+    async function handleLogQsoClick(
         event: React.MouseEvent<HTMLButtonElement, MouseEvent>
     ) {
-        logQso();
-        handleClearClick(event);
+        setData({ ...contextData, loadingQsoData: true });
+        const success = await logQso();
+        setData({ ...contextData, loadingQsoData: false });
+        if (success)
+            handleClearClick(event);
     }
 
-    function handleSpotAndLogClick(
+    async function handleSpotAndLogClick(
         event: React.MouseEvent<HTMLButtonElement, MouseEvent>
     ) {
-        logQso();
+        setData({ ...contextData, loadingQsoData: true });
+        const success = await logQso();
+        if (!success)
+            return;
+        setData({ ...contextData, loadingQsoData: false });
         spotActivator();
         handleClearClick(event);
     };
@@ -189,18 +216,24 @@ export default function QsoEntry() {
     function handleClearClick(
         event: React.MouseEvent<HTMLButtonElement, MouseEvent> | null
     ) {
-        console.log("clearing qso...");
+        console.log("clearing qso...", event, contextData);
         setQso(defaultQso);
-        contextData.park = null;
-        contextData.qso = null;
-        contextData.otherOperators = '';
-        contextData.otherParks = '';
-        setData(contextData);
+        const newCtx = { ...contextData };
+        newCtx.park = null;
+        newCtx.qso = null;
+        newCtx.otherOperators = '';
+        newCtx.otherParks = '';
+        newCtx.spotId = 0;
+        setData(newCtx);
 
         setOtherOpsHidden(true);
         setOtherOps('');
         setOtherParksHidden(true);
         setOtherParks('');
+
+        if (event?.currentTarget?.id == 'clear-btn' || event == null) {
+            window.pywebview.api.clear_staged_qso();
+        }
     }
 
     function handleMultiOpClick(
@@ -222,16 +255,21 @@ export default function QsoEntry() {
         }
         x.time_on = dayjs().toISOString();
         setQsoTime(dayjs())
+
+        // bugfix: set to empty str to force clear of comment text box
+        if (x.comment === null)
+            x.comment = '';
+
         setQso(x);
     }
 
     function getDistance() {
         // default to yes
-        let units = window.localStorage.getItem("USE_FREEDOM_UNITS") || '1';
-        let use_imperial = parseInt(units);
+        const units = window.localStorage.getItem("USE_FREEDOM_UNITS") || '1';
+        const use_imperial = parseInt(units);
 
         if (use_imperial) {
-            let mi = Math.trunc(qso.distance * 0.621371);
+            const mi = Math.trunc(qso.distance * 0.621371);
             return `${mi} mi`;
         }
         else
@@ -242,6 +280,8 @@ export default function QsoEntry() {
         if (entry === null || entry === '')
             return;
 
+        entry = entry.toUpperCase();
+
         setQso({ ...qso, call: entry });
 
         const newCtxData = { ...contextData };
@@ -250,6 +290,7 @@ export default function QsoEntry() {
             newCtxData.qso = { ...defaultQso, call: entry };
         } else if (newCtxData.qso.call != entry) {
             newCtxData.qso = { ...newCtxData.qso, call: entry };
+            newCtxData.spotId = 0;
         }
 
         //console.log(newCtxData.qso?.call);
@@ -257,13 +298,33 @@ export default function QsoEntry() {
         setData(newCtxData);
     }
 
-    function onParkEntry(park: string) {
-        if (park === null || park === '')
+    function onModeEntry(entry: string) {
+        if (entry === null || entry === '')
             return;
 
+        entry = entry.toUpperCase();
+        const rst = getModeDefaultRst(entry);
+
+        setQso({ ...qso, mode: entry });
+
+        const newCtxData = { ...contextData };
+
+        if (newCtxData.qso === null) {
+            newCtxData.qso = { ...defaultQso, mode: entry, rst_sent: rst, rst_recv: rst };
+            setQso({ ...qso, rst_sent: rst, rst_recv: rst });
+        } else if (newCtxData.qso.mode != entry) {
+            newCtxData.qso = { ...newCtxData.qso, mode: entry, rst_sent: rst, rst_recv: rst };
+            setQso({ ...qso, rst_sent: rst, rst_recv: rst });
+        }
+
+        setData(newCtxData);
+    }
+
+
+    function onParkEntry(park: string) {
         function updateQsoData(grid6: string, sig: string, sig_info: string, state: string) {
             function setLocalQso() {
-                let newQso = { ...qso };
+                const newQso = { ...qso };
                 newQso.gridsquare = grid6;
                 newQso.sig = sig;
                 newQso.sig_info = sig_info;
@@ -283,7 +344,7 @@ export default function QsoEntry() {
                 setLocalQso();
             }
             else {
-                let newQso = setLocalQso();
+                const newQso = setLocalQso();
 
                 // create a qso object in context data
                 newCtxData.qso = newQso;
@@ -291,10 +352,11 @@ export default function QsoEntry() {
             }
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         function getRefInfo(): any {
 
-            let isSota = checkReferenceForSota(park);
-            let isWwff = checkReferenceForWwff(park);
+            const isSota = checkReferenceForSota(park);
+            const isWwff = checkReferenceForWwff(park);
 
             let sig = 'POTA';
             if (isSota)
@@ -304,12 +366,12 @@ export default function QsoEntry() {
 
             window.pywebview.api.get_reference(sig, park)
                 .then((r: string) => {
-                    let result = checkApiResponse(r, contextData, setData);
+                    const result = checkApiResponse2(r, addMessage);
                     if (!result.success) {
                         console.log("get_qso_from_spot failed: " + result.message);
                         return;
                     }
-                    let p = JSON.parse(result.park_data) as Park;
+                    const p = JSON.parse(result.park_data) as Park;
                     newCtxData.park = p;
 
                     let state = '';
@@ -326,6 +388,14 @@ export default function QsoEntry() {
         }
 
         const newCtxData = { ...contextData };
+
+        if (park === null || park === '') {
+            // clear out values
+            updateQsoData('', '', '', '');
+            return;
+        }
+
+        park = park.toUpperCase();
 
         if (newCtxData.park === null) {
             getRefInfo();
@@ -353,14 +423,14 @@ export default function QsoEntry() {
         const ops = otherOperators.trim().split(',');
 
         // remove current qso call if needed
-        let x = ops.filter(e => e !== contextData.qso?.call);
+        const x = ops.filter(e => e !== contextData.qso?.call);
 
         if (x.length > 0) {
             setOtherOps(x.join(','));
         }
     }
 
-    function updateOtherParks(otherParks: string) {
+    function updateOtherParks(otherParks: string | null) {
         if (otherParks == null || otherParks === undefined) {
             setOtherParks('');
             setOtherParksHidden(true);
@@ -377,7 +447,7 @@ export default function QsoEntry() {
         const parks = otherParks.trim().split(',');
 
         // remove current qso call if needed
-        let x = parks.filter(e => e !== contextData.qso?.sig_info);
+        const x = parks.filter(e => e !== contextData.qso?.sig_info);
 
         if (x.length > 0) {
             setOtherParks(x.join(','));
@@ -388,7 +458,12 @@ export default function QsoEntry() {
     // when the app context changes (ie a user clicks on a different spot)
     // we need to update our TextFields
     React.useEffect(() => {
+        updateOtherParks(null);
         updateQsoEntry();
+
+        // this is ignored if the logger doesn't support staging
+        if (contextData.qso)
+            window.pywebview.api.stage_qso(JSON.stringify(contextData.qso));
     }, [contextData.qso]);
 
     React.useEffect(() => {
@@ -405,7 +480,20 @@ export default function QsoEntry() {
         else
             setSpinnerOpen(false);
     }, [contextData.loadingQsoData]);
-    
+
+    React.useEffect(() => {
+        if (contextData.swapRstOrder)
+            setIsSwapped(true);
+        else
+            setIsSwapped(false);
+    }, [contextData.swapRstOrder]);
+
+    React.useEffect(() => {
+        const newFx = contextData.rigFreqRead;
+        if (newFx === "")
+            return;
+        setQso({ ...qso, freq: newFx, freq_rx: newFx });
+    }, [contextData.rigFreqRead]);
 
     React.useEffect(() => {
         function handleEscapeKey(event: KeyboardEvent) {
@@ -413,6 +501,8 @@ export default function QsoEntry() {
                 handleClearClick(null);
             }
         }
+        const swapStr = window.localStorage.getItem("SWAP_RST_ORDER") || '1';
+        setIsSwapped(parseInt(swapStr) == 1 ? true : false);
 
         document.addEventListener('keydown', handleEscapeKey)
         return () => document.removeEventListener('keydown', handleEscapeKey)
@@ -429,7 +519,8 @@ export default function QsoEntry() {
                 md: 14,
                 sm: 11,
                 xs: 9
-            }
+            },
+            fontWeight: 500
         }),
     );
 
@@ -467,30 +558,56 @@ export default function QsoEntry() {
                     <TextField id="mode" label="Mode"
                         value={qso.mode}
                         inputProps={{ style: textFieldStyle }}
+                        onBlur={(e) => { onModeEntry(e.target.value); }}
                         onChange={(e) => {
                             setQso({ ...qso, mode: e.target.value });
                         }} />
                 </Grid>
-                <Grid item xs={4} lg={2}>
-                    <TextField id="rstSent" label="RST Sent"
-                        value={qso.rst_sent}
-                        inputProps={{ style: textFieldStyle }}
-                        onChange={(e) => {
-                            setQso({ ...qso, rst_sent: e.target.value });
-                        }} />
-                </Grid>
-                <Grid item xs={4} lg={2}>
-                    <TextField id="rstRecv" label="RST Recv"
-                        value={qso.rst_recv}
-                        inputProps={{ style: textFieldStyle }}
-                        onChange={(e) => {
-                            setQso({ ...qso, rst_recv: e.target.value });
-                        }} />
-                </Grid>
+                {isSwapped &&
+                    <>
+                        <Grid item xs={4} lg={2}>
+                            <TextField id="rstRecv" label="RST Recv"
 
+                                value={qso.rst_recv}
+                                inputProps={{ style: textFieldStyle, autoComplete: 'off' }}
+                                onChange={(e) => {
+                                    setQso({ ...qso, rst_recv: e.target.value });
+                                }} />
+                        </Grid>
+                        <Grid item xs={4} lg={2}>
+                            <TextField id="rstSent" label="RST Sent"
+                                autoComplete="off"
+                                value={qso.rst_sent}
+                                inputProps={{ style: textFieldStyle, autoComplete: 'off' }}
+                                onChange={(e) => {
+                                    setQso({ ...qso, rst_sent: e.target.value });
+                                }} />
+                        </Grid>
+                    </>
+                }
+                {!isSwapped &&
+                    <>
+                        <Grid item xs={4} lg={2}>
+                            <TextField id="rstSent" label="RST Sent"
+                                value={qso.rst_sent}
+                                inputProps={{ style: textFieldStyle }}
+                                onChange={(e) => {
+                                    setQso({ ...qso, rst_sent: e.target.value });
+                                }} />
+                        </Grid>
+                        <Grid item xs={4} lg={2}>
+                            <TextField id="rstRecv" label="RST Recv"
+                                value={qso.rst_recv}
+                                inputProps={{ style: textFieldStyle }}
+                                onChange={(e) => {
+                                    setQso({ ...qso, rst_recv: e.target.value });
+                                }} />
+                        </Grid>
+                    </>
+                }
 
                 <Grid item xs={4} lg={2}>
-                    <TextField id="park" label="Park"
+                    <TextField id="park" label="Reference"
                         value={qso.sig_info}
                         inputProps={{ style: textFieldStyle }}
                         onBlur={(e) => {
@@ -548,7 +665,7 @@ export default function QsoEntry() {
                         Spot
                     </StyledTypoGraphy>
                 </Button>
-                <Button variant="outlined" onClick={(e) => handleClearClick(e)}
+                <Button id="clear-btn" variant="outlined" onClick={(e) => handleClearClick(e)}
                     color='secondary'>
                     <StyledTypoGraphy>
                         Clear
@@ -560,7 +677,7 @@ export default function QsoEntry() {
                         MultiOp
                     </StyledTypoGraphy>
                 </Button>
-                <Tooltip title="POTA only: multi-park logging">
+                <Tooltip title="Multi-reference logging">
                     <Button variant={otherParksHidden ? 'outlined' : 'contained'} onClick={(e) => handleMultiParkClick(e)}
                         color='secondary'>
                         <StyledTypoGraphy>
@@ -584,12 +701,12 @@ export default function QsoEntry() {
                             }}
                             inputProps={{ style: otherOpsStyle }}
                             onChange={(e) => {
-                                setOtherOps(e.target.value);
+                                setOtherOps(e.target.value.toUpperCase());
                             }} />
                     )}
 
                     {!otherParksHidden && (
-                        <TextField id="otherParks" label="Other Parks (comma separated)"
+                        <TextField id="otherParks" label="Other Refs (comma separated)"
                             value={otherParks}
                             color='warning'
                             margin='normal'
@@ -603,7 +720,7 @@ export default function QsoEntry() {
                             }}
                             inputProps={{ style: otherOpsStyle }}
                             onChange={(e) => {
-                                setOtherParks(e.target.value);
+                                setOtherParks(e.target.value.toUpperCase());
                             }} />
                     )}
                 </Box>

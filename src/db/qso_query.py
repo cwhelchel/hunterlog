@@ -1,11 +1,16 @@
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
+import json
 import logging
+import time
 from typing import List
 import sqlalchemy as sa
 from sqlalchemy.orm import scoped_session
 
-from db.models.qsos import Qso
+from db.models.qsos import Qso, QsoSchema
 from bands import Bands, get_band, bandLimits, bandNames
+from utils.callsigns import get_basecall
+
+log = logging.getLogger(__name__)
 
 
 class QsoQuery:
@@ -18,6 +23,20 @@ class QsoQuery:
         self.session.add(qso)
         if not delay_commit:
             self.session.commit()
+
+    def insert_new_qso_multi(self, qso: any, calls: list[str]) -> int:
+        first_call = qso['call']
+        calls.insert(0, first_call)
+
+        ids: list[int] = []
+
+        for call in calls:
+            qso['call'] = call
+            i = self.insert_new_qso(qso)
+            ids.append(i)
+            time.sleep(0.5)
+
+        return ids
 
     def insert_new_qso(self, qso: any) -> int:
         '''
@@ -45,9 +64,11 @@ class QsoQuery:
         # and add it directly
         logging.debug(f"inserting qso: {qso}")
         q = Qso()
-        q.call = qso['call']
-        if q.call is None or not q.call.strip():
+        temp_call = qso['call']
+        if temp_call is None or not temp_call.strip():
             raise ValueError("Empty Callsign")
+        q.call = temp_call.upper()
+
         q.rst_sent = qso['rst_sent']
         q.rst_recv = qso['rst_recv']
         q.freq = qso['freq']
@@ -56,9 +77,10 @@ class QsoQuery:
         elif not check_float(q.freq):
             raise ValueError("Invalid Frequency number")
         q.freq_rx = qso['freq_rx']
-        q.mode = qso['mode']
-        if q.mode is None or not q.mode.strip():
+        temp_mode = qso['mode']
+        if temp_mode is None or not temp_mode.strip():
             raise ValueError("Empty Mode")
+        q.mode = temp_mode.upper()
         q.comment = qso['comment']
         temp: str = trim_z(qso['qso_date'])
         q.qso_date = datetime.fromisoformat(temp)
@@ -68,22 +90,24 @@ class QsoQuery:
         q.rx_pwr = qso['rx_pwr']
         q.gridsquare = qso['gridsquare']
         q.state = qso['state']
-        q.sig = qso['sig']
-        q.sig_info = qso['sig_info']
+        q.sig = qso['sig'] and qso['sig'].upper()
+        q.sig_info = qso['sig_info'] and qso['sig_info'].upper()
         q.distance = qso['distance']
         q.bearing = qso['bearing']
         q.from_app = True
         q.cnfm_hunt = False
         q.pota_ref = qso['pota_ref'] if q.sig == 'POTA' else None
         q.sota_ref = qso['sota_ref'] if q.sig == 'SOTA' else None
+        q.wwff_ref = qso['wwff_ref'] if q.sig == 'WWFF' else None
         self.session.add(q)
         self.session.commit()
         return q.qso_id
 
     def get_op_qso_count(self, call: str) -> int:
-        return self.session.query(Qso) \
-            .filter(Qso.call == call) \
-            .count()
+        sql = sa.select(sa.func.count()) \
+            .where(Qso.call == call)
+
+        return self.session.scalar(sql)
 
     def get_activator_hunts(self, callsign: str) -> int:
         return self.session.query(Qso) \
@@ -93,62 +117,146 @@ class QsoQuery:
     def get_qso(self, id: int) -> Qso:
         return self.session.query(Qso).get(id)
 
+    def get_qso_transient(self, qso_data) -> Qso:
+        schema = QsoSchema()
+        dic = json.loads(qso_data)
+        dic['qso_id'] = 0
+        q = schema.load(
+            dic,
+            session=self.session,
+            transient=True)
+        return q
+
     def get_qsos_from_app(self) -> List[Qso]:
         x = self.session.query(Qso) \
             .filter(Qso.from_app == True).all()   # noqa E712
         return x
 
+    def get_qsos_for_local_date(self, date: datetime) -> List[Qso]:
+        '''
+        Returns qsos for the date specified in date.
+
+        This returns the QSOs for a given day in LOCAL time, handling the
+        conversions to UTC for filtering correctly. Meaning from 00:00 of the
+        current day (local tz) until 00:00 of the next day (local tz).
+
+        :param datetime date: datetime in local timezone
+        :return List[Qso]: filtered list of Qso objs
+        '''
+
+        # get midnight of current local tz day
+        d = date.date()
+        midnight: datetime = datetime(
+            day=d.day, month=d.month, year=d.year, hour=0, minute=0)
+        log.debug(f'localtz midnight, before convert: {midnight}')
+
+        # convert midnight 00:00 of local tz day to utc. ex: America/New_York
+        # during standard time, this goes from 00:00EST -> 05:00UTC
+        start_dt = midnight.astimezone(timezone.utc)
+
+        # get midnight UTC of next day
+        end_dt = start_dt + timedelta(days=1)
+        log.debug(f"{start_dt} {end_dt}")
+
+        x = self.session.query(Qso) \
+            .filter(Qso.time_on >= start_dt) \
+            .filter(Qso.time_on <= end_dt) \
+            .all()
+        return x
+
     def get_spot_hunted_flag(self,
                              activator: str,
                              freq: str,
-                             ref: str) -> bool:
+                             ref: str,
+                             use_basecall: bool = False) -> bool:
         '''
-        Gets the flag indicating if a given spot has been hunted already today
+        Determine whether this activator has already been worked at this
+        reference, on this band, today.
 
-        :param str activator: activators callsign
-        :param str freq: frequency in MHz
-        :param str ref: the park reference (ex K-7465)
-        :returns true if the spot has already been hunted
+        :param str activator: the spotted callsign
+        :param str freq: spot frequency, used to derive the band
+        :param str ref: the park or summit reference
+        :param bool use_basecall: when True, compare base callsigns so that
+            portable suffixes and country prefixes do not create duplicates,
+            eg. SM6KZW and SM6KZW/P, or SM6KZW and LA/SM6KZW
         '''
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         band = get_band(freq)
-        # logging.debug(f"using band {band} for freq {freq}")
 
         if band is not None:
             terms = QsoQuery.get_band_lmt_terms(band, Qso.freq)
         else:
             terms = [1 == 1]
 
-        flag = self.session.query(Qso) \
-            .filter(Qso.call == activator,
-                    Qso.time_on > now.date(),
-                    Qso.sig_info == ref,
-                    sa.and_(*terms)) \
-            .count() > 0
-        return flag
+        if not use_basecall:
+            sql = sa.select(sa.func.count()) \
+                .where(Qso.call == activator) \
+                .where(Qso.sig_info == ref) \
+                .where(Qso.time_on > now.date()) \
+                .where(sa.and_(*terms))
 
-    def get_spot_hunted_bands(self, activator: str, ref: str) -> str:
-        '''
-        Gets the string of all hunted bands, this spot has been hunted today
+            return self.session.scalar(sql) > 0
 
-        :param str activator: activators callsign
-        :param str ref: park reference
-        :returns list of hunted bands for today
+        # Base call equality cannot be expressed in SQL here, so narrow the
+        # query as far as possible and finish the comparison in Python.
+        # get_basecall() always returns either the whole callsign or one of
+        # its slash separated segments, so every callsign that normalises to
+        # basecall must contain it as a substring. The LIKE below is
+        # therefore a safe superset and cannot produce false negatives.
+        basecall = get_basecall(activator)
+
+        sql = sa.select(Qso.call) \
+            .where(Qso.call.contains(basecall)) \
+            .where(Qso.sig_info == ref) \
+            .where(Qso.time_on > now.date()) \
+            .where(sa.and_(*terms))
+
+        for row in self.session.execute(sql).all():
+            if get_basecall(row.call) == basecall:
+                return True
+
+        return False
+
+    def get_spot_hunted_bands(self,
+                              activator: str,
+                              ref: str,
+                              use_basecall: bool = False) -> str:
         '''
-        now = datetime.utcnow()
+        Return a comma separated list of the bands on which this activator
+        has been worked at this reference today.
+
+        :param str activator: the spotted callsign
+        :param str ref: the park or summit reference
+        :param bool use_basecall: when True, compare base callsigns so that
+            portable suffixes and country prefixes do not create duplicates
+        '''
+        now = datetime.now(timezone.utc)
         result = ""
         hunted_b = []
 
-        qsos = self.session.query(Qso) \
-            .filter(Qso.call == activator,
-                    Qso.sig_info == ref,
-                    Qso.time_on > now.date()) \
-            .all()
+        basecall = get_basecall(activator)
+
+        if use_basecall:
+            # See get_spot_hunted_flag: this LIKE is a superset of the base
+            # call match and is narrowed exactly in the loop below.
+            call_term = Qso.call.contains(basecall)
+        else:
+            call_term = Qso.call == activator
+
+        sql = sa.select(Qso.call, Qso.sig_info, Qso.time_on, Qso.freq) \
+            .where(call_term) \
+            .where(Qso.sig_info == ref) \
+            .where(Qso.time_on > now.date())
+
+        qsos = self.session.execute(sql).all()
 
         for q in qsos:
+            if use_basecall and get_basecall(q.call) != basecall:
+                continue
+
             band = get_band(q.freq)
             if band is None:
-                logging.warn(f"unknown band for freq {q.freq}")
+                logging.warning(f"unknown band for freq {q.freq}")
             else:
                 hunted_b.append(bandNames[band.value])
 

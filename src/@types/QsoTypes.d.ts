@@ -20,4 +20,5 @@ export interface Qso {
     sig_info: string;
     pota_ref: string | undefined;
     sota_ref: string | undefined;
+    wwff_ref: string | undefined;
 }

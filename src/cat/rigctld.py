@@ -31,12 +31,15 @@ class rigctld(ICat):
             self.online = False
             logger.warning("init_cat", exc_info=e)
 
+    @property
+    def is_online(self) -> bool:
+        return self.online
+
     def set_mode(self, mode: str) -> bool:
         """sets the radios mode"""
         if self.socket:
             try:
-                self.online = True
-                self.socket.send(bytes(f"M {mode} 0\n", "utf-8"))
+                self.socket.send(bytes(f"M {mode} -1\n", "utf-8"))
                 _ = self.socket.recv(1024).decode().strip()
                 return True
             except socket.error as e:
@@ -52,10 +55,12 @@ class rigctld(ICat):
         """sets the radios vfo"""
         if self.socket:
             try:
-                self.online = True
                 self.socket.send(bytes(f"F {freq}\n", "utf-8"))
                 _ = self.socket.recv(1024).decode().strip()
                 return True
+            except socket.timeout as timeout:
+                logger.warning("set_vfo timed out", exc_info=timeout)
+                return False
             except socket.error as e:
                 self.online = False
                 logger.debug("set_vfo", exc_info=e)
@@ -63,4 +68,51 @@ class rigctld(ICat):
                 return False
 
         self.init_cat(host=self.host, port=self.port)
+        return False
+
+    def get_vfo(self) -> str:
+        '''
+        Gets the radios vfo frequency in hz
+
+        :returns: fx in hz or empty str on error
+        '''
+        if self.socket:
+            try:
+                self.socket.send(bytes(f"f\n", "utf-8"))
+                fx = self.socket.recv(1024).decode().strip()
+                logger.debug(f"got freq {fx}")
+                return fx
+            except socket.error as e:
+                self.online = False
+                logger.debug("get_vfo", exc_info=e)
+                self.socket = None
+                return "0"
+
+    def get_ptt(self):
+        """Returns ptt state via rigctld"""
+        if self.socket:
+            try:
+                self.socket.send(b"t\n")
+                ptt = self.socket.recv(1024).decode()
+                logger.debug("%s", ptt)
+                ptt = ptt.strip()
+                logger.debug(f'get_ptt -> {ptt}')
+                return ptt
+            except socket.error as exception:
+                self.online = False
+                logger.debug("%s", exception)
+                self.socket = None
+        return False
+
+    def set_cw_speed(self, speed_wpm: int):
+        if self.socket:
+            try:
+                payload = bytes(f"L KEYSPD {speed_wpm}\n", "utf-8")
+                logger.debug(f"cw speed cmd: {payload}")
+                self.socket.send(payload)
+                _ = self.socket.recv(1024).decode().strip()
+            except socket.error as exception:
+                self.online = False
+                logger.warning("set_cw_speed exception: %s", exception)
+                self.socket = None
         return False

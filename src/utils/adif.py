@@ -3,6 +3,7 @@ import datetime
 import logging as L
 import os
 import socket
+from typing import Any
 import bands
 import adif_io
 import re
@@ -55,6 +56,13 @@ class AdifLog():
             file.write(adif + "\n")
 
     @staticmethod
+    def adif_to_obj(adif: str) -> Any:
+        qsos, header = adif_io.read_from_string(adif)
+
+        if len(qsos) > 0:
+            return qsos[0]
+
+    @staticmethod
     def import_from_log(file_name: str, the_db: DataBase):
         '''
         Imports the ADIF records from the given file into the given Database.
@@ -76,13 +84,28 @@ class AdifLog():
         logging.debug(f"adif hdr {header}")
 
         sigs = ['POTA', 'SOTA', 'WWFF']
+
+        # adjust lists so that qsos with only the xOTA_REF set get tagged
+        for x in qsos:
+            if ('POTA_REF' in x.keys()):
+                x['SIG'] = 'POTA'
+                x['SIG_INFO'] = x['POTA_REF'].split(',')[0]
+            if ('SOTA_REF' in x.keys()):
+                x['SIG'] = 'SOTA'
+                x['SIG_INFO'] = x['SOTA_REF'].split(',')[0]
+            if ('WWFF_REF' in x.keys()):
+                x['SIG'] = 'WWFF'
+                x['SIG_INFO'] = x['WWFF_REF'].split(',')[0]
+
+        logging.debug(f"{len(qsos)} {str(qsos[0])}")
+
         filtered = [q for q in qsos if 'SIG' in q and q['SIG'] in sigs]
+
+        logging.debug(f"{len(filtered)} {repr(filtered)}")
 
         for qso in filtered:
             q = Qso()
-            if 'SIG_INFO' not in qso:
-                logging.warning('no sig_info ' + str(qso))
-                continue
+            logging.debug(f"adif to import {str(qso)}")
 
             if qso["SIG"] == 'POTA' or qso["SIG"] == 'WWFF':
                 sig_info_check = re.match(pota_pat, qso["SIG_INFO"])
@@ -132,10 +155,21 @@ class AdifLog():
             logging.error("_send_msg exception:", err)
 
     def _get_adif_field(self, field_name: str, field_data: str) -> str:
+        if (field_data is None):
+            logging.warning(f"null value in _get_adif_field {field_name}")
+            return ''
+
         return f"<{field_name.upper()}:{len(field_data)}>{field_data}\n"
 
     def _get_adif(self, qso: Qso, my_call: str, my_grid6: str) -> str:
         band_name = bands.get_band_name(qso.freq)
+
+        # the NOBAND string is NA which isn't a valid band name. If we dont
+        # have a good band name dont add this field.
+        if band_name != 'NA':
+            band_adif = self._get_adif_field("band", band_name)
+        else:
+            band_adif = ''
 
         # todo:
         # self._get_adif_field("distance", qso.sig_info) +
@@ -150,9 +184,9 @@ class AdifLog():
 
         adif = \
             self._get_adif_field("call", qso.call) + \
-            self._get_adif_field("band", band_name) + \
+            band_adif + \
             self._get_adif_field("name", qso.name if qso.name else '') + \
-            self._get_adif_field("comment", qso.comment) + \
+            self._get_adif_field("comment", qso.comment if qso.comment else '') + \
             self._get_adif_field("sig", qso.sig) + \
             self._get_adif_field("sig_info", qso.sig_info) + \
             self._get_adif_field("gridsquare", qso.gridsquare) + \
@@ -168,6 +202,6 @@ class AdifLog():
             self._get_adif_field("qso_date", q_date) + \
             self._get_adif_field("time_on", q_time_on) + \
             self._get_adif_field("my_gridsquare", my_grid6) + \
-            "<EOR>\n"
+            "<EOR>\n"  # noqa: E501
 
         return adif

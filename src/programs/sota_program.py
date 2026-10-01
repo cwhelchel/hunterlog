@@ -1,12 +1,18 @@
+from collections import defaultdict
+import csv
+from io import StringIO
+import re
 from db.models.parks import Park
 from db.models.qsos import Qso
+from programs.apis.iapi import IApi
 from programs.program import Program
 from db.models.spots import Spot
 import sqlalchemy as sa
 import logging as L
 import time
 
-from sota.sota import SotaApi
+from programs.apis import SotaApi
+from utils.metadata import Metadata
 
 log = L.getLogger(__name__)
 
@@ -16,6 +22,16 @@ class SotaProgram(Program):
     @property
     def seen_regions(self) -> list[str]:
         return self.regions
+
+    @property
+    def api(self) -> IApi:
+        self.sota_api = SotaApi() if self.sota_api is None else self.sota_api
+        return self.sota_api
+
+    def test_reference_str(self, ref: str) -> bool:
+        if re.match(r"[a-zA-Z0-9]{2,3}\/[a-zA-Z0-9]{2}-[0-9]{3}", ref):
+            return True
+        return False
 
     def get_reference(self,
                       ref: str,
@@ -36,10 +52,14 @@ class SotaProgram(Program):
                 self.db.session.add(to_add)
                 self.db.session.commit()
             summit = self.db.parks.get_park(ref)
+        elif summit.name is None:
+            log.info(f"{ref} summit found but half-loaded. pulling from api")
+            self._update_ref_in_db(summit)
+            summit = self.db.parks.get_park(ref)
 
         return summit
 
-    def update_spots(self, spots):
+    def update_spots(self, spots, metadata: Metadata):
         self.regions = list[str]()
         start_time = time.perf_counter()
 
@@ -95,7 +115,17 @@ class SotaProgram(Program):
             else:
                 self.db.session.add(sota_to_add)
 
-            self.update_spot_metadata(sota_to_add)
+            meta = metadata.get_metadata(sota_to_add.spotId)
+            if meta:
+                sota_to_add.park_hunts = meta.park_hunts
+                sota_to_add.op_hunts = meta.op_hunt
+                sota_to_add.hunted = meta.hunted_flag
+                sota_to_add.hunted_bands = meta.hunted_bands
+                sota_to_add.is_hidden = meta.is_hidden
+            else:
+                log.warning(f"cache miss {sota_to_add.spotId}")
+
+            # self.update_spot_metadata(sota_to_add)
 
         end_time = time.perf_counter()
         elapsed_time = end_time - start_time
@@ -106,10 +136,19 @@ class SotaProgram(Program):
         if spot.grid4 == '':
             sota_api = SotaApi()
             summit = sota_api.get_summit(spot.reference)
-            spot.grid4 = summit['locator'][:4]
-            spot.grid6 = summit['locator']
-            spot.latitude = summit['latitude']
-            spot.longitude = summit['longitude']
+            if (summit is None):
+                m = f"summit data not found for {spot.reference}. " \
+                    + "setting lat/lon of spot to (0,0)"
+                log.warning(m)
+                spot.grid4 = 'JJ00'
+                spot.grid6 = 'JJ00aa'
+                spot.latitude = '0.0'
+                spot.longitude = '0.0'
+            else:
+                spot.grid4 = summit['locator'][:4]
+                spot.grid6 = summit['locator']
+                spot.latitude = summit['latitude']
+                spot.longitude = summit['longitude']
             self.db.session.commit()
 
         q = Qso()
@@ -118,20 +157,14 @@ class SotaProgram(Program):
         self.update_qso_dist_bearing(q)
         return q
 
-    def inc_ref_hunt(self, ref: str, pota_ref: str):
-        summit_code = ref
-        ok = self.db.parks.inc_ref_hunt(summit_code)
-        if not ok:
-            summit = SotaApi().get_summit(summit_code)
-            to_add = self.parse_ref_data(summit)
-            if to_add:
-                self.db.session.add(to_add)
-                self.db.session.commit()
-            if not self.db.parks.inc_ref_hunt(summit_code):
-                log.error('unable to update ref hunt')
+    def download_reference_data(self, ref_code: str) -> any:
+        return SotaApi().get_summit(ref_code)
 
     def parse_ref_data(self, summit) -> Park:
         s = Park()
+        if summit is None:
+            return None
+        log.debug(f"parsing summit data: {summit}")
         s.reference = summit['summitCode']
         s.name = summit['name']
         s.grid4 = summit['locator'][:4]
@@ -159,3 +192,71 @@ class SotaProgram(Program):
         s.firstActivationDate = ''
         s.website = f"https://www.sotadata.org.uk/en/summit/{summit['summitCode']}"  # noqa E501
         return s
+
+    def parse_spots_data(self, spot_data) -> list[Spot]:
+        if spot_data is None:
+            return []
+
+        res: list[Spot] = []
+
+        for sota in spot_data:
+            s = Spot()
+            s.init_from_sota(sota)
+            res.append(s)
+        return res
+
+    def parse_hunt_data(self, data) -> dict[str, int]:
+        # data here is a raw string csv from the sota chaser complete log
+        # download
+
+        hdr = ['version', 'my_call', 'x', 'date', 'time', 'band',
+               'mode', 'call', 'summit', 'comment', 'points']
+        csv_file = StringIO(data)
+        csv_reader = csv.DictReader(csv_file, delimiter=',', fieldnames=hdr)
+
+        result = defaultdict(int)
+
+        skip_headers = False  # no headers in sota file
+
+        for row in csv_reader:
+            if skip_headers:
+                skip_headers = False
+                continue
+            else:
+                k = row['summit']
+                result[k] += 1
+
+        return result
+
+    def _update_ref_in_db(self, summit: Park):
+        api_res = SotaApi().get_summit(summit.reference)
+        log.debug(f"ref data from api {api_res}")
+
+        if api_res:
+            temp = self.parse_ref_data(api_res)
+            summit.name = temp.name
+            summit.grid4 = temp.grid4
+            summit.grid6 = temp.grid6
+            summit.active = temp.active
+            summit.latitude = temp.latitude
+            summit.longitude = temp.longitude
+            summit.parkComments = temp.parkComments
+            summit.accessibility = temp.accessibility
+            summit.sensitivity = temp.sensitivity
+            summit.accessMethods = temp.accessMethods
+            summit.activationMethods = temp.activationMethods
+            summit.agencies = temp.agencies
+            summit.agencyURLs = temp.agencyURLs
+            summit.parkURLs = temp.parkURLs
+            summit.parktypeId = temp.parktypeId
+            summit.parktypeDesc = temp.parktypeDesc
+            summit.locationDesc = temp.locationDesc
+            summit.locationName = temp.locationName
+            summit.entityId = temp.entityId
+            summit.entityName = temp.entityName
+            summit.referencePrefix = temp.referencePrefix
+            summit.entityDeleted = temp.entityDeleted
+            summit.firstActivator = temp.firstActivator
+            summit.firstActivationDate = temp.firstActivationDate
+            summit.website = temp.website
+            self.db.session.commit()

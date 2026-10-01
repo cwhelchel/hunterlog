@@ -18,5 +18,8 @@ export interface AlertRow {
     exclude_modes: string,
     last_triggered: string | null,
     dismissed_until: string | null,
-    dismissed_callsigns: string | null
+    dismissed_callsigns: string | null,
+    call_search: string | null,
+    excl_band_above: string | null,
+    excl_band_below: string | null,
 };

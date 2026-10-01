@@ -9,15 +9,24 @@ logging = L.getLogger(__name__)
 
 class Filters:
     def __init__(self):
-        self.band_filter = Bands.NOBAND
+        self.mode_filter = list[str]()
+        self.band_filter = list[Bands]()
         self.region_filter = list[str]()
         self.location_filter = None
         self.qrt_filter_on = True  # filter out QRT spots by default
+        self.hidden_filter_on = True  # filter out hidden spots by default
         self.hunted_filter_on = False  # filter out spots you hunted
         self.only_new_on = False  # filter out parks you have never worked
         self.cont_filter = list[str]()
+        self.sig_filter = ''
 
-    def set_band_filter(self, band: Bands):
+    def set_mode_filter(self, modes: list[str]):
+        if '' in modes:
+            modes.remove('')
+        logging.debug(f"setting modes filter to {modes}")
+        self.mode_filter = modes
+
+    def set_band_filter(self, band: list[Bands]):
         logging.debug(f"setting band filter to {band}")
         self.band_filter = band
 
@@ -37,6 +46,10 @@ class Filters:
         logging.debug(f"setting QRT filter to {is_on}")
         self.qrt_filter_on = is_on
 
+    def set_hidden_filter(self, is_on: bool):
+        logging.debug(f"setting hidden filter to {is_on}")
+        self.hidden_filter_on = is_on
+
     def set_hunted_filter(self, is_on: bool):
         logging.debug(f"setting hunted filter to {is_on}")
         self.hunted_filter_on = is_on
@@ -53,9 +66,9 @@ class Filters:
         Gets all the search terms that should be boolean and-ed together when
         filtering the spots.
         '''
-        return self._get_band_filters() + \
-            self._get_location_filters() + \
+        return self._get_location_filters() + \
             self._get_qrt_filter() + \
+            self._get_hidden_filter() + \
             self._get_hunted_filter() + \
             self._get_only_new_filter() + \
             self._get_sig_filter()
@@ -68,11 +81,27 @@ class Filters:
         return self._get_region_filters() + \
             self._get_continent_filters()
 
-    def _get_band_filters(self) -> list[sa.ColumnElement[bool]]:
-        band = Bands(self.band_filter)  # not sure why cast is needed
-        if band == Bands.NOBAND:
+    def _get_mode_filters(self) -> list[sa.ColumnElement[bool]]:
+        modes = self.mode_filter
+        if (modes is None or len(modes) == 0):
             return []
-        terms = QsoQuery.get_band_lmt_terms(band, Spot.frequency)
+
+        terms = []
+        for r in modes:
+            if len(r) > 0:
+                terms.append(Spot.mode == r)
+        return terms
+
+    def _get_band_filters(self) -> list[list[sa.ColumnElement[bool]]]:
+        bands = self.band_filter
+
+        if (bands is None or len(bands) == 0):
+            return []
+
+        terms = []
+        for band in bands:
+            b = Bands(band)
+            terms.append(QsoQuery.get_band_lmt_terms(b, Spot.frequency))
         return terms
 
     def _get_region_filters(self) -> list[sa.ColumnElement[bool]]:
@@ -108,6 +137,13 @@ class Filters:
         qrt = self.qrt_filter_on
         if qrt:
             return [Spot.is_qrt == False]  # noqa E712
+        terms = []
+        return terms
+
+    def _get_hidden_filter(self) -> list[sa.ColumnElement[bool]]:
+        filt_on = self.hidden_filter_on
+        if filt_on:
+            return [Spot.is_hidden == False]  # noqa E712
         terms = []
         return terms
 

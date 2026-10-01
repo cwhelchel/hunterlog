@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface SpotRow {
     spotId: number,
     activator: string,
@@ -27,5 +28,6 @@ export interface SpotRow {
     is_qrt: boolean,
     act_cmts: string,
     cw_wpm: number,
-    spot_source: string
+    spot_source: string,
+    is_hidden: boolean
 };
