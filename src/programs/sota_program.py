@@ -136,7 +136,7 @@ class SotaProgram(Program):
         if spot.grid4 == '':
             sota_api = SotaApi()
             summit = sota_api.get_summit(spot.reference)
-            if (summit is not None):
+            if (summit is None):
                 m = f"summit data not found for {spot.reference}. " \
                     + "setting lat/lon of spot to (0,0)"
                 log.warning(m)
@@ -164,6 +164,7 @@ class SotaProgram(Program):
         s = Park()
         if summit is None:
             return None
+        log.debug(f"parsing summit data: {summit}")
         s.reference = summit['summitCode']
         s.name = summit['name']
         s.grid4 = summit['locator'][:4]
