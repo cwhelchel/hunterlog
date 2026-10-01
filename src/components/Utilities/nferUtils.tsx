@@ -1,5 +1,8 @@
 import { SpotComments } from "../../@types/SpotComments";
 
+// match POLO and any general POTA ref (US-XXXX CA-XXXX)
+const nferPat = /\b([0-9n]+-fer:)?((?:\s*[a-zA-Z0-9]{2}-[0-9]{4,5}|TEST){1,})/;
+
 export function getPotaPlusNfer(comment: string) {
     const re = new RegExp("{Also:([^}]*)}");
     const m = comment.match(re);
@@ -13,13 +16,16 @@ export function getPotaPlusNfer(comment: string) {
 
 export function getPoloNfer(comment: string) {
     // parse polo nfer comment
-    const poloRex = /\b[0-9]+-fer:((?:\s+[A-Z0-9]+-[0-9]{4,5}|TEST){2,})/;
-    const poloRe = new RegExp(poloRex);
 
-    const m = comment.match(poloRe);
+    const m = comment.match(nferPat);
     if (m) {
         // make em comma separated
-        const parks = m[1].trim().replace(/ /g, ',');
+        console.log("da match", m);
+        let parks = "";
+        if (m.length == 2)
+            parks = m[1]?.trim().replace(/ /g, ',');
+        else if (m.length == 3)
+            parks = m[2]?.trim().replace(/ /g, ',');
         return parks;
     }
 
@@ -51,8 +57,7 @@ export function testForNfer(comment: string) {
     if (comment.includes('{Also:'))
         return true;
 
-    // Ham2k Polo self spot for n-fers
-    if (comment.match(/\b[0-9]+-fer:(?: [A-Z0-9]+-(?:[0-9]{4,5}|TEST)){2,}/))
+    if (comment.match(nferPat))
         return true;
 
     return false;
