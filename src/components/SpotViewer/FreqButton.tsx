@@ -4,6 +4,8 @@ import { checkApiResponse2 } from '../Utilities/util';
 import { useAppContext } from '../AppContext';
 import { useMessageQueue } from '../MessageContext';
 
+import debounce from 'lodash/debounce';
+
 // Update the Button's color options to include an alert option
 declare module '@mui/material/Button' {
     interface ButtonPropsColorOverrides {
@@ -36,25 +38,32 @@ export default function FreqButton(props: IFreqButtonProps) {
     const actId = [props.activator, props.frequency, props.mode].join("|");
     const id = actId + '==' + React.useId();
 
+    // Protect the debounced function from being recreated on re-renders
+    const debouncedOnClick = React.useCallback(
+        debounce((e: string, m: string, id: string) => {
+            console.log("js qsy to...");
+            console.log(`param ${e} ${m}`);
+            const p = window.pywebview.api.cat.qsy_to(e, m);
+            p.then((resp: string) => {
+                checkApiResponse2(resp, addMessage);
+                setLastQsyBtnId(id);
+            });
+        }, 250),
+        [] // Empty dependency array ensures it's created only once
+    );
+
     function onClick(e: string, m: string, id: string) {
-        console.log("js qsy to...");
-        console.log(`param ${e} ${m}`);
-        const p = window.pywebview.api.cat.qsy_to(e, m);
-        p.then((resp: string) => {
-            checkApiResponse2(resp, addMessage);
-            setLastQsyBtnId(id);
-            //console.log(`freqbtn qsy resp. spotId: ${id}`);
-        });
+        debouncedOnClick(e, m, id);
     };
 
-    function checkQsyId(btnId: string) : boolean {
+    function checkQsyId(btnId: string): boolean {
         const x = btnId.split('==');
         const actId = x[0];
         const y = actId.split('|');
 
         return (
-            y[0] === props.activator && 
-            y[1] === props.frequency && 
+            y[0] === props.activator &&
+            y[1] === props.frequency &&
             y[2] === props.mode
         );
     }

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import * as React from 'react';
 import { Backdrop, Badge, CircularProgress } from '@mui/material';
-import { DataGrid, GridColDef, GridValueGetterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams, GridRowClassNameParams, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarColumnsButton, GridToolbarQuickFilter, GridPaginationModel, GridActionsCell, GridActionsCellItem, GridInputRowSelectionModel, GridDensity, GridState } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridValueGetterParams, GridFilterModel, GridSortModel, GridSortDirection, GridCellParams, GridRowClassNameParams, GridToolbarContainer, GridToolbarDensitySelector, GridToolbarColumnsButton, GridToolbarQuickFilter, GridPaginationModel, GridActionsCell, GridActionsCellItem, GridInputRowSelectionModel, GridDensity, GridState, GridRowId, GridRowParams } from '@mui/x-data-grid';
 import { GridEventListener } from '@mui/x-data-grid';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
@@ -22,6 +22,8 @@ import HandleSpotRowClick from './HandleSpotRowClick';
 import ProgramIcon from '../Icons/ProgramIcon';
 import ScanButton from './ScanButton';
 import { useMessageQueue } from '../MessageContext';
+
+import debounce from 'lodash/debounce';
 
 
 // this needs to be moved outside of the grid's rendering function (e.g. SpotViewer())
@@ -170,6 +172,9 @@ export default function SpotViewer() {
         const storedDensity = localStorage.getItem('DATA_GRID_DENSITY') as GridDensity;
         return storedDensity || 'standard';
     });
+
+    // Stack of rows clicked since the last flush
+    const stackRef = React.useRef<SpotRow[]>([]);
 
     const handleStateChange = (state: GridState) => {
         // console.log('Grid state changed:', state);
@@ -340,20 +345,76 @@ export default function SpotViewer() {
         return row.spotId;
     }
 
-    const handleRowClick: GridEventListener<'rowClick'> = (
-        params,  // GridRowParams
-        event,   // MuiEvent<React.MouseEvent<HTMLElement>>
-        details, // GridCallbackDetails
-    ) => {
+    // Protect the debounced function from being recreated on re-renders
+    // const debouncedRowClick = React.useCallback(
+    //     debounce((spotId: number) => {
+    //         // setting spotId in ctx is connected to HandleSpotRowClick
+    //         const newCtxData = { ...contextData };
+    //         // console.log('setting spot to ' + params.row.spotId);
+    //         newCtxData.spotId = spotId;
+    //         setData(newCtxData);
+
+    //         // Also update visual selection to highlight the clicked row
+    //         setRowSelectionModel([spotId]);
+    //     }, 250),
+    //     [] // Empty dependency array ensures it's created only once
+    // );
+
+    const setStateForRowClick = React.useCallback((clickedRows: SpotRow[]) => {
+        const lastRow = clickedRows[clickedRows.length - 1];
+
         // setting spotId in ctx is connected to HandleSpotRowClick
         const newCtxData = { ...contextData };
+        newCtxData.spotId = lastRow.spotId;
+
         // console.log('setting spot to ' + params.row.spotId);
-        newCtxData.spotId = params.row.spotId;
         setData(newCtxData);
 
         // Also update visual selection to highlight the clicked row
-        setRowSelectionModel([params.row.spotId]);
+        setRowSelectionModel([lastRow.spotId]);
+    }, []);
+
+    // Debounced flush - stable across renders via useMemo
+    const debouncedFlush = React.useMemo(
+        () =>
+            debounce(() => {
+                const rowsToFlush = stackRef.current;
+                stackRef.current = [];
+                setStateForRowClick(rowsToFlush);
+            }, 
+            1000, 
+            { trailing: true }
+        ),
+        [setStateForRowClick]
+    );
+
+    // Cancel any pending debounce on unmount to avoid calling into an unmounted component
+    React.useEffect(() => {
+        return () => {
+            debouncedFlush.cancel();
+        };
+    }, [debouncedFlush]);
+
+    const handleRowClick = (params: GridRowParams<SpotRow>) => {
+        if (rowSelectionModel[0] != params.row.spotId) {
+            console.log('pushing', params.row.spotId, params.row.activator);
+            stackRef.current.push(params.row);
+            debouncedFlush();
+        }
     };
+
+
+    // const handleRowClick: GridEventListener<'rowClick'> = (
+    //     params,  // GridRowParams
+    //     event,   // MuiEvent<React.MouseEvent<HTMLElement>>
+    //     details, // GridCallbackDetails
+    // ) => {
+    //     // console.log('new spotid', params.row.spotId);
+    //     // console.log(rowSelectionModel);
+
+    //     if (rowSelectionModel[0] != params.row.spotId)
+    //         debouncedRowClick(params.row.spotId);
+    // };
 
     function setSortModelAndSave(newModel: GridSortModel) {
         setSortModel(newModel);

@@ -33,12 +33,17 @@ export default function HandleSpotRowClick() {
 
         const t = JSON.parse(r) as SpotComments[];
 
+        // wwbota spots will use {With: } syntax bc its set from backend
+        // wwbota provides multi-ref info in spot api
         const filtered = t.filter(function (el) {
             return el.comments.includes('{With:');
         });
 
+        // for parsing of POTA comments that the activator posted
         const nferComments = t.filter(function (el) {
-            return testForNfer(el.comments);
+            if (el.spotter === el.activator)
+                return testForNfer(el.comments);
+            return false;
         });
 
         // console.log('nferComments');
@@ -152,8 +157,8 @@ export default function HandleSpotRowClick() {
             timer = setTimeout(() => {
                 setIsWorking(true);
                 loadSpotData(contextData.spotId);
-            }, 400);
-            
+            }, 100);
+
         } else {
             console.log('re-entry prevented on spot row click');
         }
