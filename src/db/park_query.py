@@ -93,9 +93,10 @@ class ParkQuery:
             p.entityName = park['entityName']
             p.referencePrefix = park['referencePrefix']
             p.entityDeleted = park['entityDeleted']
-            p.firstActivator = park['firstActivator']
-            p.firstActivationDate = park['firstActivationDate']
             p.website = park['website']
+            # these could be missing b/c park has never been activated
+            p.firstActivator = park.get('firstActivator')
+            p.firstActivationDate = park.get('firstActivationDate')
 
         if not delay_commit:
             self.session.commit()
