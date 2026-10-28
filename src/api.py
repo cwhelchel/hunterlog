@@ -167,7 +167,14 @@ class JsApi:
             return self._response(False, "failed to get spot.")
 
         prog = spot.spot_source
-        q = self.programs[prog].build_qso(spot)
+
+        try:
+            # build qso _should_ return null if there's an error, but if
+            # something sneaks by this will catch it and alert user
+            q = self.programs[prog].build_qso(spot)
+        except Exception as ex:
+            logging.error('build_qso exception', exc_info=ex)
+            q = None
 
         if q is None:
             logging.error(f"failed to build qso from spot {spot}")
