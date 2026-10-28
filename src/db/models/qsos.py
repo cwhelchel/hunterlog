@@ -88,13 +88,7 @@ class Qso(Base):
             int(adif['QSO_DATE'][4:6]),
             int(adif['QSO_DATE'][6:]))
 
-        qt = datetime.datetime(
-            int(adif['QSO_DATE'][:4]),
-            int(adif['QSO_DATE'][4:6]),
-            int(adif['QSO_DATE'][6:]),
-            int(adif['TIME_ON'][:2]),
-            int(adif['TIME_ON'][2:4]),
-            int(adif['TIME_ON'][4:]))
+        qt = Qso.time_on_from_adif(adif)
 
         self.call = adif['CALL']
         if self.call is None or self.call == '':
@@ -127,6 +121,26 @@ class Qso(Base):
     def __repr__(self):
         return "<qso({self.qso_id!r}:{self.call!r} on {self.qso_date!r})>" \
             .format(self=self)
+
+    @staticmethod
+    def time_on_from_adif(adif) -> datetime.datetime:
+        date = adif['QSO_DATE']
+        time = adif['TIME_ON']
+        seconds = 0
+
+        # in adif spec 3.17 TIME_ON can be HHMM or HHMMSS
+        if len(time) == 6:
+            seconds = int(time[4:])
+
+        qt = datetime.datetime(
+            int(date[:4]),
+            int(date[4:6]),
+            int(date[6:]),
+            int(time[:2]),
+            int(time[2:4]),
+            seconds)
+
+        return qt
 
 
 class QsoSchema(SQLAlchemyAutoSchema):

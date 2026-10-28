@@ -1310,11 +1310,12 @@ class JsApi:
             sig_info = spot.reference
             q.sig = sig
             q.sig_info = sig_info
-            q.pota_ref = sig_info if sig == 'POTA' else ''  # NOQA
-            q.sota_ref = sig_info if sig == 'SOTA' else ''  # NOQA
-            q.wwff_ref = sig_info if sig == 'WWFF' else ''  # NOQA
-            q.comment = f"[{sig} {sig_info}]"  # NOQA
+            q.pota_ref = sig_info if sig == 'POTA' else ''
+            q.sota_ref = sig_info if sig == 'SOTA' else ''
+            q.wwff_ref = sig_info if sig == 'WWFF' else ''
+            q.comment = f"[{sig} {sig_info}]"
 
+            q.gridsquare = spot.grid6
             q.state = spot.get_state_or_province()
 
         q.name = self.db.get_activator_name(q.call)
