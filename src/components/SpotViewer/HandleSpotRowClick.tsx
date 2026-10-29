@@ -147,6 +147,8 @@ export default function HandleSpotRowClick() {
     useEffect(() => {
         let timer: number | undefined;
 
+        console.log("spotId changed", contextData.spotId);
+
         if (!isWorking) {
             // a cleared or logged qso changes spotId to 0
             if (contextData.spotId == 0)

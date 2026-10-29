@@ -1,6 +1,7 @@
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+from marshmallow import EXCLUDE
 
 Base = declarative_base()
 engine = sa.create_engine("sqlite:///spots.db")
@@ -29,6 +30,7 @@ class ActivatorSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = Activator
         load_instance = True
+        unknown = EXCLUDE
 
 
 Base.metadata.create_all(engine)
