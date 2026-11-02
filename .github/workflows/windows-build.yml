@@ -42,7 +42,7 @@ jobs:
     - name: Setup NSIS
       uses: nsis-dev/setup-nsis@v1
       with:
-        nsis-version: '3.13' # current as of Nov 2026
+        version: '3.13' # current as of Nov 2026
 
     - name: Build Windows Installer - makensis
       run: |
