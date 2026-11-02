@@ -57,7 +57,7 @@ jobs:
     - name: Upload installer
       uses: actions/upload-artifact@v4
       with:
-        name: hunterlog
+        name: hunterlog_installer
         path: install/Setup_Hunterlog.exe
         
 
