@@ -309,11 +309,18 @@ export default function QsoEntry() {
 
         const newCtxData = { ...contextData };
 
+        // freq and comment don't get saved onBlur and the default RS(T) will 
+        // overwrite what may be entered. so pull it from text boxes here and
+        // use in cotextData.qso
+        const comment = qso.comment;
+        const freq = qso.freq;
+
         if (newCtxData.qso === null) {
-            newCtxData.qso = { ...defaultQso, mode: entry, rst_sent: rst, rst_recv: rst };
+            console.log('onModeEntry: no qso in context data');
+            newCtxData.qso = { ...defaultQso, mode: entry, rst_sent: rst, rst_recv: rst, freq: freq, comment: comment };
             setQso({ ...qso, rst_sent: rst, rst_recv: rst });
         } else if (newCtxData.qso.mode != entry) {
-            newCtxData.qso = { ...newCtxData.qso, mode: entry, rst_sent: rst, rst_recv: rst };
+            newCtxData.qso = { ...newCtxData.qso, mode: entry, rst_sent: rst, rst_recv: rst, freq: freq, comment: comment };
             setQso({ ...qso, rst_sent: rst, rst_recv: rst });
         }
 
