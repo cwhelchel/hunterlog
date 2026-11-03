@@ -61,7 +61,7 @@ class Integration:
         self.pkt_q.subscribe('logged_adif_pkt', self.logged_packet)
         self.pkt_q.subscribe('heartbeat_pkt', self.heartbeat_packet)
         self.pkt_q.subscribe('decode_pkt', self.decode_packet)
-        self.server = WsjtxServer(ip_address=ip, port=port, queue=self.pkt_q)
+        self.server = WsjtxServer(ip_address=ip, udp_port=port, queue=self.pkt_q)  # NOQA E501
         self._lhandler = log_handler
         self._shandler = status_handler
         self._cq = {}
