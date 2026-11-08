@@ -1,6 +1,7 @@
 import requests
 import logging as L
 from cachetools.func import ttl_cache
+from utils.http_session import http
 
 from programs.apis.iapi import IApi
 # import urllib.parse
@@ -23,7 +24,7 @@ class WwffApi(IApi):
 
     def get_spots(self):
         '''Return all current spots from GMA WWFF API'''
-        response = requests.get(SPOT_URL)
+        response = http.get(SPOT_URL)
         logging.debug(response)
         if response.status_code == 200:
             try:
@@ -38,7 +39,7 @@ class WwffApi(IApi):
     @ttl_cache(ttl=24*60*60)  # 24 hours of cache
     def get_reference(self, wwff_ref: str):
         '''Return all current spots from GMA WWFF API'''
-        response = requests.get(WWFF_INFO__URL + wwff_ref)
+        response = http.get(WWFF_INFO__URL + wwff_ref)
         if response.status_code == 200:
             json = response.json()
             return json

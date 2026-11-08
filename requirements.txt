@@ -31,6 +31,7 @@ pywebview==5.1
 pywin32==306; platform_system == "Windows"
 pywin32-ctypes==0.2.2; platform_system == "Windows"
 requests>=2.32.0
+requests-cache>=1.2.1
 SQLAlchemy>=2.0.41
 tornado>=6.4.1; platform_system == "Darwin"
 typing_extensions>=4.15.0

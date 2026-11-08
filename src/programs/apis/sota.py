@@ -1,6 +1,7 @@
 import requests
 import logging as L
 from cachetools.func import ttl_cache
+from utils.http_session import http
 # import urllib.parse
 # from utils.callsigns import get_basecall
 
@@ -18,7 +19,7 @@ class SotaApi():
 
     def get_spots(self):
         '''Return all current spots from POTA API'''
-        response = requests.get(SPOT_URL)
+        response = http.get(SPOT_URL)
         logging.debug(response)
         if response.status_code == 200:
             json = response.json()
@@ -27,7 +28,7 @@ class SotaApi():
     @ttl_cache(ttl=24*60*60)  # 24 hours of cache
     def get_summit(self, summit_ref: str):
         '''Return all current spots from POTA API'''
-        response = requests.get(SUMMIT_URL + summit_ref)
+        response = http.get(SUMMIT_URL + summit_ref)
         logging.debug(response.status_code)
         if response.status_code == 200:
             json = response.json()
@@ -39,14 +40,14 @@ class SotaApi():
 
     @ttl_cache(ttl=24*60*60)  # 24 hours of cache
     def get_association(self, assoc_code: str):
-        response = requests.get(ASSOC_URL + assoc_code)
+        response = http.get(ASSOC_URL + assoc_code)
         if response.status_code == 200:
             json = response.json()
             return json
 
     @ttl_cache(ttl=24*60*60)  # 24 hours of cache
     def get_associations(self):
-        response = requests.get(ASSOC_URL)
+        response = http.get(ASSOC_URL)
         if response.status_code == 200:
             json = response.json()
             return json

@@ -3,6 +3,7 @@ import json
 import requests
 import logging
 from datetime import datetime
+from utils.http_session import http
 
 log = logging.getLogger(__name__)
 
@@ -58,7 +59,7 @@ def get_stations(url: str, api_key: str) -> list:
     endpoint = _endpoint(url, WL_API_STATIONS) + api_key
 
     try:
-        response = requests.get(endpoint, headers=headers, timeout=10)
+        response = http.get(endpoint, headers=headers, timeout=10)
     except requests.exceptions.RequestException as e:
         log.error(f"An error occurred getting stations from: {url}",
                   exc_info=e)
@@ -104,7 +105,7 @@ def send_radio(url: str, api_key: str, freq_hz: str, mode: str):
     try:
         endpoint = _endpoint(url, WL_API_RIG)
 
-        response = requests.post(
+        response = http.post(
             endpoint, json=radio_payload, headers=headers)
 
         # Check if the request was successful
@@ -142,7 +143,7 @@ def send_adif(url: str, api_key: str, adif: str, station_id: str):
     try:
         endpoint = _endpoint(url, WL_API_LOG)
 
-        response = requests.post(
+        response = http.post(
             endpoint, json=adif_payload, headers=headers)
 
         # Check if the request was successful.

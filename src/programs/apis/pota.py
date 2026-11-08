@@ -1,11 +1,12 @@
 import json
 import os
 from pathlib import Path
-import requests
+
 import logging as L
 import urllib.parse
 from cachetools.func import ttl_cache
 from utils.callsigns import get_basecall
+from utils.http_session import http
 from version import __version__
 
 logging = L.getLogger(__name__)
@@ -28,7 +29,7 @@ class Api():
 
     def get_spots(self):
         '''Return all current spots from POTA API'''
-        response = requests.get(SPOT_URL)
+        response = http.get(SPOT_URL)
         if response.status_code == 200:
             json = response.json()
             return json
@@ -44,7 +45,7 @@ class Api():
         '''
         quoted = urllib.parse.quote_plus(activator)
         url = SPOT_COMMENTS_URL.format(act=quoted, park=park)
-        response = requests.get(url)
+        response = http.get(url)
         if response.status_code == 200:
             json = response.json()
             return json
@@ -61,7 +62,7 @@ class Api():
         s = get_basecall(activator)
 
         url = ACTIVATOR_URL.format(call=s)
-        response = requests.get(url)
+        response = http.get(url)
         if response.status_code == 200:
             json = response.json()
             return json
@@ -78,7 +79,7 @@ class Api():
         :returns: json activator stats.
         '''
         url = PARK_URL.format(park=park_ref)
-        response = requests.get(url)
+        response = http.get(url)
         if response.status_code == 200:
             json = response.json()
             return json
@@ -123,7 +124,7 @@ class Api():
     def save_json(url: str, file_name: str) -> int:
         '''Request json data from an endpoint and save it to the given file.'''
 
-        r = requests.get(url)
+        r = http.get(url)
         if r.status_code == 200:
             data = r.json()
             with open(file_name, 'w') as out_file:
@@ -137,7 +138,7 @@ class Api():
         This file is quite large
         '''
         url = LOCATIONS_URL
-        response = requests.get(url)
+        response = http.get(url)
         if response.status_code == 200:
             obj = response.json()
             with open('locations.json', 'w', encoding='utf8') as w:
@@ -172,5 +173,5 @@ class Api():
             'comments': spotter_comments
         }
 
-        r = requests.post(url=url, json=json_data, headers=headers)
+        r = http.post(url=url, json=json_data, headers=headers)
         logging.debug(f"code: {r.status_code} : {r.reason}")
