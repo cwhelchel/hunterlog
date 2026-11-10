@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 import os
 import logging as L
-import urllib.request
+from utils.http_session import http
 from urllib.parse import urlparse
 
 from db.models.callsign_notes import CallsignNote
@@ -87,13 +87,14 @@ class CallsignNotes():
             req = urllib.request.Request(path, headers=headers)
 
             fn = Path(self.notes_root, row.name + ".txt")
-            with urllib.request.urlopen(req, timeout=10.0) as resp:
-                text = resp.read().decode('utf-8')
-                t = str(text).replace('\n', ' ')[0:255]
-                log.debug(f'downloaded text {t}...')
-                log.debug(f'saving to {fn}')
-                with open(fn, 'wt', encoding='utf-8') as file:
-                    file.writelines(text)
+            response = http.get(path, timeout=10.0)
+            response.raise_for_status()
+            text = response.text
+            t = str(text).replace('\n', ' ')[0:255]
+            log.debug(f'downloaded text {t}...')
+            log.debug(f'saving to {fn}')
+            with open(fn, 'wt', encoding='utf-8') as file:
+                file.writelines(text)
         except Exception as ex:
             log.error('error downloading callsign note file', exc_info=ex)
         finally:

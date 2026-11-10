@@ -1,6 +1,6 @@
 import requests
 import logging
-from version import __version__
+from utils.http_session import http
 
 log = logging.getLogger(__name__)
 
@@ -8,7 +8,6 @@ QRZ_URL = "https://logbook.qrz.com/api"
 
 # Define required headers
 headers = {
-    "User-Agent": f"hunterlog/{__version__}",
     "Content-Type": "application/x-www-form-urlencoded"
 }
 
@@ -30,7 +29,7 @@ def send_adif(api_key: str, adif: str) -> bool:
     try:
         endpoint = QRZ_URL
 
-        response = requests.post(
+        response = http.post(
             endpoint,
             data=payload,
             headers=headers)

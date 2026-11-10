@@ -2,6 +2,7 @@ import json
 import requests
 import logging as L
 from cachetools.func import ttl_cache
+from utils.http_session import http
 
 logging = L.getLogger(__name__)
 
@@ -15,7 +16,7 @@ class WwbotaApi():
 
     def get_spots(self):
         '''Return current spots from WWBOTA API'''
-        response = requests.get(SPOT_URL)
+        response = http.get(SPOT_URL)
         logging.debug(response)
         if response.status_code == 200:
             try:
@@ -30,7 +31,7 @@ class WwbotaApi():
     @ttl_cache(ttl=24*60*60)  # 24 hours of cache
     def get_bunker(self, bunker_ref: str):
         '''Return all current spots from GMA WWFF API'''
-        response = requests.get(BUNKERS_URL + bunker_ref)
+        response = http.get(BUNKERS_URL + bunker_ref)
         if response.status_code == 200:
             json = response.json()
             return json

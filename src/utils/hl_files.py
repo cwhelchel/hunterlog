@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 import os
 import logging as L
-import urllib.request
+from utils.http_session import http
 
 from fs.data_file import DataFile
 
@@ -56,28 +56,26 @@ class HunterlogFiles():
     def _download_file(self, full_path, url):
         try:
             fn = Path(full_path)
-            with urllib.request.urlopen(url, timeout=10.0) as resp:
-                text = resp.read().decode('utf-8')
-                log.debug(f'downloaded text {text[0:100]}...')
-                log.debug(f'saving to {fn}')
-                with open(fn, 'wt', encoding='utf-8') as file:
-                    file.writelines(text)
+            response = http.get(url, timeout=10.0)
+            response.raise_for_status()
+            text = response.text
+            log.debug(f'downloaded text {text[0:100]}...')
+            log.debug(f'saving to {fn}')
+            with open(fn, 'wt', encoding='utf-8') as file:
+                file.writelines(text)
         except Exception as ex:
             log.error('error downloading Hunterlog file', exc_info=ex)
 
     def _get_source_date(self, date_url) -> datetime:
         try:
-            with urllib.request.urlopen(date_url, timeout=10.0) as resp:
-                data = resp.read()
-                encoding = resp.info().get_content_charset("utf-8")
-                json_obj = json.loads(data.decode(encoding))
+            response = http.get(date_url, timeout=10.0)
+            response.raise_for_status()
+            json_obj = response.json()
 
-                # log.debug(f"response {data} {json_obj} {encoding}")
-
-                # we want to make it tz aware with tz as UTC.
-                lastMod = json_obj.get('last_modified')
-                dt = datetime.strptime(lastMod, "%Y-%m-%dT%H:%M:%S%z")
-                return dt.replace(tzinfo=timezone.utc)
+            # we want to make it tz aware with tz as UTC.
+            lastMod = json_obj.get('last_modified')
+            dt = datetime.strptime(lastMod, "%Y-%m-%dT%H:%M:%S%z")
+            return dt.replace(tzinfo=timezone.utc)
         except Exception as ex:
             log.error('error in _get_source_date', exc_info=ex)
             return None
