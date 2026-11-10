@@ -112,15 +112,17 @@ class ImportApi:
             total = len(hunts)
             x = 0.0
 
-            for park in hunts:
-                count = stats.get_park_hunt_count(park)
-                j = {'reference': park.strip(), 'hunts': count}
-                self.db.parks.update_park_hunts(j, count)
-                x += 1.0
-                per = (x / total) * 100.0
-                self.call_update_progress(per)
+            self.db.parks.upsert_park_hunts(stats.get_stats())
 
-            self.db.commit_session()
+            # for park in hunts:
+            #     count = stats.get_park_hunt_count(park)
+            #     j = {'reference': park.strip(), 'hunts': count}
+            #     self.db.parks.update_park_hunts(j, count)
+            #     x += 1.0
+            #     per = (x / total) * 100.0
+            #     self.call_update_progress(per)
+
+            # self.db.commit_session()
 
             return _response(
                 True, "Park Hunts imported", persist=True)

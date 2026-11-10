@@ -1,7 +1,9 @@
 import sqlalchemy as sa
 from sqlalchemy.orm import scoped_session
+from sqlalchemy.dialects.sqlite import insert
 import logging as L
 
+from db.models.import_pota_hunts import ImportPotaHunt
 from db.models.parks import Park, ParkSchema
 
 logging = L.getLogger(__name__)
@@ -154,6 +156,55 @@ class ParkQuery:
             self.session.commit()
 
         return res
+
+    def upsert_park_hunts(self, stats: dict[str, int]):
+        '''
+        This will 'upsert' the park stats from hunter_parks.csv into staging
+        table. Then will perform the update on parks table.
+
+        :param stats: Data from the POTA csv file.
+        :type stats: dict[str, int] str is park ref, int number of hunts
+        '''
+
+        data_to_upsert = [{'id': x[0], 'hunts': x[1]} for x in stats.items()]
+
+        # Create the base insert statement
+        stmt = insert(ImportPotaHunt)
+        upsert_stmt = stmt.on_conflict_do_update(
+            index_elements=['id'],  # The conflict target column(s)
+            set_={
+                'hunts': 0
+            }
+        )
+
+        self.session.execute(upsert_stmt, data_to_upsert)
+        self.session.commit()
+
+        with self.session.begin():
+            # this will update hunts for rows currently in parks table
+            res = self.session.execute(
+                sa.text("""UPDATE parks SET 
+                    hunts = src.hunts
+                FROM import_pota_hunts src
+                WHERE parks.reference = src.id;
+                """)
+            )
+
+            logging.debug(f"update result {res}")
+
+            # this will insert new park rows. these rows are "half-loaded". the
+            # empty park updater will enrich with pota api data later.
+            res = self.session.execute(
+                sa.text("""INSERT INTO parks (reference, hunts)
+                    SELECT t1.id, t1.hunts
+                    FROM import_pota_hunts t1
+                    LEFT JOIN parks t2 ON t1.id = t2.reference
+                    WHERE t2.id IS NULL;
+                """)
+            )
+
+            logging.debug(f"insert result {res}")
+            
 
     def get_hunted_parks(self, location: str) -> list[str]:
         '''
