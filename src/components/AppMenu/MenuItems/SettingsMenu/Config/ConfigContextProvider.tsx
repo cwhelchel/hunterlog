@@ -40,7 +40,8 @@ const defData: UserConfig = {
     wsjtx_new_ref_bg: '',
     wsjtx_ip_addr: '',
     wsjtx_udp_port: 0,
-    wsjtx_fwd_remote_logger: false
+    wsjtx_fwd_remote_logger: false,
+    max_spot_age: 0
 };
 
 export interface ConfigContextType {

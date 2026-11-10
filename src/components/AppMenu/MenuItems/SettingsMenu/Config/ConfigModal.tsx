@@ -74,6 +74,7 @@ export default function ConfigModal() {
             loadDbCfg();
             window.pywebview.api.set_user_config2(JSON.stringify(config2));
             setOpen(false);
+            window.location.reload();
         }
     };
 

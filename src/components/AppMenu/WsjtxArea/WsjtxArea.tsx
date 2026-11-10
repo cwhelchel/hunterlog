@@ -3,19 +3,16 @@ import './WsjtxArea.scss'
 
 import React, { useState } from "react";
 
-import { useAppContext } from '../../AppContext';
-import { Tooltip } from '@mui/material';
+import { SvgIconProps, Tooltip } from '@mui/material';
 import PublicIcon from '@mui/icons-material/Public';
 import { checkApiResponse2 } from '../../Utilities/util';
 import { useMessageQueue } from '../../MessageContext';
 
 export default function WsjtxArea() {
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { contextData, setData } = useAppContext();
     const { addMessage } = useMessageQueue();
 
-    const [color, setColor] = useState('primary');
+    const [color, setColor] = useState<SvgIconProps['color']>('primary');
     const [tooltipText, setTooltipText] = useState('Unknown');
 
     function set_wsjtx_status(status: number) {
