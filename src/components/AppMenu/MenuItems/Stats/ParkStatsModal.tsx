@@ -13,17 +13,7 @@ import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 
 import { HlModal, HlModalContent, HlStyledBackdrop } from '../../../Common/Modals';
 import { checkApiResponse2 } from '../../../Utilities/util';
-import pota_step1 from '../../../../assets/import_pota_1.png'
-import pota_step2 from '../../../../assets/import_pota_2.png';
-import wwff_step1 from '../../../../assets/import_wwff_1.png';
-import wwff_step2 from '../../../../assets/import_wwff_2.png';
-import wwff_step3 from '../../../../assets/import_wwff_3.png';
-import wwff_step4 from '../../../../assets/import_wwff_4.png';
-import sota_step1 from '../../../../assets/import_sota_1.png';
-import sota_step2 from '../../../../assets/import_sota_2.png';
-import sota_step3 from '../../../../assets/import_sota_3.png';
-import wwbota_step1 from '../../../../assets/import_wwbota1.png';
-import wwbota_step2 from '../../../../assets/import_wwbota2.png';
+
 import './ParkStatsModal.scss';
 import LinearProgress from '@mui/material/LinearProgress';
 import { Divider, Typography } from '@mui/material';
@@ -31,6 +21,20 @@ import CheckIcon from '@mui/icons-material/Check';
 import { useMessageQueue } from '../../../MessageContext';
 
 const PROGS = ["POTA", "WWFF", "SOTA", "WWBOTA"];
+
+// update for Parcel builder. something broke these imports.
+// see tsconfig.json for updates there to get these to work
+const pota_step1 = new URL('../../../../assets/import_pota_1.png', import.meta.url);
+const pota_step2 = new URL('../../../../assets/import_pota_2.png', import.meta.url);
+const wwff_step1 = new URL('../../../../assets/import_wwff_1.png', import.meta.url);
+const wwff_step2 = new URL('../../../../assets/import_wwff_2.png', import.meta.url);
+const wwff_step3 = new URL('../../../../assets/import_wwff_3.png', import.meta.url);
+const wwff_step4 = new URL('../../../../assets/import_wwff_4.png', import.meta.url);
+const sota_step1 = new URL('../../../../assets/import_sota_1.png', import.meta.url);
+const sota_step2 = new URL('../../../../assets/import_sota_2.png', import.meta.url);
+const sota_step3 = new URL('../../../../assets/import_sota_3.png', import.meta.url);
+const wwbota_step1 = new URL('../../../../assets/import_wwbota1.png', import.meta.url);
+const wwbota_step2 = new URL('../../../../assets/import_wwbota2.png', import.meta.url);
 
 export interface IParkStatsModalProps {
     isOpen: boolean,
@@ -261,9 +265,9 @@ export default function ParkStatsModal(props: IParkStatsModalProps) {
                         <Stepper activeStep={activeStep} alternativeLabel>
                             {steps.map((label, index) => (
                                 <Step
-                                    key={label[0]}
+                                    key={label[0].toString()}
                                     completed={activeStep > index}>
-                                    <StepLabel>{label[0]}</StepLabel>
+                                    <StepLabel>{label[0].toString()}</StepLabel>
                                 </Step>
                             ))}
                         </Stepper>
@@ -280,7 +284,9 @@ export default function ParkStatsModal(props: IParkStatsModalProps) {
                                 <Box sx={{ flex: '1 1 auto' }} >
                                     <div className='step-info'>
                                         <Typography variant='body2' dangerouslySetInnerHTML={{ __html: steps[activeStep][1] }} />
-                                        <img className='step-img' src={steps[activeStep][2]} />
+                                        {steps[activeStep][2] &&
+                                            <img className='step-img' src={steps[activeStep][2].toString()} />
+                                        }
                                     </div>
                                 </Box>
                                 <Button onClick={handleNext} sx={{ mr: 1 }}>

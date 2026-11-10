@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import * as L from 'leaflet';
-import logo from '../../../../assets/logo.png';
+
+const logo = new URL('../../../../assets/logo.png', import.meta.url);
 
 export class HlMapWaterMark extends L.Control {
     options: L.ControlOptions = {
@@ -9,7 +10,7 @@ export class HlMapWaterMark extends L.Control {
 
     onAdd(map: L.Map): HTMLElement {
         const img = L.DomUtil.create('img');
-        img.src = logo;
+        img.src = logo.toString();
         //console.log(img.src);
 
         img.style.width = '25px';
