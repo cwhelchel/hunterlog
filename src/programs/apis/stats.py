@@ -31,6 +31,10 @@ class PotaStats:
         '''Returns true if the user has activated the given POTA reference'''
         return ref in self.activated_parks
 
+    def get_stats(self) -> dict[str, int]:
+        '''Returns dictionary of park refs and hunt counts'''
+        return self.hunted_park_stats
+
     def get_hunt_count(self, location: str) -> int:
         '''Returns number of hunted references in a given location'''
         if location in self.loc_stats:

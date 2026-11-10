@@ -8,6 +8,7 @@ from utils.http_session import http
 from urllib.parse import urlparse
 
 from db.models.callsign_notes import CallsignNote
+from version import __version__
 
 log = L.getLogger(__name__)
 
@@ -76,8 +77,15 @@ class CallsignNotes():
             return os.path.dirname(__file__) + "/../../"
 
     def _download_file(self, row: CallsignNote):
+
+        # ham2k url needs a useragent set or its a 403. others i know of are ok
+        headers = {
+            "User-Agent": f"hunterlog/{__version__}"
+        }
         path = row.path
         try:
+            req = urllib.request.Request(path, headers=headers)
+
             fn = Path(self.notes_root, row.name + ".txt")
             response = http.get(path, timeout=10.0)
             response.raise_for_status()
@@ -93,7 +101,7 @@ class CallsignNotes():
             row.last_download = datetime.now(timezone.utc)
 
     def _check_file(self, name: str, row: CallsignNote):
-        # we may get in a strang spot where the notes are configures but the
+        # we may get in a strange spot where the notes are configured but the
         # file needed doesn't exist. try to download it.
         fn = Path(self.notes_root, name + ".txt")
         if not fn.exists():
