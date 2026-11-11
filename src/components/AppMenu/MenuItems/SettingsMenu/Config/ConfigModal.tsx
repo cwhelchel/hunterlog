@@ -74,7 +74,10 @@ export default function ConfigModal() {
             loadDbCfg();
             window.pywebview.api.set_user_config2(JSON.stringify(config2));
             setOpen(false);
-            window.location.reload();
+            
+            // on linux location reload breaks the js api bridge. wrap it in a delay
+            setTimeout(() => {window.location.reload();}, 1000);
+            // window.location.reload();
         }
     };
 
