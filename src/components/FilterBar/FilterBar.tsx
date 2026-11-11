@@ -44,66 +44,70 @@ export const FilterBar = (props: IFilterBarPros) => {
             init();
         else
             window.addEventListener('pywebviewready', init);
-
-        function init() {
-            const bf = window.localStorage.getItem("BAND_FILTER") || '0';
-            const bf_a = bf.split(',');
-            if (bf_a.length == 1 && bf_a[0] == '')
-                setBandFilter([]);
-            else
-                setBandFilter(bf_a);
-
-            const rf = window.localStorage.getItem("REGION_FILTER") || '';
-            setRegionFilter(rf.split(","));
-            const mf = window.localStorage.getItem("MODE_FILTER") || '';
-            const mf_a = mf.split(",");
-            if (mf_a.length == 1 && mf_a[0] == '')
-                setModeFilter([]);
-            else
-                setModeFilter(mf_a);
-            const lf = window.localStorage.getItem("LOCATION_FILTER") || '';
-            setLocationFilter(lf);
-            const cf = window.localStorage.getItem("CONTINENT_FILTER") || '';
-            setContinentFilter(cf.split(","));
-
-            // NOTE: there's an issue with these on first load and refresh 
-            // where the first two prints will be true (if show hidden is on)
-            // but the stuff in the state and context will be false. and when
-            // the switch is toggled it doesn't register a change until toggled
-            // several times
-            // This issue affects the other filters too
-            // console.log(hidden);
-            // console.log(bHidden);
-            // console.log(showHidden);
-            // console.log(contextData.showHiddenFilter);
-
-            const sf = window.localStorage.getItem("SIG_FILTER") || '';
-            setSigFilter(sf);
-
-            // get enabled programs
-            const res = window.pywebview.api.get_enabled_programs();
-
-            res.then((cfgStr: string) => {
-                const obj = checkApiResponse2(cfgStr, addMessage);
-
-                console.log(obj);
-                if (!obj.success)
-                    return;
-
-                const progs: string[] = [];
-                const temp = obj.enabled_progs;
-                const keys = Object.keys(temp);
-                keys.forEach((k)=> {
-                     const enabled = temp[k];
-
-                     if (enabled)
-                        progs.push(k);
-                });
-
-                setEnabledPrograms(progs);
-            });
-        };
     }, []);
+
+    function init() {
+        if (!window.pywebview.state) {
+            window.pywebview.state = {}
+        }
+
+        const bf = window.localStorage.getItem("BAND_FILTER") || '0';
+        const bf_a = bf.split(',');
+        if (bf_a.length == 1 && bf_a[0] == '')
+            setBandFilter([]);
+        else
+            setBandFilter(bf_a);
+
+        const rf = window.localStorage.getItem("REGION_FILTER") || '';
+        setRegionFilter(rf.split(","));
+        const mf = window.localStorage.getItem("MODE_FILTER") || '';
+        const mf_a = mf.split(",");
+        if (mf_a.length == 1 && mf_a[0] == '')
+            setModeFilter([]);
+        else
+            setModeFilter(mf_a);
+        const lf = window.localStorage.getItem("LOCATION_FILTER") || '';
+        setLocationFilter(lf);
+        const cf = window.localStorage.getItem("CONTINENT_FILTER") || '';
+        setContinentFilter(cf.split(","));
+
+        // NOTE: there's an issue with these on first load and refresh 
+        // where the first two prints will be true (if show hidden is on)
+        // but the stuff in the state and context will be false. and when
+        // the switch is toggled it doesn't register a change until toggled
+        // several times
+        // This issue affects the other filters too
+        // console.log(hidden);
+        // console.log(bHidden);
+        // console.log(showHidden);
+        // console.log(contextData.showHiddenFilter);
+
+        const sf = window.localStorage.getItem("SIG_FILTER") || '';
+        setSigFilter(sf);
+
+        // get enabled programs
+        const res = window.pywebview.api.get_enabled_programs();
+
+        res.then((cfgStr: string) => {
+            const obj = checkApiResponse2(cfgStr, addMessage);
+
+            console.log(obj);
+            if (!obj.success)
+                return;
+
+            const progs: string[] = [];
+            const temp = obj.enabled_progs;
+            const keys = Object.keys(temp);
+            keys.forEach((k)=> {
+                    const enabled = temp[k];
+
+                    if (enabled)
+                    progs.push(k);
+            });
+
+            setEnabledPrograms(progs);
+        });
+    };
 
     const handleModeChange = (event: SelectChangeEvent<string[]>) => {
         let m = typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value;
@@ -180,20 +184,23 @@ export const FilterBar = (props: IFilterBarPros) => {
     }
 
     const handleClear = () => {
-        setMode([]);
-        setBand([]);
+        
         contextData.filter.items = [];
         // contextData.filter.items.push(
         //     createEqualityFilter('mode', '')
         // );
+        window.pywebview.api.set_mode_filter([]);
         window.pywebview.api.set_band_filter([]);
         window.pywebview.api.set_region_filter([]);
         window.pywebview.api.set_continent_filter([]);
+        window.pywebview.api.set_location_filter('');
         window.pywebview.api.set_qrt_filter(true);
         window.pywebview.api.set_hidden_filter(false);
         window.pywebview.api.set_hunted_filter(false);
         window.pywebview.api.set_only_new_filter(false);
         window.pywebview.api.set_sig_filter("");
+        setMode([]);
+        setBand([]);
         setRegion([]);
         setContinent([]);
         setLocation("");
@@ -223,7 +230,8 @@ export const FilterBar = (props: IFilterBarPros) => {
         };
         setData(next);
 
-        location.reload();
+        //setTimeout(() => {window.location.reload();}, 1000);
+        
     };
 
     function setModeFilter(m: string[]) {
@@ -433,7 +441,7 @@ export const FilterBar = (props: IFilterBarPros) => {
                         ))}
                     </Select>
                 </FormControl>
-                <Button onClick={handleClear} variant="outlined"
+                <Button onClick={() => handleClear()} variant="outlined"
                     sx={{ maxWidth: 100 }}>
                     Clear
                 </Button>
