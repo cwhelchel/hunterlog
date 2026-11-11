@@ -96,7 +96,7 @@ class PotaStats:
 
         with open(file_n, encoding='utf-8') as csv_file:
             csv_reader = csv.DictReader(csv_file, delimiter=',')
-            skip_headers = True
+            skip_headers = False
             for row in csv_reader:
                 if skip_headers:
                     skip_headers = False
