@@ -1,0 +1,87 @@
+name: Bug Report (form)
+description: File a bug report by filling out a form.
+title: "[Bug]: "
+labels: ["bug", "triage"]
+assignees:
+  - cwhelchel
+type: bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping make Hunterlog better by reporting issues. Form items with a star * next to them are required.
+
+  - type: input
+    id: version
+    attributes:
+      label: Hunterlog Version
+      description: Hunterlog version number. It is found in lower left corner of application.
+      placeholder: ex 0.0.11
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: os
+    attributes:
+      label: What Operating System are you running
+      description: You can select more than one OS 
+      multiple: true
+      options:
+        - Windows 11
+        - Windows 10
+        - Ubuntu 22.04
+        - Ubuntu 24.04
+        - MacOs
+        - other Linux
+        - other Windows
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: E.g., Hunterlog failed to send the QSO to my logger.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction_steps
+    attributes:
+      label: Steps to Reproduce
+      description: Tell us exactly how to reproduce the behavior.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Scroll down to '...'
+        4. See error
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Please copy and paste any relevant log output found in `index.log`. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+    validations:
+      required: false
+
+  - type: upload
+    id: uploads
+    attributes:
+      label: Upload screenshots and/or Logs
+      description: If applicable, add screenshots to help explain your problem. You could also attach index.log
+    validations:
+      required: false
+        
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: ex. email@example.com
+    validations:
+      required: false
+      

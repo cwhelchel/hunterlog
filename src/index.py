@@ -101,7 +101,7 @@ def refresh_frontend():
 @set_interval(60)
 def update_ticker(t: DownloadThread):
     '''
-    This is the main update thread. It handles the critical main update task 
+    This is the main update thread. It handles the critical main update task
     where the database is updated with the latests spots.
     '''
     log.debug("thread heartbeat")
@@ -121,7 +121,6 @@ def update_ticker(t: DownloadThread):
 
 @set_interval(60)
 def background_update_ticker():
-
     log.debug("background update heartbeat")
     the_api.do_background_update()
 
@@ -144,10 +143,10 @@ def on_restore():
 
 
 # saving window positions on linux. root cause, cant
-# access window.width height, x, y etc in the closing or 
+# access window.width height, x, y etc in the closing or
 # closed callbacks. we store the changes and save those
-win_sz = (800,600)
-win_pos = (0,0)
+win_sz = (800, 600)
+win_pos = (0, 0)
 
 
 def on_resized_linux(width, height):
@@ -288,7 +287,7 @@ if __name__ == '__main__':
 
     log.info('checking for file downloads...')
     hl_files = HunterlogFiles()
-    
+
     log.debug('starting dl thread')
     stopFlag = threading.Event()
     dl = DownloadThread(event=stopFlag, progs=progs, post_callback=dl_callback)

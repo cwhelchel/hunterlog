@@ -400,7 +400,6 @@ class JsApi:
             logging.exception(
                 msg="Error staging QSO:",
                 exc_info=log_ex)
-            self.lock.release()
             return self._response(False, f"Error staging qso: {log_ex}")
 
         return self._response(True, '')
@@ -413,41 +412,42 @@ class JsApi:
             logging.exception(
                 msg="Error clearing staged qsos:",
                 exc_info=log_ex)
-            self.lock.release()
             return self._response(False, "Error clearing staged qsos")
 
         return self._response(True, '')
 
     def _log_qso_internal(self, qso_data) -> tuple[bool, Any]:
         logging.info('acquiring lock to log qso')
-        self.lock.acquire()
 
-        def_pwr = self.db.config.get_value('default_pwr')
+        # self.lock.acquire()
+        with self.lock:
+            def_pwr = self.db.config.get_value('default_pwr')
 
-        try:
-            program = qso_data['sig']
-            ref = qso_data['sig_info']
-            pota_ref = qso_data['pota_ref'] if 'pota_ref' in qso_data else ''
+            try:
+                program = qso_data['sig']
+                ref = qso_data['sig_info']
+                pota_ref = qso_data['pota_ref'] if 'pota_ref' in qso_data else ''  # NOQA
 
-            self.programs[program].inc_ref_hunt(ref, pota_ref)
+                self.programs[program].inc_ref_hunt(ref, pota_ref)
 
-            qso_data['tx_pwr'] = def_pwr
-            logging.debug(f"logging qso: {qso_data}")
-            id = self.db.qsos.insert_new_qso(qso_data)
-        except Exception as ex:
-            logging.error("Error logging QSO to db:")
-            logging.exception(ex)
-            self.lock.release()
-            return False, self._response(False, f"Error logging QSO: {ex}")
+                qso_data['tx_pwr'] = def_pwr
+                logging.debug(f"logging qso: {qso_data}")
+                id = self.db.qsos.insert_new_qso(qso_data)
+            except Exception as ex:
+                logging.error("Error logging QSO to db:")
+                logging.exception(ex)
+                # self.lock.release()
+                return False, self._response(False, f"Error logging QSO: {ex}")
 
-        # get the data to log to the adif file and remote adif host
-        qso = self.db.qsos.get_qso(id)
-        act = self.db.get_activator_name(qso_data['call'])
-        qso.name = act if act is not None else 'ERROR NO NAME'
+            # get the data to log to the adif file and remote adif host
+            qso = self.db.qsos.get_qso(id)
+            act = self.db.get_activator_name(qso_data['call'])
+            qso.name = act if act is not None else 'ERROR NO NAME'
 
-        # db written so commit & release lock
-        self.db.commit_session()
-        self.lock.release()
+            # db written so commit & release lock
+            self.db.commit_session()
+            # self.lock.release()
+
         return True, qso
 
     def _log_qso_remote(self, qso) -> tuple[bool, str]:
@@ -542,46 +542,47 @@ class JsApi:
         :param list[str] other_ops: array of other op callsigns
         '''
         logging.info('acquiring lock to log multi-OP qso')
-        self.lock.acquire()
+        # self.lock.acquire()
+        with self.lock:
+            def_pwr = self.db.config.get_value('default_pwr')
 
-        def_pwr = self.db.config.get_value('default_pwr')
-
-        try:
-            program = qso_data['sig']
-            ref = qso_data['sig_info']
-            pota_ref = qso_data['pota_ref'] if 'pota_ref' in qso_data else ''
-
-            self.programs[program].inc_ref_hunt(ref, pota_ref)
-
-            qso_data['tx_pwr'] = def_pwr
-            logging.debug(f"logging qso: {qso_data}")
-            ids = self.db.qsos.insert_new_qso_multi(qso_data, other_ops)
-        except Exception as ex:
-            logging.error("Error logging QSO to db:")
-            logging.exception(ex)
-            self.lock.release()
-            return self._response(False, f"Error logging QSO: {ex}")
-
-        for id in ids:
-            # get the data to log to the adif file and remote adif host
-            qso = self.db.qsos.get_qso(id)
-            act = self.db.get_activator_name(qso_data['call'])
-            qso.name = act if act is not None else 'ERROR NO NAME'
-            self.db.commit_session()
             try:
-                self.adif_log.log_qso(qso)
-            except Exception as log_ex:
-                logging.exception(
-                    msg="Error logging QSO to as adif (local/remote):",
-                    exc_info=log_ex)
-                self.lock.release()
-                return self._response(False, f"Error logging ADIF: {log_ex}")
+                program = qso_data['sig']
+                ref = qso_data['sig_info']
+                pota_ref = qso_data['pota_ref'] if 'pota_ref' in qso_data else ''  # NOQA
 
-            # delay here - the remote logger may need to catch its breath
-            time.sleep(1.0)
+                self.programs[program].inc_ref_hunt(ref, pota_ref)
 
-        logging.info('releasing multi-op lock')
-        self.lock.release()
+                qso_data['tx_pwr'] = def_pwr
+                logging.debug(f"logging qso: {qso_data}")
+                ids = self.db.qsos.insert_new_qso_multi(qso_data, other_ops)
+            except Exception as ex:
+                logging.error("Error logging QSO to db:")
+                logging.exception(ex)
+                # self.lock.release()
+                return self._response(False, f"Error logging QSO: {ex}")
+
+            for id in ids:
+                # get the data to log to the adif file and remote adif host
+                qso = self.db.qsos.get_qso(id)
+                act = self.db.get_activator_name(qso_data['call'])
+                qso.name = act if act is not None else 'ERROR NO NAME'
+                self.db.commit_session()
+                try:
+                    self.adif_log.log_qso(qso)
+                except Exception as log_ex:
+                    logging.exception(
+                        msg="Error logging QSO to as adif (local/remote):",
+                        exc_info=log_ex)
+                    # self.lock.release()
+                    return self._response(False, f"Error logging ADIF: {log_ex}")  # NOQA
+
+                # delay here - the remote logger may need to catch its breath
+                time.sleep(1.0)
+
+            logging.info('releasing multi-op lock')
+            # self.lock.release()
+
         return self._response(True, "QSO logged successfully")
 
     def refresh_spot(self, spot_id: int, call: str, ref: str):
@@ -929,19 +930,17 @@ class JsApi:
             unique_reg = list(set(p.seen_regions))
             self.seen_regions += unique_reg
 
-        self.lock.acquire()
-        self._handle_alerts()
+        logging.debug('acquiring lock(w) for background updates...')
+        with self.lock:
+            self._handle_alerts()
 
-        # handle half-loaded parks from program imports
-        self._empty_park_updater()
+            # handle half-loaded parks from program imports
+            self._empty_park_updater()
 
-        # handle WSJT-X integration.
-        self._handle_wsjtx()
+            logging.debug('lock(w) for background updates released')
 
         # update all the advanced integrations
         self._integrations.update_all()
-        if self.lock.locked():
-            self.lock.release()
 
         logging.debug('background updates finished')
 
@@ -980,7 +979,7 @@ class JsApi:
         try:
             logging.info("acquiring lock for update")
             if not self.lock.acquire(timeout=4.0):
-                logging.error('no lock aquired')
+                logging.error('no lock acquired')
                 return
             self.db.delete_spots()
             self.programs["POTA"].update_spots(spots["POTA"], self._metadata)
@@ -993,10 +992,7 @@ class JsApi:
 
             # commit all spot changes from programs
             self.db.session.commit()
-
             logging.info("spots updated for programs")
-            self.lock.release()
-            logging.info("update lock released")
         except ConnectionError as con_ex:
             logging.warning("Connection error in do_update: ")
             logging.exception(con_ex)
@@ -1007,6 +1003,7 @@ class JsApi:
         finally:
             if self.lock.locked():
                 self.lock.release()
+            logging.info("update lock released")
 
             end = time.perf_counter()
             elapsed_time = end - start
