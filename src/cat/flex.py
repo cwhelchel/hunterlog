@@ -33,6 +33,7 @@ class flex(ICat):
         '''
         self.host = kwargs['host']
         self.port = kwargs['port']
+        self.debug = kwargs.get('debug', False)
 
         try:
             self.socket = socket.socket()
@@ -78,7 +79,8 @@ class flex(ICat):
             # TODO: handle better
             raise Exception("Unknown mode given to FLEX cat obj")
 
-        logger.debug(cmd)
+        if self.debug:
+            logger.debug(cmd)
 
         if self.socket:
             try:
@@ -101,7 +103,8 @@ class flex(ICat):
         s = str(math.trunc(freq))
         cmd = f"{cmd}{s.rjust(11, '0')};"
 
-        logger.debug(cmd)
+        if self.debug:
+            logger.debug(cmd)
 
         if self.socket:
             try:
@@ -113,7 +116,7 @@ class flex(ICat):
                 return False
             except socket.error as e:
                 self.online = False
-                logger.debug("set_vfo", exc_info=e)
+                logger.warning("set_vfo", exc_info=e)
                 self.socket = None
                 return False
 
@@ -131,7 +134,8 @@ class flex(ICat):
             try:
                 self.socket.send(bytes(cmd, "ascii"))
                 fx = self.socket.recv(1024).decode().strip()
-                logger.debug(f"got freq {fx}")
+                if self.debug:
+                    logger.debug(f"got freq {fx}")
                 if fx[:4] != 'ZZFA':
                     logger.warning('incorrect freq format returned')
                     return '0'
@@ -154,12 +158,14 @@ class flex(ICat):
             try:
                 self.socket.send(bytes(cmd, "ascii"))
                 ptt = self.socket.recv(1024).decode()
-                logger.debug("%s", ptt)
+                if self.debug:
+                    logger.debug("%s", ptt)
                 if ptt[:4] != 'ZZRX':
                     logger.warning('incorrect PTT format returned')
                     return False
                 res = ptt[4:-1]
-                logger.debug(f'get_ptt -> {res}')
+                if self.debug:
+                    logger.debug(f'get_ptt -> {res}')
 
                 # inverted
                 if res == '1':

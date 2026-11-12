@@ -394,6 +394,15 @@ class ConfigQuery:
             'group': 'general',
             'enabled': 'True',
             'editable': 'True'
+        },
+        {
+            'key': 'enable_wavelog_int',
+            'val': '0',
+            'type': 'bool',
+            'description': 'True to enable advanced Wavelog integrations',
+            'group': 'wavelog',
+            'enabled': 'True',
+            'editable': 'True'
         }
     ]
 

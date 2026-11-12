@@ -19,7 +19,8 @@ from db.models.parks import Park, ParkSchema
 from db.models.qsos import Qso, QsoSchema
 from db.models.spot_comments import SpotCommentSchema
 from db.models.spots import Spot, SpotSchema
-from integrations.wsjtx.integration import ColorConfig, Integration
+from integrations.hl_integrations_cfg import IntegrationCfg
+from integrations.hl_integrations import HlIntegrations
 from loggers import LoggerInterface
 from loggers.logger_interface import LoggerParams
 from programs.apis import PotaApi
@@ -80,21 +81,18 @@ class JsApi:
             self.cat = None
         self.pw = None
 
-        ws_int = self.db.config.get_value('enable_wsjtx_int')
-        if ws_int:
-            logging.debug('starting wsjtx integration...')
-            ip = self.db.config.get_value('wsjtx_ip_addr')
-            port = self.db.config.get_value('wsjtx_udp_port')
-            self.db.config.get_value('enable_wsjtx_int')
-            self._wsjtx = Integration(
-                log_handler=self._wsjtx_log_handle,
-                status_handler=self._wsjtx_status_handler,
-                ip=ip,
-                port=port
-            )
-            self._wsjtx.start()
-        else:
-            self._wsjtx = None
+        # advanced integrations config setup
+        int_cfg: IntegrationCfg = IntegrationCfg(
+            db=self.db,
+            cat=self.cat,
+            wsjt_log_handler=self._wsjtx_log_handle,
+            wsjtx_status_handler=self._wsjtx_status_handler
+        )
+
+        # starts advanced integrations (wsjtx, wavelog, etc)
+        self._integrations = HlIntegrations(int_cfg)
+        self._integrations.init_all()
+        self._integrations.start_all()
 
     def get_spot(self, spot_id: int):
         logging.debug('py get_spot')
@@ -940,6 +938,8 @@ class JsApi:
         # handle WSJT-X integration.
         self._handle_wsjtx()
 
+        # update all the advanced integrations
+        self._integrations.update_all()
         if self.lock.locked():
             self.lock.release()
 
@@ -1166,33 +1166,6 @@ class JsApi:
                 """.format(obj=json.dumps(res))
             # logging.debug(f"alerting w this {js}")
             webview.windows[0].evaluate_js(js)
-
-    def _handle_wsjtx(self):
-        if self._wsjtx is None:
-            return
-
-        if self._wsjtx.is_wsjtx_alive() > 1:
-            logging.error("WSJTX is offline. Missed heartbeat packets")
-            self._call_js_param('set_wsjtx_status', 0)
-            return
-
-        self._call_js_param('set_wsjtx_status', 1)
-
-        colors = ColorConfig(
-            self.db.config.get_value('wsjtx_hunted_fg'),
-            self.db.config.get_value('wsjtx_hunted_bg'),
-            self.db.config.get_value('wsjtx_spot_fg'),
-            self.db.config.get_value('wsjtx_spot_bg'),
-            self.db.config.get_value('wsjtx_new_ref_fg'),
-            self.db.config.get_value('wsjtx_new_ref_bg')
-        )
-
-        # tell wsjtx-to highlight these calls
-        x = self.db.spots.get_wsjtx_spots()
-        logging.debug(f"highlighting wsjtx #{len(x)} spots")
-        for s in x:
-            self._wsjtx.highlight_call(
-                s.activator, s.hunted, s.park_hunts == 0, colors)
 
     def _wsjtx_log_handle(self, adif: str):
         # take the adif from clicking log qso button on wsjtx and

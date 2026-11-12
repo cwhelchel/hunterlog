@@ -2,11 +2,15 @@ from dataclasses import dataclass
 from threading import Event, Thread
 import time
 
+from db.db import DataBase
+from integrations.hl_integration import IHlIntegration
 from integrations.wsjtx.packet_processor import PacketProcessor
 from integrations.wsjtx.wsjtx_server import WsjtxServer
 from lib import pywsjtx
 from lib.pywsjtx.wsjtx_packets import DecodePacket, HeartBeatPacket, LoggedADIFPacket  # NOQA
 import logging
+
+from utils.pywebview_util import call_js_param
 
 log = logging.getLogger(__name__)
 
@@ -51,22 +55,44 @@ class ColorConfig:
     new_back: str
 
 
-class Integration:
+class WsjtxIntegration(IHlIntegration):
     # marked so JS API doesnt serialize for frontend
     #  - not for our pinned ver of pywebview. update for this to work
     _serializable = False
 
-    def __init__(self, log_handler, status_handler, ip='127.0.0.1', port=2237):  # NOQA
+    def __init__(self):
         self.pkt_q = PacketProcessor()
         self.pkt_q.subscribe('logged_adif_pkt', self.logged_packet)
         self.pkt_q.subscribe('heartbeat_pkt', self.heartbeat_packet)
         self.pkt_q.subscribe('decode_pkt', self.decode_packet)
-        self.server = WsjtxServer(ip_address=ip, udp_port=port, queue=self.pkt_q)  # NOQA E501
-        self._lhandler = log_handler
-        self._shandler = status_handler
         self._cq = {}
         self._last_hb_time = 0
         self.stop_event = Event()
+
+    def init(self, **kwargs):
+        db = kwargs.get('db')
+        if db is None:
+            raise ValueError("WsjtxIntegration requires a DataBase object")
+
+        self.db: DataBase = db
+        self._log_handler_callback = kwargs.get('wsjt_log_handler')
+        self._status_handler_callback = kwargs.get('wsjtx_status_handler')
+
+        if (
+            self._log_handler_callback is None or
+            self._status_handler_callback is None
+        ):
+            raise ValueError(
+                "WsjtxIntegration requires log and status handler callbacks"
+            )
+
+        ip = self.db.config.get_value('wsjtx_ip_addr')
+        port = self.db.config.get_value('wsjtx_udp_port')
+
+        if ip is None or port is None:
+            raise ValueError("WsjtxIntegration requires ip and port values")
+
+        self.server = WsjtxServer(ip_address=ip, udp_port=port, queue=self.pkt_q)  # NOQA E501
 
     def start(self):
         self.server.start()
@@ -75,6 +101,30 @@ class Integration:
         t = Thread(target=self._status_check_thread)
         t.daemon = True
         t.start()
+
+    def update(self):
+        if self.is_wsjtx_alive() > 1:
+            logging.error("WSJTX is offline. Missed heartbeat packets")
+            call_js_param('set_wsjtx_status', 0)
+            return
+
+        call_js_param('set_wsjtx_status', 1)
+
+        colors = ColorConfig(
+            self.db.config.get_value('wsjtx_hunted_fg'),
+            self.db.config.get_value('wsjtx_hunted_bg'),
+            self.db.config.get_value('wsjtx_spot_fg'),
+            self.db.config.get_value('wsjtx_spot_bg'),
+            self.db.config.get_value('wsjtx_new_ref_fg'),
+            self.db.config.get_value('wsjtx_new_ref_bg')
+        )
+
+        # tell wsjtx-to highlight these calls
+        x = self.db.spots.get_wsjtx_spots()
+        logging.debug(f"highlighting wsjtx #{len(x)} spots")
+        for s in x:
+            self.highlight_call(
+                s.activator, s.hunted, s.park_hunts == 0, colors)
 
     def get_cq_decodes(self):
         return self._cq
@@ -135,8 +185,8 @@ class Integration:
     def logged_packet(self, packet: LoggedADIFPacket):
         log.debug(f"got logged_packet {packet}")
         adif = packet.logged_adif
-        if self._lhandler:
-            self._lhandler(adif)
+        if self._log_handler_callback:
+            self._log_handler_callback(adif)
 
     def heartbeat_packet(self, packet: HeartBeatPacket):
         log.debug(f"got heartbeat pkt {packet}")
@@ -168,8 +218,8 @@ class Integration:
             # check status here
             status = self.is_wsjtx_alive()
 
-            if self._shandler:
-                self._shandler(status)
+            if self._status_handler_callback:
+                self._status_handler_callback(status)
 
             if self.stop_event.wait(10.0):
                 break

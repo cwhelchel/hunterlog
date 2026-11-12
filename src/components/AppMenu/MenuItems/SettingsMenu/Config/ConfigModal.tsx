@@ -137,6 +137,7 @@ export default function ConfigModal() {
         config.wsjtx_udp_port = Number(getVar(cfg2, 'wsjtx_udp_port'));
         config.wsjtx_fwd_remote_logger = Number(getVar(cfg2, 'wsjtx_fwd_remote_logger')) != 0;
         config.max_spot_age = Number(getVar(cfg2, 'max_spot_age'));
+        config.enable_wavelog_int = Number(getVar(cfg2, 'enable_wavelog_int')) != 0;
         setConfig(config);
     }
 
@@ -178,6 +179,7 @@ export default function ConfigModal() {
         setVar(config2, "wsjtx_udp_port", config.wsjtx_udp_port.toString());
         setVar(config2, "wsjtx_fwd_remote_logger", config.wsjtx_fwd_remote_logger.toString());
         setVar(config2, "max_spot_age", config.max_spot_age.toString());
+        setVar(config2, "enable_wavelog_int", config.enable_wavelog_int.toString());
         setConfig2(config2);
     }
 

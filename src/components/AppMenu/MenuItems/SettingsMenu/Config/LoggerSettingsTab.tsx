@@ -182,7 +182,7 @@ export default function LoggerSettingsTab() {
                         your station profiles from Wavelog and then pick the one you are
                         operating from.
                         <br />
-                        <Typography 
+                        <Typography
                             lineHeight={'inherit'}
                             fontSize={'inherit'}
                             fontWeight={'inherit'}
@@ -235,6 +235,22 @@ export default function LoggerSettingsTab() {
                             </Tooltip>
                         }
                     </Stack>
+
+                    <FormControlLabel label="Enable advanced Wavelog Integrations"
+                        style={{ width: "100%" }}
+                        control={
+                            <Checkbox checked={config.enable_wavelog_int}
+                                inputProps={{ 'aria-label': 'controlled' }}
+                                onChange={(e) => {
+                                    const val = Boolean(e.target.checked);
+                                    setConfig({ ...config, enable_wavelog_int: val });
+                                }} />
+                        } />
+                    <p className="modal-config-text">
+                        If enabled, Hunterlog will use Wavelog&apos;s API to provide the radios frequency and mode to Wavelog. 
+                        The radio will appear as HUNTERLOG in Wavelog&apos;s radio list. If this is false, all Wavelog integrations are disabled.
+                        (Restart Hunterlog to apply changes)
+                    </p>
                 </Stack>
             }
 
