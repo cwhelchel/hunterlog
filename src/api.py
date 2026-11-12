@@ -29,6 +29,7 @@ from utils.distance import Distance
 from utils.adif import AdifLog
 from utils.metadata import Metadata
 from utils.wavelog import get_stations
+from utils.pywebview_util import call_js, call_js_param
 from version import __version__
 
 logging = L.getLogger(__name__)
@@ -1009,7 +1010,7 @@ class JsApi:
             elapsed_time = end - start
             logging.debug(f"do_update Elapsed time: {elapsed_time:.6f} secs")
             # trigger front end to know the main update method is over.
-            self._call_js('workingDone')
+            call_js('workingDone')
 
     def _empty_park_updater(self):
         def get_park(park: Park):
@@ -1170,7 +1171,7 @@ class JsApi:
         logging.info("got adif to log from wsjtx")
         logging.debug(adif)
 
-        self._call_js('setWorking')
+        call_js('setWorking')
 
         enriched = False
         qso, spot = self._adif_to_enriched_qso(adif)
@@ -1197,65 +1198,20 @@ class JsApi:
             success, resp = self._log_qso_remote(qso)
             if not success:
                 logging.error(f"error sending WSJT-X QSO to logger: {resp}")
-                self._call_js_param('showFailurePopup', f'Logging error: {resp}')  # noqa: E501
-                self._call_js('getSpots')
+                call_js_param('showFailurePopup', f'Logging error: {resp}')  # noqa: E501
+                call_js('getSpots')
                 return
 
         msg = 'WSJT-X QSO (e) Logged' if enriched else 'WSJT-X QSO Logged'
-        self._call_js_param('showSuccessPopup', msg)
-        self._call_js('getSpots')
+        call_js_param('showSuccessPopup', msg)
+        call_js('getSpots')
 
     def _wsjtx_status_handler(self, status: int):
         if status == 2:
             # wsjtx most likely offline. prob set a value in api
             logging.warning("wsjtx down")
 
-        self._call_js_param('set_wsjtx_status', status)
-
-    def _call_js(self, method: str):
-        '''
-        Executes the JS method on the pywebview state object.
-
-        Method must take no parameters and the return is ignored.
-        '''
-        def get_js(m: str):
-            return """
-                if (window.pywebview.state !== undefined &&
-                    window.pywebview.state.{m} !== undefined) {{
-                    window.pywebview.state.{m}();
-                }}
-                """.format(m=method)
-
-        if len(webview.windows) > 0:
-            js = get_js(method)
-            logging.debug(f'calling {method} in frontend')
-            try:
-                webview.windows[0].evaluate_js(js)
-            except Exception as ex:
-                logging.error(f'error executing JS {js}', exc_info=ex)
-
-    def _call_js_param(self, method: str, param):
-        '''
-        Executes the JS method on the pywebview state object.
-
-        Target js method must take 1 parameter. Passed in param Will be
-        json.dumps'd
-        '''
-        def get_js(m: str):
-            return """
-                if (window.pywebview.state !== undefined &&
-                    window.pywebview.state.{m} !== undefined) {{
-                    window.pywebview.state.{m}({p});
-                }}
-                """.format(m=method, p=json.dumps(param))
-
-        if len(webview.windows) > 0:
-            js = get_js(method)
-            logging.debug(f'calling {method} in frontend')
-            try:
-                webview.windows[0].evaluate_js(js)
-            except Exception as ex:
-                logging.error(f'error executing JS {js}', exc_info=ex)
+        call_js_param('set_wsjtx_status', status)
 
     def _adif_to_enriched_qso(self, adif: str) -> tuple[Qso, Spot]:
         '''
