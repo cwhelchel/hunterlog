@@ -82,7 +82,7 @@ class WwbotaProgram(Program):
             # locationDesc could be null
             if to_add.locationDesc:
                 loc = to_add.locationDesc.split('|')[0]
-                to_add.continent = self.continents.find_continent_wwbota(
+                to_add.continent = WwbotaProgram.continents.find_continent_wwbota(
                     loc
                 )
                 self.regions.append(loc)

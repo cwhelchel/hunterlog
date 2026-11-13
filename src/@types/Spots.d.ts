@@ -29,5 +29,6 @@ export interface SpotRow {
     act_cmts: string,
     cw_wpm: number,
     spot_source: string,
-    is_hidden: boolean
+    is_hidden: boolean,
+    county: string | undefined;
 };

@@ -38,6 +38,7 @@ class Qso(Base):
     pota_ref = sa.Column(sa.String)
     sota_ref = sa.Column(sa.String)
     wwff_ref = sa.Column(sa.String)
+    county = sa.Column(sa.String, nullable=True)
 
     def init_from_spot(self, spot: Spot, name: str):
         rst = self.get_default_rst(spot.mode)
@@ -55,6 +56,7 @@ class Qso(Base):
         self.sota_ref = None
         self.wwff_ref = None
         self.state = ''
+        self.county = spot.county
 
         # program specific logic done in /src/programs/
 

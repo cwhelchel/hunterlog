@@ -72,6 +72,7 @@ class PotaProgram(Program):
         if spots is None:
             log.warning('POTA spots object is Null')
             return
+
         start_time = time.perf_counter()
 
         schema = SpotSchema()
@@ -84,8 +85,12 @@ class PotaProgram(Program):
 
         for s in s_list:
             s.spot_source = 'POTA'
-            s.continent = self.continents.find_continent(
+            s.continent = PotaProgram.continents.find_continent(
                 s.reference[:2])
+
+            county_info = PotaProgram.county_file.get_county_str(s.reference)
+            # log.debug(f"county info for {s.reference}: {county_info}")
+            s.county = county_info
 
             self.db.session.add(s)
 

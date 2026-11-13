@@ -21,4 +21,5 @@ export interface Qso {
     pota_ref: string | undefined;
     sota_ref: string | undefined;
     wwff_ref: string | undefined;
+    county: string | undefined;
 }

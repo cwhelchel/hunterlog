@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-import json
 from pathlib import Path
 import sys
 import os
@@ -13,14 +12,19 @@ log = L.getLogger(__name__)
 
 class HunterlogFiles():
     '''
-    This class handles the operations related to the callsign note files that
-    are configured by the user.
+    This class handles checking and downloading files from hunterlog.us API. It
+    does not provide access to them, only checks the existing files against API
+    date and downloads if the API date is newer.
     '''
 
     _files = [{
         'file': 'wwbota_continents.json',
         'source': 'https://hunterlog.us/v1/wwbota',
         'source_date': 'https://hunterlog.us/v1/wwbota/date',
+    }, {
+        'file': 'hl_county_file.json',
+        'source': 'https://hunterlog.us/v1/county',
+        'source_date': 'https://hunterlog.us/v1/county/date',
     }]
 
     def __init__(self):

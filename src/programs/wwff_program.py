@@ -85,9 +85,13 @@ class WwffProgram(Program):
             self.regions.append(wwff_to_add.locationDesc)
 
             # locationDesc is the WWFF 'program'. should not be null
-            wwff_to_add.continent = self.continents.find_continent_wwff(
+            wwff_to_add.continent = WwffProgram.continents.find_continent_wwff(
                 wwff_to_add.locationDesc
             )
+
+            county_str = WwffProgram.county_file.get_county_str(
+                wwff_to_add.reference)
+            wwff_to_add.county = county_str
 
             statement = sa.select(Spot) \
                 .filter_by(activator=wwff_to_add.activator) \

@@ -72,6 +72,8 @@ class AdifProvider():
             self.get_adif_field("pota_ref", qso.pota_ref or '') + \
             self.get_adif_field("sota_ref", qso.sota_ref or '') + \
             self.get_adif_field("wwff_ref", qso.wwff_ref or '') + \
+            self.get_adif_field("wwff_ref", qso.wwff_ref or '') + \
+            self.get_adif_field("cnty", qso.county or '') + \
             extra +\
             "<EOR>\n"
 

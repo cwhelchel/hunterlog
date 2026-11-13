@@ -6,7 +6,7 @@ from loggers.iadif_logger import IAdifLogger
 
 class GenericFileLogger(IAdifLogger):
     '''
-    This is the base class logger for all other loggers in HL. If hooked 
+    This is the base class logger for all other loggers in HL. If hooked
     properly, all adif that's logged also gets logged to a generic adif file.
     '''
 

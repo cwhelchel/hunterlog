@@ -99,6 +99,7 @@ class QsoQuery:
         q.pota_ref = qso['pota_ref'] if q.sig == 'POTA' else None
         q.sota_ref = qso['sota_ref'] if q.sig == 'SOTA' else None
         q.wwff_ref = qso['wwff_ref'] if q.sig == 'WWFF' else None
+        q.county = qso['county'] if 'county' in qso else None
         self.session.add(q)
         self.session.commit()
         return q.qso_id

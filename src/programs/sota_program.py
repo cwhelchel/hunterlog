@@ -73,7 +73,7 @@ class SotaProgram(Program):
             sota_to_add = Spot()
             sota_to_add.init_from_sota(sota)
 
-            sota_to_add.continent = self.continents.find_continent_sota(
+            sota_to_add.continent = SotaProgram.continents.find_continent_sota(
                 sota_to_add.reference.split('/')[0]
             )
 

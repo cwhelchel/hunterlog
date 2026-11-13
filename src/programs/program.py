@@ -6,6 +6,7 @@ from db.models.qsos import Qso
 from db.models.spots import Spot
 from programs.apis.iapi import IApi
 from utils.continent import Continents
+from utils.county import County
 from utils.distance import Distance
 import logging as L
 
@@ -21,8 +22,10 @@ class Program(ABC):
     that any implementing class must provide.
     '''
 
+    continents: Continents
+    county_file: County
+
     def __init__(self, db: DataBase):
-        self.continents = Continents()
         self.db = db
 
     @property
@@ -248,3 +251,8 @@ class Program(ABC):
                 self.db.session.commit()
             if not self.db.parks.inc_ref_hunt(ref):
                 log.error('unable to update ref hunt')
+
+
+# initialize the static class members
+Program.continents = Continents()
+Program.county_file = County()

@@ -77,6 +77,7 @@ export default function ParkInfo() {
                         {parkStats()} <br />
                         {firstActivator()} <br />
                         {locationDesc()} <br />
+                        <span style={{ overflow: "hidden" }}>CNTY: {contextData?.qso?.county}</span><br/>
                         {parkHunts()}
                     </>
                 )}
@@ -89,6 +90,7 @@ export default function ParkInfo() {
                 {contextData?.park?.parktypeDesc == 'WWFF LOCATION' && (
                     <>
                         {wwffInfo()} <br />
+                        <span style={{ overflow: "hidden" }}>CNTY: {contextData?.qso?.county}</span><br/>
                         {parkHunts()}
                     </>
                 )}

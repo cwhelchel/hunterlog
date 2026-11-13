@@ -56,6 +56,8 @@ class Spot(Base):
     # calculated metadata. set via user
     is_hidden = sa.Column(sa.Boolean, default=False)
 
+    county = sa.Column(sa.String, nullable=True)
+
     def __repr__(self):
         return "<spot(id={self.spotId!r},call={self.activator!r},src={self.spot_source})>".format(self=self)  # NOQA: E501
 
