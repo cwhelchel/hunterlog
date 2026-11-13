@@ -979,7 +979,7 @@ class JsApi:
 
         try:
             logging.info("acquiring lock for update")
-            if not self.lock.acquire(timeout=4.0):
+            if not self.lock.acquire(timeout=10.0):
                 logging.error('no lock acquired')
                 return
             self.db.delete_spots()

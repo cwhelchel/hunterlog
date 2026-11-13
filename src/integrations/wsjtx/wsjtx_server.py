@@ -76,7 +76,9 @@ class WsjtxServer(threading.Thread):
         # windows this must be '0.0.0.0'... not empty str or group
         # TODO test on other OS
         self.sock.bind(('0.0.0.0', port))
-        mreq = struct.pack("4sl", socket.inet_aton(group), socket.INADDR_ANY)
+
+        local = socket.inet_aton('127.0.0.1')
+        mreq = struct.pack("4s4s", socket.inet_aton(group), local)
         self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
     def rx_packet(self):

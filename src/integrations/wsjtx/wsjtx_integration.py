@@ -56,7 +56,7 @@ class ColorConfig:
 
 
 class WsjtxIntegration(IHlIntegration):
-    # marked so JS API doesnt serialize for frontend
+    # marked so JS API doesn't serialize for frontend
     #  - not for our pinned ver of pywebview. update for this to work
     _serializable = False
 
@@ -92,6 +92,7 @@ class WsjtxIntegration(IHlIntegration):
         if ip is None or port is None:
             raise ValueError("WsjtxIntegration requires ip and port values")
 
+        log.debug(f"WsjtxServer starting: ip={ip}, port={port}")
         self.server = WsjtxServer(ip_address=ip, udp_port=port, queue=self.pkt_q)  # NOQA E501
 
     def start(self):
@@ -104,11 +105,11 @@ class WsjtxIntegration(IHlIntegration):
 
     def update(self):
         if self.is_wsjtx_alive() > 1:
-            logging.error("WSJTX is offline. Missed heartbeat packets")
-            call_js_param('set_wsjtx_status', 0)
+            logging.info("WSJTX is offline. Missed heartbeat packets")
+            call_js_param('set_wsjtx_status', 2)
             return
 
-        call_js_param('set_wsjtx_status', 1)
+        call_js_param('set_wsjtx_status', 0)
 
         colors = ColorConfig(
             self.db.config.get_value('wsjtx_hunted_fg'),
@@ -168,16 +169,17 @@ class WsjtxIntegration(IHlIntegration):
     def is_wsjtx_alive(self) -> int:
         '''
         Returns status enum: 0 = wsjtx heartbeat packets received.
-        1 = last packet > 30 sec ago
-        2 = last hb packet > 45 sec. wsjtx most likely down
+        1 = last packet > 45 sec ago
+        2 = last hb packet > 60 sec. wsjtx most likely down
         '''
         last = self._last_hb_time
         now = time.time()
-        if (now - last) > 45:
-            log.warning("too many missed wsjtx hb packet")
+        # log.debug(f"checking wsjtx heartbeat {now} - {self._last_hb_time}")
+        if (now - last) > 60:
+            log.warning(">60 secs since last wsjtx heartbeat packet")
             return 2
-        elif (now - last) > 30:
-            log.warning("missed wsjtx hb packet")
+        elif (now - last) > 45:
+            log.info(">45 secs since last wsjtx heartbeat packet")
             return 1
 
         return 0
