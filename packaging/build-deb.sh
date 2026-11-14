@@ -52,11 +52,11 @@ Version: $VERSION
 Section: hamradio
 Priority: optional
 Architecture: $ARCH
-Maintainer: Hunterlog contributors
+Maintainer: cwhelchel et. al.
 Depends: libgtk-3-0, libwebkit2gtk-4.0-37 | libwebkit2gtk-4.1-0
-Description: POTA and SOTA amateur radio spot and logging application
- Hunterlog displays and filters radio spots, tracks hunted references,
- and supports logging and rig control.
+Description: POTA and SOTA amateur radio spot viewing and logging application.
+ Hunterlog displays and filters spots from various Ham radio programs, tracks hunted references,
+ logging to your favorit logger, and various rig control set ups.
 Homepage: https://github.com/cwhelchel/hunterlog
 EOF
 
