@@ -2,13 +2,15 @@
 ; NSIS Per-User Installation Script (Installs to Local AppData)
 ; ============================================================================
 
-!define APP_NAME "Hunterlog"
+!searchparse /file "..\src\version.py" `__version__ = '` APP_VERSION `'`
+
+!define APP_NAME "hunterlog"
 !define COMP_NAME "krinkl3"
-!define VERSION "0.0.11"
+!define VERSION "${APP_VERSION}"
 !define EXE_NAME "hunterlog.exe"
 
 Name "${APP_NAME}"
-OutFile "Setup_${APP_NAME}.exe"
+OutFile "Setup_${APP_NAME}_${APP_VERSION}.exe"
 
 ; CRITICAL: Tell Windows this installer does NOT need admin/UAC elevation.
 ; It will run completely under standard user rights.
@@ -16,6 +18,9 @@ RequestExecutionLevel user
 
 ; Set the default installation directory to %LOCALAPPDATA%\Programs\AppName
 InstallDir "$LOCALAPPDATA\Programs\${APP_NAME}"
+
+
+!define HL_DATA_DIR "$LOCALAPPDATA\${APP_NAME}\data"
 
 ; not used [cmw]
 ; Registry key for application settings (Current User hive)
@@ -60,7 +65,7 @@ Section "MainSection" SEC01
     SetOutPath "$INSTDIR"
     
     ; Replace "myapp.exe" with your compiled file, or use: File /r "path\to\your\files\*.*"
-    FILE /r "..\dist\*.*"
+    FILE "..\dist\hunterlog.exe"
 
     ; Create uninstaller
     WriteUninstaller "$INSTDIR\uninstall.exe"
@@ -78,6 +83,17 @@ Section "MainSection" SEC01
     WriteRegStr HKCU "${UNINSTALL_KEY}" "DisplayVersion" "${VERSION}"
     WriteRegStr HKCU "${UNINSTALL_KEY}" "Publisher" "${COMP_NAME}"
 
+SectionEnd
+
+Section "InstallUserData"
+    ; Ensure variables resolve to the current user's profile, not ProgramData
+    SetShellVarContext current
+
+    ; Creates %APPDATA%\MyCompany\MyApp if it doesn't exist
+    SetOutPath "${HL_DATA_DIR}"
+
+    ; Extracts default config files into that folder
+    File /r "..\dist\data\*.*"
 SectionEnd
 
 ; ============================================================================

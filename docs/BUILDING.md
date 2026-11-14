@@ -90,3 +90,19 @@ To build an executable. The output binary will be produced in the `dist` directo
 ``` bash
 npm run build
 ```
+
+### Build a Debian package
+
+On an `amd64` Debian-based Linux system, build the Linux executable first, then
+package the contents of `dist/`:
+
+``` bash
+npm run build
+bash packaging/build-deb.sh
+```
+
+The script requires `dpkg-deb` and an executable `dist/hunterlog` Linux build.
+It creates `dist/hunterlog_<version>_amd64.deb`. The package installs the
+application under `/opt/hunterlog` and provides a desktop entry and
+`/usr/bin/hunterlog` launcher. The launcher stores the database and logs under
+`${XDG_DATA_HOME:-~/.local/share}/hunterlog`.
