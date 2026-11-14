@@ -3,8 +3,9 @@
 from datetime import datetime
 import os
 from pathlib import Path
-import sys
 from typing import Optional, List
+
+from fs.glob import hl_data_dir
 
 
 class DataFile:
@@ -16,8 +17,6 @@ class DataFile:
         name (str): The name of the file
     '''
 
-    data_root = "data/"
-
     def __init__(self, name: str):
         '''
         Initialize a file system object.
@@ -27,8 +26,7 @@ class DataFile:
             be created in data_root location
         '''
         self.name = name
-        self.app_root = DataFile.get_app_root()
-        self.root = Path(self.app_root, self.data_root).resolve()
+        self.root = hl_data_dir
 
     @property
     def full_path(self) -> str:
@@ -106,7 +104,7 @@ class DataFile:
             print(f"Error reading file: {e}")
             return None
 
-    def write(self, content: str) -> bool:
+    def write(self, content: str, encoding: str = "utf-8") -> bool:
         '''
         Write content to the file.
 
@@ -117,14 +115,14 @@ class DataFile:
             True if successful, False otherwise
         '''
         try:
-            with open(self.full_path, 'w') as f:
+            with open(self.full_path, 'w', encoding=encoding) as f:
                 f.write(content)
             return True
         except Exception as e:
             print(f"Error writing to file: {e}")
             return False
 
-    def append(self, content: str) -> bool:
+    def append(self, content: str, encoding: str = "utf-8") -> bool:
         '''
         Append content to the file.
 
@@ -135,7 +133,7 @@ class DataFile:
             True if successful, False otherwise
         '''
         try:
-            with open(self.full_path, 'a') as f:
+            with open(self.full_path, 'a', encoding=encoding) as f:
                 f.write(content)
             return True
         except Exception as e:
@@ -174,16 +172,6 @@ class DataFile:
             print(f"Error listing directory: {e}")
             return None
 
-    @staticmethod
-    def get_app_root() -> str:
-        '''stolen from alembic/versions/__init__.py'''
-        if getattr(sys, 'frozen', False):
-            return os.path.abspath(os.path.dirname(sys.executable))
-        elif __file__:
-            # were running from source (npm run start) and this file is in a
-            # sub-dir so we need to back up a little so the code works
-            return os.path.dirname(__file__) + "/../../"
-
     def __str__(self) -> str:
         '''String representation of the object.'''
         if self.is_file:
@@ -192,7 +180,7 @@ class DataFile:
             type = "directory"
         else:
             type = "non-existent"
-        return f"<datafile(name='{self.name}',fullpath='{self.full_path}', type={type})>" # NOQA
+        return f"<datafile(name='{self.name}',fullpath='{self.full_path}', type={type})>"  # NOQA
 
     def __repr__(self) -> str:
         '''Developer-friendly representation.'''

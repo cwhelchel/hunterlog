@@ -1,15 +1,12 @@
-import os
 import sys
 import threading
 import time
 import traceback
 import webview
 import logging
-import logging.config
 import platform
 import argparse
 import mimetypes
-from pathlib import Path
 
 from api import JsApi
 from download_thread import DownloadThread
@@ -18,30 +15,10 @@ from utils.hl_files import HunterlogFiles
 from utils.streamlogger import StreamToLogger
 from version import __version__
 
+from fs.glob import configure_logging, get_app_dir, database_file, log_file
 
-def configure_logging():
 
-    def get_app_global_path():
-        '''stolen from alembic/versions/__init__.py'''
-        if getattr(sys, 'frozen', False):
-            print('frozen')
-            return os.path.abspath(os.path.dirname(sys.executable))
-        elif __file__:
-            print(f'not frozen {__file__}')
-            # were running from source (npm run start) and this file is in
-            # so we need to back up a little so the code works
-            return os.path.dirname(__file__) + "./../"
-
-    conf = Path(get_app_global_path(), 'logging.conf')
-    if conf.exists():
-        logging.config.fileConfig(fname=conf, disable_existing_loggers=False)
-    else:
-        logging.basicConfig(
-            filename='index.log',
-            encoding='utf-8',
-            format='%(asctime)s = %(levelname)-7.7s [%(name)s]: %(message)s',  # noqa E501
-            level=logging.DEBUG)
-
+# files_migrated = migrate_old_files(get_app_dir())
 
 configure_logging()
 
@@ -51,17 +28,20 @@ sys.stderr = StreamToLogger(log, logging.INFO)
 
 log.info(f"!!!!!!!!!!!! Starting Hunterlog {__version__}")
 
+
+test = get_app_dir()
+log.info(f"!!!!!!!!!!!! app dir: {test}")
+log.info(f"!!!!!!!!!!!! database file: {database_file}")
+log.info(f"!!!!!!!!!!!! log file: {log_file}")
+
+# if files_migrated:
+#     log.info("!!!!!!!!!!!! migrated old files to platformdirs dir")
+
+log.info('checking for file downloads...')
+hl_files = HunterlogFiles()
+
 the_api = JsApi()
 started = False
-
-parser = argparse.ArgumentParser()
-parser.add_argument("-w", "--reset-win", action="store_true",
-                    help="reset the window size and position to default")
-
-
-def do_update(spots: dict):
-    log.debug('updating db')
-    the_api._do_update(spots)
 
 
 def show_frontend_work():
@@ -108,7 +88,8 @@ def update_ticker(t: DownloadThread):
 
     spot_arr = t.get_spots()
     show_frontend_work()
-    do_update(spot_arr)
+    log.debug('updating db')
+    the_api._do_update(spot_arr)
     refresh_frontend()
 
     global started
@@ -229,6 +210,10 @@ sys.excepthook = global_exception_handler
 threading.excepthook = threading_exception_handler
 
 if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-w", "--reset-win", action="store_true",
+                        help="reset the window size and position to default")
     args = parser.parse_args()
 
     entry = get_entrypoint()
@@ -284,9 +269,6 @@ if __name__ == '__main__':
         window.events.closed += on_closing_linux
         window.events.resized += on_resized_linux
         window.events.moved += on_moved_linux
-
-    log.info('checking for file downloads...')
-    hl_files = HunterlogFiles()
 
     log.debug('starting dl thread')
     stopFlag = threading.Event()

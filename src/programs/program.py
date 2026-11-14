@@ -27,6 +27,9 @@ class Program(ABC):
 
     def __init__(self, db: DataBase):
         self.db = db
+        # initialize the static class members
+        Program.continents = Continents()
+        Program.county_file = County()
 
     @property
     @abstractmethod
@@ -251,8 +254,3 @@ class Program(ABC):
                 self.db.session.commit()
             if not self.db.parks.inc_ref_hunt(ref):
                 log.error('unable to update ref hunt')
-
-
-# initialize the static class members
-Program.continents = Continents()
-Program.county_file = County()

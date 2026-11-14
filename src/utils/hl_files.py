@@ -1,7 +1,5 @@
 from datetime import datetime, timezone
 from pathlib import Path
-import sys
-import os
 import logging as L
 from utils.http_session import http
 
@@ -83,12 +81,3 @@ class HunterlogFiles():
         except Exception as ex:
             log.error('error in _get_source_date', exc_info=ex)
             return None
-
-    def _get_app_global_path(self):
-        '''stolen from alembic/versions/__init__.py'''
-        if getattr(sys, 'frozen', False):
-            return os.path.abspath(os.path.dirname(sys.executable))
-        elif __file__:
-            # were running from source (npm run start) and this file is in
-            # so we need to back up a little so the code works
-            return os.path.dirname(__file__) + "/../../"

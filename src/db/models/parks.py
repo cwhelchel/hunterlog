@@ -5,8 +5,11 @@ from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 
 from db.utc import utcnow
 
+from fs.glob import database_file
+
 Base = declarative_base()
-engine = sa.create_engine("sqlite:///spots.db")
+db_url = sa.URL.create(drivername="sqlite", database=str(database_file))
+engine = sa.create_engine(db_url)
 
 
 class Park(Base):

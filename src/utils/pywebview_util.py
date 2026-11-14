@@ -51,3 +51,11 @@ def call_js_param(method: str, param):
             webview.windows[0].evaluate_js(js)
         except Exception as ex:
             log.error(f'error executing JS {js}', exc_info=ex)
+
+
+def call_js_raw(js: str):
+    '''
+    Executes the given string as javascript. This is probably very unsafe.
+    '''
+    if len(webview.windows) > 0:
+        webview.windows[0].evaluate_js(js)

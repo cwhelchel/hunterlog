@@ -20,6 +20,8 @@ from db.hidden_spots_query import HiddenSpotsQuery
 from utils.callsigns import get_basecall
 import upgrades
 
+from fs.glob import database_file
+
 
 Base = declarative_base()
 
@@ -102,7 +104,8 @@ class InitQuery:
 
 class DataBase:
     def __init__(self):
-        engine = sa.create_engine("sqlite:///spots.db", poolclass=sa.NullPool)
+        db_url = sa.URL.create(drivername="sqlite", database=str(database_file))  # NOQA E501
+        engine = sa.create_engine(db_url, poolclass=sa.NullPool)
         self.session = scoped_session(sessionmaker(bind=engine))
         Base.metadata.create_all(engine)
 

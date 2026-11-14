@@ -1,5 +1,5 @@
 from datetime import datetime
-import os
+from fs.data_file import DataFile
 from loggers.adif_provider import AdifProvider
 from loggers.iadif_logger import IAdifLogger
 
@@ -27,27 +27,26 @@ class GenericFileLogger(IAdifLogger):
         '''
         self.my_call = kwargs['my_call']
         self.my_grid6 = kwargs['my_grid6']
-        self.log_filename = kwargs['log_filename']
         self.app_ver = kwargs['app_ver']
         self.ap = AdifProvider(self.my_call, self.my_grid6)
 
-        if not os.path.exists(self.log_filename):
-            with open(self.log_filename, "w", encoding='UTF-8') as f:
-                v = self.ap.get_adif_field("programversion", self.app_ver)
-                pid = self.ap.get_adif_field("programid", "hunterlog")
+        self.log_file = DataFile('hunter.adi')
 
-                f.write("HUNTER LOG backup log\n")
-                f.write(f"Created {datetime.now()}\n")
-                f.write(pid)
-                f.write(v)
-                f.write("<EOH>\n")
+        if not self.log_file.exists:
+            self.log_file.create()
+
+            v = self.ap.get_adif_field("programversion", self.app_ver)
+            pid = self.ap.get_adif_field("programid", "hunterlog")
+
+            self.log_file.append('HUNTER LOG backup log\n')
+            self.log_file.append(f'Created {datetime.now()}\n')
+            self.log_file.append(f'{pid}')
+            self.log_file.append(f'{v}')
+            self.log_file.append('<EOH>\n')
 
     def log_qso(self, qso) -> str:
         adif = self.ap.get_adif(qso)
-
-        with open(self.log_filename, "a", encoding='UTF-8') as file:
-            file.write(adif + "\n")
-
+        self.log_file.append(adif + "\n")
         return adif
 
     def get_extra_field_adif(self, qso):

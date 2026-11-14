@@ -77,7 +77,6 @@ class LoggerInterface:
         logger.init_logger(
             my_call=config.my_call,
             my_grid6=config.my_grid6,
-            log_filename='hunter.adi',
             app_ver=app_ver,
             host=config.adif_host,
             port=config.adif_port,

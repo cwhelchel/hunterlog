@@ -1,14 +1,13 @@
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-import sys
-import os
 import logging as L
 from utils.http_session import http
 from urllib.parse import urlparse
 
 from db.models.callsign_notes import CallsignNote
-from version import __version__
+from fs.glob import hl_data_dir
+
 
 log = L.getLogger(__name__)
 
@@ -27,8 +26,7 @@ class CallsignNotes():
         :type rows: list[CallsignNote]
         '''
         self.map = defaultdict(list)
-        root = self._get_app_global_path()
-        self.notes_root = Path(str(root), 'data/', 'notes/')
+        self.notes_root = hl_data_dir / 'notes'
         self.notes_root.mkdir(exist_ok=True)
         log.debug(f'data root = {self.notes_root} for {rows}')
         self._init_notes(rows)
@@ -67,25 +65,9 @@ class CallsignNotes():
             self._check_file(row.name, row)
             self._load_file(row.name)
 
-    def _get_app_global_path(self):
-        '''stolen from alembic/versions/__init__.py'''
-        if getattr(sys, 'frozen', False):
-            return os.path.abspath(os.path.dirname(sys.executable))
-        elif __file__:
-            # were running from source (npm run start) and this file is in
-            # so we need to back up a little so the code works
-            return os.path.dirname(__file__) + "/../../"
-
     def _download_file(self, row: CallsignNote):
-
-        # ham2k url needs a useragent set or its a 403. others i know of are ok
-        headers = {
-            "User-Agent": f"hunterlog/{__version__}"
-        }
         path = row.path
         try:
-            req = urllib.request.Request(path, headers=headers)
-
             fn = Path(self.notes_root, row.name + ".txt")
             response = http.get(path, timeout=10.0)
             response.raise_for_status()

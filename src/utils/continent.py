@@ -1,11 +1,10 @@
 import json
 from pathlib import Path
-import sys
-import os
 import logging as L
 from typing import Any
 
 from programs.apis import SotaApi
+from fs.glob import hl_data_dir
 
 logging = L.getLogger(__name__)
 
@@ -26,16 +25,15 @@ class Continents():
     '''
 
     def __init__(self):
-        root = self._get_app_global_path()
-        self.data_root = Path(str(root), 'data/')
-        pota_f = Path(str(root), 'data/', 'continents.json')
+        self.data_root = hl_data_dir
+        pota_f = Path(hl_data_dir, 'continents.json')
         if pota_f.exists():
             with open(file=pota_f, encoding='utf-8') as f:
                 self.pota: dict[str, Any] = json.load(f)
         else:
             logging.warning(f'no continent file found at {pota_f}')
 
-        self._init_sota(root)
+        self._init_sota()
         self.wwbota: dict[str, Any] = None
         self.wwff: dict[str, Any] = None
 
@@ -57,7 +55,7 @@ class Continents():
         return cont
 
     def find_continent_wwbota(self, scheme: str) -> str:
-        fn = Path(str(self.data_root), 'wwbota_continents.json')
+        fn = Path(hl_data_dir, 'wwbota_continents.json')
 
         if self.wwbota is None:
             with open(file=fn, mode='r', encoding='utf-8') as f:
@@ -72,7 +70,7 @@ class Continents():
         return result
 
     def find_continent_wwff(self, program: str) -> str:
-        fn = Path(str(self.data_root), 'wwff_continents.json')
+        fn = Path(hl_data_dir, 'wwff_continents.json')
 
         if self.wwff is None:
             with open(file=fn, mode='r', encoding='utf-8') as f:
@@ -87,8 +85,8 @@ class Continents():
 
         return result
 
-    def _init_sota(self, root: str):
-        sota_f = Path(root, 'data/', 'sota_associations.json')
+    def _init_sota(self):
+        sota_f = Path(hl_data_dir, 'sota_associations.json')
 
         if sota_f.exists():
             with open(file=sota_f, encoding='utf-8') as f:
@@ -108,12 +106,3 @@ class Continents():
             self.sota = c
             with open(sota_f, 'w', encoding='utf-8') as output:
                 json.dump(c, output)
-
-    def _get_app_global_path(self):
-        '''stolen from alembic/versions/__init__.py'''
-        if getattr(sys, 'frozen', False):
-            return os.path.abspath(os.path.dirname(sys.executable))
-        elif __file__:
-            # were running from source (npm run start) and this file is in
-            # so we need to back up a little so the code works
-            return os.path.dirname(__file__) + "/../../"

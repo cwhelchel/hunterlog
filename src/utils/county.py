@@ -7,6 +7,10 @@ log = L.getLogger(__name__)
 
 
 class County:
+
+    pota_list = None
+    wwff_list = None
+
     def __init__(self):
         self.file = DataFile('hl_county_file.json')
         if not self.file.exists:
@@ -21,16 +25,19 @@ class County:
         lines = self.file.read()
         items = json.loads(lines)
 
-        self.pota_list = {item["POTA-ID"]: {"county": item["COUNTIES"], "state": item["LOCATION"]} for item in items}  # NOQA
-        self.wwff_list = {item["WWFF-ID"]: {"county": item["COUNTIES"], "state": item["LOCATION"]} for item in items}  # NOQA
+        if County.pota_list is None:
+            County.pota_list = {item["POTA-ID"]: {"county": item["COUNTIES"], "state": item["LOCATION"]} for item in items}  # NOQA
+            log.debug(f"county file loaded: {len(items)} POTA entries")
 
-        log.debug(f"county file loaded: {len(items)} entries")
+        if County.wwff_list is None:
+            County.wwff_list = {item["WWFF-ID"]: {"county": item["COUNTIES"], "state": item["LOCATION"]} for item in items}  # NOQA
+            log.debug(f"county file loaded: {len(items)} WWFF entries")
 
     def find_county(self, ref: str) -> dict:
         if ref.startswith("US-"):
-            return self.pota_list.get(ref)
+            return County.pota_list.get(ref)
         elif ref.startswith("KFF-"):
-            return self.wwff_list.get(ref)
+            return County.wwff_list.get(ref)
         else:
             # log.warning(f"unknown reference format: {ref}")
             return None

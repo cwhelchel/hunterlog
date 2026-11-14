@@ -9,6 +9,8 @@ from utils.callsigns import get_basecall
 from utils.http_session import http
 from version import __version__
 
+from fs.glob import hl_data_dir
+
 logging = L.getLogger(__name__)
 
 
@@ -24,7 +26,7 @@ LOCATION_PARKS_URL = "https://api.pota.app/location/parks/{loc}"
 class Api():
     '''Class that calls the POTA endpoints and returns their results'''
 
-    data_dir = "data"
+    data_dir = hl_data_dir
     '''Directory for stored files'''
 
     def get_spots(self):
