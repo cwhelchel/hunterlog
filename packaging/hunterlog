@@ -2,6 +2,22 @@
 set -eu
 
 DATA_DIR="${XDG_DATA_HOME:-"$HOME/.local/share"}/hunterlog"
-mkdir -p "$DATA_DIR"
-cd "$DATA_DIR"
+HL_DATA_DIR="$DATA_DIR/data"
+
+# echo "$DATA_DIR"
+# echo "$HL_DATA_DIR"
+
+if [ ! -d "$DATA_DIR" ]; then
+    mkdir -p "$DATA_DIR" 
+    cp -r "/opt/hunterlog/data" "$DATA_DIR"
+    echo "created local hunterlog dir"
+fi
+
+if [ ! -d "$HL_DATA_DIR" ]; then
+    mkdir -p "$HL_DATA_DIR"
+    cp -r "/opt/hunterlog/data/." "$HL_DATA_DIR"
+    echo "First run: copied HL data to $HL_DATA_DIR"
+fi
+
+# echo "Running hunterlog binary"
 exec /opt/hunterlog/hunterlog "$@"
