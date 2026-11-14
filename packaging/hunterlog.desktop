@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Hunterlog
+Comment=Amateur radio spot and logging application
+Exec=hunterlog
+Icon=hunterlog
+Terminal=false
+Categories=Utility;
