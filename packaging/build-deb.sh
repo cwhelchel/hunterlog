@@ -64,3 +64,11 @@ chmod 0755 "$PACKAGE_ROOT/DEBIAN"
 OUTPUT="$DIST_DIR/hunterlog_${VERSION}_${ARCH}.deb"
 dpkg-deb --build --root-owner-group "$PACKAGE_ROOT" "$OUTPUT"
 echo "Created $OUTPUT"
+
+# next github steps need to know how to build the output filename
+if [ -n "${GITHUB_ENV+x}" ]; then
+    echo "setting github env"
+    echo "HL_VER=$VERSION" >> "$GITHUB_ENV"
+    echo "BUILD_ARCH=$ARCH" >> "$GITHUB_ENV"
+fi
+
