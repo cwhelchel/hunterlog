@@ -16,7 +16,7 @@ def res_path(rel_path):
     return os.path.join(base_path, rel_path)
 
 
-def get_entrypoint():
+def get_entrypoint(html_file: str):
     '''
     Get the path to the entrypoint html file needed for pywebview.
 
@@ -33,24 +33,24 @@ def get_entrypoint():
     # index.py
 
     root = res_path('gui')
-    x = os.path.join(root, 'index.html')
+    x = os.path.join(root, f'{html_file}')
 
     if os.path.exists(x):
         return x
 
-    if exists('../../gui/index.html'):  # unfrozen development
-        return '../gui/index.html'
+    if exists(f'../../gui/{html_file}'):  # unfrozen development
+        return f'../gui/{html_file}'
 
-    if exists('../../Resources/gui/index.html'):  # frozen py2app
-        return '../Resources/gui/index.html'
+    if exists(f'../../Resources/gui/{html_file}'):  # frozen py2app
+        return f'../Resources/gui/{html_file}'
 
-    if exists('../gui/index.html'):
-        return '../gui/index.html'
+    if exists(f'../gui/{html_file}'):
+        return f'../gui/{html_file}'
 
-    if exists('./gui/index.html'):
-        return './gui/index.html'
+    if exists(f'./gui/{html_file}'):
+        return f'./gui/{html_file}'
 
-    raise Exception('No index.html found')
+    raise Exception(f'No {html_file} found')
 
 
 def set_interval(interval):

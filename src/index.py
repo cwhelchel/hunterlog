@@ -1,3 +1,4 @@
+import multiprocessing
 import sys
 import threading
 import time
@@ -10,6 +11,7 @@ import mimetypes
 
 from api import JsApi
 from download_thread import DownloadThread
+from splash import run_show_splash
 from utils.entrypoint import get_entrypoint, set_interval
 from utils.hl_files import HunterlogFiles
 from utils.streamlogger import StreamToLogger
@@ -17,30 +19,9 @@ from version import __version__
 
 from fs.glob import configure_logging, get_app_dir, database_file, log_file
 
-
-# files_migrated = migrate_old_files(get_app_dir())
-
-configure_logging()
-
-log = logging.getLogger("root")
-sys.stdout = StreamToLogger(log, logging.INFO)
-sys.stderr = StreamToLogger(log, logging.INFO)
-
-log.info(f"!!!!!!!!!!!! Starting Hunterlog {__version__}")
-
-
-test = get_app_dir()
-log.info(f"!!!!!!!!!!!! app dir: {test}")
-log.info(f"!!!!!!!!!!!! database file: {database_file}")
-log.info(f"!!!!!!!!!!!! log file: {log_file}")
-
-# if files_migrated:
-#     log.info("!!!!!!!!!!!! migrated old files to platformdirs dir")
-
-log.info('checking for file downloads...')
-hl_files = HunterlogFiles()
-
-the_api = JsApi()
+log = None
+window = None
+the_api = None
 started = False
 
 
@@ -79,12 +60,17 @@ def refresh_frontend():
 
 
 @set_interval(60)
-def update_ticker(t: DownloadThread):
+def update_ticker(t: DownloadThread, splash_queue):
     '''
     This is the main update thread. It handles the critical main update task
     where the database is updated with the latests spots.
     '''
     log.debug("thread heartbeat")
+    global started
+
+    # make the splash screen disappear
+    if not started:
+        splash_queue.put("READY")
 
     spot_arr = t.get_spots()
     show_frontend_work()
@@ -92,8 +78,8 @@ def update_ticker(t: DownloadThread):
     the_api._do_update(spot_arr)
     refresh_frontend()
 
-    global started
     if not started:
+        splash_queue.put("READY")
         # this has to be kicked once to start the thread. And it needs to be
         # run after the main update
         background_update_ticker()
@@ -204,19 +190,35 @@ def threading_exception_handler(args):
         pass
 
 
-# Assign the hook to the system execution hook before anything else happens
-log.debug("setting global exception handler")
-sys.excepthook = global_exception_handler
-threading.excepthook = threading_exception_handler
+def main():
+    configure_logging()
 
-if __name__ == '__main__':
+    global log
+    log = logging.getLogger("root")
+    sys.stdout = StreamToLogger(log, logging.INFO)
+    sys.stderr = StreamToLogger(log, logging.INFO)
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-w", "--reset-win", action="store_true",
-                        help="reset the window size and position to default")
-    args = parser.parse_args()
+    log.info(f"!!!!!!!!!!!! Starting Hunterlog {__version__}")
+    app_dir = get_app_dir()
+    log.info(f"!!!!!!!!!!!! app dir: {app_dir}")
+    log.info(f"!!!!!!!!!!!! database file: {database_file}")
+    log.info(f"!!!!!!!!!!!! log file: {log_file}")
 
-    entry = get_entrypoint()
+    # Assign the hook to the system execution hook before anything else happens
+    log.debug("setting global exception handler")
+    sys.excepthook = global_exception_handler
+    threading.excepthook = threading_exception_handler
+
+    # first thing is start the splash screen process
+    status_queue, splash_process = start_splash_screen()
+
+    log.info('checking for file downloads...')
+    hl_files = HunterlogFiles()  # NOQA F841 not using this var for anything
+
+    global the_api
+    the_api = JsApi()
+
+    args = parse_hl_args()
 
     (width, height) = the_api._get_win_size()
     (x, y) = the_api._get_win_pos()
@@ -246,6 +248,10 @@ if __name__ == '__main__':
     # checking is enforced for module scripts per HTML spec.
     mimetypes.add_type("application/javascript", ".js")
 
+    entry = get_entrypoint(html_file='index.html')
+    log.debug(f'got index.html entrypoint {entry}')
+
+    global window
     window = webview.create_window(
         'HUNTER LOG',
         entry,
@@ -279,10 +285,37 @@ if __name__ == '__main__':
     time.sleep(5.5)
 
     if the_system == "Linux":
-        webview.start(update_ticker, args=dl, private_mode=False, debug=True, gui="gtk")  # noqa E501
+        webview.start(update_ticker, args=(dl, status_queue), private_mode=False, debug=True, gui="gtk")  # noqa E501
     elif the_system == "Windows":
-        webview.start(update_ticker, args=dl, private_mode=False, debug=True)
+        webview.start(update_ticker, args=(dl, status_queue),
+                      private_mode=False, debug=True)
     elif the_system == "Darwin":
-        webview.start(update_ticker, args=dl, private_mode=False, debug=True)
+        webview.start(update_ticker, args=(dl, status_queue),
+                      private_mode=False, debug=True)
 
+    splash_process.join()
     stopFlag.set()
+
+
+def parse_hl_args():
+    log.debug('parsing args...')
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-w", "--reset-win", action="store_true",
+                        help="reset the window size and position to default")
+    args = parser.parse_args()
+    return args
+
+
+def start_splash_screen():
+    log.debug("starting splash screen")
+    status_queue = multiprocessing.Queue()
+    splash_process = multiprocessing.Process(
+        target=run_show_splash, args=(status_queue,))
+    splash_process.start()
+    return status_queue, splash_process
+
+
+if __name__ == '__main__':
+    multiprocessing.freeze_support()
+
+    main()

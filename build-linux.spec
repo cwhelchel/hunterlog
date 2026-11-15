@@ -3,6 +3,7 @@
 block_cipher = None
 added_files = [
     ('./gui/*', 'gui'),
+    ('./src/assets/logo.png', 'src/assets'),
     ('./alembic.ini', '.'),
     ('./src/alembic_src/env.py', 'alembic_src'),
     ('./src/alembic_src/versions/*', 'alembic_src/versions'),

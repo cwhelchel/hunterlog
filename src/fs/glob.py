@@ -14,6 +14,7 @@ defined in this module to maintain consistency.
 
 import logging
 import logging.config
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -54,6 +55,19 @@ def get_app_dir() -> Path:
     res = this_file_dir.parent.parent
     print(f"Running in a non-frozen environment. Returning {res}")
     return res
+
+
+def get_resource_path(relative_path) -> Path:
+    '''
+    Get the absolute path to a resource, works for dev and PyInstaller.
+    '''
+    try:
+        # PyInstaller creates a temp folder and stores the path in _MEIPASS
+        base_path = sys._MEIPASS
+    except AttributeError:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 
 def migrate_old_files(user_dir: Path, force: bool = False) -> bool:
