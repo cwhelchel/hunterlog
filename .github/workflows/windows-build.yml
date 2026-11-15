@@ -45,19 +45,37 @@ jobs:
         version: '3.13' # current as of Nov 2026
 
     - name: Build Windows Installer - makensis
+      shell: pwsh
       run: |
-        makensis install/win.nsi
+        $output = makensis install/win/win.nsi
+
+        # Match the line: Output: "C:\path\to\MySetup.exe"
+        $outputLine = $output | Where-Object { $_ -match '^Output:\s*"(?<ExePath>[^"]+)"' }
+
+        if ($outputLine) {
+            $installerPath = $Matches.ExePath
+            $fileName = Split-Path $installerPath -Leaf
+            
+            "NSIS_FULL_PATH=$installerPath" >> $env:GITHUB_ENV
+            "NSIS_FILE=$fileName" >> $env:GITHUB_ENV
+        }
+
+        if ($fileName -match 'Setup_hunterlog_(\d+.\d+.\d+)\.exe') {
+            $hlVer = $matches[1]
+            
+            "HL_VER=$hlVer" >> $env:GITHUB_ENV
+        }
 
     - name: Upload Zip
       uses: actions/upload-artifact@v4
       with:
-        name: hunterlog
+        name: hl_${{ env.HL_VER }}_win
         path: dist
 
     - name: Upload installer
       uses: actions/upload-artifact@v4
       with:
-        name: hunterlog_installer
-        path: install/Setup_Hunterlog.exe
+        name: hlsetup_${{ env.HL_VER }}_windows
+        path: install/win/${{ env.NSIS_FILE }}
         
 

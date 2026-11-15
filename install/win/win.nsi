@@ -2,7 +2,7 @@
 ; NSIS Per-User Installation Script (Installs to Local AppData)
 ; ============================================================================
 
-!searchparse /file "..\src\version.py" `__version__ = '` APP_VERSION `'`
+!searchparse /file "..\..\src\version.py" `__version__ = '` APP_VERSION `'`
 
 !define APP_NAME "hunterlog"
 !define COMP_NAME "krinkl3"
@@ -65,7 +65,7 @@ Section "MainSection" SEC01
     SetOutPath "$INSTDIR"
     
     ; Replace "myapp.exe" with your compiled file, or use: File /r "path\to\your\files\*.*"
-    FILE "..\dist\hunterlog.exe"
+    FILE "..\..\dist\hunterlog.exe"
 
     ; Create uninstaller
     WriteUninstaller "$INSTDIR\uninstall.exe"
@@ -93,7 +93,7 @@ Section "InstallUserData"
     SetOutPath "${HL_DATA_DIR}"
 
     ; Extracts default config files into that folder
-    File /r "..\dist\data\*.*"
+    File /r "..\..\dist\data\*.*"
 SectionEnd
 
 ; ============================================================================
