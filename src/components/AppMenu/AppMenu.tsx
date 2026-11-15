@@ -15,11 +15,9 @@ import { checkApiResponse2, showErrorToast, showSuccessToast } from '../Utilitie
 import HuntMapMenu from './MenuItems/Map/HuntMapMenu';
 import ConfigDropdownMenu from './MenuItems/ConfigDropdownMenu';
 import { useMessageQueue } from '../MessageContext';
-import CatArea from './CatArea/CatArea';
-import CondxArea from './CondxArea/CondxArea';
 import RefreshButton from './RefreshButton';
-import WsjtxArea from './WsjtxArea/WsjtxArea';
 import RightArea from './RightArea';
+import ExtrasDropdownMenu from './MenuItems/Extras/ExtrasDropdownMenu';
 
 
 
@@ -36,7 +34,7 @@ export default function AppMenu() {
     const [alertHidden, setAlertHidden] = React.useState(true);
     const [alertMsg, setAlertMsg] = React.useState('');
     const [severity, setSeverity] = React.useState<AlertColor>('info');
-    const [showBandCondx, setShowBandCondx] = React.useState(parseInt(currentVal) == 1 ? true : false);
+    const [_, setShowBandCondx] = React.useState(parseInt(currentVal) == 1 ? true : false);
 
     const { messages, removeMessage, addMessage } = useMessageQueue();
 
@@ -175,7 +173,7 @@ export default function AppMenu() {
 
     return (
         <Box sx={{ flexGrow: 1 }}>
-            <AppBar position="static" sx={{maxHeight: 85}}>
+            <AppBar position="static" sx={{ maxHeight: 85 }}>
                 <Toolbar>
                     <Avatar src={gravatar} >
                     </Avatar>
@@ -186,6 +184,7 @@ export default function AppMenu() {
                     <ConfigDropdownMenu />
                     <StatsDropdownMenu />
                     <HuntMapMenu />
+                    <ExtrasDropdownMenu />
                     {/* <Button onClick={() => checkApiResponse2('{ "success": false, "message": "Test msg" }', addMessage)}>
                         Test
                     </Button> */}

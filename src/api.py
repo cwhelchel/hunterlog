@@ -9,6 +9,7 @@ from datetime import timedelta
 
 from api_callnotes import CallNotesApi
 from api_cat import CatApi
+from api_extras import ExtrasApi
 from api_hidden_spots import HiddenSpotsApi
 from api_imports import ImportApi
 from bands import get_band, get_name_of_band, bandNames
@@ -55,6 +56,7 @@ class JsApi:
         self.hidden_spots = HiddenSpotsApi(
             self.db, self.programs, self._metadata)
         self.callsign_notes = CallNotesApi(self.db, self.programs)
+        self.extras = ExtrasApi(self.db, self.programs)
 
         logging.debug("init logger...")
         lp = LoggerParams(

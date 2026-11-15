@@ -3,14 +3,14 @@ import { HlModal, HlModalContent, HlStyledBackdrop } from './Modals';
 import { SxProps } from '@mui/material';
 
 // Define the component's specific props
-interface HlModalProps {
-    children: ReactNode;
+export interface HlModalProps {
+    children?: ReactNode;
     isOpen: boolean;
     onClose: () => void;
     contentWidth?: string; // css width for modal content
-    title: string; // modal title
-    id: string; //css id
-    contentStyle: SxProps;
+    title?: string; // modal title
+    id?: string; //css id
+    contentStyle?: SxProps;
 }
 
 const HlModal2: React.FC<HlModalProps> = ({

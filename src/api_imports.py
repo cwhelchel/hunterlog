@@ -10,8 +10,7 @@ from programs.program import Program
 import logging as L
 
 from utils.adif import AdifLog
-from fs.glob import hl_data_dir, migrate_to_platformdirs
-from utils.pywebview_util import call_js_raw
+from fs.glob import hl_data_dir
 
 
 log = L.getLogger(__name__)
@@ -156,27 +155,3 @@ class ImportApi:
             return _response(False, 'Error loading location data')
 
         return _response(True, "Downloaded location data successfully")
-
-    def migrate_select_path(self):
-        filename = webview.windows[0] \
-            .create_file_dialog(
-            webview.FOLDER_DIALOG)
-        if not filename:
-            return _response(False, 'No directory selected')
-
-        return _response(True, '', path=filename[0])
-
-    def migrate_to_new_hunterlog(self, path):
-        log.debug(f"migrating {path} data to platformdirs...")
-
-        if (path is not None or path != ''):
-            files_migrated = migrate_to_platformdirs(path)
-
-        if files_migrated:
-            call_js_raw('alert("Migration successful! Hunterlog will now close. Then it can be restarted for changes to take effect");')  # NOQA E501
-            webview.windows[0].destroy()
-
-            # this is probably not needed since we destroy the window
-            return _response(True, "Migration successful")
-
-        return _response(False, "Migration failed")
