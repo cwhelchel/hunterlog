@@ -23,16 +23,31 @@ jobs:
     - name: Update APT
       run: |
         sudo apt-get update
+
     - name: Use Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '20.x'
         cache: 'npm'
+
     - name: Install env
       run: npm run init
+
     - name: Build Output
       run: npm run build
     - uses: actions/upload-artifact@v4
       with:
         name: hunterlog-ubuntu
         path: dist
+
+    - name: Build deb package
+      run: |
+        ./packaging/build-deb.sh
+
+    - name: Upload deb file
+      uses: actions/upload-artifact@v4
+      with:
+        name: hlsetup_${{ env.HL_VER }}_ubuntu_22-04
+        path: dist/hunterlog_${{ env.HL_VER }}_${{ env.ARCH }}.deb
+
+   
