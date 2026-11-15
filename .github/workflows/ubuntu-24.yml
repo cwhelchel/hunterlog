@@ -24,6 +24,10 @@ jobs:
       run: |
         sudo apt-get update
 
+    - name: Add tkinter
+      run: |
+        sudo apt-get install -y python3-tk
+
     - name: Add glib-networking
       run: |
         sudo apt-get install glib-networking     
