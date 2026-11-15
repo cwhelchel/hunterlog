@@ -48,6 +48,6 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: hlsetup_${{ env.HL_VER }}_ubuntu_22-04
-        path: dist/hunterlog_${{ env.HL_VER }}_${{ env.ARCH }}.deb
+        path: dist/hunterlog_${{ env.HL_VER }}_${{ env.BUILD_ARCH }}.deb
 
    
