@@ -60,7 +60,7 @@ def refresh_frontend():
 
 
 @set_interval(60)
-def update_ticker(t: DownloadThread, splash_queue):
+def update_ticker(t: DownloadThread, splash_queue: multiprocessing.Queue):
     '''
     This is the main update thread. It handles the critical main update task
     where the database is updated with the latests spots.
@@ -70,7 +70,8 @@ def update_ticker(t: DownloadThread, splash_queue):
 
     # make the splash screen disappear
     if not started:
-        splash_queue.put("READY")
+        log.debug("flagging the queue")
+        splash_queue.put("DONE")
 
     spot_arr = t.get_spots()
     show_frontend_work()
