@@ -1230,6 +1230,8 @@ class JsApi:
         q.tx_pwr = def_pwr
         q.rx_pwr = def_pwr
 
+        logging.debug(f"finding spot to enrich qso for {q.call}...")
+
         # find a spot in current spots to enrich the qso data
         spot = self.db.spots.get_wsjtx_spot(callsign=q.call)
         if spot is not None:

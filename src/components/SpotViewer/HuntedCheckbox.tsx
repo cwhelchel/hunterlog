@@ -21,7 +21,7 @@ export default function HuntedCheckbox(props: IHuntedCheckboxProps) {
                     </Tooltip>
                 </div>
             )}
-            {!props.hunted && props.hunted_bands.length > 0 && (
+            {!props.hunted && props.hunted_bands?.length > 0 && (
                 <Tooltip title={<React.Fragment>
                     {'hunted on:'}<br />
                     {props.hunted_bands}
@@ -29,7 +29,7 @@ export default function HuntedCheckbox(props: IHuntedCheckboxProps) {
                     <CheckBoxOutlineBlankIcon color='primary' />
                 </Tooltip>
             )}
-            {!props.hunted && props.hunted_bands.length === 0 && (
+            {!props.hunted && props.hunted_bands?.length === 0 && (
                 <CheckBoxOutlineBlankIcon />
             )}
         </>
