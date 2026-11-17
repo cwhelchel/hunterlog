@@ -48,8 +48,11 @@ def run_show_splash(status_queue: Queue):
     margin = 16
     radius = 32
 
-    # windows only
-    splash.wm_attributes("-transparentcolor", transparent_key)
+    # windows only - crashes on linux b/c transparentcolor is not supported
+    try:
+        splash.wm_attributes("-transparentcolor", transparent_key)
+    except tk.TclError:
+        pass
 
     canvas = tk.Canvas(
         splash,
