@@ -7,9 +7,10 @@ import { useMessageQueue } from "../../../MessageContext";
 export interface MigrateModalProps {
     isOpen: boolean;
     onClose: () => void;
+    migrateFromInstall?: boolean;
 }
 
-export default function MigrateModal({ isOpen, onClose }: MigrateModalProps) {
+export default function MigrateModal({ isOpen, onClose, migrateFromInstall }: MigrateModalProps) {
     const [migrateDir, setMigrateDir] = React.useState('');
 
     const { addMessage } = useMessageQueue();
@@ -51,6 +52,21 @@ export default function MigrateModal({ isOpen, onClose }: MigrateModalProps) {
             id='migration'
             contentStyle={{ width: 700 }}>
 
+            {migrateFromInstall && (
+                <Alert severity="info">
+                    Hunterlog has detected that you may need to migrate your old
+                    files (installed via a zipped archive) into the new Hunterlog
+                    user data directory.
+                    <p>
+                        Use this screen to perform the migration. You can access this
+                        screen from the arrow menu  &apos;{">"}&apos; in the main menu.
+                    </p>
+                    <p>
+                        If you are a brand new user you can safely ignore this.
+                    </p>
+                </Alert>
+            )}
+
             <Typography variant="body1" gutterBottom>
                 This will copy Hunterlog files from an older, manually installed directory
                 into the new Hunterlog user data directory on your system.
@@ -85,14 +101,14 @@ export default function MigrateModal({ isOpen, onClose }: MigrateModalProps) {
                         <Typography variant="body2" gutterBottom marginTop={"10px"}>
                             This will copy old files to the new USER directory location
                             on your system. This location is platform (OS) dependant.
-                            <br /><span style={{marginLeft:'10px'}}>Linux: <code>~/.local/share/hunterlog/</code></span>
-                            <br /><span style={{marginLeft:'10px'}}>Windows: <code>%LOCALAPPDATA%/hunterlog/</code></span>
+                            <br /><span style={{ marginLeft: '10px' }}>Linux: <code>~/.local/share/hunterlog/</code></span>
+                            <br /><span style={{ marginLeft: '10px' }}>Windows: <code>%LOCALAPPDATA%/hunterlog/</code></span>
                         </Typography>
                     </li>
                 </ol>
 
                 <Alert severity="warning">
-                   Hunterlog will restart after the files are migrated.
+                    Hunterlog will restart after the files are migrated.
                 </Alert>
             </div>
 

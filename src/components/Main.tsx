@@ -12,6 +12,9 @@ import AppMenu from './AppMenu/AppMenu'
 import Footer from './Footer/Footer'
 import BasicTabs from './Tabs';
 import { Backdrop, CircularProgress } from '@mui/material';
+import { checkApiResponse2 } from './Utilities/util';
+import { useMessageQueue } from './MessageContext';
+import MigrateModal from './AppMenu/MenuItems/Extras/MigrateModal';
 
 // Augment the palette to include an alert color
 declare module '@mui/material/styles' {
@@ -49,6 +52,9 @@ export default function Main() {
     const potaTheme = buildTheme(true);
     const [theme, setTheme] = React.useState(potaTheme);
     const [spinnerOpen, setSpinnerOpen] = React.useState(false);
+    const [modalOpen, setModalOpen] = React.useState(false);
+
+    const { addMessage } = useMessageQueue();
 
     React.useEffect(() => {
         const isDark = contextData.themeMode == 'dark';
@@ -84,9 +90,28 @@ export default function Main() {
             else
                 newCtx.themeMode = 'light';
             setData(newCtx);
+
+            checkMigration();
         };
     }, []);
 
+    function checkMigration() {
+        if (window.pywebview) {
+            window.pywebview.api.extras.check_migration_flag()
+                .then((x: string) => {
+                    const j = checkApiResponse2(x, addMessage)
+                    console.log('checking migration flag', j);
+                    if (j.success) {
+                        const do_migrate = j.migrate_flag;
+                        if (do_migrate) {
+                            console.log('gotta migrate');
+                            setModalOpen(true);
+                        }
+                    }
+                }
+            );
+        }
+    }
 
     return (
         <ThemeProvider theme={theme}>
@@ -130,6 +155,7 @@ export default function Main() {
                 <SpotViewer />
                 <Footer />
             </Stack>
+            <MigrateModal isOpen={modalOpen} onClose={() => setModalOpen(false)} migrateFromInstall={true} />
         </ThemeProvider>
     )
 }

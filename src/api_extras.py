@@ -5,6 +5,7 @@ import platform
 import subprocess
 import webview
 from db.db import DataBase
+from fs.data_file import DataFile
 from programs.program import Program
 import logging as L
 
@@ -34,6 +35,7 @@ class ExtrasApi:
     def __init__(self, db: DataBase, programs: dict[str, Program]):
         self.db = db
         self.programs = programs
+        self._migration_flag = False
 
     def open_folder_select_dialog(self):
         filename = webview.windows[0] \
@@ -96,3 +98,25 @@ class ExtrasApi:
             return _response(False, 'Error opening log file')
 
         return _response(True, '')
+
+    def check_migration_flag(self):
+        return _response(True, '', migrate_flag=self._migration_flag)
+
+    def _initialize_migration_flag(self):
+        # check for migration flag
+        migration_df = DataFile(".migrate")
+        user_callsign = self.db.config.get_value('my_call')
+
+        log.debug(f"checking migration file {migration_df} and call {user_callsign}")  # NOQA E501
+
+        if (migration_df.exists):
+            if user_callsign == "N0CALL":
+                # set flag to show migration popup in front end.
+                log.info("setting migration flag in API")
+                self._migration_flag = True
+
+            # delete the .migrate file so this never runs again.
+            if not migration_df.delete():
+                log.error('could not delete migration flag file')
+            else:
+                log.info('migration flag file deleted')

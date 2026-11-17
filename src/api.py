@@ -82,7 +82,6 @@ class JsApi:
         except Exception:
             logging.error("Error creating CAT object: ", exc_info=True)
             self.cat = None
-        self.pw = None
 
         # advanced integrations config setup
         int_cfg: IntegrationCfg = IntegrationCfg(
@@ -963,6 +962,9 @@ class JsApi:
                         self._metadata.add_spots(program, p, spots[program])
         except Exception as ex:
             logging.error("exception updating metadata", exc_info=ex)
+
+    def _initialize(self):
+        self.extras._initialize_migration_flag()
 
     def _do_update(self, spots: dict[any]):
         '''

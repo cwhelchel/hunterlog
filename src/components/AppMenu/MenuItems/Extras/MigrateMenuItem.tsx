@@ -13,7 +13,7 @@ export default function MigrateMenuItem() {
                     Migrate
                 </Button>
             </Tooltip>
-            <MigrateModal isOpen={modalOpen} onClose={()=>setModalOpen(false)} />
+            <MigrateModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
         </>
     )
 }

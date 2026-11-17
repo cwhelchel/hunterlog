@@ -73,6 +73,9 @@ def update_ticker(t: DownloadThread, splash_queue: multiprocessing.Queue):
         log.debug("flagging the queue")
         splash_queue.put("DONE")
 
+        log.debug("initializing the js api")
+        the_api._initialize()
+
     spot_arr = t.get_spots()
     show_frontend_work()
     log.debug('updating db')
@@ -80,7 +83,6 @@ def update_ticker(t: DownloadThread, splash_queue: multiprocessing.Queue):
     refresh_frontend()
 
     if not started:
-        splash_queue.put("READY")
         # this has to be kicked once to start the thread. And it needs to be
         # run after the main update
         background_update_ticker()

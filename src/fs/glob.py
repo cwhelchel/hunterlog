@@ -168,4 +168,7 @@ def configure_logging():
             format='%(asctime)s = %(levelname)-7.7s [%(name)s]: %(message)s',  # noqa E501
             level=logging.DEBUG)
 
+    # this one is chatty. disable debug level
+    logging.getLogger('requests_cache').setLevel(logging.INFO)
+
     print(f'logging configured. see {log_file}')
