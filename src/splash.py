@@ -1,3 +1,4 @@
+
 import tkinter as tk
 from multiprocessing.queues import Queue
 
@@ -28,7 +29,8 @@ def run_show_splash(status_queue: Queue):
     splash.overrideredirect(True)  # Remove title bar and borders
 
     # Center the splash screen on the display
-    width, height = 600, 400
+    # Slightly larger so the full-size logo + caption have room to breathe
+    width, height = 540, 450
     screen_width = splash.winfo_screenwidth()
     screen_height = splash.winfo_screenheight()
     x = (screen_width // 2) - (width // 2)
@@ -38,8 +40,16 @@ def run_show_splash(status_queue: Queue):
     img_path = get_resource_path("src/assets/logo.png")
     img = tk.PhotoImage(file=img_path)
     transparent_key = "#050505"
-    round_bg = "#111111"
+    round_bg = "#214228"
+    shadow_bg = "#181818"
+    accent = "#1f7a2e"  # matches the green in the logo
     text_fg = "#dad8d8"
+
+    margin = 16
+    radius = 32
+
+    # windows only
+    splash.wm_attributes("-transparentcolor", transparent_key)
 
     canvas = tk.Canvas(
         splash,
@@ -50,14 +60,24 @@ def run_show_splash(status_queue: Queue):
     )
     canvas.pack(fill="both", expand=True)
 
-    draw_rounded_rect(canvas, 0+20, 0+20, width-20,
-                      height-20, 25, fill=round_bg)
+    # Soft shadow/halo just outside the card
+    draw_rounded_rect(canvas, margin - 8, margin - 8,
+                      width - margin + 8, height - margin + 8,
+                      radius + 8, fill=shadow_bg)
 
+    # Main card with a thin green accent border
+    draw_rounded_rect(canvas, margin, margin,
+                      width - margin, height - margin,
+                      radius, fill=round_bg, outline=accent, width=2)
+
+    # Close button sits inside the card's top-right corner, inset from curve
+    btn_size = 24
+    btn_inset = 16
     close_btn = tk.Button(
         splash,
         text="✕",
         command=splash.destroy,
-        bg=transparent_key,
+        bg=round_bg,
         fg=text_fg,
         activebackground="#e81123",
         activeforeground="#ffffff",
@@ -65,7 +85,9 @@ def run_show_splash(status_queue: Queue):
         font=("Arial", 11, "bold"),
         cursor="hand2"
     )
-    close_btn.place(x=width - 35, y=20, width=20, height=20)
+    close_btn.place(x=width - margin - btn_inset - btn_size,
+                    y=margin + btn_inset,
+                    width=btn_size, height=btn_size)
 
     tk.Label(
         splash,
@@ -77,6 +99,7 @@ def run_show_splash(status_queue: Queue):
         text="Starting Hunterlog...",
         font=("Arial", 16, "bold"),
         fg=text_fg,
+        pady=8,
     ).place(relx=0.5, rely=0.5, anchor="center")
 
     # Poll the multiprocessing queue to check if pywebview is ready
