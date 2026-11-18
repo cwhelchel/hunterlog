@@ -5,6 +5,7 @@ from pathlib import Path
 import logging as L
 import urllib.parse
 from cachetools.func import ttl_cache
+from fs.data_file import DataFile
 from utils.callsigns import get_basecall
 from utils.http_session import http
 from version import __version__
@@ -143,8 +144,10 @@ class Api():
         response = http.get(url)
         if response.status_code == 200:
             obj = response.json()
-            with open('locations.json', 'w', encoding='utf8') as w:
-                w.write(json.dumps(obj))
+            df = DataFile('locations.json')
+            ok = df.write(json.dumps(obj))
+            if not ok:
+                return None
             return obj
 
     @staticmethod

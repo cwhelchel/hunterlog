@@ -4,8 +4,11 @@ from datetime import datetime
 import os
 from pathlib import Path
 from typing import Optional, List
+import logging as L
 
 from fs.glob import hl_data_dir
+
+log = L.getLogger(__name__)
 
 
 class DataFile:
@@ -85,10 +88,10 @@ class DataFile:
                 f.write(content)
             return True
         except Exception as e:
-            print(f"Error creating file: {e}")
+            log.error(f"Error creating file {self}", exc_info=e)
             return False
 
-    def read(self) -> Optional[str]:
+    def read(self, encoding: str = 'utf-8') -> Optional[str]:
         '''
         Read file contents.
 
@@ -98,10 +101,10 @@ class DataFile:
         if not self.is_file:
             return None
         try:
-            with open(self.full_path, 'r') as f:
+            with open(self.full_path, 'r', encoding=encoding) as f:
                 return f.read()
         except Exception as e:
-            print(f"Error reading file: {e}")
+            log.error(f"Error reading file {self}", exc_info=e)
             return None
 
     def write(self, content: str, encoding: str = "utf-8") -> bool:
@@ -119,7 +122,7 @@ class DataFile:
                 f.write(content)
             return True
         except Exception as e:
-            print(f"Error writing to file: {e}")
+            log.error(f"Error writing to file {self}", exc_info=e)
             return False
 
     def append(self, content: str, encoding: str = "utf-8") -> bool:
@@ -137,7 +140,7 @@ class DataFile:
                 f.write(content)
             return True
         except Exception as e:
-            print(f"Error appending to file: {e}")
+            log.error(f"Error appending to file {self}", exc_info=e)
             return False
 
     def delete(self) -> bool:
@@ -154,7 +157,7 @@ class DataFile:
                 os.rmdir(self.full_path)
             return True
         except Exception as e:
-            print(f"Error deleting: {e}")
+            log.error(f"Error deleting file {self}", exc_info=e)
             return False
 
     def list_contents(self) -> Optional[List[str]]:
@@ -169,18 +172,22 @@ class DataFile:
         try:
             return os.listdir(self.full_path)
         except Exception as e:
-            print(f"Error listing directory: {e}")
+            log.error(f"Error listing directory {self}", exc_info=e)
             return None
 
     def __str__(self) -> str:
         '''String representation of the object.'''
-        if self.is_file:
-            type = "file"
-        elif self.is_directory:
-            type = "directory"
-        else:
-            type = "non-existent"
-        return f"<datafile(name='{self.name}',fullpath='{self.full_path}', type={type})>"  # NOQA
+        try:
+            if self.is_file:
+                type = "file"
+            elif self.is_directory:
+                type = "directory"
+            else:
+                type = "non-existent"
+            return f"<datafile(name='{self.name}',fullpath='{self.full_path}', type={type})>"  # NOQA
+        except Exception as e: 
+            log.warning("Error getting str for file obj", exc_info=e)
+            return "<datafile(UNKNOWN ERROR)>"
 
     def __repr__(self) -> str:
         '''Developer-friendly representation.'''

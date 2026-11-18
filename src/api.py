@@ -20,6 +20,7 @@ from db.models.parks import Park, ParkSchema
 from db.models.qsos import Qso, QsoSchema
 from db.models.spot_comments import SpotCommentSchema
 from db.models.spots import Spot, SpotSchema
+from fs.data_file import DataFile
 from integrations.hl_integrations_cfg import IntegrationCfg
 from integrations.hl_integrations import HlIntegrations
 from loggers import LoggerInterface
@@ -800,20 +801,23 @@ class JsApi:
     def get_hamalert_text(self, location: str) -> str:
         hunted = self.db.parks.get_hunted_parks(location)
         self.pota.check_and_download_parks(location)
-        with open(f"data\\parks-{location}.json", 'r', encoding='utf-8') as r:
-            text = r.read()
-            obj = json.loads(text)
-            all_parks: list[str] = list(map(lambda x: x['reference'], obj))
-            # logging.debug(all_parks)
 
-            hunted_set = set(hunted)
-            all_set = set(all_parks)
-            unhunted = list(all_set - hunted_set)
-            return self._response(True, '',
-                                  hunted_refs=hunted,
-                                  unhunted_refs=unhunted)
+        file = DataFile(f'parks-{location}.json')
+        text = file.read()
 
-        return self._response(False, 'Error getting hamalert text')
+        if text is None:
+            return self._response(False, 'Error getting hamalert text')
+
+        obj = json.loads(text)
+        all_parks: list[str] = list(map(lambda x: x['reference'], obj))
+        # logging.debug(all_parks)
+
+        hunted_set = set(hunted)
+        all_set = set(all_parks)
+        unhunted = list(all_set - hunted_set)
+        return self._response(True, '',
+                              hunted_refs=hunted,
+                              unhunted_refs=unhunted)
 
     def grid_to_ll(self, grid6: str):
         '''

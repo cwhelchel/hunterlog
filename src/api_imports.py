@@ -96,22 +96,8 @@ class ImportApi:
 
             log.info(f"updating park hunts from {imp_fn}")
             stats = PotaStats(imp_fn)
-            # hunts = stats.get_all_hunts()
-
-            # total = len(hunts)
-            # x = 0.0
 
             self.db.parks.upsert_park_hunts(stats.get_stats())
-
-            # for park in hunts:
-            #     count = stats.get_park_hunt_count(park)
-            #     j = {'reference': park.strip(), 'hunts': count}
-            #     self.db.parks.update_park_hunts(j, count)
-            #     x += 1.0
-            #     per = (x / total) * 100.0
-            #     self.call_update_progress(per)
-
-            # self.db.commit_session()
 
             return _response(
                 True, "Park Hunts imported", persist=True)
@@ -148,8 +134,12 @@ class ImportApi:
 
         try:
             locations = PotaApi.get_locations()
-            log.debug(locations)
-            self.db.locations.load_location_data(locations)
+            if locations:
+                log.debug(f"got locations {str(locations)[:100]}...snip...")
+                self.db.locations.load_location_data(locations)
+            else:
+                log.error('Error writing locations file')
+                return _response(False, 'Error writing locations file')
         except Exception as ex:
             log.error('Error downloaded location data', exc_info=ex)
             return _response(False, 'Error loading location data')

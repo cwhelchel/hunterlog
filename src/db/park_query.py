@@ -166,6 +166,7 @@ class ParkQuery:
         :type stats: dict[str, int] str is park ref, int number of hunts
         '''
 
+        logging.debug('upserting park hunts...')
         data_to_upsert = [{'id': x[0], 'hunts': x[1]} for x in stats.items()]
 
         # Create the base insert statement
@@ -177,20 +178,22 @@ class ParkQuery:
             }
         )
 
+        logging.debug(f'upsert statement {str(upsert_stmt)}...')
+
         self.session.execute(upsert_stmt, data_to_upsert)
         self.session.commit()
 
         with self.session.begin():
             # this will update hunts for rows currently in parks table
             res = self.session.execute(
-                sa.text("""UPDATE parks SET 
+                sa.text("""UPDATE parks SET
                     hunts = src.hunts
                 FROM import_pota_hunts src
                 WHERE parks.reference = src.id;
                 """)
             )
 
-            logging.debug(f"update result {res}")
+            logging.debug(f"{res.rowcount} park hunts updated")
 
             # this will insert new park rows. these rows are "half-loaded". the
             # empty park updater will enrich with pota api data later.
@@ -203,8 +206,7 @@ class ParkQuery:
                 """)
             )
 
-            logging.debug(f"insert result {res}")
-            
+            logging.debug(f"{res.rowcount} new park rows inserted")
 
     def get_hunted_parks(self, location: str) -> list[str]:
         '''
