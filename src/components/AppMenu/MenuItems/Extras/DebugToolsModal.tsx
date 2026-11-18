@@ -13,6 +13,7 @@ export default function DebugToolsModal({ isOpen, onClose }: DebugToolsModalProp
     const { addMessage } = useMessageQueue();
     const [isWorking, setIsWorking] = React.useState(false);
 
+
     function handleExportQsosClick() {
         if (window.pywebview) {
             setIsWorking(true);
@@ -71,7 +72,7 @@ export default function DebugToolsModal({ isOpen, onClose }: DebugToolsModalProp
             <Typography variant="body2">
                 Select this to reduce amount of text that gets logged to the index.log file.
                 DEBUG has the most detailed info and is most useful for fixing issues but also
-                takes up the most space. 
+                takes up the most space.
             </Typography>
             <Typography variant="caption">
                 HL is configured to use no more than 10 MB for log files.
@@ -106,11 +107,33 @@ export default function DebugToolsModal({ isOpen, onClose }: DebugToolsModalProp
                 <Button fullWidth variant='outlined' onClick={handleExportQsosClick}>Export</Button>
             </Stack>
 
-            {isWorking && ( 
+            {isWorking && (
                 <Box sx={{ width: '50vw' }}>
                     <LinearProgress />
                 </Box>
             )}
+
+            <Divider>Testing tools</Divider>
+            <Typography variant="body2">
+                Random front end testing tools
+            </Typography>
+            <Select
+                value={0}
+                label="Surprises"
+                onChange={(e) => {
+                    const val = e.target.value.toString();
+                    addMessage({
+                        id: 0,
+                        message: `This is a ${val} Alert popup`,
+                        type: 1,
+                        color: val
+                    });
+                }}>
+                <MenuItem value={'success'}>Success</MenuItem>
+                <MenuItem value={'info'}>Info</MenuItem>
+                <MenuItem value={'warning'}>Warning</MenuItem>
+                <MenuItem value={'error'}>Error</MenuItem>
+            </Select>
 
             <Stack direction={'row'} spacing={1} sx={{ 'align-items': 'stretch', 'justify-content': 'space-evenly' }} useFlexGap>
                 <Button fullWidth variant='contained' onClick={onClose}>Close</Button>
