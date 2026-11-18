@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Divider, Grid } from "@mui/material";
+import { Divider, FormControl, Grid, InputLabel, MenuItem, Select } from "@mui/material";
 import { useAppContext } from '../../../../AppContext';
 import ToggleSwitch from './ToggleSwitch';
 import StoredTextInput from './StoredTextInput';
@@ -12,17 +12,11 @@ export default function DisplaySettingsTab() {
     // stored in localStorage
     // const { config, setConfig } = useConfigContext();
 
-    // function to toggle the dark mode as true or false
-    const toggleDarkTheme = (newVal: boolean) => {
-        const newMode = newVal;
-
+    const setThemeName = (newVal: string) => {
         const newCtx = { ...contextData };
-        if (newMode)
-            newCtx.themeMode = 'dark';
-        else
-            newCtx.themeMode = 'light';
-
+        newCtx.themeName = newVal;
         setData(newCtx);
+        window.localStorage.setItem("THEME_NAME", newVal);
     };
 
     const toggleSwapRst = (newVal: boolean) => {
@@ -45,7 +39,30 @@ export default function DisplaySettingsTab() {
             <Divider />
             <Grid container direction={'row'} spacing={2} alignItems="stretch" marginTop={1} marginBottom={2}>
                 <Grid item xs={4}>
-                    <ToggleSwitch storageKey={'USE_DARK_MODE'} initialState={true} label='Dark Mode' onChange={toggleDarkTheme} />
+                    {/* <ToggleSwitch storageKey={'USE_DARK_MODE'} initialState={true} label='Dark Mode' onChange={toggleDarkTheme} /> */}
+                    <FormControl fullWidth>
+                        <InputLabel id="theme-select-label">Theme</InputLabel>
+                        <Select
+                            labelId='theme-select-label'
+                            id="theme-select"
+                            label="Theme"
+                            value={contextData?.themeName}
+                            onChange={(e) => {
+                                const x = e.target.value.toString();
+                                setThemeName(x);
+                            }}>
+                            <MenuItem value={'def-dark'}>dark</MenuItem>
+                            <MenuItem value={'def-light'}>light</MenuItem>
+                            <MenuItem value={'bluey-dark'}>bluey</MenuItem>
+                            <MenuItem value={'bluey-light'}>bluey (light)</MenuItem>
+                            <MenuItem value={'midnight-blue'}>midnight blue</MenuItem>
+                            <MenuItem value={'terminal'}>terminal</MenuItem>
+                            <MenuItem value={'graphite'}>graphite</MenuItem>
+                            <MenuItem value={'classic-light'}>classic light</MenuItem>
+                            <MenuItem value={'skylight'}>skylight</MenuItem>
+                            <MenuItem value={'sandlight'}>sandlight</MenuItem>
+                        </Select>
+                    </FormControl>
                 </Grid>
                 <Grid item xs={4}>
                     <ToggleSwitch storageKey={'SHOW_SPOT_AGE'} initialState={true} label='Show Spot Age' longTrueText='Shows spot age as minutes past' longFalseText='Shows spot timestamps' />

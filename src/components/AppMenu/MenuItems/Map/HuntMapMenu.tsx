@@ -207,10 +207,7 @@ export default function HuntMapMenu() {
 
     return (
         <>
-            <Button onClick={handleOpen} style={{
-                color: "#bdbdbd",
-                marginRight: '15px'
-            }}>
+            <Button onClick={handleOpen} color='inherit' >
                 Map
             </Button>
             <HlModal2

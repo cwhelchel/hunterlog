@@ -80,7 +80,10 @@ export default function RightArea() {
     return (
         <Box
             className="right-area"
-            sx={{ backgroundColor: backgroundColor }}>
+            sx={{
+                backgroundColor: 'background.paper',
+                borderRadius: (theme) => `${theme.shape.borderRadius}px`
+            }}>
 
             {showBandCondx &&
                 <CondxArea />

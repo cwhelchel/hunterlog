@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Box, CircularProgress, IconButton, Tooltip, keyframes } from "@mui/material";
 import RefreshIcon from '@mui/icons-material/Refresh';
-import { useAppContext } from '../AppContext';
+import { useTheme } from '@mui/material/styles';
 
 const highlightLimit = 20;
 
@@ -22,24 +22,17 @@ const pulseGlow = keyframes`
 
 export default function RefreshButton() {
 
-    const { contextData } = useAppContext();
-    const [refreshBtnColor, setRefreshBtnColor] = React.useState('#008C2C');
     const timerRef = React.useRef<number | null>(null);
+
+    const theme = useTheme();
+    const currentMode = theme.palette.mode; // 'light' or 'dark'
+
+    const refreshBtnColor = (currentMode === 'dark') ? 'primary.main' : 'primary.contrastText';
 
     const [progress, setProgress] = React.useState(() => {
         const saved = sessionStorage.getItem('progressVal');
         return saved !== null ? parseInt(saved) : 100;
     });
-
-    const LIGHT_COLOR = '#ffffff';
-    const DARK_COLOR = '#008C2C';
-
-    React.useEffect(() => {
-        if (contextData.themeMode == 'dark')
-            setRefreshBtnColor(DARK_COLOR)
-        else if (contextData.themeMode == 'light')
-            setRefreshBtnColor(LIGHT_COLOR)
-    }, [contextData.themeMode]);
 
     React.useEffect(() => {
         // automatically sync state changes to sessionStorage

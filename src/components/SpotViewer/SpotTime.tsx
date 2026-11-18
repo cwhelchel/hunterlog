@@ -1,7 +1,8 @@
 import * as React from 'react';
 import dayjs, { Dayjs } from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import { useAppContext } from '../AppContext';
+import { Box } from '@mui/material';
+import { useState } from 'react';
 
 dayjs.extend(utc);
 
@@ -11,17 +12,16 @@ interface ISpotTimeProps {
 
 
 export default function SpotTimeCell(props: ISpotTimeProps) {
-    const { contextData, setData } = useAppContext();
-    
+
     function getStr(y: string) {
-        let x = new Date(y);
+        const x = new Date(y);
         if (props.dateTimeObj === undefined) return '';
 
-        let showSpotAgeStr = window.localStorage.getItem("SHOW_SPOT_AGE") || '1';
-        let showSpotAge = parseInt(showSpotAgeStr);
+        const showSpotAgeStr = window.localStorage.getItem("SHOW_SPOT_AGE") || '1';
+        const showSpotAge = parseInt(showSpotAgeStr);
 
         if (showSpotAge) {
-            const diffDayjs = dayjs().subtract( x.getTime(), 'milliseconds');
+            const diffDayjs = dayjs().subtract(x.getTime(), 'milliseconds');
             if (diffDayjs.minute() > 0) {
                 return `${diffDayjs.minute()} min`;
             } else {
@@ -35,27 +35,34 @@ export default function SpotTimeCell(props: ISpotTimeProps) {
     }
 
     function getClassName(x: string) {
-        let now = dayjs().utc();
-        let y = dayjs.utc(x);
-        let diffInMin = now.diff(y, 'minute');
+        const now = dayjs().utc();
+        const y = dayjs.utc(x);
+        const diffInMin = now.diff(y, 'minute');
+
         if (diffInMin < 1) {
-            return contextData.themeMode == 'dark' ?  'timeBrandNew': 'timeBrandNew-light';
+            return 'timeBrandNew'
         }
         else if (diffInMin < 5) {
             return 'timeNew';
         }
-        else if (diffInMin < 20 && diffInMin > 15) {
+        else if (diffInMin <= 20 && diffInMin >= 15) {
             return 'timeAging';
         }
         else if (diffInMin > 20) {
             return 'timeOld';
         }
-        return 'timeNormal'
+        
+        return 'text'
     }
 
+    const className = getClassName(props.dateTimeObj);
+
     return (
-        <span className={getClassName(props.dateTimeObj)}>
+        <Box component={'span'} sx={{
+            color: className + ".main",
+            fontWeight: className == 'timeBrandNew' ? 600 : 'inherit'
+        }}>
             {getStr(props.dateTimeObj)}
-        </span>
+        </Box>
     );
 }

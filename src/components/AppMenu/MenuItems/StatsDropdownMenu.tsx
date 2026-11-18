@@ -28,9 +28,7 @@ export default function StatsDropdownMenu() {
                 aria-haspopup="true"
                 aria-expanded={open ? 'true' : undefined}
                 onClick={handleClick}
-                style={{
-                    color: "#bdbdbd"
-                }}
+                color='inherit'
             >
                 Stats
                 {isWorking && (

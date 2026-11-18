@@ -35,9 +35,7 @@ export default function ConfigDropdownMenu() {
                 aria-haspopup="true"
                 aria-expanded={openMenu ? 'true' : undefined}
                 onClick={handleClick}
-                style={{
-                    color: "#bdbdbd"
-                }}
+                color='inherit'
             >
                 Settings
             </Button>

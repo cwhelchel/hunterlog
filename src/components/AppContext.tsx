@@ -33,7 +33,8 @@ const defData: ContextData = {
     showHiddenFilter: false,
     modeFilter: [],
     rigFreqRead: '',
-    showBandCondx: false
+    showBandCondx: false,
+    themeName: 'default'
 };
 
 export const AppContext = React.createContext<AppContextType | null>(null);

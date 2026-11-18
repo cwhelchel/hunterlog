@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import { HlModal, HlModalContent, HlStyledBackdrop } from './Modals';
-import { SxProps } from '@mui/material';
+import { SxProps, Typography } from '@mui/material';
 
 // Define the component's specific props
 export interface HlModalProps {
@@ -37,9 +37,9 @@ const HlModal2: React.FC<HlModalProps> = ({
 
             <HlModalContent sx={contentStyle}>
                 {title != '' && (
-                    <h2 id={titleId} className="hl-modal-title" style={{ display: 'flex' }}>
+                    <Typography variant='h2' id={titleId} className="hl-modal-title" style={{ display: 'flex' }}>
                         {title}
-                    </h2>
+                    </Typography>
                 )}
                 {children}
             </HlModalContent>

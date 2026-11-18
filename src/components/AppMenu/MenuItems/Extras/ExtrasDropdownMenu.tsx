@@ -36,8 +36,9 @@ export default function ExtrasDropdownMenu() {
                 aria-haspopup="true"
                 aria-expanded={openMenu ? 'true' : undefined}
                 onClick={handleClick}
+                color='inherit'
                 style={{
-                    color: "#bdbdbd"
+                    marginRight: '15px'
                 }}
             >
                 <KeyboardArrowRightIcon

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Theme, ThemeProvider, createTheme } from '@mui/material/styles'
+import { ThemeProvider } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline';
 import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Grid';
@@ -15,52 +15,75 @@ import { Backdrop, CircularProgress } from '@mui/material';
 import { checkApiResponse2 } from './Utilities/util';
 import { useMessageQueue } from './MessageContext';
 import MigrateModal from './AppMenu/MenuItems/Extras/MigrateModal';
+import { createAppTheme } from './Theme';
 
 // Augment the palette to include an alert color
 declare module '@mui/material/styles' {
     interface Palette {
         alert: Palette['primary'];
+        timeOld: Palette['primary'];
+        timeAging: Palette['primary'];
+        timeNew: Palette['primary'];
+        timeBrandNew: Palette['primary'];
     }
 
     interface PaletteOptions {
         alert?: PaletteOptions['primary'];
+        timeOld?: PaletteOptions['primary'];
+        timeAging?: PaletteOptions['primary'];
+        timeNew?: PaletteOptions['primary'];
+        timeBrandNew?: PaletteOptions['primary'];
     }
 }
 
-function buildTheme(isDark: boolean): Theme {
-    return createTheme({
-        palette: {
-            mode: isDark ? 'dark' : 'light',
-            primary: {
-                main: isDark ? '#008C2C' : '#305c3e'
-            },
-            secondary: {
-                main: isDark ? '#7e0e5b' : '#650b49' //og purp 8c0060 
-            },
-            alert: {
-                main: '#E3D026',
-                light: '#E9DB5D',
-                dark: '#A29415',
-                contrastText: '#242105',
-            }
-        }
-    });
-}
+// function buildTheme(isDark: boolean): Theme {
+//     return createTheme({
+//         palette: {
+//             mode: isDark ? 'dark' : 'light',
+//             primary: {
+//                 main: isDark ? '#008C2C' : '#305c3e'
+//             },
+//             secondary: {
+//                 main: isDark ? '#7e0e5b' : '#650b49' //og purp 8c0060 
+//             },
+//             alert: {
+//                 main: '#E3D026',
+//                 light: '#E9DB5D',
+//                 dark: '#A29415',
+//                 contrastText: '#242105',
+//             }
+//         }
+//     });
+// }
 
 export default function Main() {
     const { contextData, setData } = useAppContext();
-    const potaTheme = buildTheme(true);
-    const [theme, setTheme] = React.useState(potaTheme);
+    // const potaTheme = buildTheme(true);
+    // const [theme, setTheme] = React.useState(potaTheme);
     const [spinnerOpen, setSpinnerOpen] = React.useState(false);
     const [modalOpen, setModalOpen] = React.useState(false);
+    const [themeName, setThemeName] = React.useState('def-dark');
 
     const { addMessage } = useMessageQueue();
 
+    const theme = React.useMemo(() => {
+        function fuck(themeName: string) {
+            switch (themeName) {
+                case 'def-dark': return 'dark';
+                case 'def-light': return 'light';
+                case 'bluey-dark': return 'dark';
+                case 'bluey-light': return 'light';
+                default: return 'dark';
+            }
+        }
+        const theMode = fuck(themeName);
+        console.log('thememememe', theMode, themeName);
+        return createAppTheme(theMode, themeName)
+    }, [themeName]);
+
     React.useEffect(() => {
-        const isDark = contextData.themeMode == 'dark';
-        const temp = buildTheme(isDark);
-        setTheme(temp);
-    }, [contextData.themeMode]);
+        setThemeName(contextData.themeName);
+    }, [contextData.themeName]);
 
     React.useEffect(() => {
         if (contextData.loadingQsoData)
@@ -76,19 +99,17 @@ export default function Main() {
             window.addEventListener('pywebviewready', initTheme);
 
         function initTheme() {
-            const darkMode = window.localStorage.getItem("USE_DARK_MODE") || '1';
-            const darkModeInt = parseInt(darkMode);
+            //const darkMode = window.localStorage.getItem("USE_DARK_MODE") || '1';
+            //const darkModeInt = parseInt(darkMode);
 
-            const isDark = darkModeInt == 1;
-            const temp = buildTheme(isDark);
-            setTheme(temp);
+            const themeName = window.localStorage.getItem("THEME_NAME") || 'def-dark';
+
+            //const isDark = darkModeInt == 1;
+            //const temp = buildTheme(isDark);
+            //setTheme(temp);
 
             const newCtx = { ...contextData };
-            if (isDark)
-                newCtx.themeMode = 'dark';
-
-            else
-                newCtx.themeMode = 'light';
+            newCtx.themeName = themeName;
             setData(newCtx);
 
             checkMigration();
