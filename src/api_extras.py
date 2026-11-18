@@ -3,13 +3,16 @@ import json
 import os
 import platform
 import subprocess
+import time
 import webview
 from db.db import DataBase
+from db.models.parks import ParkSchema
 from fs.data_file import DataFile
 from programs.program import Program
 import logging as L
 
 from fs.glob import hl_data_dir, migrate_to_platformdirs, log_file
+from utils.adif import AdifLog
 from utils.pywebview_util import call_js_raw
 
 
@@ -101,6 +104,106 @@ class ExtrasApi:
 
     def check_migration_flag(self):
         return _response(True, '', migrate_flag=self._migration_flag)
+
+    def export_park_data(self) -> str:
+        '''
+        Dumps the entire parks table into a file named 'park_export.json'.
+
+        This can then be later used to import. This is useful to avoid having
+        to download park info from the POTA endpoints.
+        '''
+        log.debug("export_park_data: dumping parks table...")
+        parks = self.db.parks.get_parks()
+        schema = ParkSchema()
+        data = schema.dumps(parks, many=True)
+
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
+        fn = f"park_export_{timestamp}.json"
+
+        ft = ('JSON files (*.json)',)
+
+        filename = webview.windows[0] \
+            .create_file_dialog(
+                webview.SAVE_DIALOG,
+                save_filename=fn,
+                file_types=ft)
+
+        if not filename:
+            # user cancelled
+            return _response(True, "")
+
+        path = filename
+        log.info(f'exporting park table to {path}')
+
+        with open(path, "w") as out:
+            out.write(data)
+
+        return _response(True, "Park data exported successfully")
+
+    def import_park_data(self) -> str:
+        '''
+        Loads previously exported park data from a file into the parks table.
+
+        The opposite of :meth:`export_park_data`
+        '''
+        log.debug("import_park_data: loading table...")
+
+        ft = ('JSON files (*.json)',)
+
+        filename = webview.windows[0] \
+            .create_file_dialog(
+                webview.OPEN_DIALOG,
+            file_types=ft)
+
+        if not filename:
+            # user cancelled
+            return _response(True, "")
+
+        with open(filename[0], "r") as input:
+            text = input.read()
+            obj = json.loads(text)
+            self.db.parks.import_park_data(obj)
+
+        log.debug("import_park_data: import finished")
+        return _response(True, "Park data imported successfully", persist=True)
+
+    def export_qsos(self):
+        '''
+        Exports the QSOs logged with this logger app into a file.
+        '''
+        try:
+            qs = self.db.qsos.get_qsos_from_app()
+            my_call = self.db.config.get_value('my_call')
+            my_grid6 = self.db.config.get_value('my_grid6')
+
+            timestamp = time.strftime("%Y%m%d-%H%M%S")
+            fn = f"{timestamp}_hl_export.adi"
+
+            ft = ('ADIF files (*.adi;*.adif)',)
+
+            filename = webview.windows[0] \
+                .create_file_dialog(
+                    webview.SAVE_DIALOG,
+                    save_filename=fn,
+                    file_types=ft)
+
+            if not filename:
+                # user cancelled
+                return _response(True, "")
+
+            my_log = AdifLog(filename=filename)
+            for q in qs:
+                if (q.freq == ''):
+                    log.warning('exporting: no freq in qso, skipping')
+                    continue
+
+                my_log.log_qso(q, my_call, my_grid6)
+
+            return _response(True, "QSOs exported successfully")
+        except Exception as ex:
+            log.exception("Error exporting QSOs to ADIF file")
+            return _response(
+                False, "Error exporting QSOs from DB", ext=str(ex))
 
     def _initialize_migration_flag(self):
         # check for migration flag

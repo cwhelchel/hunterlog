@@ -4,6 +4,7 @@ import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import MigrateMenuItem from './MigrateMenuItem';
 import OpenUserDirectoryMenuItem from './OpenUserDirectoryMenuItem';
 import OpenLogFileMenuItem from './OpenLogFileMenuItem';
+import DebugToolsMenuItem from './DebugToolsMenuItem';
 
 
 export default function ExtrasDropdownMenu() {
@@ -61,6 +62,10 @@ export default function ExtrasDropdownMenu() {
                 </MenuItem>
                 <MenuItem onKeyDown={avoidBubblingUp} >
                     <OpenLogFileMenuItem />
+                </MenuItem>
+                <Divider />
+                <MenuItem onKeyDown={avoidBubblingUp}>
+                    <DebugToolsMenuItem />
                 </MenuItem>
             </Menu>
         </>

@@ -626,30 +626,6 @@ class JsApi:
         self.db.session.commit()
         return self._response(True, "")
 
-    def export_qsos(self):
-        '''
-        Exports the QSOs logged with this logger app into a file.
-        '''
-        try:
-            qs = self.db.qsos.get_qsos_from_app()
-            my_call = self.db.config.get_value('my_call')
-            my_grid6 = self.db.config.get_value('my_grid6')
-
-            dt = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-            log = AdifLog(filename=f"{dt}_export.adi")
-            for q in qs:
-                if (q.freq == ''):
-                    logging.warning('exporting: no freq in qso, skipping')
-                    continue
-
-                log.log_qso(q, my_call, my_grid6)
-
-            return self._response(True, "QSOs exported successfully")
-        except Exception as ex:
-            logging.exception("Error exporting the DB")
-            return self._response(
-                False, "Error exporting QSOs from DB", ext=str(ex))
-
     # def set_user_config(self, config_json: any):
     #     logging.debug(f"setting config {config_json}")
     #     self.db.update_user_config(config_json)
@@ -763,52 +739,6 @@ class JsApi:
         else:
             logging.warning(f"activator callsign {callsign} not found")
             return -1
-
-    def export_park_data(self) -> str:
-        '''
-        Dumps the entire parks table into a file named 'park_export.json'.
-
-        This can then be later used to import. This is useful to avoid having
-        to download park info from the POTA endpoints.
-        '''
-        logging.debug("export_park_data: dumping parks table...")
-        parks = self.db.parks.get_parks()
-        schema = ParkSchema()
-        data = schema.dumps(parks, many=True)
-
-        with open("park_export.json", "w") as out:
-            out.write(data)
-
-        return self._response(
-            True, "Park data exported successfully")
-
-    def import_park_data(self) -> str:
-        '''
-        Loads previously exported park data from a file into the parks table.
-
-        The opposite of :meth:`export_park_data`
-        '''
-        logging.debug("import_park_data: loading table...")
-
-        ft = ('JSON files (*.json)', 'All files (*.*)')
-        filename = webview.windows[0] \
-            .create_file_dialog(
-                webview.OPEN_DIALOG,
-            file_types=ft)
-
-        if not filename:
-            # user cancelled
-            return self._response(True, "")
-
-        with open(filename[0], "r") as input:
-            text = input.read()
-            obj = json.loads(text)
-            self.db.parks.import_park_data(obj)
-
-        logging.debug("import_park_data: import finished")
-
-        return self._response(
-            True, "Park data imported successfully", persist=True)
 
     def get_seen_regions(self) -> str:
         '''

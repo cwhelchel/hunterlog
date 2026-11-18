@@ -108,8 +108,7 @@ export default function Main() {
                             setModalOpen(true);
                         }
                     }
-                }
-            );
+                });
         }
     }
 
@@ -117,6 +116,7 @@ export default function Main() {
         <ThemeProvider theme={theme}>
             <CssBaseline enableColorScheme />
             <Stack direction="column"
+                height={'100vh'}
                 ml="1.5rem"
                 mr="1.5rem">
                 <Grid
@@ -129,7 +129,6 @@ export default function Main() {
                     direction="row"
                     justifyContent="space-evenly"
                     spacing={{ xs: 1, md: 1 }}
-                    height="28%"
                 >
                     <Grid item xs={12} >
                         <AppMenu />

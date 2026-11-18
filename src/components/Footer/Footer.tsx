@@ -1,16 +1,10 @@
 import './Footer.scss'
 
 import * as React from 'react'
-import Link from '@mui/material/Link';
-import { Box, LinearProgress } from '@mui/material';
-import { checkApiResponse2 } from '../Utilities/util';
-import { useMessageQueue } from '../MessageContext';
 
 export default function Footer() {
     const [version, setVersion] = React.useState('');
     const [dbVersion, setDbVersion] = React.useState('');
-    const [isWorking, setIsWorking] = React.useState(false);
-    const { addMessage } = useMessageQueue();
 
     React.useEffect(() => {
         if (window.pywebview !== undefined && window.pywebview.api !== null)
@@ -31,73 +25,12 @@ export default function Footer() {
         }
     }, []);
 
-    function handleOnClick() {
-        if (window.pywebview) {
-            setIsWorking(true);
-
-            const x = window.pywebview.api.export_qsos();
-
-            x.then((r: string) => {
-                const x = checkApiResponse2(r, addMessage);
-                setIsWorking(false);
-                if (!x.success) {
-                    console.log("export qsos failed");
-                }
-            });
-        }
-    }
-
-    function handleExportParkData() {
-        if (window.pywebview) {
-            setIsWorking(true);
-
-            const x = window.pywebview.api.export_park_data();
-            x.then((r: string) => {
-                const x = checkApiResponse2(r, addMessage);
-                setIsWorking(false);
-                if (!x.success) {
-                    console.log("export park data failed");
-                }
-            });
-        }
-    }
-
-    function handleImportParkData() {
-        if (window.pywebview) {
-            setIsWorking(true);
-
-            const x = window.pywebview.api.import_park_data();
-            x.then((r: string) => {
-                const x = checkApiResponse2(r, addMessage);
-                setIsWorking(false);
-                if (!x.success) {
-                    console.log("import park data failed");
-                }
-            });
-        }
-    }
-
     return (
         <div className="footer">
             <div className='left'>
                 <span id="versionNum">{version} - db: {dbVersion}</span>
-                <Link href="#" onClick={() => { handleOnClick() }} ml={1} mr={1}>
-                    Export Logged QSOs
-                </Link>
-                <Link href="#" onClick={() => { handleExportParkData() }} ml={1} mr={1}>
-                    Export Park Info
-                </Link>
-                <Link href="#" onClick={() => { handleImportParkData() }} ml={1} mr={1}>
-                    Import Park Info
-                </Link>
-                {isWorking && (
-                    <Box sx={{ width: '50vw' }}>
-                        <LinearProgress />
-                    </Box>
-                )}
             </div>
             <span id="attributionText">Icons from <a href="https://icons8.com" target='_blank' rel='noreferrer'>icons8.com</a></span>
         </div >
-
     )
 }
