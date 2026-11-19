@@ -57,17 +57,16 @@ declare module '@mui/material/styles' {
 // }
 
 export default function Main() {
+    const savedTheme = window.localStorage.getItem('THEME_NAME') || 'def-dark';
+    
     const { contextData, setData } = useAppContext();
-    // const potaTheme = buildTheme(true);
-    // const [theme, setTheme] = React.useState(potaTheme);
     const [spinnerOpen, setSpinnerOpen] = React.useState(false);
     const [modalOpen, setModalOpen] = React.useState(false);
-    const [themeName, setThemeName] = React.useState('def-dark');
-
+    const [themeName, setThemeName] = React.useState(savedTheme);
     const { addMessage } = useMessageQueue();
 
     const theme = React.useMemo(() => {
-        function fuck(themeName: string) {
+        function getThemeMode(themeName: string) {
             switch (themeName) {
                 case 'def-dark': return 'dark';
                 case 'def-light': return 'light';
@@ -76,8 +75,8 @@ export default function Main() {
                 default: return 'dark';
             }
         }
-        const theMode = fuck(themeName);
-        console.log('thememememe', theMode, themeName);
+        const theMode = getThemeMode(themeName);
+        console.log('themem', theMode, themeName);
         return createAppTheme(theMode, themeName)
     }, [themeName]);
 
@@ -99,19 +98,11 @@ export default function Main() {
             window.addEventListener('pywebviewready', initTheme);
 
         function initTheme() {
-            //const darkMode = window.localStorage.getItem("USE_DARK_MODE") || '1';
-            //const darkModeInt = parseInt(darkMode);
-
             const themeName = window.localStorage.getItem("THEME_NAME") || 'def-dark';
-
-            //const isDark = darkModeInt == 1;
-            //const temp = buildTheme(isDark);
-            //setTheme(temp);
-
             const newCtx = { ...contextData };
             newCtx.themeName = themeName;
             setData(newCtx);
-
+            setThemeName(themeName);
             checkMigration();
         };
     }, []);
